@@ -50,9 +50,11 @@ $config = [
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                '/' => 'site/index',
+                '/' => 'user/create-expert',
+                
                 'login' => 'user/login',
-                'logout' => 'user/logout'
+                'logout' => 'user/logout',
+                'register' => 'user/register',
             ],
         ],
         

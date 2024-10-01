@@ -17,17 +17,19 @@ class UserController extends \yii\web\Controller
      */
     public function actionLogin()
     {
+        $this->layout = 'login';
+
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
 
-        $model = Users::login();
+        $login = Users::login();
 
-        if ($model['status']) {
+        if ($login['status']) {
             return $this->goHome();
         } else {
             return $this->render('login', [
-                'model' => $model['model'],
+                'model' => $login['model'],
             ]);
         }
     }
@@ -36,5 +38,23 @@ class UserController extends \yii\web\Controller
     {
         Users::logout();
         return $this->goHome();
+    }
+
+    public function actionCreateExpert()
+    {
+        if (Yii::$app->user->isGuest) {
+            return Yii::$app->response->redirect('/login');
+        }
+
+        $create = Users::createExpert();
+
+        if ($create['status']) {
+            return $this->goHome();
+        } else {
+            return $this->render('createExpert', [
+                'model' => $create['model'],
+                'dataProvider' => Users::getDataProvider(20),
+            ]);
+        }
     }
 }
