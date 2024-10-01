@@ -42,6 +42,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             [['login', 'password', 'surname', 'name', 'middle_name', 'token'], 'string', 'max' => 255],
             [['token'], 'unique'],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
+            ['middle_name', 'default', 'value' => null],
         
             [['surname', 'name'], 'required', 'on' => static::SCENARIO_REGISTER],
         ];
@@ -263,5 +264,13 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         }
         
         return $answer;
+    }
+
+    /**
+     * Deletes an existing Users model.
+     */
+    public static function deleteUser($id): void
+    {
+        (self::findOne($id))->delete();
     }
 }

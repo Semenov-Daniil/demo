@@ -7,12 +7,14 @@ use yii\db\Migration;
  */
 class m241001_064006_create_roles_table extends Migration
 {
+    const TABLE_NAME = '{{%roles}}';
+
     /**
      * {@inheritdoc}
      */
     public function safeUp()
     {
-        $this->createTable('{{%roles}}', [
+        $this->createTable(self::TABLE_NAME, [
             'id' => $this->primaryKey(),
             'title' => $this->string(255)->notNull()->unique()
         ]);
@@ -23,6 +25,6 @@ class m241001_064006_create_roles_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable('{{%roles}}');
+        $this->dropTable(self::TABLE_NAME);
     }
 }

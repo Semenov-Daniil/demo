@@ -57,4 +57,22 @@ class UserController extends \yii\web\Controller
             ]);
         }
     }
+
+    /**
+     * Deletes an existing Groups model.
+     * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @param int $id ID
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionDelete($id)
+    {
+        if (Yii::$app->user->isGuest || Users::findOne(Yii::$app->user->id)->getTitleRoles() !== 'Admin') {
+            return $this->goHome();
+        }
+
+        Users::deleteUser($id);
+
+        return $this->redirect('/');
+    }
 }

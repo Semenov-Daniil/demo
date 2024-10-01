@@ -7,15 +7,17 @@ use yii\db\Migration;
  */
 class m241001_064509_add_roles_id_column_to_users_table extends Migration
 {
+    const TABLE_NAME = '{{%users}}';
+
     /**
      * {@inheritdoc}
      */
     public function safeUp()
     {
-        $this->addColumn('{{%users}}', 'roles_id', $this->integer()->notNull());
+        $this->addColumn(self::TABLE_NAME, 'roles_id', $this->integer()->notNull());
 
-        $this->createIndex('users-roles_id', '{{%users}}', 'roles_id');
-        $this->addForeignKey('fk-users-roles_id', '{{%users}}', 'roles_id', '{{%roles}}', 'id', 'RESTRICT', 'CASCADE');
+        $this->createIndex('users-roles_id', self::TABLE_NAME, 'roles_id');
+        $this->addForeignKey('fk-users-roles_id', self::TABLE_NAME, 'roles_id', '{{%roles}}', 'id', 'RESTRICT', 'CASCADE');
     }
 
     /**
@@ -23,9 +25,9 @@ class m241001_064509_add_roles_id_column_to_users_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropForeignKey('fk-users-roles_id', '{{%users}}');
-        $this->dropIndex('users-roles_id', '{{%users}}');
+        $this->dropForeignKey('fk-users-roles_id', self::TABLE_NAME);
+        $this->dropIndex('users-roles_id', self::TABLE_NAME);
         
-        $this->dropColumn('{{%users}}', 'roles_id');
+        $this->dropColumn(self::TABLE_NAME, 'roles_id');
     }
 }

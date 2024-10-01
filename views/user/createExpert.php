@@ -70,8 +70,10 @@ $this->title = 'Главная';
                     },
                     'visibleButtons' => [
                         'delete' => function ($model, $key, $index) {
-                            return !Yii::$app->user->isGuest && Users::findOne(Yii::$app->user->id)->getTitleRoles() == 'Admin';
+                            return !Yii::$app->user->isGuest && Users::findOne(Yii::$app->user->id)->getTitleRoles() == 'Admin' && Yii::$app->user->id !== $model->id;
                         },
+                        'update' => false,
+                        'view' => false
                     ]
                 ],
             ],

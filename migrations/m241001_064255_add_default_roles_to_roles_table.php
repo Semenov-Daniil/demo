@@ -3,16 +3,18 @@
 use yii\db\Migration;
 
 /**
- * Class m241001_064255_add_default_roles_to_roles_table
+ * Handles adding columns to table `{{%roles}}`.
  */
 class m241001_064255_add_default_roles_to_roles_table extends Migration
 {
+    const TABLE_NAME = '{{%roles}}';
+
     /**
      * {@inheritdoc}
      */
     public function safeUp()
     {
-        $this->batchInsert('{{%roles}}', 
+        $this->batchInsert(self::TABLE_NAME, 
         [
             'id',
             'title'
@@ -35,22 +37,7 @@ class m241001_064255_add_default_roles_to_roles_table extends Migration
      */
     public function safeDown()
     {
-        $this->delete('{{%roles}}', ['id' => 1]);
-        $this->delete('{{%roles}}', ['id' => 2]);
+        $this->delete(self::TABLE_NAME, ['id' => 1]);
+        $this->delete(self::TABLE_NAME, ['id' => 2]);
     }
-
-    /*
-    // Use up()/down() to run migration code without a transaction.
-    public function up()
-    {
-
-    }
-
-    public function down()
-    {
-        echo "m241001_064255_add_default_roles_to_roles_table cannot be reverted.\n";
-
-        return false;
-    }
-    */
 }

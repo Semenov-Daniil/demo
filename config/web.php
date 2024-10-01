@@ -55,6 +55,7 @@ $config = [
                 'login' => 'user/login',
                 'logout' => 'user/logout',
                 'register' => 'user/register',
+                'user/delete' => 'user/delete'
             ],
         ],
         
