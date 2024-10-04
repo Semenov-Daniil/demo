@@ -43,7 +43,7 @@ class UserController extends \yii\web\Controller
     public function actionCreateExpert()
     {
         if (Yii::$app->user->isGuest) {
-            return Yii::$app->response->redirect('/login');
+            return Yii::$app->response->redirect(['/login']);
         }
 
         $create = Users::createExpert();
