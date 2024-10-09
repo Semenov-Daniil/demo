@@ -22,11 +22,11 @@ class m241001_064255_add_default_roles_to_roles_table extends Migration
         [
             [
                 1,
-                'Admin'
+                'Student'
             ],
             [
                 2,
-                'Student'
+                'Expert'
             ]
         ]
     );

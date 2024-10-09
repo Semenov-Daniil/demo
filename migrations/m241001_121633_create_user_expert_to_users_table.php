@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%users}}`.
  */
-class m241001_121633_create_user_admin_to_users_table extends Migration
+class m241001_121633_create_user_expert_to_users_table extends Migration
 {
     const TABLE_NAME = '{{%users}}';
     
@@ -16,11 +16,11 @@ class m241001_121633_create_user_admin_to_users_table extends Migration
     {
         $this->insert(self::TABLE_NAME, [
             'id' => 1,
-            'login' => 'admin',
-            'password' => \Yii::$app->security->generatePasswordHash('admin'),
-            'surname' => 'Admin',
+            'login' => 'expert',
+            'password' => \Yii::$app->security->generatePasswordHash('expert'),
+            'surname' => 'Expert',
             'name' => '1',
-            'roles_id' => '1',
+            'roles_id' => '2',
         ]);
     }
 

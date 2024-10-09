@@ -14,10 +14,10 @@ class m241001_064509_add_roles_id_column_to_users_table extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn(self::TABLE_NAME, 'roles_id', $this->integer()->notNull());
+        $this->addColumn(self::TABLE_NAME, 'roles_id', $this->integer()->notNull()->defaultValue(1));
 
         $this->createIndex('users-roles_id', self::TABLE_NAME, 'roles_id');
-        $this->addForeignKey('fk-users-roles_id', self::TABLE_NAME, 'roles_id', '{{%roles}}', 'id', 'RESTRICT', 'CASCADE');
+        $this->addForeignKey('fk-users-roles_id', self::TABLE_NAME, 'roles_id', '{{%roles}}', 'id', 'SET DEFAULT', 'CASCADE');
     }
 
     /**
