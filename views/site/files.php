@@ -4,8 +4,8 @@
 
 $this->title = 'My Yii Application';
 ?>
-<div class="site-index">
+<div class="site-files">
 
-    <h1 class="display-4">Настройки</h1>
+    <h1 class="display-4">Файлы</h1>
     
 </div>

@@ -16,32 +16,6 @@ class SiteController extends Controller
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::class,
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::class,
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function actions()
     {
         return [
@@ -62,10 +36,46 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        if (Yii::$app->user->isGuest) {
-            return Yii::$app->response->redirect('/login');
-        }
-
         return $this->render('index');
+    }
+
+    /**
+     * Displays student page.
+     *
+     * @return string
+     */
+    public function actionStudents()
+    {
+        return $this->render('students');
+    }
+
+    /**
+     * Displays files page.
+     *
+     * @return string
+     */
+    public function actionFiles()
+    {
+        return $this->render('files');
+    }
+
+    /**
+     * Displays modules page.
+     *
+     * @return string
+     */
+    public function actionModules()
+    {
+        return $this->render('modules');
+    }
+
+    /**
+     * Displays competitors page.
+     *
+     * @return string
+     */
+    public function actionCompetitors()
+    {
+        return $this->render('competitors');
     }
 }

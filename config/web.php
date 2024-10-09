@@ -52,9 +52,8 @@ $config = [
                 'login' => 'user/login',
                 'logout' => 'user/logout',
                 
-                '/' => 'user/create-expert',
-                'register' => 'user/register',
-                'user/delete' => 'user/delete'
+                '/' => 'site/index',
+                '<action>' => 'site/<action>'
             ],
         ],
         'authManager' => [
