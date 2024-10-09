@@ -225,11 +225,14 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         return $answer;
     }
 
+    /**
+     * Logout user
+     * 
+     * @return void
+     */
     public static function logout(): void
     {
-        if (!Yii::$app->user->isGuest) {
-            $identity = Yii::$app->user->identity;
-            $user = Users::findOne($identity->id);
+        if ($user = Users::findOne(Yii::$app->user->id)) {
             $user->token = null;
             $user->save(false);
             Yii::$app->user->logout();
