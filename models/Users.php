@@ -4,6 +4,7 @@ namespace app\models;
 
 use Yii;
 use yii\data\ActiveDataProvider;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "{{%users}}".
@@ -55,11 +56,11 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     {
         return [
             'id' => 'ID',
-            'login' => 'Login',
-            'password' => 'Password',
-            'surname' => 'Surname',
-            'name' => 'Name',
-            'middle_name' => 'Middle Name',
+            'login' => 'Логин',
+            'password' => 'Пароль',
+            'surname' => 'Фамилия',
+            'name' => 'Имя',
+            'middle_name' => 'Отчество',
             'token' => 'Token',
         ];
     }
@@ -118,18 +119,18 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     /**
      * @return string|null current user auth key
      */
-    public function getAuthKey(): void
+    public function getAuthKey(): string|null
     {
-        // return $this->auth_key;
+        return $this->token;
     }
 
     /**
      * @param string $authKey
      * @return bool|null if auth key is valid for current user
      */
-    public function validateAuthKey($authKey): void
+    public function validateAuthKey($authKey): string|null
     {
-        // return $this->getAuthKey() === $authKey;
+        return $this->getAuthKey() === $authKey;
     }
 
     /**
@@ -150,6 +151,19 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         return !Users::find()
             ->where([$attr => $this->$attr])
             ->exists();
+    }
+    
+    /**
+     * @param string $attr the name of the attribute to set a unique string value
+     * @return bool
+     */
+    public function setUniqueStr(string $attr, int $length = 32): void
+    {
+        $this->$attr = Yii::$app->security->generateRandomString($length);
+    
+        while(!$this->isUnique($attr)) {
+            $this->$attr = Yii::$app->security->generateRandomString($length);
+        }
     }
 
     public static function getDataProvider($page)
@@ -172,9 +186,11 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     }
 
     /**
+     * Login user
+     * 
      * @return array
      */
-    public static function login(): array
+    static function login(): array
     {
         $answer = [
             'status' => false,
@@ -183,29 +199,23 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 
         $model = &$answer['model'];
 
-        if (Yii::$app->request->isPost) {
-            $data = Yii::$app->request->post()['Users'];
-    
-            $model->load($data, '');
+        if (Yii::$app->request->isAjax) {
+            $model->load(Yii::$app->request->post(), $model->formName());
             $model->validate();
     
             if (!$model->hasErrors()) {
                 $user = Users::findOne(['login' => $model->login]);
                 
-                
                 if (!empty($user) && $user->validatePassword($model->password)) {
                     $model = $user;
-                    $model->token = Yii::$app->security->generateRandomString();
-    
-                    while(!$model->isUnique('token')) {
-                        $model->token = Yii::$app->security->generateRandomString();
-                    }
+
+                    $model->setUniqueStr('token');
     
                     Yii::$app->user->login($model);
 
                     $answer['status'] = $model->save();
                 } else {
-                    $model->addError('password', 'Неправильное имя пользователя или пароль.');
+                    $model->addError('password', 'Неправильный «' . $model->getAttributeLabel('login') . '» или «' . $model->getAttributeLabel('password') .  '».');
                 }
             }
         }

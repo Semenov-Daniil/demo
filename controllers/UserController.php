@@ -4,34 +4,40 @@ namespace app\controllers;
 
 use app\models\Users;
 use Yii;
+use yii\filters\AccessControl;
 
 class UserController extends \yii\web\Controller
 {
-    public function actionIndex()
+    public function behaviors()
     {
-        return $this->render('index');
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'only' => ['login'],
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'actions' => ['login'],
+                        'roles' => ['?'],
+                    ],
+                ],
+                'denyCallback' => function ($rule, $action) {
+                    Yii::$app->user->isGuest ? $this->redirect(['user/login']) : $this->redirect(['/']);
+                }
+            ],
+        ];
     }
 
     /**
-     * Login 
+     * Login user
      */
     public function actionLogin()
     {
         $this->layout = 'login';
 
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
         $login = Users::login();
 
-        if ($login['status']) {
-            return $this->goHome();
-        } else {
-            return $this->render('login', [
-                'model' => $login['model'],
-            ]);
-        }
+        return $login['status'] ? $this->goHome() : $this->render('login', ['model' => $login['model']]);
     }
 
     public function actionLogout()
