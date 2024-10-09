@@ -44,21 +44,22 @@ $config = [
             ],
         ],
         'db' => $db,
-        
         'urlManager' => [
             'enablePrettyUrl' => true,
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
                 '/' => 'user/create-expert',
-                
                 'login' => 'user/login',
                 'logout' => 'user/logout',
                 'register' => 'user/register',
                 'user/delete' => 'user/delete'
             ],
         ],
-        
+        'authManager' => [
+            'class' => 'yii\rbac\DbManager',
+            'defaultRoles' => ['student', 'expert'],
+        ],
     ],
     'params' => $params,
 ];

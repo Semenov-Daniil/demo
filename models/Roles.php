@@ -55,4 +55,15 @@ class Roles extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Users::class, ['roles_id' => 'id']);
     }
+
+    /**
+     * Get role id by  title
+     * 
+     * @param string $title
+     * @return int|null
+     */
+    public static function getRoleId(string $title): int|null
+    {
+        return (self::findOne(['title' => $title]))?->id;
+    }
 }
