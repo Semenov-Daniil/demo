@@ -32,7 +32,7 @@ class Testings extends \yii\db\ActiveRecord
     {
         return [
             [['title'], 'required'],
-            [['num_modules'], 'integer'],
+            [['num_modules'], 'integer', 'min' => 1],
             [['title'], 'string', 'max' => 255],
             [['users_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['users_id' => 'id']],
 
@@ -68,7 +68,7 @@ class Testings extends \yii\db\ActiveRecord
 
         $model->scenario = Testings::SCENARIO_ADD;
 
-        $model->load($data);
+        $model->load($data, '');
         $model->validate();
 
         if (!$model->hasErrors()) {

@@ -62,7 +62,7 @@ class Passwords extends \yii\db\ActiveRecord
     {
         $model = new Passwords();
         
-        $model->load($data);
+        $model->load($data, '');
         $model->validate();
 
         if (!$model->hasErrors()) {

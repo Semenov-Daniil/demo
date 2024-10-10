@@ -44,10 +44,9 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         parent::afterSave($insert, $changedAttributes);
 
         if ($insert) {
-            var_dump(Yii::$app->request->post());die;
-            // Passwords::addPassword(['users_id' => $this->id, 'password' => $this->temp_password]);
-            // Testings::addTesting(['users_id' => $tis->id, ])
-
+            if (!(Passwords::addPassword(['users_id' => $this->id, 'password' => $this->temp_password]) && Testings::addTesting(['users_id' => $this->id, ...(Yii::$app->request->post())[(new Testings())->formName()]]))) {
+                $this->delete();
+            }
         } 
     }
 
@@ -287,8 +286,10 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             if (!($user->hasErrors() || $testing->hasErrors())) {
                 $user->temp_password = Yii::$app->security->generateRandomString(6);
                 
-                if ($answer['status'] = $user->save()) {
+
+                if ($user->save()) {
                     $user = new Users();
+                    $testing = new Testings();
                 }
             }
         }
@@ -301,6 +302,6 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
      */
     public static function deleteUser($id): void
     {
-        (self::findOne($id))->delete();
+        (self::findOne(['id' => $id]))->delete();
     }
 }

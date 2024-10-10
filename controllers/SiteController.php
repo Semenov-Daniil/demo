@@ -63,15 +63,10 @@ class SiteController extends Controller
     {
         $addExpert = Users::addExpert();
 
-        return $this->render('addExpert', [
-            'user' => $addExpert['model'],
-            'champ' => $addExpert['model'],
-            'dataProvider' => Users::getDataProvider(20),
-        ]);
-
         return $this->render('settings', [
-            'user',
-            'champ'
+            'user' => $addExpert['user'],
+            'testing' => $addExpert['testing'],
+            'dataProvider' => Users::getDataProvider(20),
         ]);
     }
 
