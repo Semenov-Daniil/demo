@@ -2,17 +2,32 @@
 
 namespace app\controllers;
 
+use app\models\Users;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\web\Response;
-use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
-use app\models\Users;
 
 class SiteController extends Controller
 {
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'only' => [],
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+                'denyCallback' => function ($rule, $action) {
+                    $this->redirect(['user/login']);
+                }
+            ],
+        ];
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -36,7 +51,28 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        return Yii::$app->user->can('student') ? $this->redirect(['student']) : $this->redirect(['settings']);
+    }
+
+    /**
+     * Displays settings page.
+     *
+     * @return string
+     */
+    public function actionSettings()
+    {
+        $addExpert = Users::addExpert();
+
+        return $this->render('addExpert', [
+            'user' => $addExpert['model'],
+            'champ' => $addExpert['model'],
+            'dataProvider' => Users::getDataProvider(20),
+        ]);
+
+        return $this->render('settings', [
+            'user',
+            'champ'
+        ]);
     }
 
     /**

@@ -9,6 +9,7 @@ use yii\bootstrap5\Breadcrumbs;
 use yii\bootstrap5\Html;
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
+use yii\widgets\Pjax;
 
 AppAsset::register($this);
 
@@ -39,13 +40,13 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav'],
         'items' => [
-            ['label' => 'Настройки', 'url' => ['site/index']],
-            ['label' => 'Студенты', 'url' => ['site/students']],
-            ['label' => 'Файлы', 'url' => ['site/files']],
-            ['label' => 'Модули', 'url' => ['site/modules']],
-            ['label' => 'Участники', 'url' => ['site/competitors']],
+            ['label' => 'Настройки', 'url' => ['site/index'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Студенты', 'url' => ['site/students'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Файлы', 'url' => ['site/files'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Модули', 'url' => ['site/modules'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Участники', 'url' => ['site/competitors'], 'visible' => Yii::$app->user->can('expert')],
             Yii::$app->user->isGuest
-                ? ['label' => 'Login', 'url' => ['/login']]
+                ? ['label' => 'Войти', 'url' => ['site/login']]
                 : '<li class="nav-item">'
                     . Html::beginForm(['/logout'])
                     . Html::submitButton(

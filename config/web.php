@@ -52,8 +52,12 @@ $config = [
                 'login' => 'user/login',
                 'logout' => 'user/logout',
                 
+                'student' => 'student/index',
+                'student/<action>' => 'student/<action>',
+                
                 '/' => 'site/index',
-                '<action>' => 'site/<action>'
+                '<action>' => 'site/<action>',
+
             ],
         ],
         'authManager' => [

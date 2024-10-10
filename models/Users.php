@@ -22,7 +22,34 @@ use yii\helpers\VarDumper;
  */
 class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-    const SCENARIO_REGISTER = "register";
+    public string $temp_password = '';
+    const SCENARIO_ADD = "add";
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($this->isNewRecord || $this->isAttributeChanged('password')) {
+                $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
+                $this->login = Yii::$app->security->generateRandomString(6);
+                $this->roles_id = Roles::getRoleId('expert');
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+
+        if ($insert) {
+            var_dump(Yii::$app->request->post());die;
+            // Passwords::addPassword(['users_id' => $this->id, 'password' => $this->temp_password]);
+            // Testings::addTesting(['users_id' => $tis->id, ])
+
+        } 
+    }
 
     /**
      * {@inheritdoc}
@@ -38,14 +65,14 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public function rules(): array
     {
         return [
-            [['login', 'password'], 'required', 'except' => self::SCENARIO_REGISTER],
+            [['login', 'password'], 'required', 'except' => self::SCENARIO_ADD],
             [['id', 'roles_id'], 'integer'],
             [['login', 'password', 'surname', 'name', 'middle_name', 'token'], 'string', 'max' => 255],
             [['token'], 'unique'],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
             ['middle_name', 'default', 'value' => null],
         
-            [['surname', 'name'], 'required', 'on' => static::SCENARIO_REGISTER],
+            [['surname', 'name'], 'required', 'on' => static::SCENARIO_ADD],
         ];
     }
 
@@ -208,12 +235,9 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
                 
                 if (!empty($user) && $user->validatePassword($model->password)) {
                     $model = $user;
-
                     $model->setUniqueStr('token');
-    
-                    Yii::$app->user->login($model);
-
                     $answer['status'] = $model->save();
+                    Yii::$app->user->login($model);
                 } else {
                     $model->addError('password', 'Неправильный «' . $model->getAttributeLabel('login') . '» или «' . $model->getAttributeLabel('password') .  '».');
                 }
@@ -242,36 +266,29 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     /**
      * @return array
      */
-    public static function createExpert(): array
+    public static function addExpert(): array
     {
         $answer = [
-            'status' => false,
-            'model' => new Users(),
+            'user' => new Users(),
+            'testing' => new Testings()
         ];
 
-        $model = &$answer['model'];
-        $model->scenario = Users::SCENARIO_REGISTER;
+        $user = &$answer['user'];
+        $testing = &$answer['testing'];
 
-        if (Yii::$app->request->isPost) {
-            $data = Yii::$app->request->post()['Users'];
-    
-            $model->load($data, '');
-            $model->validate();
+        $user->scenario = Users::SCENARIO_ADD;
 
-            if (!$model->hasErrors()) {
-                $password_value = Yii::$app->security->generateRandomString(6);
+        if (Yii::$app->request->isAjax) {
+            $user->load(Yii::$app->request->post(), $user->formName());
+            $testing->load(Yii::$app->request->post(), $testing->formName());
+            $user->validate();
+            $testing->validate();
 
-                $model->login = Yii::$app->security->generateRandomString(6);
-                $model->password = Yii::$app->getSecurity()->generatePasswordHash($password_value);
-                $model->roles_id = (Roles::findOne(['title' => 'Admin']))->id;
+            if (!($user->hasErrors() || $testing->hasErrors())) {
+                $user->temp_password = Yii::$app->security->generateRandomString(6);
                 
-                if ($answer['status'] = $model->save()) {
-                    $password_model = new Passwords();
-                    $password_model->password = $password_value;
-                    $password_model->users_id = $model->id;
-                    $password_model->save(false);
-
-                    $model = new Users();
+                if ($answer['status'] = $user->save()) {
+                    $user = new Users();
                 }
             }
         }

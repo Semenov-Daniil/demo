@@ -5,22 +5,24 @@ namespace app\models;
 use Yii;
 
 /**
- * This is the model class for table "{{%passwords}}".
+ * This is the model class for table "dm_testings".
  *
- * @property int $id
- * @property string $password
  * @property int $users_id
+ * @property string $title
+ * @property int $num_modules
  *
- * @property Users $users
+ * @property User $users
  */
-class Passwords extends \yii\db\ActiveRecord
+class Testings extends \yii\db\ActiveRecord
 {
+    const SCENARIO_ADD = 'add';
+
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return '{{%passwords}}';
+        return 'dm_testings';
     }
 
     /**
@@ -29,10 +31,12 @@ class Passwords extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['password', 'users_id'], 'required'],
-            [['users_id'], 'integer'],
-            [['password'], 'string', 'max' => 255],
+            [['title'], 'required'],
+            [['num_modules'], 'integer'],
+            [['title'], 'string', 'max' => 255],
             [['users_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['users_id' => 'id']],
+
+            [['users_id'], 'required', 'on' => self::SCENARIO_ADD],
         ];
     }
 
@@ -42,9 +46,9 @@ class Passwords extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'password' => 'Password',
             'users_id' => 'Users ID',
+            'title' => 'Title',
+            'num_modules' => 'Num Modules',
         ];
     }
 
@@ -58,17 +62,19 @@ class Passwords extends \yii\db\ActiveRecord
         return $this->hasOne(Users::class, ['id' => 'users_id']);
     }
 
-    public static function addPassword($data = [])
+    public static function addTesting($data = [])
     {
-        $model = new Passwords();
-        
+        $model = new Testings();
+
+        $model->scenario = Testings::SCENARIO_ADD;
+
         $model->load($data);
         $model->validate();
 
         if (!$model->hasErrors()) {
             return $model->save();
         }
-        
+
         return false;
     }
 }

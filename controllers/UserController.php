@@ -46,24 +46,6 @@ class UserController extends \yii\web\Controller
         return $this->goHome();
     }
 
-    public function actionCreateExpert()
-    {
-        if (Yii::$app->user->isGuest) {
-            return Yii::$app->response->redirect(['/login']);
-        }
-
-        $create = Users::createExpert();
-
-        if ($create['status']) {
-            return $this->goHome();
-        } else {
-            return $this->render('createExpert', [
-                'model' => $create['model'],
-                'dataProvider' => Users::getDataProvider(20),
-            ]);
-        }
-    }
-
     /**
      * Deletes an existing Groups model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
