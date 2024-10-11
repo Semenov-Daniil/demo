@@ -47,8 +47,8 @@ class Testings extends \yii\db\ActiveRecord
     {
         return [
             'users_id' => 'Users ID',
-            'title' => 'Title',
-            'num_modules' => 'Num Modules',
+            'title' => 'Название тестирования',
+            'num_modules' => 'Кол-во модулей',
         ];
     }
 
@@ -62,19 +62,29 @@ class Testings extends \yii\db\ActiveRecord
         return $this->hasOne(Users::class, ['id' => 'users_id']);
     }
 
-    public static function addTesting($data = [])
+    /**
+     * Add user
+     * 
+     * @param array $data 
+     * @return array
+    */
+    public static function addTesting($data = []): array
     {
-        $model = new Testings();
+        $answer = [
+            'status' => false,
+            'model' => new Testings()
+        ];
 
-        $model->scenario = Testings::SCENARIO_ADD;
+        $test = &$answer['model'];
+        $test->scenario = Testings::SCENARIO_ADD;
 
-        $model->load($data, '');
-        $model->validate();
+        $test->load($data, '');
+        $test->validate();
 
-        if (!$model->hasErrors()) {
-            return $model->save();
+        if (!$test->hasErrors()) {
+            $answer['status'] = $test->save();
         }
 
-        return false;
+        return $answer;
     }
 }

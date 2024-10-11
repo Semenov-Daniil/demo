@@ -20,9 +20,14 @@ class SiteController extends Controller
                         'allow' => true,
                         'roles' => ['@'],
                     ],
+                    [
+                        'allow' => true,
+                        'actions' => ['settings', 'students', 'modules', 'files', 'competitors'],
+                        'roles' => ['expert'],
+                    ],  
                 ],
                 'denyCallback' => function ($rule, $action) {
-                    $this->redirect(['user/login']);
+                    Yii::$app->user->isGuest ? $this->redirect(['user/login']) : $this->redirect(['/']);
                 }
             ],
         ];

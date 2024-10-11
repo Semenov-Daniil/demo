@@ -7,7 +7,6 @@ use Yii;
 /**
  * This is the model class for table "{{%passwords}}".
  *
- * @property int $id
  * @property string $password
  * @property int $users_id
  *
@@ -42,7 +41,6 @@ class Passwords extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
             'password' => 'Password',
             'users_id' => 'Users ID',
         ];

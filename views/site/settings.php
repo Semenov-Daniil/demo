@@ -39,7 +39,7 @@ $this->title = 'Настройки';
     
             <?= $form->field($user, 'surname')->textInput(['autofocus' => true]) ?>
     
-            <?= $form->field($user, 'name')->passwordInput() ?>
+            <?= $form->field($user, 'name')->textInput() ?>
             
             <?= $form->field($user, 'middle_name')->textInput() ?>
     
@@ -77,12 +77,11 @@ $this->title = 'Настройки';
                         'urlCreator' => function ($action, Users $model, $key, $index, $column) {
                             return Url::toRoute([$action, 'id' => $model->id]);
                         },
+                        'buttons' => ['{delete}'],
                         'visibleButtons' => [
                             'delete' => function ($model, $key, $index) {
-                                return !Yii::$app->user->isGuest && Users::findOne(Yii::$app->user->id)->getTitleRoles() == 'Admin' && Yii::$app->user->id !== $model->id;
-                            },
-                            'update' => false,
-                            'view' => false
+                                return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model->id;
+                            }
                         ]
                     ],
                 ],
