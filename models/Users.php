@@ -25,6 +25,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public string $temp_password = '';
 
     const SCENARIO_ADD = "add";
+    const SCENARIO_LOGIN = "login";
     const TITLE_ROLE_EXPERT = 'expert';
     const TITLE_ROLE_STUDENT = 'student';
 
@@ -33,7 +34,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
                 $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
-                $this->login = Yii::$app->security->generateRandomString(6);
+                $this->login = $this->getUniqueStr('login', 6);
             }
             return true;
         } else {
@@ -64,13 +65,13 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public function rules(): array
     {
         return [
-            [['surname', 'name'], 'required'],
             [['id', 'roles_id'], 'integer'],
             [['login', 'password', 'surname', 'name', 'middle_name', 'token'], 'string', 'max' => 255],
-            [['login', 'token'], 'unique'],
             ['middle_name', 'default', 'value' => null],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
             
+            [['surname', 'name'], 'required', 'except' => self::SCENARIO_LOGIN],
+
             [['login', 'password'], 'required', 'except' => self::SCENARIO_ADD],
         ];
     }
@@ -190,27 +191,30 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 
     /**
      * @param string $attr the name of the attribute that we are checking
+     * @param mixed $value value attribute
      * @return bool
      */
-    public function isUnique(string $attr): bool
+    public function isUnique(string $attr, mixed $value): bool
     {
         return !Users::find()
-            ->where([$attr => $this->$attr])
+            ->where([$attr => $value])
             ->exists();
     }
     
     /**
      * @param string $attr the name of the attribute to set a unique string value
      * @param int $length the length string
-     * @return bool
+     * @return string
      */
-    public function setUniqueStr(string $attr, int $length = 32): void
+    public function getUniqueStr(string $attr, int $length = 32): string
     {
-        $this->$attr = Yii::$app->security->generateRandomString($length);
+        $result_str = Yii::$app->security->generateRandomString($length);
     
-        while(!$this->isUnique($attr)) {
-            $this->$attr = Yii::$app->security->generateRandomString($length);
+        while(!$this->isUnique($attr, $result_str)) {
+            $result_str = Yii::$app->security->generateRandomString($length);
         }
+
+        return $result_str;
     }
 
     public static function getDataProvider($page)
@@ -218,6 +222,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         return new ActiveDataProvider([
             'query' => Users::find()
                 ->select([
+                    'id',
                     'surname',
                     'name',
                     'middle_name',
@@ -226,8 +231,10 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
                     Testings::tableName() . '.title',
                     Testings::tableName() . '.num_modules',
                 ])
+                ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
                 ->joinWith('passwords', false)
-                ->joinWith('testings', false),
+                ->joinWith('testings', false)
+                ->asArray(),
             'pagination' => [
                 'pageSize' => $page,
             ],
@@ -247,6 +254,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         ];
 
         $model = &$answer['model'];
+        $model->scenario = Users::SCENARIO_LOGIN;
 
         if (Yii::$app->request->isAjax) {
             $model->load(Yii::$app->request->post(), $model->formName());
@@ -257,7 +265,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
                 
                 if (!empty($user) && $user->validatePassword($model->password)) {
                     $model = $user;
-                    $model->setUniqueStr('token');
+                    $model->token = $model->getUniqueStr('token');
                     $answer['status'] = $model->save();
                     Yii::$app->user->login($model);
                 } else {
@@ -291,26 +299,26 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
      * @param array $data 
      * @return array
      */
-    public static function addUser(array $data = []): array
-    {
-        $answer = [
-            'status' => false,
-            'model' => new Users()
-        ];
+    // public static function addUser(array $data = []): array
+    // {
+    //     $answer = [
+    //         'status' => false,
+    //         'model' => new Users()
+    //     ];
 
-        $user = &$answer['model'];
+    //     $user = &$answer['model'];
 
-        $user->load($data, '');
-        $user->validate();
+    //     $user->load($data, '');
+    //     $user->validate();
 
-        if (!$user->hasErrors()) {
-            $user->temp_password = Yii::$app->security->generateRandomString(6);
+    //     if (!$user->hasErrors()) {
+    //         $user->temp_password = Yii::$app->security->generateRandomString(6);
 
-            $answer['status'] = $user->save();
-        }
+    //         $answer['status'] = $user->save();
+    //     }
 
-        return $answer;
-    }
+    //     return $answer;
+    // }
 
     /**
      * Add expert
@@ -326,27 +334,32 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 
         $user = &$answer['user'];
         $testing = &$answer['testing'];
-
-        $testing->scenario = Testings::SCENARIO_ADD;
-
+        
         if (Yii::$app->request->isAjax) {
-            $user->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT);
-
-            $userAdd = Users::addUser((Yii::$app->request->post())[$user->formName()]);
+            $data = Yii::$app->request->post();
             
-            if ($userAdd['status']) {
-                $testAdd = Testings::addTesting(['users_id' => $userAdd['model']->id, ...((Yii::$app->request->post())[$testing->formName()])]);
-                if ($testAdd['status']) {
-                    $user = new Users();
-                    $testing = new Testings();
-                } else {
-                    $user->delete();
-                    $testing = $testAdd['model'];
+            $user->scenario = Users::SCENARIO_ADD;
+            $user->load($data, $user->formName());
+            $user->validate();
+
+            if (!$user->hasErrors()) {
+                $user->roles_id = Roles::getRoleId(self::TITLE_ROLE_EXPERT);
+                $user->temp_password = Yii::$app->security->generateRandomString(6);
+                if ($user->save()) {
+                    $testAdd = Testings::addTesting(['users_id' => $user->id, ...($data[$testing->formName()])]);
+                    if ($testAdd['status']) {
+                        Yii::$app->session->setFlash('success', "Эксперт добавлен успешно!");
+                        $user = new Users();
+                        $testing = new Testings();
+                    } else {
+                        Yii::$app->session->setFlash('error', "Эксперт не добавлен");
+                        $user->delete();
+                        $testing = $testAdd['model'];
+                    }
                 }
-            } else {
-                $user = $userAdd['model'];
             }
         }
+
         
         return $answer;
     }

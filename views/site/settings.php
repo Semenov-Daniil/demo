@@ -13,6 +13,7 @@ use yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\helpers\Html;
 use yii\helpers\Url;
+use yii\helpers\VarDumper;
 use yii\widgets\Pjax;
 
 $this->title = 'Настройки';
@@ -57,30 +58,39 @@ $this->title = 'Настройки';
                 'dataProvider' => $dataProvider,
                 'pager' => ['class' => \yii\bootstrap5\LinkPager::class],
                 'columns' => [
-
                     [
                         'label' => 'Full name',
-                        'value' => function ($data) {
-                            return trim($data->surname) . ' ' . trim($data->name) . ($data->middle_name ? (' ' . trim($data->middle_name)) : '');
+                        'value' => function ($model) {
+                            return trim($model['surname']) . ' ' . trim($model['name']) . ($model['middle_name'] ? (' ' . trim($model['middle_name'])) : '');
                         },
                     ],
-
                     [
                         'label' => 'Login/Password',
-                        'value' => function ($data) {
-                            return $data->login . '/' . $data->password;
+                        'value' => function ($model) {
+                            return $model['login'] . '/' . $model['password'];
                         },
                     ],
-
+                    [
+                        'attribute' => 'Test',
+                        'value' => function($model) {
+                            return $model['title'];
+                        },
+                    ],
+                    [
+                        'attribute' => 'Num modules',
+                        'value' => function($model) {
+                            return $model['num_modules'];
+                        },
+                    ],
                     [
                         'class' => ActionColumn::className(),
-                        'urlCreator' => function ($action, Users $model, $key, $index, $column) {
-                            return Url::toRoute([$action, 'id' => $model->id]);
+                        'template' => '{delete}',
+                        'urlCreator' => function ($action, $model, $key, $index, $column) {
+                            return Url::toRoute([$action, 'id' => $model['id']]);
                         },
-                        'buttons' => ['{delete}'],
                         'visibleButtons' => [
                             'delete' => function ($model, $key, $index) {
-                                return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model->id;
+                                return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model['id'];
                             }
                         ]
                     ],

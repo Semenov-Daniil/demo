@@ -14,10 +14,11 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => [],
+                'only' => ['*'],
                 'rules' => [
                     [
                         'allow' => true,
+                        'actions' => ['index'],
                         'roles' => ['@'],
                     ],
                     [

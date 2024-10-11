@@ -22,7 +22,7 @@ class Testings extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'dm_testings';
+        return '{{%testings}}';
     }
 
     /**
@@ -31,12 +31,10 @@ class Testings extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['title'], 'required'],
+            [['title', 'num_modules'], 'required'],
             [['num_modules'], 'integer', 'min' => 1],
             [['title'], 'string', 'max' => 255],
             [['users_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['users_id' => 'id']],
-
-            [['users_id'], 'required', 'on' => self::SCENARIO_ADD],
         ];
     }
 
@@ -76,7 +74,6 @@ class Testings extends \yii\db\ActiveRecord
         ];
 
         $test = &$answer['model'];
-        $test->scenario = Testings::SCENARIO_ADD;
 
         $test->load($data, '');
         $test->validate();

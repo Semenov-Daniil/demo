@@ -66,8 +66,12 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         <?php if (!empty($this->params['breadcrumbs'])): ?>
             <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
         <?php endif ?>
-        <?= Alert::widget() ?>
-        <?= $content ?>
+        <?php Pjax::begin([
+            'id' => 'ajax-main'
+        ]); ?>
+            <?= Alert::widget() ?>
+            <?= $content ?>
+        <?php Pjax::end(); ?>
     </div>
 </main>
 
