@@ -38,7 +38,8 @@ class UserController extends \yii\web\Controller
 
         $model = new LoginForm();
 
-        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login()) {
+        if (Yii::$app->request->isPost && $model->load(Yii::$app->request->post()) && $model->login()) {
+            // var_dump('ok');die;
             $this->goHome();
         }
 
