@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "dm_competencies".
@@ -21,6 +22,21 @@ class Competencies extends \yii\db\ActiveRecord
         $scenarios = parent::scenarios();
         $scenarios[self::SCENARIO_DEFAULT] = ['title', 'num_modules', '!users_id'];
         return $scenarios;
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+
+        if ($insert) {
+            for($i = 0; $i < $this->num_modules; $i++) {
+                $module = new Modules();
+                $module->competencies_id = $this->users_id;
+                $module->number = $i + 1;
+                VarDumper::dump($module->save(), 10, true);
+                // $module->save();
+            }
+        }
     }
 
     /**

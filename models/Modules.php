@@ -15,6 +15,29 @@ use Yii;
  */
 class Modules extends \yii\db\ActiveRecord
 {
+    public int $number = 0;
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_DEFAULT] = ['!competencies_id', '!title'];
+        return $scenarios;
+    }
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($this->isNewRecord) {
+                $this->title = 'demo_' . Yii::$app->generate->generateRandomString() . '_m' . $this->number;
+                Yii::$app->db->createCommand('CREATE DATABASE ' . $this->title)
+                    ->execute();
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -29,7 +52,7 @@ class Modules extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['competencies_id', 'title'], 'required'],
+            [['competencies_id'], 'required'],
             [['competencies_id'], 'integer'],
             [['title'], 'string', 'max' => 255],
             [['title'], 'unique'],

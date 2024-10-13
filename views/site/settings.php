@@ -70,7 +70,7 @@ $this->title = 'Настройки';
                         },
                     ],
                     [
-                        'attribute' => 'Test',
+                        'attribute' => 'Competencies',
                         'value' => function($model) {
                             return $model['title'];
                         },
@@ -81,18 +81,18 @@ $this->title = 'Настройки';
                             return $model['num_modules'];
                         },
                     ],
-                    // [
-                    //     'class' => ActionColumn::className(),
-                    //     'template' => '{delete}',
-                    //     'urlCreator' => function ($action, $model, $key, $index, $column) {
-                    //         return Url::toRoute([$action, 'id' => $model['id']]);
-                    //     },
-                    //     'visibleButtons' => [
-                    //         'delete' => function ($model, $key, $index) {
-                    //             return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model['id'];
-                    //         }
-                    //     ]
-                    // ],
+                    [
+                        'class' => ActionColumn::className(),
+                        'template' => '{delete}',
+                        'urlCreator' => function ($action, $model, $key, $index, $column) {
+                            return Url::toRoute(['/user/' . $action, 'id' => $model['id']]);
+                        },
+                        'visibleButtons' => [
+                            'delete' => function ($model, $key, $index) {
+                                return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model['id'];
+                            }
+                        ]
+                    ],
                 ],
             ]); ?>
         <?php Pjax::end(); ?>

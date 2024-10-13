@@ -84,8 +84,7 @@ class UsersCompetencies extends Model
         $this->validate();
         
         if (!$this->hasErrors()) {
-            $transaction = Yii::$app->db->beginTransaction();
-                
+            $transaction = Yii::$app->db->beginTransaction();   
             try {
                 $user = new Users(['scenario' => Users::SCENARIO_ADD_EXPERT]);
                 $user->attributes = $this->attributes;
@@ -95,9 +94,9 @@ class UsersCompetencies extends Model
                 $competence->attributes = $this->attributes;
                 $competence->users_id = $user->id;
                 $competence->save();
-
+    
                 $transaction->commit();
-
+    
                 Yii::$app->session->setFlash('success', "Эксперта успешно добавлен.");
                 return true;
             } catch(\Exception $e) {

@@ -48,7 +48,7 @@ class Users extends ActiveRecord implements IdentityInterface
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
-                $this->temp_password = $this->generateRandomString(6);
+                $this->temp_password = Yii::$app->generate->generateRandomString(6);
                 $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
                 $this->login = $this->getUniqueStr('login', 8, true, 'ONLI_SMALL_CHARACTERS');
                 $this->auth_key = $this->getUniqueStr('auth_key');
@@ -57,6 +57,24 @@ class Users extends ActiveRecord implements IdentityInterface
         } else {
             return false;
         }
+    }
+
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        $modules = Modules::find()
+            ->where(['competencies_id' => $this->id])
+            ->all();
+
+        foreach($modules as $module) {
+            Yii::$app->db->createCommand('DROP DATABASE ' . $module->title)
+                ->execute();
+        }
+
+        return true;
     }
 
     public function afterSave($insert, $changedAttributes)
@@ -216,48 +234,13 @@ class Users extends ActiveRecord implements IdentityInterface
      */
     public function getUniqueStr(string $attr, int $length = 32, bool $builtin = false, string $flag = ''): string
     {
-        $result_str = $builtin ? $this->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
+        $result_str = $builtin ? Yii::$app->generate->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
     
         while(!$this->isUnique($attr, $result_str)) {
-            $result_str = $builtin ? $this->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
+            $result_str = $builtin ? Yii::$app->generate->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
         }
 
         return $result_str;
-    }
-
-    /**
-     * Return a string of random characters [a-zA-Z0-9]
-     *
-     * @param int $length The length of the returned string
-     * @param string $flag Which characters to use when generating a string: 'ONLI_SMALL_CHARACTERS', 'ONLI_BIG_CHARACTERS', 'ONLI_NUMBERS_CHARACTERS'
-     * @return string a string of random characters [a-zA-Z0-9]
-     */
-    public function generateRandomString($length, $flag = ''): string
-    {
-        if ($length <= 0) {
-            return '';
-        }
-    
-        $all_characters = [
-            'ONLI_SMALL_CHARACTERS' => 'abcdefghijklmnopqrstuvwxyz',
-            'ONLI_BIG_CHARACTERS' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-            'ONLI_NUMBERS_CHARACTERS' => '0123456789'
-        ];
-
-        $characters = implode("", $all_characters);
-
-        if (array_key_exists($flag, $all_characters)) {
-            $characters = $all_characters[$flag];
-        }
-
-        $characters_length = strlen($characters);
-        $random_string = '';
-    
-        for ($i = 0; $i < $length; $i++) {
-            $random_string .= $characters[rand(0, $characters_length - 1)];
-        }
-    
-        return $random_string;
     }
 
     /**
@@ -281,8 +264,21 @@ class Users extends ActiveRecord implements IdentityInterface
     /**
      * Deletes an existing Users model.
      */
-    public static function deleteUser($id): void
+    public static function deleteUser($id): bool
     {
-        (self::findOne(['id' => $id]))->delete();
+        $transaction = Yii::$app->db->beginTransaction();   
+        try {
+            (self::findOne(['id' => $id]))->delete();
+            $transaction->commit();
+            Yii::$app->session->setFlash('success', "Эксперта успешно удален.");
+            return true;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
+        }
+        return false;
     }
 }

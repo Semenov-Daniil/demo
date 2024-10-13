@@ -59,6 +59,8 @@ $config = [
                 
                 'student' => 'student/index',
                 'student/<action>' => 'student/<action>',
+
+                'user/<action>' => 'user/<action>',
                 
                 '/' => 'site/index',
                 '<action>' => 'site/<action>',
@@ -77,6 +79,9 @@ $config = [
             ],
             'timeout' => 1440,
             'useCookies' => true,
+        ],
+        'generate' => [
+            'class' => 'app\components\AppComponent',
         ],
     ],
     'params' => $params,

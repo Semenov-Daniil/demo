@@ -39,7 +39,6 @@ class UserController extends \yii\web\Controller
         $model = new LoginForm();
 
         if (Yii::$app->request->isPost && $model->load(Yii::$app->request->post()) && $model->login()) {
-            // var_dump('ok');die;
             $this->goHome();
         }
 
@@ -64,12 +63,9 @@ class UserController extends \yii\web\Controller
      */
     public function actionDelete($id)
     {
-        if (Yii::$app->user->isGuest || Users::findOne(Yii::$app->user->id)->getTitleRoles() !== 'Admin') {
-            return $this->goHome();
+        if (Yii::$app->user->can('expert') && Yii::$app->user->id != $id) {
+            Users::deleteUser($id);
         }
-
-        Users::deleteUser($id);
-
-        return $this->redirect('/');
+        return $this->goHome();
     }
 }
