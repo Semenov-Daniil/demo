@@ -30,6 +30,7 @@ class m241001_121633_create_user_expert_to_users_table extends Migration
             'password' => \Yii::$app->security->generatePasswordHash(self::PASSWORD),
             'surname' => 'Expert',
             'name' => '1',
+            'auth_key' => \Yii::$app->security->generateRandomString(),
             'roles_id' => $this->role_expert['id'],
         ]);
 

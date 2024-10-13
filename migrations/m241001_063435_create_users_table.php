@@ -21,7 +21,7 @@ class m241001_063435_create_users_table extends Migration
             'middle_name' => $this->string(255)->defaultValue(null),
             'login' => $this->string(255)->notNull()->unique(),
             'password' => $this->string(255)->notNull(),
-            'auth_key' => $this->string(32)->unique()->defaultValue(null),
+            'auth_key' => $this->string(32)->unique()->notNull(),
         ]);
     }
 

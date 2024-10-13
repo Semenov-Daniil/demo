@@ -30,6 +30,7 @@ class m241010_112409_create_user_student_to_users_table extends Migration
             'password' => \Yii::$app->security->generatePasswordHash(self::PASSWORD),
             'surname' => 'Student',
             'name' => '1',
+            'auth_key' => \Yii::$app->security->generateRandomString(),
             'roles_id' => $this->role_student['id']
         ]);
 
