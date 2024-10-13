@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\LoginForm;
 use app\models\Users;
 use Yii;
 use yii\filters\AccessControl;
@@ -35,14 +36,21 @@ class UserController extends \yii\web\Controller
     {
         $this->layout = 'login';
 
-        $login = Users::login();
+        $model = new LoginForm();
 
-        return $login['status'] ? $this->goHome() : $this->render('login', ['model' => $login['model']]);
+        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login()) {
+            $this->goHome();
+        }
+
+        $model->password = '';
+        return $this->render('login', [
+            'model' => $model
+        ]);
     }
 
     public function actionLogout()
     {
-        Users::logout();
+        Yii::$app->user->logout();
         return $this->goHome();
     }
 

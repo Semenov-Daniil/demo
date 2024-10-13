@@ -17,14 +17,18 @@ $config = [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'mbpvOpHTC0G9lSYi96SJZNUs4AL-Ayy_',
-            'baseUrl' => ''
+            'baseUrl' => '',
+            'csrfCookie' => [
+                'httpOnly' => true,
+                'expire' => 0,
+            ],
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
         'user' => [
             'identityClass' => 'app\models\Users',
-            'enableAutoLogin' => true,
+            'enableAutoLogin' => false,
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -64,6 +68,15 @@ $config = [
         'authManager' => [
             'class' => 'yii\rbac\DbManager',
             'defaultRoles' => ['student', 'expert'],
+        ],
+        'session' => [
+            'class' => 'yii\web\Session',
+            'cookieParams' => [
+                'httpOnly' => true,
+                'lifetime' => 0,
+            ],
+            'timeout' => 1440,
+            'useCookies' => true,
         ],
     ],
     'params' => $params,

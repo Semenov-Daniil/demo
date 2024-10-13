@@ -5,7 +5,7 @@ namespace app\models;
 use Yii;
 
 /**
- * This is the model class for table "dm_testings".
+ * This is the model class for table "dm_competencies".
  *
  * @property int $users_id
  * @property string $title
@@ -13,16 +13,22 @@ use Yii;
  *
  * @property User $users
  */
-class Testings extends \yii\db\ActiveRecord
+class Competencies extends \yii\db\ActiveRecord
 {
-    const SCENARIO_ADD = 'add';
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'num_modules', '!users_id'];
+        return $scenarios;
+    }
 
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return '{{%testings}}';
+        return '{{%competencies}}';
     }
 
     /**
@@ -70,7 +76,7 @@ class Testings extends \yii\db\ActiveRecord
     {
         $answer = [
             'status' => false,
-            'model' => new Testings()
+            'model' => new Competencies()
         ];
 
         $test = &$answer['model'];

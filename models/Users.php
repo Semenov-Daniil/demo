@@ -3,8 +3,9 @@
 namespace app\models;
 
 use Yii;
-use yii\data\ActiveDataProvider;
+use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
+use yii\web\IdentityInterface;
 
 /**
  * This is the model class for table "{{%users}}".
@@ -15,26 +16,42 @@ use yii\helpers\VarDumper;
  * @property string $surname
  * @property string $name
  * @property string|null $middle_name
- * @property string|null $token
+ * @property string|null $auth_key
  * @property int $roles_id
  *
- * @property Role $roles
+ * @property Competencies $competencies
+ * @property Passwords $passwords
+ * @property Roles $roles
  */
-class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
+class Users extends ActiveRecord implements IdentityInterface
 {
     public string $temp_password = '';
 
-    const SCENARIO_ADD = "add";
-    const SCENARIO_LOGIN = "login";
-    const TITLE_ROLE_EXPERT = 'expert';
-    const TITLE_ROLE_STUDENT = 'student';
+    const SCENARIO_ADD_EXPERT = "add-expert";
+    const TITLE_ROLE_EXPERT = "expert";
+
+    public function fields()
+    {
+        $fields = parent::fields();
+        unset($fields['auth_key'], $fields['password']);
+        return $fields;
+    }
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_ADD_EXPERT] = ['surname', 'name', 'middle_name', '!roles_id', '!auth_key', '!login', '!password', '!temp_password'];
+        return $scenarios;
+    }
 
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
+                $this->temp_password = $this->generateRandomString(6);
                 $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
-                $this->login = $this->getUniqueStr('login', 6);
+                $this->login = $this->getUniqueStr('login', 8, true, 'ONLI_SMALL_CHARACTERS');
+                $this->auth_key = $this->getUniqueStr('auth_key');
             }
             return true;
         } else {
@@ -47,7 +64,10 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         parent::afterSave($insert, $changedAttributes);
 
         if ($insert) {
-           !Passwords::addPassword(['users_id' => $this->id, 'password' => $this->temp_password]) && $this->delete();
+            $password = new Passwords();
+            $password->users_id = $this->id;
+            $password->password = $this->temp_password;
+            $password->save();
         }
     }
 
@@ -66,13 +86,10 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     {
         return [
             [['id', 'roles_id'], 'integer'],
-            [['login', 'password', 'surname', 'name', 'middle_name', 'token'], 'string', 'max' => 255],
-            ['middle_name', 'default', 'value' => null],
+            [['login', 'password', 'surname', 'name', 'middle_name'], 'string', 'max' => 255],
+            [['surname', 'name'], 'required'],
+            ['auth_key', 'string', 'max' => 32],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
-            
-            [['surname', 'name'], 'required', 'except' => self::SCENARIO_LOGIN],
-
-            [['login', 'password'], 'required', 'except' => self::SCENARIO_ADD],
         ];
     }
 
@@ -88,7 +105,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             'surname' => 'Фамилия',
             'name' => 'Имя',
             'middle_name' => 'Отчество',
-            'token' => 'Token',
+            'auth_key' => 'Auth Key',
         ];
     }
 
@@ -103,16 +120,6 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     }
 
     /**
-     * Gets query for [[Roles]].
-     *
-     * @return string
-     */
-    public function getTitleRoles(): string
-    {
-        return Roles::findOne($this->roles_id)->title;
-    }
-
-    /**
      * Gets query for [[Passwords]].
      *
      * @return \yii\db\ActiveQuery
@@ -123,15 +130,14 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     }
 
     /**
-     * Gets query for [[Testings]].
+     * Gets query for [[Competencies]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getTestings(): object
+    public function getCompetencies(): object
     {
-        return $this->hasOne(Testings::class, ['users_id' => 'id'])->inverseOf('users');
+        return $this->hasOne(Competencies::class, ['users_id' => 'id'])->inverseOf('users');
     }
-
 
     /**
      * Finds an identity by the given ID.
@@ -139,7 +145,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
      * @param string|int $id the ID to be looked for
      * @return IdentityInterface|null the identity object that matches the given ID.
      */
-    public static function findIdentity($id): object|null
+    public static function findIdentity($id)
     {
         return static::findOne($id);
     }
@@ -150,15 +156,15 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
      * @param string $token the token to be looked for
      * @return IdentityInterface|null the identity object that matches the given token.
      */
-    public static function findIdentityByAccessToken($token, $type = null): object|null
+    public static function findIdentityByAccessToken($token, $type = null)
     {
-        return static::findOne(['token' => $token]);
+        return static::findOne(['access_token' => $token]);
     }
 
     /**
      * @return int|string current user ID
      */
-    public function getId(): int|string
+    public function getId()
     {
         return $this->id;
     }
@@ -166,16 +172,16 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     /**
      * @return string|null current user auth key
      */
-    public function getAuthKey(): string|null
+    public function getAuthKey()
     {
-        return $this->token;
+        return $this->auth_key;
     }
 
     /**
      * @param string $authKey
      * @return bool|null if auth key is valid for current user
      */
-    public function validateAuthKey($authKey): string|null
+    public function validateAuthKey($authKey)
     {
         return $this->getAuthKey() === $authKey;
     }
@@ -196,7 +202,7 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
      */
     public function isUnique(string $attr, mixed $value): bool
     {
-        return !Users::find()
+        return !self::find()
             ->where([$attr => $value])
             ->exists();
     }
@@ -204,164 +210,72 @@ class Users extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     /**
      * @param string $attr the name of the attribute to set a unique string value
      * @param int $length the length string
+     * @param bool $builtin use the built-in function
+     * @param string $flag if $b = true, the characters to use when generating
      * @return string
      */
-    public function getUniqueStr(string $attr, int $length = 32): string
+    public function getUniqueStr(string $attr, int $length = 32, bool $builtin = false, string $flag = ''): string
     {
-        $result_str = Yii::$app->security->generateRandomString($length);
+        $result_str = $builtin ? $this->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
     
         while(!$this->isUnique($attr, $result_str)) {
-            $result_str = Yii::$app->security->generateRandomString($length);
+            $result_str = $builtin ? $this->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
         }
 
         return $result_str;
     }
 
-    public static function getDataProvider($page)
-    {
-        return new ActiveDataProvider([
-            'query' => Users::find()
-                ->select([
-                    'id',
-                    'surname',
-                    'name',
-                    'middle_name',
-                    'login',
-                    Passwords::tableName() . '.password',
-                    Testings::tableName() . '.title',
-                    Testings::tableName() . '.num_modules',
-                ])
-                ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
-                ->joinWith('passwords', false)
-                ->joinWith('testings', false)
-                ->asArray(),
-            'pagination' => [
-                'pageSize' => $page,
-            ],
-        ]);
-    }
-
     /**
-     * Login user
-     * 
-     * @return array
+     * Return a string of random characters [a-zA-Z0-9]
+     *
+     * @param int $length The length of the returned string
+     * @param string $flag Which characters to use when generating a string: 'ONLI_SMALL_CHARACTERS', 'ONLI_BIG_CHARACTERS', 'ONLI_NUMBERS_CHARACTERS'
+     * @return string a string of random characters [a-zA-Z0-9]
      */
-    static function login(): array
+    public function generateRandomString($length, $flag = ''): string
     {
-        $answer = [
-            'status' => false,
-            'model' => new Users(),
+        if ($length <= 0) {
+            return '';
+        }
+    
+        $all_characters = [
+            'ONLI_SMALL_CHARACTERS' => 'abcdefghijklmnopqrstuvwxyz',
+            'ONLI_BIG_CHARACTERS' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            'ONLI_NUMBERS_CHARACTERS' => '0123456789'
         ];
 
-        $model = &$answer['model'];
-        $model->scenario = Users::SCENARIO_LOGIN;
+        $characters = implode("", $all_characters);
 
-        if (Yii::$app->request->isAjax) {
-            $model->load(Yii::$app->request->post(), $model->formName());
-            $model->validate();
+        if (array_key_exists($flag, $all_characters)) {
+            $characters = $all_characters[$flag];
+        }
+
+        $characters_length = strlen($characters);
+        $random_string = '';
     
-            if (!$model->hasErrors()) {
-                $user = Users::findOne(['login' => $model->login]);
-                
-                if (!empty($user) && $user->validatePassword($model->password)) {
-                    $model = $user;
-                    $model->token = $model->getUniqueStr('token');
-                    $answer['status'] = $model->save();
-                    Yii::$app->user->login($model);
-                } else {
-                    $model->addError('password', 'Неправильный «' . $model->getAttributeLabel('login') . '» или «' . $model->getAttributeLabel('password') .  '».');
-                }
-            }
+        for ($i = 0; $i < $length; $i++) {
+            $random_string .= $characters[rand(0, $characters_length - 1)];
         }
-
-        $model->password = '';
-
-        return $answer;
+    
+        return $random_string;
     }
-
-    /**
-     * Logout user
-     * 
-     * @return void
-     */
-    public static function logout(): void
-    {
-        if ($user = Users::findOne(Yii::$app->user->id)) {
-            $user->token = null;
-            $user->save(false);
-            Yii::$app->user->logout();
-        }
-    }
-
-    /**
-     * Add user
-     * 
-     * @param array $data 
-     * @return array
-     */
-    // public static function addUser(array $data = []): array
-    // {
-    //     $answer = [
-    //         'status' => false,
-    //         'model' => new Users()
-    //     ];
-
-    //     $user = &$answer['model'];
-
-    //     $user->load($data, '');
-    //     $user->validate();
-
-    //     if (!$user->hasErrors()) {
-    //         $user->temp_password = Yii::$app->security->generateRandomString(6);
-
-    //         $answer['status'] = $user->save();
-    //     }
-
-    //     return $answer;
-    // }
 
     /**
      * Add expert
      * 
-     * @return array
+     * @param array $data 
+     * @return bool
      */
-    public static function addExpert(): array
+    public function addExpert(): bool
     {
-        $answer = [
-            'user' => new Users(),
-            'testing' => new Testings()
-        ];
+        $this->validate();
 
-        $user = &$answer['user'];
-        $testing = &$answer['testing'];
-        
-        if (Yii::$app->request->isAjax) {
-            $data = Yii::$app->request->post();
-            
-            $user->scenario = Users::SCENARIO_ADD;
-            $user->load($data, $user->formName());
-            $user->validate();
-
-            if (!$user->hasErrors()) {
-                $user->roles_id = Roles::getRoleId(self::TITLE_ROLE_EXPERT);
-                $user->temp_password = Yii::$app->security->generateRandomString(6);
-                if ($user->save()) {
-                    $testAdd = Testings::addTesting(['users_id' => $user->id, ...($data[$testing->formName()])]);
-                    if ($testAdd['status']) {
-                        Yii::$app->session->setFlash('success', "Эксперт добавлен успешно!");
-                        $user = new Users();
-                        $testing = new Testings();
-                    } else {
-                        Yii::$app->session->setFlash('error', "Эксперт не добавлен");
-                        $user->delete();
-                        $testing = $testAdd['model'];
-                    }
-                }
-            }
+        if (!$this->hasErrors()) {
+            $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_EXPERT);
+            return $this->save();
         }
 
-        
-        return $answer;
+        return false;
     }
 
     /**

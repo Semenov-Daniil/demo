@@ -3,9 +3,8 @@
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 
-/** @var app\models\Users $user */
-/** @var app\models\Testings $testing */
-/** @var app\models\Users $dataProvider */
+/** @var app\models\UsersCompetencies $model */
+/** @var app\models\UsersCompetencies $dataProvider */
 
 use app\models\Users;
 use yii\bootstrap5\ActiveForm;
@@ -38,15 +37,15 @@ $this->title = 'Настройки';
                 ],
             ]); ?>
     
-            <?= $form->field($user, 'surname')->textInput(['autofocus' => true]) ?>
+            <?= $form->field($model, 'surname')->textInput(['autofocus' => true]) ?>
     
-            <?= $form->field($user, 'name')->textInput() ?>
+            <?= $form->field($model, 'name')->textInput() ?>
             
-            <?= $form->field($user, 'middle_name')->textInput() ?>
+            <?= $form->field($model, 'middle_name')->textInput() ?>
     
-            <?= $form->field($testing, 'title')->textInput() ?>
+            <?= $form->field($model, 'title')->textInput() ?>
             
-            <?= $form->field($testing, 'num_modules')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
+            <?= $form->field($model, 'num_modules')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
     
             <div class="form-group">
                 <div>
@@ -82,18 +81,18 @@ $this->title = 'Настройки';
                             return $model['num_modules'];
                         },
                     ],
-                    [
-                        'class' => ActionColumn::className(),
-                        'template' => '{delete}',
-                        'urlCreator' => function ($action, $model, $key, $index, $column) {
-                            return Url::toRoute([$action, 'id' => $model['id']]);
-                        },
-                        'visibleButtons' => [
-                            'delete' => function ($model, $key, $index) {
-                                return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model['id'];
-                            }
-                        ]
-                    ],
+                    // [
+                    //     'class' => ActionColumn::className(),
+                    //     'template' => '{delete}',
+                    //     'urlCreator' => function ($action, $model, $key, $index, $column) {
+                    //         return Url::toRoute([$action, 'id' => $model['id']]);
+                    //     },
+                    //     'visibleButtons' => [
+                    //         'delete' => function ($model, $key, $index) {
+                    //             return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model['id'];
+                    //         }
+                    //     ]
+                    // ],
                 ],
             ]); ?>
         <?php Pjax::end(); ?>

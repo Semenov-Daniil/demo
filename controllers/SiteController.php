@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\Users;
+use app\models\UsersCompetencies;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -67,12 +68,15 @@ class SiteController extends Controller
      */
     public function actionSettings()
     {
-        $addExpert = Users::addExpert();
+        $model = new UsersCompetencies();
+
+        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->addExpert()) {
+            $model = new UsersCompetencies();
+        }
 
         return $this->render('settings', [
-            'user' => $addExpert['user'],
-            'testing' => $addExpert['testing'],
-            'dataProvider' => Users::getDataProvider(20),
+            'model' => $model,
+            'dataProvider' => $model->getDataProviderExpert(20),
         ]);
     }
 

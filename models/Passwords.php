@@ -53,20 +53,6 @@ class Passwords extends \yii\db\ActiveRecord
      */
     public function getUsers()
     {
-        return $this->hasOne(Users::class, ['id' => 'users_id']);
-    }
-
-    public static function addPassword($data = [])
-    {
-        $model = new Passwords();
-        
-        $model->load($data, '');
-        $model->validate();
-
-        if (!$model->hasErrors()) {
-            return $model->save();
-        }
-        
-        return false;
+        return $this->hasOne(Users::class, ['id' => 'users_id'])->inverseOf('passwords');
     }
 }
