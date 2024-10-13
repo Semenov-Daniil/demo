@@ -4,7 +4,7 @@ $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
 
 $config = [
-    'id' => 'basic-console',
+    'id' => 'demo-console',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'app\commands',
@@ -32,13 +32,18 @@ $config = [
         ],
     ],
     'params' => $params,
-    /*
     'controllerMap' => [
-        'fixture' => [ // Fixture generation command line.
+        'fixture' => [
             'class' => 'yii\faker\FixtureController',
         ],
+        'migrate' => [
+            'class' => 'yii\console\controllers\MigrateController',
+            'migrationPath' => [
+                '@app/migrations',
+                '@yii/rbac/migrations',
+            ],
+        ],
     ],
-    */
 ];
 
 if (YII_ENV_DEV) {

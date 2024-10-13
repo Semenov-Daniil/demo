@@ -18,10 +18,10 @@ class m241001_063435_create_users_table extends Migration
             'id' => $this->primaryKey(),
             'surname' => $this->string(255)->notNull(),
             'name' => $this->string(255)->notNull(),
-            'middle_name' => $this->string(255),
+            'middle_name' => $this->string(255)->defaultValue(null),
             'login' => $this->string(255)->notNull()->unique(),
             'password' => $this->string(255)->notNull(),
-            'token' => $this->string(255)->unique(),
+            'auth_key' => $this->string(255)->unique()->defaultValue(null),
         ]);
     }
 

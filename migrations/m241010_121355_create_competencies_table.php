@@ -3,11 +3,11 @@
 use yii\db\Migration;
 
 /**
- * Handles the creation of table `{{%testings}}`.
+ * Handles the creation of table `{{%competencies}}`.
  */
-class m241010_121355_create_testings_table extends Migration
+class m241010_121355_create_competencies_table extends Migration
 {
-    const TABLE_NAME = '{{%testings}}';
+    const TABLE_NAME = '{{%competencies}}';
 
     /**
      * {@inheritdoc}
@@ -20,7 +20,7 @@ class m241010_121355_create_testings_table extends Migration
             'num_modules' => $this->integer()->notNull()->defaultValue(1),
         ]);
 
-        $this->addForeignKey('fk-testings-users_id', self::TABLE_NAME, 'users_id', '{{%users}}', 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('fk-competencies-users_id', self::TABLE_NAME, 'users_id', '{{%users}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**
@@ -28,7 +28,7 @@ class m241010_121355_create_testings_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropForeignKey('fk-testings-users_id', self::TABLE_NAME);
+        $this->dropForeignKey('fk-competencies-users_id', self::TABLE_NAME);
 
         $this->dropTable(self::TABLE_NAME);
     }

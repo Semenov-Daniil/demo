@@ -16,17 +16,14 @@ class m241001_064255_add_default_roles_to_roles_table extends Migration
     {
         $this->batchInsert(self::TABLE_NAME, 
         [
-            'id',
             'title'
         ], 
         [
             [
-                1,
-                'Student'
+                'student'
             ],
             [
-                2,
-                'Expert'
+                'expert'
             ]
         ]
     );
@@ -37,7 +34,7 @@ class m241001_064255_add_default_roles_to_roles_table extends Migration
      */
     public function safeDown()
     {
-        $this->delete(self::TABLE_NAME, ['id' => 1]);
-        $this->delete(self::TABLE_NAME, ['id' => 2]);
+        $this->delete(self::TABLE_NAME, ['title' => 'student']);
+        $this->delete(self::TABLE_NAME, ['title' => 'expert']);
     }
 }
