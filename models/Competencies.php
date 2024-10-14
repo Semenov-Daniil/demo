@@ -23,22 +23,7 @@ class Competencies extends \yii\db\ActiveRecord
         $scenarios[self::SCENARIO_DEFAULT] = ['title', 'num_modules', '!users_id'];
         return $scenarios;
     }
-
-    public function afterSave($insert, $changedAttributes)
-    {
-        parent::afterSave($insert, $changedAttributes);
-
-        if ($insert) {
-            for($i = 0; $i < $this->num_modules; $i++) {
-                $module = new Modules();
-                $module->competencies_id = $this->users_id;
-                $module->number = $i + 1;
-                VarDumper::dump($module->save(), 10, true);
-                // $module->save();
-            }
-        }
-    }
-
+    
     /**
      * {@inheritdoc}
      */
@@ -80,15 +65,5 @@ class Competencies extends \yii\db\ActiveRecord
     public function getUsers()
     {
         return $this->hasOne(Users::class, ['id' => 'users_id']);
-    }
-
-    /**
-     * Add user
-     * 
-     * @return bool
-    */
-    public function addCompetencies(): bool
-    {
-        return $this->save();
     }
 }
