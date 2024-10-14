@@ -54,9 +54,7 @@ class Users extends ActiveRecord implements IdentityInterface
                 $this->auth_key = $this->getUniqueStr('auth_key');
 
                 if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_STUDENT)) {
-                    for($i = 0; $i < Competencies::findOne(['users_id' => Yii::$app->user->id])->num_modules; $i++) {
-
-                    }
+                    return $this->addDbStudent();
                 }
             }
             return true;
@@ -309,8 +307,18 @@ class Users extends ActiveRecord implements IdentityInterface
         return false;
     }
 
-    public function addTable($title)
+    public function addDbStudent()
     {
-        
+        if (Yii::$app->generateDb->createUser($this->login, $this->temp_password)) {
+            for($i = 0; $i < Competencies::findOne(['users_id' => Yii::$app->user->id])?->num_modules; $i++) {
+                if (!Yii::$app->generateDb->createDb($this->login . '_m' . ($i + 1)) && !Yii::$app->generateDb->addRuleDb($this->login, $this->login . '_m' . ($i + 1))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 }

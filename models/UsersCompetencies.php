@@ -169,10 +169,10 @@ class UsersCompetencies extends Model
                 return true;
             } catch(\Exception $e) {
                 $transaction->rollBack();
-                Yii::$app->session->setFlash('error', "Не удалось добавить студент.");
+                Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
             } catch(\Throwable $e) {
                 $transaction->rollBack();
-                Yii::$app->session->setFlash('error', "Не удалось добавить студент.");
+                Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
             }
         }
 
