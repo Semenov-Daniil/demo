@@ -27,8 +27,8 @@ class Users extends ActiveRecord implements IdentityInterface
 {
     public string $temp_password = '';
 
-    const SCENARIO_ADD_EXPERT = "add-expert";
     const TITLE_ROLE_EXPERT = "expert";
+    const TITLE_ROLE_STUDENT = "student";
 
     public function fields()
     {
@@ -40,7 +40,7 @@ class Users extends ActiveRecord implements IdentityInterface
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_ADD_EXPERT] = ['surname', 'name', 'middle_name', '!roles_id', '!auth_key', '!login', '!password', '!temp_password'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['surname', 'name', 'middle_name', '!roles_id', '!auth_key', '!login', '!password', '!temp_password'];
         return $scenarios;
     }
 
@@ -69,10 +69,10 @@ class Users extends ActiveRecord implements IdentityInterface
             ->where(['competencies_id' => $this->id])
             ->all();
 
-        foreach($modules as $module) {
-            Yii::$app->db->createCommand('DROP DATABASE ' . $module->title)
-                ->execute();
-        }
+        // foreach($modules as $module) {
+        //     Yii::$app->db->createCommand('DROP DATABASE ' . $module->title)
+        //         ->execute();
+        // }
 
         return true;
     }
@@ -103,10 +103,10 @@ class Users extends ActiveRecord implements IdentityInterface
     public function rules(): array
     {
         return [
-            [['id', 'roles_id'], 'integer'],
+            [['roles_id'], 'integer'],
             [['login', 'password', 'surname', 'name', 'middle_name'], 'string', 'max' => 255],
-            [['surname', 'name'], 'required'],
             ['auth_key', 'string', 'max' => 32],
+            [['surname', 'name'], 'required'],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
         ];
     }
@@ -224,7 +224,7 @@ class Users extends ActiveRecord implements IdentityInterface
             ->where([$attr => $value])
             ->exists();
     }
-    
+
     /**
      * @param string $attr the name of the attribute to set a unique string value
      * @param int $length the length string
@@ -244,21 +244,42 @@ class Users extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * Add expert
+     * Add user
      * 
      * @param array $data 
      * @return bool
      */
-    public function addExpert(): bool
+    public function addUser(): bool
     {
         $this->validate();
 
         if (!$this->hasErrors()) {
-            $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_EXPERT);
             return $this->save();
         }
 
         return false;
+    }
+
+    /**
+     * Add expert
+     * 
+     * @return bool
+     */
+    public function addExpert(): bool
+    {
+        $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_EXPERT);
+        return $this->addUser();
+    }
+
+    /**
+     * Add student
+     * 
+     * @return bool
+     */
+    public function addStudent(): bool
+    {
+        $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_STUDENT);
+        return $this->addUser();
     }
 
     /**

@@ -28,9 +28,9 @@ class Modules extends \yii\db\ActiveRecord
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
-                $this->title = 'demo_' . Yii::$app->generate->generateRandomString() . '_m' . $this->number;
-                Yii::$app->db->createCommand('CREATE DATABASE ' . $this->title)
-                    ->execute();
+                // $this->title = 'demo_' . Yii::$app->generate->generateRandomString() . '_m' . $this->number;
+                // Yii::$app->db->createCommand('CREATE DATABASE ' . $this->title)
+                //     ->execute();
             }
             return true;
         } else {

@@ -32,7 +32,7 @@ class UserController extends Controller
         if ($model->validate()) {
             $transaction = Yii::$app->db->beginTransaction();   
             try {
-                $user = new Users(['scenario' => Users::SCENARIO_ADD_EXPERT]);
+                $user = new Users();
                 $user->attributes = $model->attributes;
                 $user->addExpert();
 

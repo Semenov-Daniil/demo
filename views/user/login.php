@@ -4,6 +4,7 @@
 /** @var yii\bootstrap5\ActiveForm $form */
 
 /** @var app\models\LoginForm $model */
+/** @var app\models\Users $users */
 
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
@@ -37,5 +38,11 @@ $this->title = 'Авторизация';
     </div>
 
     <?php ActiveForm::end(); ?>
+
+    <div style="color:#999;">
+        You may login with <br>
+        expert: <strong><?= $users['expert']?->login ?>/<?= $users['expert']?->password ?></strong><br>
+        student: <strong><?= $users['student']?->login ?>/<?= $users['student']?->password ?></strong>.
+    </div>
 
 </div>

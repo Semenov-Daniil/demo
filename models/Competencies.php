@@ -85,25 +85,10 @@ class Competencies extends \yii\db\ActiveRecord
     /**
      * Add user
      * 
-     * @param array $data 
-     * @return array
+     * @return bool
     */
-    public static function addTesting($data = []): array
+    public function addCompetencies(): bool
     {
-        $answer = [
-            'status' => false,
-            'model' => new Competencies()
-        ];
-
-        $test = &$answer['model'];
-
-        $test->load($data, '');
-        $test->validate();
-
-        if (!$test->hasErrors()) {
-            $answer['status'] = $test->save();
-        }
-
-        return $answer;
+        return $this->save();
     }
 }

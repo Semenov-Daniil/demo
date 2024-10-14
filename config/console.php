@@ -30,6 +30,9 @@ $config = [
             'class' => 'yii\rbac\DbManager',
             'defaultRoles' => ['student', 'expert'],
         ],
+        'generate' => [
+            'class' => 'app\components\AppComponent',
+        ],
     ],
     'params' => $params,
     'controllerMap' => [
@@ -44,6 +47,7 @@ $config = [
             ],
         ],
     ],
+    
 ];
 
 if (YII_ENV_DEV) {

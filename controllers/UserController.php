@@ -3,6 +3,8 @@
 namespace app\controllers;
 
 use app\models\LoginForm;
+use app\models\Passwords;
+use app\models\Roles;
 use app\models\Users;
 use Yii;
 use yii\filters\AccessControl;
@@ -44,7 +46,19 @@ class UserController extends \yii\web\Controller
 
         $model->password = '';
         return $this->render('login', [
-            'model' => $model
+            'model' => $model,
+            'users' => [
+                'expert' => Users::find()
+                    ->select(['login', Passwords::tableName() . '.password'])
+                    ->where(['roles_id' => Roles::getRoleId('expert')])
+                    ->joinWith('passwords', false)
+                    ->one(),
+                'student' => Users::find()
+                    ->select(['login', Passwords::tableName() . '.password'])
+                    ->where(['roles_id' => Roles::getRoleId('student')])
+                    ->joinWith('passwords', false)
+                    ->one(),
+            ]
         ]);
     }
 

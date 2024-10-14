@@ -68,15 +68,15 @@ class SiteController extends Controller
      */
     public function actionSettings()
     {
-        $model = new UsersCompetencies();
+        $model = new UsersCompetencies(['scenario' => UsersCompetencies::SCENARIO_ADD_EXPERT]);
 
         if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->addExpert()) {
-            $model = new UsersCompetencies();
+            $model = new UsersCompetencies(['scenario' => UsersCompetencies::SCENARIO_ADD_EXPERT]);
         }
 
         return $this->render('settings', [
             'model' => $model,
-            'dataProvider' => $model->getDataProviderExpert(20),
+            'dataProvider' => $model->getDataProviderExperts(20),
         ]);
     }
 
@@ -87,7 +87,16 @@ class SiteController extends Controller
      */
     public function actionStudents()
     {
-        return $this->render('students');
+        $model = new UsersCompetencies();
+
+        if (Yii::$app->request->isAjax && Yii::$app->user->can('expert') && $model->load(Yii::$app->request->post()) && $model->addStudent()) {
+            $model = new UsersCompetencies();
+        }
+
+        return $this->render('students', [
+            'model' => $model,
+            'dataProvider' => $model->getDataProviderStudents(20),
+        ]);
     }
 
     /**
