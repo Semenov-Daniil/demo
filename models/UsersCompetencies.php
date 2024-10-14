@@ -157,7 +157,12 @@ class UsersCompetencies extends Model
                 $user = new Users();
                 $user->attributes = $this->attributes;
                 $user->addStudent();
-    
+
+                $student_competenc = new StudentsCompetencies();
+                $student_competenc->students_id = $user->id;
+                $student_competenc->competencies_id = Yii::$app->user->id;
+                $student_competenc->save();
+
                 $transaction->commit();
     
                 Yii::$app->session->setFlash('success', "Студент успешно добавлен.");

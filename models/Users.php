@@ -52,6 +52,12 @@ class Users extends ActiveRecord implements IdentityInterface
                 $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
                 $this->login = $this->getUniqueStr('login', 8, true, 'ONLI_SMALL_CHARACTERS');
                 $this->auth_key = $this->getUniqueStr('auth_key');
+
+                if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_STUDENT)) {
+                    for($i = 0; $i < Competencies::findOne(['users_id' => Yii::$app->user->id])->num_modules; $i++) {
+
+                    }
+                }
             }
             return true;
         } else {
@@ -301,5 +307,10 @@ class Users extends ActiveRecord implements IdentityInterface
             Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
         }
         return false;
+    }
+
+    public function addTable($title)
+    {
+        
     }
 }

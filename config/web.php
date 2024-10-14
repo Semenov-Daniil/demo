@@ -83,6 +83,9 @@ $config = [
         'generate' => [
             'class' => 'app\components\AppComponent',
         ],
+        'generateDb' => [
+            'class' => 'app\components\DbComponent',
+        ],
     ],
     'params' => $params,
 ];
