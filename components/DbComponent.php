@@ -37,6 +37,25 @@ class DbComponent extends Component
         return false;
     }
 
+    public function deleteDb($title)
+    {
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            Yii::$app->db->createCommand("DROP DATABASE $title;")
+                ->execute();
+            $transaction->commit();
+            return true;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+
+        return false;
+    }
+
     public function createUser($login, $password)
     {
         $transaction = Yii::$app->db->beginTransaction();
@@ -47,7 +66,26 @@ class DbComponent extends Component
                 REVOKE ALL PRIVILEGES ON performance_schema.* FROM '$login'@'$this->host';
                 FLUSH PRIVILEGES;
             ")
-            ->execute();
+                ->execute();
+            $transaction->commit();
+            return true;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+        
+        return false;
+    }
+
+    public function deleteUser($login)
+    {
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            Yii::$app->db->createCommand("DROP USER '$login'@'$this->host';")
+                ->execute();
             $transaction->commit();
             return true;
         } catch(\Exception $e) {
