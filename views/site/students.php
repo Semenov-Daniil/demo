@@ -37,7 +37,7 @@ $this->title = 'Студенты';
                 ],
             ]); ?>
     
-            <?= $form->field($model, 'surname')->textInput(['autofocus' => true]) ?>
+            <?= $form->field($model, 'surname')->textInput() ?>
     
             <?= $form->field($model, 'name')->textInput() ?>
             
@@ -67,10 +67,17 @@ $this->title = 'Студенты';
                     ],
                     [
                         'class' => ActionColumn::className(),
+                        'controller' => 'user',
                         'template' => '{delete}',
-                        'urlCreator' => function ($action, $model, $key, $index, $column) {
-                            return Url::toRoute(['/user/' . $action, 'id' => $model['id']]);
-                        },
+                        'buttons' => [
+                            'delete' => function ($url, $model, $key) {
+                                return
+                                    Html::beginForm(['user/delete-student'], 'post', ['data' => ['pjax' => true]])
+                                    . Html::submitButton('Удалить', ['class' => 'btn btn-danger', 'data' => ['method' => 'POST', 'params' => ['id' => $model['students_id']]]])
+                                    . Html::endForm()
+                                ;
+                            }
+                        ],
                         'visibleButtons' => [
                             'delete' => function ($model, $key, $index) {
                                 return Yii::$app->user->can('expert');

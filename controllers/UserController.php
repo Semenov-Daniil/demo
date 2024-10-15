@@ -8,6 +8,7 @@ use app\models\Roles;
 use app\models\Users;
 use Yii;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 
 class UserController extends \yii\web\Controller
 {
@@ -16,17 +17,28 @@ class UserController extends \yii\web\Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['login'],
+                'only' => ['login', 'logout'],
                 'rules' => [
                     [
                         'allow' => true,
                         'actions' => ['login'],
                         'roles' => ['?'],
                     ],
+                    [
+                        'actions' => ['logout'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
                 ],
                 'denyCallback' => function ($rule, $action) {
                     Yii::$app->user->isGuest ? $this->redirect(['user/login']) : $this->redirect(['/']);
                 }
+            ],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'logout' => ['post'],
+                ],
             ],
         ];
     }
@@ -64,22 +76,39 @@ class UserController extends \yii\web\Controller
 
     public function actionLogout()
     {
-        Yii::$app->user->logout();
+        if  (Yii::$app->request->isPost) {
+            Yii::$app->user->logout();
+        }
         return $this->goHome();
     }
 
-    /**
-     * Deletes an existing Groups model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionDelete($id)
+    public function actionDeleteExpert()
     {
-        if (Yii::$app->user->can('expert') && Yii::$app->user->id != $id) {
-            Users::deleteUser($id);
+        if (Yii::$app->request->isAjax) {
+            $user = new Users();
+            $user->id = Yii::$app->request->post()['id'];
+            if (Yii::$app->user->can('expert') && $user->deleteUser()) {
+                Yii::$app->session->setFlash('success', "Эксперт успешно удален.");
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
+            }
         }
-        return $this->goHome();
+
+        return $this->redirect(['site/settings']);
+    }
+
+    public function actionDeleteStudent()
+    {
+        if (Yii::$app->request->isAjax) {
+            $user = new Users();
+            $user->id = Yii::$app->request->post()['id'];
+            if (Yii::$app->user->can('expert') && $user->deleteUser()) {
+                Yii::$app->session->setFlash('success', "Студент успешно удален.");
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось удалить студента.");
+            }
+        }
+
+        return $this->redirect(['site/students']);
     }
 }

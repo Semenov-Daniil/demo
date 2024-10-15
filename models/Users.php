@@ -48,14 +48,10 @@ class Users extends ActiveRecord implements IdentityInterface
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
-                $this->temp_password = Yii::$app->generate->generateRandomString(6);
+                $this->temp_password = Yii::$app->generationString->generateRandomString(6);
                 $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
                 $this->login = $this->getUniqueStr('login', 8, true, 'ONLI_SMALL_CHARACTERS');
                 $this->auth_key = $this->getUniqueStr('auth_key');
-
-                if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_STUDENT)) {
-                    return $this->addDbStudent();
-                }
             }
             return true;
         } else {
@@ -69,14 +65,19 @@ class Users extends ActiveRecord implements IdentityInterface
             return false;
         }
 
-        $modules = Modules::find()
-            ->where(['competencies_id' => $this->id])
-            ->all();
+        if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_STUDENT)) {
+            return StudentsCompetencies::findOne(['students_id' => $this->id])->delete();
+        }
 
-        // foreach($modules as $module) {
-        //     Yii::$app->db->createCommand('DROP DATABASE ' . $module->title)
-        //         ->execute();
-        // }
+        if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
+            $students = StudentsCompetencies::findAll(['competencies_id' => $this->id]);
+
+            foreach ($students as $student) {
+                if (!$student->delete()) {
+                    return false;
+                }
+            }
+        }
 
         return true;
     }
@@ -238,10 +239,10 @@ class Users extends ActiveRecord implements IdentityInterface
      */
     public function getUniqueStr(string $attr, int $length = 32, bool $builtin = false, string $flag = ''): string
     {
-        $result_str = $builtin ? Yii::$app->generate->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
+        $result_str = $builtin ? Yii::$app->generationString->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
     
         while(!$this->isUnique($attr, $result_str)) {
-            $result_str = $builtin ? Yii::$app->generate->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
+            $result_str = $builtin ? Yii::$app->generationString->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
         }
 
         return $result_str;
@@ -289,36 +290,20 @@ class Users extends ActiveRecord implements IdentityInterface
     /**
      * Deletes an existing Users model.
      */
-    public static function deleteUser($id): bool
+    public function deleteUser(): bool
     {
-        $transaction = Yii::$app->db->beginTransaction();   
-        try {
-            (self::findOne(['id' => $id]))->delete();
-            $transaction->commit();
-            Yii::$app->session->setFlash('success', "Эксперта успешно удален.");
-            return true;
-        } catch(\Exception $e) {
-            $transaction->rollBack();
-            Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
-        } catch(\Throwable $e) {
-            $transaction->rollBack();
-            Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
-        }
-        return false;
-    }
-
-    public function addDbStudent()
-    {
-        if (Yii::$app->generateDb->createUser($this->login, $this->temp_password)) {
-            for($i = 0; $i < Competencies::findOne(['users_id' => Yii::$app->user->id])?->num_modules; $i++) {
-                if (!Yii::$app->generateDb->createDb($this->login . '_m' . ($i + 1)) && !Yii::$app->generateDb->addRuleDb($this->login, $this->login . '_m' . ($i + 1))) {
-                    return false;
-                }
+        if (Yii::$app->user->id !== $this->id) {
+            $transaction = Yii::$app->db->beginTransaction();   
+            try {
+                (self::findOne(['id' => $this->id]))->delete();
+                $transaction->commit();
+                return true;
+            } catch(\Exception $e) {
+                $transaction->rollBack();
+            } catch(\Throwable $e) {
+                $transaction->rollBack();
             }
-
-            return true;
         }
-
         return false;
     }
 }

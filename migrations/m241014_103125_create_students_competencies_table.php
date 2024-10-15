@@ -19,6 +19,7 @@ class m241014_103125_create_students_competencies_table extends Migration
         $this->createTable(self::TABLE_NAME, [
             'students_id' => $this->primaryKey(),
             'competencies_id' => $this->integer()->notNull(),
+            'dir_title' => $this->string(255)->unique()->notNull(),
         ]);
 
         $this->addForeignKey('fk-students_competencies-students_id', self::TABLE_NAME, 'students_id', self::TABLE_NAME_USERS, 'id', 'CASCADE', 'CASCADE');

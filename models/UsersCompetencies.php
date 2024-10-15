@@ -31,6 +31,7 @@ class UsersCompetencies extends Model
             [['surname', 'name'], 'required'],
             [['surname', 'name', 'middle_name', 'title'], 'string', 'max' => 255],
             [['num_modules'], 'integer', 'min' => 1],
+            [['surname', 'name', 'middle_name', 'title'], 'trim'],
 
             [['title', 'num_modules'], 'required', 'on' => self::SCENARIO_ADD_EXPERT],
         ];
@@ -86,18 +87,34 @@ class UsersCompetencies extends Model
      */
     public static function getDataProviderStudents($page)
     {
+        // VarDumper::dump(StudentsCompetencies::find()
+        //     ->select([
+        //         'id',
+        //         'surname',
+        //         'name',
+        //         'middle_name',
+        //         'login',
+        //         Passwords::tableName() . '.password',
+        //     ])
+        //     ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_STUDENT), 'competencies_id' => Yii::$app->user->id])
+        //     ->joinWith('passwords', false)
+        //     ->joinWith('users', false)
+        //     ->asArray(),
+        //  10, true);die;
+        
         return new ActiveDataProvider([
-            'query' => Users::find()
+            'query' => StudentsCompetencies::find()
                 ->select([
-                    'id',
+                    'students_id',
                     'surname',
                     'name',
                     'middle_name',
                     'login',
                     Passwords::tableName() . '.password',
                 ])
-                ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_STUDENT)])
+                ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_STUDENT), 'competencies_id' => Yii::$app->user->id])
                 ->joinWith('passwords', false)
+                ->joinWith('users', false)
                 ->asArray(),
             'pagination' => [
                 'pageSize' => $page,
@@ -119,23 +136,19 @@ class UsersCompetencies extends Model
             try {
                 $user = new Users();
                 $user->attributes = $this->attributes;
-                $user->addExpert();
-                
-                $competence = new Competencies();
-                $competence->attributes = $this->attributes;
-                $competence->users_id = $user->id;
-                $competence->save();
-    
-                $transaction->commit();
-    
-                Yii::$app->session->setFlash('success', "Эксперта успешно добавлен.");
-                return true;
+                if ($user->addExpert()) {
+                    $competence = new Competencies();
+                    $competence->attributes = $this->attributes;
+                    $competence->users_id = $user->id;
+                    if ($competence->save()) {
+                        $transaction->commit();
+                        return true;
+                    }
+                }
             } catch(\Exception $e) {
                 $transaction->rollBack();
-                Yii::$app->session->setFlash('error', "Не удалось добавить эксперта.");
             } catch(\Throwable $e) {
                 $transaction->rollBack();
-                Yii::$app->session->setFlash('error', "Не удалось добавить эксперта.");
             }
         }
 
@@ -156,23 +169,21 @@ class UsersCompetencies extends Model
             try {
                 $user = new Users();
                 $user->attributes = $this->attributes;
-                $user->addStudent();
-
-                $student_competenc = new StudentsCompetencies();
-                $student_competenc->students_id = $user->id;
-                $student_competenc->competencies_id = Yii::$app->user->id;
-                $student_competenc->save();
-
-                $transaction->commit();
-    
-                Yii::$app->session->setFlash('success', "Студент успешно добавлен.");
-                return true;
+                if ($user->addStudent()) {
+                    $student_competenc = new StudentsCompetencies();
+                    $student_competenc->students_id = $user->id;
+                    $student_competenc->competencies_id = Yii::$app->user->id;
+                    if ($student_competenc->save()) {
+                        $transaction->commit();
+                        return true;
+                    }
+                }
             } catch(\Exception $e) {
                 $transaction->rollBack();
-                Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
+                var_dump($e);die;
             } catch(\Throwable $e) {
                 $transaction->rollBack();
-                Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
+                var_dump($e);die;
             }
         }
 

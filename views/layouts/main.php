@@ -25,6 +25,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 <html lang="<?= Yii::$app->language ?>" class="h-100">
 <head>
     <title><?= Html::encode($this->title) ?></title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <?php $this->head() ?>
 </head>
 <body class="d-flex flex-column h-100">
@@ -37,25 +38,29 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         'brandUrl' => Yii::$app->homeUrl,
         'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top']
     ]);
-    echo Nav::widget([
-        'options' => ['class' => 'navbar-nav'],
-        'items' => [
-            ['label' => 'Настройки', 'url' => ['site/index'], 'visible' => Yii::$app->user->can('expert')],
-            ['label' => 'Студенты', 'url' => ['site/students'], 'visible' => Yii::$app->user->can('expert')],
-            ['label' => 'Файлы', 'url' => ['site/files'], 'visible' => Yii::$app->user->can('expert')],
-            ['label' => 'Модули', 'url' => ['site/modules'], 'visible' => Yii::$app->user->can('expert')],
-            ['label' => 'Участники', 'url' => ['site/competitors'], 'visible' => Yii::$app->user->can('expert')],
-            Yii::$app->user->isGuest
-                ? ['label' => 'Войти', 'url' => ['site/login']]
-                : '<li class="nav-item">'
-                    . Html::beginForm(['/logout'])
+
+    $items = [];
+
+    Yii::$app->user->can('expert') 
+    && array_push($items, 
+        ['label' => 'Настройки', 'url' => ['site/settings'], 'visible' => Yii::$app->user->can('expert')],
+        ['label' => 'Студенты', 'url' => ['site/students'], 'visible' => Yii::$app->user->can('expert')],
+        ['label' => 'Файлы', 'url' => ['site/files'], 'visible' => Yii::$app->user->can('expert')],
+        ['label' => 'Модули', 'url' => ['site/modules'], 'visible' => Yii::$app->user->can('expert')],
+        ['label' => 'Участники', 'url' => ['site/competitors'], 'visible' => Yii::$app->user->can('expert')]);
+    
+    !Yii::$app->user->isGuest && $items[] = '<li class="nav-item">'
+                    . Html::beginForm(['logout'])
                     . Html::submitButton(
                         'Выход (' . Yii::$app->user->identity->login . ')',
                         ['class' => 'nav-link btn btn-link logout']
                     )
                     . Html::endForm()
-                    . '</li>'
-        ]
+                    . '</li>';
+
+    echo Nav::widget([
+        'options' => ['class' => 'navbar-nav'],
+        'items' => $items,
     ]);
     NavBar::end();
     ?>

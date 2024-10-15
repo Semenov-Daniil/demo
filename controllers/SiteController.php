@@ -51,11 +51,6 @@ class SiteController extends Controller
         ];
     }
 
-    /**
-     * Displays homepage.
-     *
-     * @return string
-     */
     public function actionIndex()
     {
         return Yii::$app->user->can('student') ? $this->redirect(['student']) : $this->redirect(['settings']);
@@ -70,8 +65,13 @@ class SiteController extends Controller
     {
         $model = new UsersCompetencies(['scenario' => UsersCompetencies::SCENARIO_ADD_EXPERT]);
 
-        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->addExpert()) {
-            $model = new UsersCompetencies(['scenario' => UsersCompetencies::SCENARIO_ADD_EXPERT]);
+        if (Yii::$app->request->isAjax) {
+            if ($model->load(Yii::$app->request->post()) && $model->addExpert()) {
+                Yii::$app->session->setFlash('success', "Эксперт успешно добавлен.");
+                $model = new UsersCompetencies(['scenario' => UsersCompetencies::SCENARIO_ADD_EXPERT]);
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось добавить эксперта.");
+            }
         }
 
         return $this->render('settings', [
@@ -89,8 +89,13 @@ class SiteController extends Controller
     {
         $model = new UsersCompetencies();
 
-        if (Yii::$app->request->isAjax && Yii::$app->user->can('expert') && $model->load(Yii::$app->request->post()) && $model->addStudent()) {
-            $model = new UsersCompetencies();
+        if (Yii::$app->request->isAjax) {
+            if (Yii::$app->user->can('expert') && $model->load(Yii::$app->request->post()) && $model->addStudent()) {
+                Yii::$app->session->setFlash('success', "Студент успешно добавлен.");
+                $model = new UsersCompetencies();
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
+            }
         }
 
         return $this->render('students', [

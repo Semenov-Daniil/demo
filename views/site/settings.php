@@ -37,22 +37,24 @@ $this->title = 'Настройки';
                 ],
             ]); ?>
     
-            <?= $form->field($model, 'surname')->textInput(['autofocus' => true]) ?>
-    
-            <?= $form->field($model, 'name')->textInput() ?>
-            
-            <?= $form->field($model, 'middle_name')->textInput() ?>
-    
-            <?= $form->field($model, 'title')->textInput() ?>
-            
-            <?= $form->field($model, 'num_modules')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
-    
-            <div class="form-group">
-                <div>
-                    <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add-button']) ?>
+                <?= $form->field($model, 'surname')->textInput() ?>
+        
+                <?= $form->field($model, 'name')->textInput() ?>
+                
+                <?= $form->field($model, 'middle_name')->textInput() ?>
+        
+                <?= $form->field($model, 'title')->textInput() ?>
+                
+                <?= $form->field($model, 'num_modules')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
+        
+                <div class="form-group">
+                    <div>
+                        <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add-button']) ?>
+                    </div>
                 </div>
-            </div>
+
             <?php ActiveForm::end(); ?>
+
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
                 'pager' => ['class' => \yii\bootstrap5\LinkPager::class],
@@ -83,10 +85,17 @@ $this->title = 'Настройки';
                     ],
                     [
                         'class' => ActionColumn::className(),
+                        'controller' => 'user',
                         'template' => '{delete}',
-                        'urlCreator' => function ($action, $model, $key, $index, $column) {
-                            return Url::toRoute(['/user/' . $action, 'id' => $model['id']]);
-                        },
+                        'buttons' => [
+                            'delete' => function ($url, $model, $key) {
+                                return
+                                    Html::beginForm(['user/delete-expert'], 'post', ['data' => ['pjax' => true]])
+                                    . Html::submitButton('Удалить', ['class' => 'btn btn-danger', 'data' => ['method' => 'POST', 'params' => ['id' => $model['id']]]])
+                                    . Html::endForm()
+                                ;
+                            }
+                        ],
                         'visibleButtons' => [
                             'delete' => function ($model, $key, $index) {
                                 return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model['id'];

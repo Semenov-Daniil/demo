@@ -27,7 +27,7 @@ $this->title = 'Авторизация';
         ],
     ]); ?>
 
-    <?= $form->field($model, 'login')->textInput(['autofocus' => true]) ?>
+    <?= $form->field($model, 'login')->textInput() ?>
 
     <?= $form->field($model, 'password')->passwordInput() ?>
 

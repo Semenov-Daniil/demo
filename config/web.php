@@ -12,6 +12,7 @@ $config = [
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
+        // '@students' => '@app/dir_students/',
     ],
     'components' => [
         'request' => [
@@ -49,22 +50,22 @@ $config = [
             ],
         ],
         'db' => $db,
+        'defaultRoute' => 'site/index',
         'urlManager' => [
             'enablePrettyUrl' => true,
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
+                '/' => 'site/index',
+
                 'login' => 'user/login',
                 'logout' => 'user/logout',
                 
                 'student' => 'student/index',
                 'student/<action>' => 'student/<action>',
 
-                'user/<action>' => 'user/<action>',
-                
-                '/' => 'site/index',
-                '<action>' => 'site/<action>',
-
+                '/<action>' => 'site/<action>',
+                '/students' => 'site/students',
             ],
         ],
         'authManager' => [
@@ -80,11 +81,14 @@ $config = [
             'timeout' => 1440,
             'useCookies' => true,
         ],
-        'generate' => [
-            'class' => 'app\components\AppComponent',
+        'generationString' => [
+            'class' => 'app\components\StringComponent',
         ],
-        'generateDb' => [
+        'generationDb' => [
             'class' => 'app\components\DbComponent',
+        ],
+        'generationFile' => [
+            'class' => 'app\components\FileComponent',
         ],
     ],
     'params' => $params,
