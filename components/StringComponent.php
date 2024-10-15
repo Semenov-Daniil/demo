@@ -4,7 +4,7 @@ namespace app\components;
 
 use yii\base\Component;
 
-class AppComponent extends Component
+class StringComponent extends Component
 {
     /**
      * Return a string of random characters [a-zA-Z0-9]
