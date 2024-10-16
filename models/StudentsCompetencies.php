@@ -128,10 +128,12 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
 
     public function addDbStudent()
     {
-        if (Yii::$app->generationDb->createUser($this->login, $this->temp_password)) {
+        $login = Users::findOne(['id' => $this->students_id])?->login;
+        $password = Passwords::findOne(['users_id'=>$this->students_id])?->password;
+        if (Yii::$app->generationDb->createUser($login, $password)) {
             $num_modeles = Competencies::findOne(['users_id' => $this->competencies_id])?->num_modules;
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!Yii::$app->generationDb->createDb($this->login . '_m' . ($i + 1)) && !Yii::$app->generationDb->addRuleDb($this->login, $this->login . '_m' . ($i + 1))) {
+                if (!Yii::$app->generationDb->createDb($login . '_m' . ($i + 1)) && !Yii::$app->generationDb->addRuleDb($login, $login . '_m' . ($i + 1))) {
                     return false;
                 }
             }

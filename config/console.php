@@ -30,8 +30,14 @@ $config = [
             'class' => 'yii\rbac\DbManager',
             'defaultRoles' => ['student', 'expert'],
         ],
-        'generate' => [
-            'class' => 'app\components\AppComponent',
+        'generationString' => [
+            'class' => 'app\components\StringComponent',
+        ],
+        'generationDb' => [
+            'class' => 'app\components\DbComponent',
+        ],
+        'generationFile' => [
+            'class' => 'app\components\FileComponent',
         ],
     ],
     'params' => $params,

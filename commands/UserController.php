@@ -28,22 +28,22 @@ class UserController extends Controller
             'title' => 'Сompetence',
             'num_modules' => 4
         ], '');
-        
+
         if ($model->validate()) {
             $transaction = Yii::$app->db->beginTransaction();   
             try {
                 $user = new Users();
                 $user->attributes = $model->attributes;
-                $user->addExpert();
-
-                $competence = new Competencies();
-                $competence->attributes = $model->attributes;
-                $competence->users_id = $user->id;
-                $competence->save();
-                
-                $transaction->commit();
-                echo "\nExpert create\n";
-                return ExitCode::OK;
+                if ($user->addExpert()) {
+                    $competence = new Competencies();
+                    $competence->attributes = $model->attributes;
+                    $competence->users_id = $user->id;
+                    if ($competence->save()) {
+                        $transaction->commit();
+                        echo "\nExpert create\n";
+                        return ExitCode::OK;
+                    }
+                }
             } catch(\Exception $e) {
                 $transaction->rollBack();
             } catch(\Throwable $e) {

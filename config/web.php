@@ -12,7 +12,7 @@ $config = [
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
-        // '@students' => '@app/dir_students/',
+        '@users' => '@app/users',
     ],
     'components' => [
         'request' => [

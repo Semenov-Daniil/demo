@@ -12,8 +12,8 @@ class FileComponent extends Component
     {
         parent::init();
 
-        if (!is_dir(Yii::getAlias('@students'))) {
-            FileHelper::createDirectory(Yii::getAlias('@students'), 0755, true);
+        if (!is_dir(Yii::getAlias('@users'))) {
+            FileHelper::createDirectory(Yii::getAlias('@users'), 0755, true);
         }
     }
 
@@ -23,7 +23,7 @@ class FileComponent extends Component
             $dirPath = $this->getUniqueDirPath(8);
         }
 
-        if (FileHelper::createDirectory(Yii::getAlias('@students') . $dirPath, 0755, true)) {
+        if (FileHelper::createDirectory(Yii::getAlias('@users') . '/' . $dirPath, 0755, true)) {
             return $dirPath;
         }
 
@@ -32,8 +32,8 @@ class FileComponent extends Component
 
     public function deleteDir($dirPath): void
     {
-        if (is_dir(Yii::getAlias('@students') . $dirPath)) {
-            FileHelper::removeDirectory(Yii::getAlias('@students') . $dirPath);
+        if (is_dir(Yii::getAlias('@users') . $dirPath)) {
+            FileHelper::removeDirectory(Yii::getAlias('@users') . '/' . $dirPath);
         }
     }
 
@@ -41,7 +41,7 @@ class FileComponent extends Component
     {
         $dirPath = Yii::$app->generationString->generateRandomString($length);
     
-        while(is_dir(Yii::getAlias('@students') . $dirPath)) {
+        while(is_dir(Yii::getAlias('@users') . '/' . $dirPath)) {
             $dirPath = Yii::$app->generationString->generateRandomString($length);
         }
 
