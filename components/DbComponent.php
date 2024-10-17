@@ -18,7 +18,7 @@ class DbComponent extends Component
         }
     }
 
-    public function createDb($title)
+    public static function createDb($title)
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
@@ -37,7 +37,7 @@ class DbComponent extends Component
         return false;
     }
 
-    public function deleteDb($title)
+    public static function deleteDb($title)
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
@@ -56,14 +56,15 @@ class DbComponent extends Component
         return false;
     }
 
-    public function createUser($login, $password)
+    public static function createUser($login, $password)
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
+            $host = self::getHostBd();
             Yii::$app->db->createCommand("
-                CREATE USER '$login'@'$this->host' IDENTIFIED BY '$password';
-                REVOKE ALL PRIVILEGES ON information_schema.* FROM '$login'@'$this->host';
-                REVOKE ALL PRIVILEGES ON performance_schema.* FROM '$login'@'$this->host';
+                CREATE USER '$login'@'$host' IDENTIFIED BY '$password';
+                REVOKE ALL PRIVILEGES ON information_schema.* FROM '$login'@'$host';
+                REVOKE ALL PRIVILEGES ON performance_schema.* FROM '$login'@'$host';
                 FLUSH PRIVILEGES;
             ")
                 ->execute();
@@ -80,11 +81,12 @@ class DbComponent extends Component
         return false;
     }
 
-    public function deleteUser($login)
+    public static function deleteUser($login)
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            Yii::$app->db->createCommand("DROP USER '$login'@'$this->host';")
+            $host = self::getHostBd();
+            Yii::$app->db->createCommand("DROP USER '$login'@'$host';")
                 ->execute();
             $transaction->commit();
             return true;
@@ -99,11 +101,12 @@ class DbComponent extends Component
         return false;
     }
 
-    public function addRuleDb($login, $db)
+    public static function addRuleDb($login, $db)
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            Yii::$app->db->createCommand("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, ALTER ON $db.* TO '$login'@'$this->host';FLUSH PRIVILEGES;")
+            $host = self::getHostBd();
+            Yii::$app->db->createCommand("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, ALTER ON $db.* TO '$login'@'$host';FLUSH PRIVILEGES;")
                 ->execute();
             $transaction->commit();
             return true;
@@ -118,7 +121,7 @@ class DbComponent extends Component
         return false;
     }
 
-    public function getHostBd()
+    public static function getHostBd()
     {
         $dsn = Yii::$app->db->dsn;
         preg_match('/host=([^;]+)/', $dsn, $matches);

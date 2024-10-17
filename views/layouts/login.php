@@ -9,6 +9,7 @@ use yii\bootstrap5\Breadcrumbs;
 use yii\bootstrap5\Html;
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
+use yii\widgets\Pjax;
 
 AppAsset::register($this);
 
@@ -34,8 +35,11 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
 <main id="main" class="d-flex flex-shrink-0 flex-fill" role="main">
     <div class="d-flex flex-fill justify-content-center align-items-center">
-        <?= Alert::widget() ?>
-        <?= $content ?>
+        <?php Pjax::begin([
+            'id' => 'ajax-main'
+        ]); ?>
+            <?= $content ?>
+        <?php Pjax::end(); ?>
     </div>
 </main>
 

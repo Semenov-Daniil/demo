@@ -3,24 +3,24 @@
 namespace app\models;
 
 use Yii;
+use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "dm_competencies".
  *
- * @property int $users_id
+ * @property int $experts_id
  * @property string $title
  * @property int $num_modules
  *
- * @property User $users
+ * @property Users $users
  */
-class Competencies extends \yii\db\ActiveRecord
+class Competencies extends ActiveRecord
 {
-
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'num_modules', '!users_id'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'num_modules', '!experts_id'];
         return $scenarios;
     }
     
@@ -41,7 +41,7 @@ class Competencies extends \yii\db\ActiveRecord
             [['title', 'num_modules'], 'required'],
             [['num_modules'], 'integer', 'min' => 1],
             [['title'], 'string', 'max' => 255],
-            [['users_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['users_id' => 'id']],
+            [['experts_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['experts_id' => 'id']],
         ];
     }
 
@@ -51,7 +51,7 @@ class Competencies extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'users_id' => 'Users ID',
+            'experts_id' => 'Эксперт',
             'title' => 'Название тестирования',
             'num_modules' => 'Кол-во модулей',
         ];
@@ -64,6 +64,6 @@ class Competencies extends \yii\db\ActiveRecord
      */
     public function getUsers()
     {
-        return $this->hasOne(Users::class, ['id' => 'users_id']);
+        return $this->hasOne(Users::class, ['id' => 'experts_id']);
     }
 }

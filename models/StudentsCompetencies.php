@@ -2,7 +2,10 @@
 
 namespace app\models;
 
+use app\components\DbComponent;
+use app\components\FileComponent;
 use Yii;
+use yii\data\ActiveDataProvider;
 
 /**
  * This is the model class for table "dm_students_competencies".
@@ -16,21 +19,26 @@ use Yii;
  */
 class StudentsCompetencies extends \yii\db\ActiveRecord
 {
+    public string $surname = '';
+    public string $name = '';
+    public string $middle_name = '';
+
+    const SCENARIOS_ADD_STUDENT = "add-student";
+    const TITLE_ROLE_STUDENT = "student";
+
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
-                if ($this->addDirStudent()) {
-                    return $this->addDbStudent();
+                if ($this->addDbStudent()) {
+                    return $this->addDirStudent();
                 }
                 
-                Yii::$app->generationFile->deleteDir($this->dir_title);
                 return false;
             }
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     public function beforeDelete()
@@ -39,8 +47,19 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
             return false;
         }
 
-        Yii::$app->generationFile->deleteDir($this->dir_title);
-        return $this->deleteDbStudent();
+        if ($this->deleteDbStudent()) {
+            return FileComponent::deleteDir($this->dir_title);
+        }
+        
+        return false;
+    }
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!competencies_id'];
+        $scenarios[self::SCENARIOS_ADD_STUDENT] = ['surname', 'name', 'middle_name'];
+        return $scenarios;
     }
 
     /**
@@ -48,14 +67,7 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'dm_students_competencies';
-    }
-
-    public function scenarios()
-    {
-        $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!competencies_id'];
-        return $scenarios;
+        return '{{%students_competencies}}';
     }
 
     /**
@@ -64,9 +76,11 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['students_id', 'competencies_id'], 'required'],
+            [['surname', 'name', 'students_id', 'competencies_id'], 'required'],
+            [['surname', 'name'], 'string', 'max' => 255],
+            [['surname', 'name', 'middle_name'], 'trim'],
             [['students_id', 'competencies_id'], 'integer'],
-            [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'users_id']],
+            [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
             [['students_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['students_id' => 'id']],
         ];
     }
@@ -77,8 +91,8 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'students_id' => 'Students ID',
-            'competencies_id' => 'Competencies ID',
+            'students_id' => 'Студент',
+            'competencies_id' => 'Компетенция',
         ];
     }
 
@@ -89,7 +103,7 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
      */
     public function getCompetencies()
     {
-        return $this->hasOne(Competencies::class, ['users_id' => 'competencies_id']);
+        return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id']);
     }
 
     /**
@@ -112,12 +126,74 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
         return $this->hasOne(Passwords::class, ['users_id' => 'students_id']);
     }
 
+    /**
+     * Get DataProvider students
+     * 
+     * @return array
+     */
+    public static function getDataProviderStudents($page)
+    {
+        return new ActiveDataProvider([
+            'query' => StudentsCompetencies::find()
+                ->select([
+                    'students_id',
+                    'surname',
+                    'name',
+                    'middle_name',
+                    'login',
+                    Passwords::tableName() . '.password',
+                ])
+                ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_STUDENT), 'competencies_id' => Yii::$app->user->id])
+                ->joinWith('passwords', false)
+                ->joinWith('users', false)
+                ->asArray(),
+            'pagination' => [
+                'pageSize' => $page,
+            ],
+        ]);
+    }
+
+    /**
+     * Add student
+     * 
+     * @return bool
+     */
+    public function addStudent(): bool
+    {
+        $this->validate();
+        
+        if (!$this->hasErrors()) {
+            $transaction = Yii::$app->db->beginTransaction();   
+            try {
+                $user = new Users();
+                $user->attributes = $this->attributes;
+                if ($user->addStudent()) {
+                    $student_competenc = new StudentsCompetencies();
+                    $student_competenc->students_id = $user->id;
+                    $student_competenc->competencies_id = Yii::$app->user->id;
+                    if ($student_competenc->save()) {
+                        $transaction->commit();
+                        return true;
+                    }
+                }
+            } catch(\Exception $e) {
+                $transaction->rollBack();
+                var_dump($e);die;
+            } catch(\Throwable $e) {
+                $transaction->rollBack();
+                var_dump($e);die;
+            }
+        }
+
+        return false;
+    }
+
     public function addDirStudent()
     {
-        if ($this->dir_title = Yii::$app->generationFile->createDir()) {
-            $num_modeles = Competencies::findOne(['users_id' => $this->competencies_id])?->num_modules;
+        if ($this->dir_title = FileComponent::createDir()) {
+            $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!Yii::$app->generationFile->createDir("$this->dir_title/$this->dir_title-m" . ($i + 1))) {
+                if (!FileComponent::createDir("$this->dir_title/$this->dir_title-m" . ($i + 1))) {
                     return false;
                 }
             }
@@ -130,10 +206,10 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     {
         $login = Users::findOne(['id' => $this->students_id])?->login;
         $password = Passwords::findOne(['users_id'=>$this->students_id])?->password;
-        if (Yii::$app->generationDb->createUser($login, $password)) {
-            $num_modeles = Competencies::findOne(['users_id' => $this->competencies_id])?->num_modules;
+        if (DbComponent::createUser($login, $password)) {
+            $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!Yii::$app->generationDb->createDb($login . '_m' . ($i + 1)) && !Yii::$app->generationDb->addRuleDb($login, $login . '_m' . ($i + 1))) {
+                if (!DbComponent::createDb($login . '_m' . ($i + 1)) && !DbComponent::addRuleDb($login, $login . '_m' . ($i + 1))) {
                     return false;
                 }
             }
@@ -147,10 +223,10 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     public function deleteDbStudent()
     {
         $login = Users::findOne(['id' => $this->students_id])->login;
-        if (Yii::$app->generationDb->deleteUser($login)) {
-            $num_modeles = Competencies::findOne(['users_id' => $this->competencies_id])?->num_modules;
+        if (DbComponent::deleteUser($login)) {
+            $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!Yii::$app->generationDb->deleteDb($login . '_m' . ($i + 1))) {
+                if (!DbComponent::deleteDb($login . '_m' . ($i + 1))) {
                     return false;
                 }
             }

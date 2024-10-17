@@ -13,15 +13,14 @@ class StudentController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => [],
                 'rules' => [
                     [
                         'allow' => true,
                         'roles' => ['student'],
-                    ],
+                    ]
                 ],
                 'denyCallback' => function ($rule, $action) {
-                    $this->redirect(['user/login']);
+                    Yii::$app->user->isGuest ? $this->redirect(['login']) : $this->redirect(['/']);
                 }
             ],
         ];

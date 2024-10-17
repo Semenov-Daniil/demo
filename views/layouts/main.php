@@ -43,17 +43,17 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
     Yii::$app->user->can('expert') 
     && array_push($items, 
-        ['label' => 'Настройки', 'url' => ['site/settings'], 'visible' => Yii::$app->user->can('expert')],
-        ['label' => 'Студенты', 'url' => ['site/students'], 'visible' => Yii::$app->user->can('expert')],
-        ['label' => 'Файлы', 'url' => ['site/files'], 'visible' => Yii::$app->user->can('expert')],
-        ['label' => 'Модули', 'url' => ['site/modules'], 'visible' => Yii::$app->user->can('expert')],
-        ['label' => 'Участники', 'url' => ['site/competitors'], 'visible' => Yii::$app->user->can('expert')]);
+        ['label' => 'Настройки', 'url' => ['expert/settings']],
+        ['label' => 'Студенты', 'url' => ['expert/students']],
+        ['label' => 'Файлы', 'url' => ['expert/files']],
+        ['label' => 'Модули', 'url' => ['expert/modules']],
+        ['label' => 'Участники', 'url' => ['expert/competitors']]);
     
     !Yii::$app->user->isGuest && $items[] = '<li class="nav-item">'
                     . Html::beginForm(['logout'])
                     . Html::submitButton(
                         'Выход (' . Yii::$app->user->identity->login . ')',
-                        ['class' => 'nav-link btn btn-link logout']
+                        ['class' => 'nav-link logout']
                     )
                     . Html::endForm()
                     . '</li>';

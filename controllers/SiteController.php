@@ -2,10 +2,14 @@
 
 namespace app\controllers;
 
+use app\models\LoginForm;
+use app\models\Passwords;
+use app\models\Roles;
 use app\models\Users;
 use app\models\UsersCompetencies;
 use Yii;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 
 class SiteController extends Controller
@@ -15,22 +19,28 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['*'],
+                'only' => ['login', 'logout', 'index'],
                 'rules' => [
                     [
                         'allow' => true,
-                        'actions' => ['index'],
-                        'roles' => ['@'],
+                        'actions' => ['login'],
+                        'roles' => ['?'],
                     ],
                     [
+                        'actions' => ['index', 'logout'],
                         'allow' => true,
-                        'actions' => ['settings', 'students', 'modules', 'files', 'competitors'],
-                        'roles' => ['expert'],
-                    ],  
+                        'roles' => ['@'],
+                    ],
                 ],
                 'denyCallback' => function ($rule, $action) {
-                    Yii::$app->user->isGuest ? $this->redirect(['user/login']) : $this->redirect(['/']);
+                    Yii::$app->user->isGuest ? $this->redirect(['login']) : $this->redirect(['/']);
                 }
+            ],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'logout' => ['post'],
+                ],
             ],
         ];
     }
@@ -53,84 +63,45 @@ class SiteController extends Controller
 
     public function actionIndex()
     {
-        return Yii::$app->user->can('student') ? $this->redirect(['student']) : $this->redirect(['settings']);
+        return $this->goHome();
     }
 
     /**
-     * Displays settings page.
-     *
-     * @return string
+     * Login user
      */
-    public function actionSettings()
+    public function actionLogin()
     {
-        $model = new UsersCompetencies(['scenario' => UsersCompetencies::SCENARIO_ADD_EXPERT]);
+        $this->layout = 'login';
 
-        if (Yii::$app->request->isAjax) {
-            if ($model->load(Yii::$app->request->post()) && $model->addExpert()) {
-                Yii::$app->session->setFlash('success', "Эксперт успешно добавлен.");
-                $model = new UsersCompetencies(['scenario' => UsersCompetencies::SCENARIO_ADD_EXPERT]);
-            } else {
-                Yii::$app->session->setFlash('error', "Не удалось добавить эксперта.");
-            }
+        $model = new LoginForm();
+
+        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login()) {
+           $this->redirect(['/'])->send();
         }
 
-        return $this->render('settings', [
+        $model->password = '';
+        return $this->render('login', [
             'model' => $model,
-            'dataProvider' => $model->getDataProviderExperts(20),
+            'users' => [
+                'expert' => Users::find()
+                    ->select(['login', Passwords::tableName() . '.password'])
+                    ->where(['roles_id' => Roles::getRoleId('expert')])
+                    ->joinWith('passwords', false)
+                    ->one(),
+                'student' => Users::find()
+                    ->select(['login', Passwords::tableName() . '.password'])
+                    ->where(['roles_id' => Roles::getRoleId('student')])
+                    ->joinWith('passwords', false)
+                    ->one(),
+            ]
         ]);
     }
 
-    /**
-     * Displays student page.
-     *
-     * @return string
-     */
-    public function actionStudents()
+    public function actionLogout()
     {
-        $model = new UsersCompetencies();
-
-        if (Yii::$app->request->isAjax) {
-            if (Yii::$app->user->can('expert') && $model->load(Yii::$app->request->post()) && $model->addStudent()) {
-                Yii::$app->session->setFlash('success', "Студент успешно добавлен.");
-                $model = new UsersCompetencies();
-            } else {
-                Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
-            }
+        if  (Yii::$app->request->isPost) {
+            Yii::$app->user->logout();
         }
-
-        return $this->render('students', [
-            'model' => $model,
-            'dataProvider' => $model->getDataProviderStudents(20),
-        ]);
-    }
-
-    /**
-     * Displays files page.
-     *
-     * @return string
-     */
-    public function actionFiles()
-    {
-        return $this->render('files');
-    }
-
-    /**
-     * Displays modules page.
-     *
-     * @return string
-     */
-    public function actionModules()
-    {
-        return $this->render('modules');
-    }
-
-    /**
-     * Displays competitors page.
-     *
-     * @return string
-     */
-    public function actionCompetitors()
-    {
-        return $this->render('competitors');
+        return $this->goHome();
     }
 }

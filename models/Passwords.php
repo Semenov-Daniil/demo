@@ -41,8 +41,8 @@ class Passwords extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'password' => 'Password',
-            'users_id' => 'Users ID',
+            'password' => 'Пароль',
+            'users_id' => 'Пользователь',
         ];
     }
 
@@ -54,5 +54,11 @@ class Passwords extends \yii\db\ActiveRecord
     public function getUsers()
     {
         return $this->hasOne(Users::class, ['id' => 'users_id'])->inverseOf('passwords');
+    }
+
+    public static function addPassword(array $data = [])
+    {
+        $password = new Passwords();
+        return $password->load($data, '') && $password->save();
     }
 }

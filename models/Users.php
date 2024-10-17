@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\components\AppComponent;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
@@ -48,10 +49,10 @@ class Users extends ActiveRecord implements IdentityInterface
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
-                $this->temp_password = Yii::$app->generationString->generateRandomString(6);
+                $this->temp_password = AppComponent::generateRandomString(6, ['lowercase','uppercase','digits']);
                 $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
-                $this->login = $this->getUniqueStr('login', 8, true, 'ONLI_SMALL_CHARACTERS');
-                $this->auth_key = $this->getUniqueStr('auth_key');
+                $this->setUniqueStr('login', 8, ['lowercase']);
+                $this->setUniqueStr('auth_key');
             }
             return true;
         } else {
@@ -87,10 +88,7 @@ class Users extends ActiveRecord implements IdentityInterface
         parent::afterSave($insert, $changedAttributes);
 
         if ($insert) {
-            $password = new Passwords();
-            $password->users_id = $this->id;
-            $password->password = $this->temp_password;
-            $password->save();
+            Passwords::addPassword(['users_id' => $this->id, 'password' => $this->temp_password]);
         }
     }
 
@@ -108,10 +106,11 @@ class Users extends ActiveRecord implements IdentityInterface
     public function rules(): array
     {
         return [
+            [['surname', 'name'], 'required'],
             [['roles_id'], 'integer'],
             [['login', 'password', 'surname', 'name', 'middle_name'], 'string', 'max' => 255],
             ['auth_key', 'string', 'max' => 32],
-            [['surname', 'name'], 'required'],
+            [['surname', 'name', 'middle_name', 'login', 'password', 'auth_key'], 'trim'],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
         ];
     }
@@ -159,7 +158,7 @@ class Users extends ActiveRecord implements IdentityInterface
      */
     public function getCompetencies(): object
     {
-        return $this->hasOne(Competencies::class, ['users_id' => 'id'])->inverseOf('users');
+        return $this->hasOne(Competencies::class, ['experts_id' => 'id'])->inverseOf('users');
     }
 
     /**
@@ -220,32 +219,27 @@ class Users extends ActiveRecord implements IdentityInterface
 
     /**
      * @param string $attr the name of the attribute that we are checking
-     * @param mixed $value value attribute
      * @return bool
      */
-    public function isUnique(string $attr, mixed $value): bool
+    public function isUnique(string $attr): bool
     {
         return !self::find()
-            ->where([$attr => $value])
+            ->where([$attr => $this->$attr])
             ->exists();
     }
 
     /**
      * @param string $attr the name of the attribute to set a unique string value
      * @param int $length the length string
-     * @param bool $builtin use the built-in function
-     * @param string $flag if $b = true, the characters to use when generating
-     * @return string
+     * @param array $charSets An array of character sets to generate a string. Each element is a string of characters.
      */
-    public function getUniqueStr(string $attr, int $length = 32, bool $builtin = false, string $flag = ''): string
+    public function setUniqueStr(string $attr, int $length = 32, array $charSets = []): void
     {
-        $result_str = $builtin ? Yii::$app->generationString->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
+        $this->$attr = $charSets ? AppComponent::generateRandomString($length, $charSets) : Yii::$app->security->generateRandomString($length);
     
-        while(!$this->isUnique($attr, $result_str)) {
-            $result_str = $builtin ? Yii::$app->generationString->generateRandomString($length, $flag) : Yii::$app->security->generateRandomString($length);
+        while(!$this->isUnique($attr)) {
+            $this->$attr = $charSets ? AppComponent::generateRandomString($length, $charSets) : Yii::$app->security->generateRandomString($length);
         }
-
-        return $result_str;
     }
 
     /**
@@ -295,7 +289,7 @@ class Users extends ActiveRecord implements IdentityInterface
         if (Yii::$app->user->id !== $this->id) {
             $transaction = Yii::$app->db->beginTransaction();   
             try {
-                (self::findOne(['id' => $this->id]))->delete();
+                self::findOne(['id' => $this->id])->delete();
                 $transaction->commit();
                 return true;
             } catch(\Exception $e) {

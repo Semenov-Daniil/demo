@@ -50,22 +50,30 @@ $config = [
             ],
         ],
         'db' => $db,
-        'defaultRoute' => 'site/index',
+        'defaultRoute' => 'login',
         'urlManager' => [
             'enablePrettyUrl' => true,
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
+                'login' => 'site/login',
+                'logout' => 'site/logout',
+
+                [
+                    'class' => 'app\components\RoleBasedUrlRule', 
+                    'pattern' => '/<action:[\w]*>',
+                    'route' => 'expert/<action>',
+                    'roles' => 'expert'
+                ],
+                [
+                    'class' => 'app\components\RoleBasedUrlRule', 
+                    'pattern' => '/<action:[\w]*>',
+                    'route' => 'student/<action>',
+                    'roles' => 'student'
+                ],
+
                 '/' => 'site/index',
-
-                'login' => 'user/login',
-                'logout' => 'user/logout',
-                
-                'student' => 'student/index',
-                'student/<action>' => 'student/<action>',
-
-                '/<action>' => 'site/<action>',
-                '/students' => 'site/students',
+                '<action:[\w]*>' => 'site/<action>',
             ],
         ],
         'authManager' => [
@@ -81,14 +89,8 @@ $config = [
             'timeout' => 1440,
             'useCookies' => true,
         ],
-        'generationString' => [
-            'class' => 'app\components\StringComponent',
-        ],
-        'generationDb' => [
-            'class' => 'app\components\DbComponent',
-        ],
-        'generationFile' => [
-            'class' => 'app\components\FileComponent',
+        'component' => [
+            'class' => 'app\components\AppComponent',
         ],
     ],
     'params' => $params,
