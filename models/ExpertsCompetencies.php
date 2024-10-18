@@ -84,7 +84,7 @@ class ExpertsCompetencies extends Model
     public function addExpert(): bool
     {
         $this->validate();
-        
+
         if (!$this->hasErrors()) {
             $transaction = Yii::$app->db->beginTransaction();   
             try {
@@ -93,7 +93,7 @@ class ExpertsCompetencies extends Model
                 if ($user->addExpert()) {
                     $competence = new Competencies();
                     $competence->attributes = $this->attributes;
-                    $competence->users_id = $user->id;
+                    $competence->experts_id = $user->id;
                     if ($competence->save()) {
                         $transaction->commit();
                         return true;

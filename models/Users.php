@@ -252,6 +252,7 @@ class Users extends ActiveRecord implements IdentityInterface
     {
         $this->validate();
 
+        var_dump($this->errors);die;
         if (!$this->hasErrors()) {
             return $this->save();
         }
@@ -278,6 +279,7 @@ class Users extends ActiveRecord implements IdentityInterface
     public function addStudent(): bool
     {
         $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_STUDENT);
+        var_dump($this->addUser());die;
         return $this->addUser();
     }
 

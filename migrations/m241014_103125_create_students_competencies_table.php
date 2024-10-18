@@ -25,7 +25,7 @@ class m241014_103125_create_students_competencies_table extends Migration
         $this->addForeignKey('fk-students_competencies-students_id', self::TABLE_NAME, 'students_id', self::TABLE_NAME_USERS, 'id', 'CASCADE', 'CASCADE');
 
         $this->createIndex('students_competencies-competencies_id', self::TABLE_NAME, 'competencies_id');
-        $this->addForeignKey('fk-students_competencies-competencies_id', self::TABLE_NAME, 'competencies_id', self::TABLE_NAME_COMPETENCIES, 'users_id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('fk-students_competencies-competencies_id', self::TABLE_NAME, 'competencies_id', self::TABLE_NAME_COMPETENCIES, 'experts_id', 'CASCADE', 'CASCADE');
     }
 
     /**

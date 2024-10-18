@@ -13,6 +13,9 @@ use yii\data\ActiveDataProvider;
  * @property int $students_id
  * @property int $competencies_id
  * @property string $dir_title
+ * @property string $surname
+ * @property string $name
+ * @property string $middle_name
  *
  * @property Competencies $competencies
  * @property Users $students
@@ -161,12 +164,16 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     public function addStudent(): bool
     {
         $this->validate();
+
+        var_dump($this->attributes);
         
         if (!$this->hasErrors()) {
             $transaction = Yii::$app->db->beginTransaction();   
             try {
                 $user = new Users();
-                $user->attributes = $this->attributes;
+                $user->surname = $this->surname;
+                $user->name = $this->name;
+                $user->middle_name = $this->middle_name;
                 if ($user->addStudent()) {
                     $student_competenc = new StudentsCompetencies();
                     $student_competenc->students_id = $user->id;
@@ -178,10 +185,8 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
                 }
             } catch(\Exception $e) {
                 $transaction->rollBack();
-                var_dump($e);die;
             } catch(\Throwable $e) {
                 $transaction->rollBack();
-                var_dump($e);die;
             }
         }
 
