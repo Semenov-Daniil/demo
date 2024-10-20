@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%competencies}}`.
  */
-class m241010_121355_create_competencies_table extends Migration
+class m241018_113956_create_competencies_table extends Migration
 {
     const TABLE_NAME = '{{%competencies}}';
 

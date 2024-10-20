@@ -8,6 +8,8 @@ use app\models\Users;
 use app\models\UsersCompetencies;
 use Yii;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
+use yii\helpers\VarDumper;
 use yii\web\Controller;
 
 class ExpertController extends Controller
@@ -28,6 +30,13 @@ class ExpertController extends Controller
                 'denyCallback' => function ($rule, $action) {
                     Yii::$app->user->isGuest ? $this->redirect(['login']) : $this->redirect(['/']);
                 }
+            ],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'delete-expert' => ['post'],
+                    'delete-student' => ['post'],
+                ],
             ],
         ];
     }
@@ -79,12 +88,12 @@ class ExpertController extends Controller
      */
     public function actionStudents()
     {
-        $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIOS_ADD_STUDENT]);
+        $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
 
         if (Yii::$app->request->isAjax) {
             if (Yii::$app->user->can('expert') && $model->load(Yii::$app->request->post()) && $model->addStudent()) {
                 Yii::$app->session->setFlash('success', "Студент успешно добавлен.");
-                $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIOS_ADD_STUDENT]);
+                $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
             }
@@ -129,26 +138,26 @@ class ExpertController extends Controller
     public function actionDeleteExpert()
     {
         if (Yii::$app->request->isAjax) {
-            $user = new Users();
-            $user->id = Yii::$app->request->post()['id'];
-            if (Yii::$app->user->can('expert') && $user->deleteUser()) {
+            if (Yii::$app->user->can('expert') && Users::deleteUser(Yii::$app->request->post()['id'])) {
                 Yii::$app->session->setFlash('success', "Эксперт успешно удален.");
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
             }
         }
+
+        return $this->redirect(['/settings']);
     }
 
     public function actionDeleteStudent()
     {
         if (Yii::$app->request->isAjax) {
-            $user = new Users();
-            $user->id = Yii::$app->request->post()['id'];
-            if (Yii::$app->user->can('expert') && $user->deleteUser()) {
+            if (Yii::$app->user->can('expert') && Users::deleteUser(Yii::$app->request->post()['id'])) {
                 Yii::$app->session->setFlash('success', "Студент успешно удален.");
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось удалить студента.");
             }
         }
+
+        return $this->redirect(['/students']);
     }
 }

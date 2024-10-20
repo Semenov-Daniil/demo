@@ -5,6 +5,7 @@ namespace app\models;
 use app\components\AppComponent;
 use Yii;
 use yii\db\ActiveRecord;
+use yii\db\Transaction;
 use yii\helpers\VarDumper;
 use yii\web\IdentityInterface;
 
@@ -74,7 +75,7 @@ class Users extends ActiveRecord implements IdentityInterface
             $students = StudentsCompetencies::findAll(['competencies_id' => $this->id]);
 
             foreach ($students as $student) {
-                if (!$student->delete()) {
+                if (!Users::findOne(['id' => $student->students_id])->delete()) {
                     return false;
                 }
             }
@@ -111,6 +112,7 @@ class Users extends ActiveRecord implements IdentityInterface
             [['login', 'password', 'surname', 'name', 'middle_name'], 'string', 'max' => 255],
             ['auth_key', 'string', 'max' => 32],
             [['surname', 'name', 'middle_name', 'login', 'password', 'auth_key'], 'trim'],
+            ['middle_name', 'default', 'value' => null],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
         ];
     }
@@ -252,7 +254,6 @@ class Users extends ActiveRecord implements IdentityInterface
     {
         $this->validate();
 
-        var_dump($this->errors);die;
         if (!$this->hasErrors()) {
             return $this->save();
         }
@@ -279,25 +280,29 @@ class Users extends ActiveRecord implements IdentityInterface
     public function addStudent(): bool
     {
         $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_STUDENT);
-        var_dump($this->addUser());die;
         return $this->addUser();
     }
 
     /**
      * Deletes an existing Users model.
      */
-    public function deleteUser(): bool
+    public static function deleteUser($id): bool
     {
-        if (Yii::$app->user->id !== $this->id) {
-            $transaction = Yii::$app->db->beginTransaction();   
+        if (Yii::$app->user->id !== $id) {
+            $transaction = Yii::$app->db->beginTransaction(Transaction::SERIALIZABLE);   
             try {
-                self::findOne(['id' => $this->id])->delete();
-                $transaction->commit();
-                return true;
+                if (self::findOne([$id])?->delete()) {
+                    $transaction->commit();
+                    return true;
+                }
+
+                $transaction->rollBack();
             } catch(\Exception $e) {
                 $transaction->rollBack();
+                var_dump($e);die;
             } catch(\Throwable $e) {
                 $transaction->rollBack();
+                var_dump($e);die;
             }
         }
         return false;

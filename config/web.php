@@ -56,24 +56,23 @@ $config = [
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                'login' => 'site/login',
-                'logout' => 'site/logout',
+                '<action:(login|logout)>' => 'site/<action>',
 
                 [
                     'class' => 'app\components\RoleBasedUrlRule', 
-                    'pattern' => '/<action:[\w]*>',
+                    'pattern' => '/<action:.*>',
                     'route' => 'expert/<action>',
                     'roles' => 'expert'
                 ],
                 [
                     'class' => 'app\components\RoleBasedUrlRule', 
-                    'pattern' => '/<action:[\w]*>',
+                    'pattern' => '/<action:.*>',
                     'route' => 'student/<action>',
                     'roles' => 'student'
                 ],
 
                 '/' => 'site/index',
-                '<action:[\w]*>' => 'site/<action>',
+                '<action>' => 'site/<action>',
             ],
         ],
         'authManager' => [

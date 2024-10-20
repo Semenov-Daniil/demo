@@ -85,12 +85,11 @@ $this->title = 'Настройки';
                     ],
                     [
                         'class' => ActionColumn::className(),
-                        'controller' => 'user',
                         'template' => '{delete}',
                         'buttons' => [
                             'delete' => function ($url, $model, $key) {
                                 return
-                                    Html::beginForm(['user/delete-expert'], 'post', ['data' => ['pjax' => true]])
+                                    Html::beginForm(['/delete-expert'], 'post', ['data' => ['pjax' => true]])
                                     . Html::submitButton('Удалить', ['class' => 'btn btn-danger', 'data' => ['method' => 'POST', 'params' => ['id' => $model['id']]]])
                                     . Html::endForm()
                                 ;

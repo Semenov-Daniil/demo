@@ -6,6 +6,7 @@ use app\components\DbComponent;
 use app\components\FileComponent;
 use Yii;
 use yii\data\ActiveDataProvider;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "dm_students_competencies".
@@ -13,20 +14,17 @@ use yii\data\ActiveDataProvider;
  * @property int $students_id
  * @property int $competencies_id
  * @property string $dir_title
- * @property string $surname
- * @property string $name
- * @property string $middle_name
  *
  * @property Competencies $competencies
  * @property Users $students
  */
-class StudentsCompetencies extends \yii\db\ActiveRecord
+class StudentsCompetencies extends ActiveRecord
 {
     public string $surname = '';
     public string $name = '';
-    public string $middle_name = '';
+    public string|null $middle_name = '';
 
-    const SCENARIOS_ADD_STUDENT = "add-student";
+    const SCENARIO_ADD_STUDENT = "add-student";
     const TITLE_ROLE_STUDENT = "student";
 
     public function beforeSave($insert)
@@ -51,7 +49,8 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
         }
 
         if ($this->deleteDbStudent()) {
-            return FileComponent::deleteDir($this->dir_title);
+            FileComponent::deleteDir($this->dir_title);
+            return true;
         }
         
         return false;
@@ -60,8 +59,8 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!competencies_id'];
-        $scenarios[self::SCENARIOS_ADD_STUDENT] = ['surname', 'name', 'middle_name'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!competencies_id', '!dir_title'];
+        $scenarios[self::SCENARIO_ADD_STUDENT] = ['surname', 'name', 'middle_name'];
         return $scenarios;
     }
 
@@ -80,9 +79,10 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     {
         return [
             [['surname', 'name', 'students_id', 'competencies_id'], 'required'],
-            [['surname', 'name'], 'string', 'max' => 255],
-            [['surname', 'name', 'middle_name'], 'trim'],
+            [['surname', 'name', 'middle_name', 'dir_title'], 'string', 'max' => 255],
+            [['surname', 'name', 'middle_name', 'dir_title'], 'trim'],
             [['students_id', 'competencies_id'], 'integer'],
+            ['middle_name', 'default', 'value' => null],
             [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
             [['students_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['students_id' => 'id']],
         ];
@@ -96,6 +96,19 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
         return [
             'students_id' => 'Студент',
             'competencies_id' => 'Компетенция',
+            'dir_title' => 'Директория',
+            'surname' => 'Фамилия',
+            'name' => 'Имя',
+            'middle_name' => 'Отчество',
+        ];
+    }
+
+    public function attributes() {
+        return [
+            ...parent::attributes(),
+            'surname',
+            'name',
+            'middle_name'
         ];
     }
 
@@ -145,6 +158,7 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
                     'middle_name',
                     'login',
                     Passwords::tableName() . '.password',
+                    'dir_title',
                 ])
                 ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_STUDENT), 'competencies_id' => Yii::$app->user->id])
                 ->joinWith('passwords', false)
@@ -164,16 +178,13 @@ class StudentsCompetencies extends \yii\db\ActiveRecord
     public function addStudent(): bool
     {
         $this->validate();
-
-        var_dump($this->attributes);
         
         if (!$this->hasErrors()) {
             $transaction = Yii::$app->db->beginTransaction();   
             try {
                 $user = new Users();
-                $user->surname = $this->surname;
-                $user->name = $this->name;
-                $user->middle_name = $this->middle_name;
+                $user->attributes = $this->attributes;
+
                 if ($user->addStudent()) {
                     $student_competenc = new StudentsCompetencies();
                     $student_competenc->students_id = $user->id;

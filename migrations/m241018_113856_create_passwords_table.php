@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%passwords}}`.
  */
-class m241001_101327_create_passwords_table extends Migration
+class m241018_113856_create_passwords_table extends Migration
 {
     const TABLE_NAME = '{{%passwords}}';
     const TABLE_NAME_USERS = '{{%users}}';

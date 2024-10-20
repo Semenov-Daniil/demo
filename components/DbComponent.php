@@ -4,6 +4,7 @@ namespace app\components;
 
 use Yii;
 use yii\base\Component;
+use yii\db\Transaction;
 
 class DbComponent extends Component
 {
@@ -20,17 +21,13 @@ class DbComponent extends Component
 
     public static function createDb($title)
     {
-        $transaction = Yii::$app->db->beginTransaction();
         try {
             Yii::$app->db->createCommand("CREATE DATABASE $title;")
                 ->execute();
-            $transaction->commit();
             return true;
         } catch(\Exception $e) {
-            $transaction->rollBack();
             throw $e;
         } catch(\Throwable $e) {
-            $transaction->rollBack();
             throw $e;
         }
 
@@ -39,17 +36,13 @@ class DbComponent extends Component
 
     public static function deleteDb($title)
     {
-        $transaction = Yii::$app->db->beginTransaction();
         try {
             Yii::$app->db->createCommand("DROP DATABASE $title;")
                 ->execute();
-            $transaction->commit();
             return true;
         } catch(\Exception $e) {
-            $transaction->rollBack();
             throw $e;
         } catch(\Throwable $e) {
-            $transaction->rollBack();
             throw $e;
         }
 
@@ -58,7 +51,6 @@ class DbComponent extends Component
 
     public static function createUser($login, $password)
     {
-        $transaction = Yii::$app->db->beginTransaction();
         try {
             $host = self::getHostBd();
             Yii::$app->db->createCommand("
@@ -68,13 +60,10 @@ class DbComponent extends Component
                 FLUSH PRIVILEGES;
             ")
                 ->execute();
-            $transaction->commit();
             return true;
         } catch(\Exception $e) {
-            $transaction->rollBack();
             throw $e;
         } catch(\Throwable $e) {
-            $transaction->rollBack();
             throw $e;
         }
         
@@ -83,18 +72,14 @@ class DbComponent extends Component
 
     public static function deleteUser($login)
     {
-        $transaction = Yii::$app->db->beginTransaction();
         try {
             $host = self::getHostBd();
             Yii::$app->db->createCommand("DROP USER '$login'@'$host';")
                 ->execute();
-            $transaction->commit();
             return true;
         } catch(\Exception $e) {
-            $transaction->rollBack();
             throw $e;
         } catch(\Throwable $e) {
-            $transaction->rollBack();
             throw $e;
         }
         
@@ -103,18 +88,14 @@ class DbComponent extends Component
 
     public static function addRuleDb($login, $db)
     {
-        $transaction = Yii::$app->db->beginTransaction();
         try {
             $host = self::getHostBd();
             Yii::$app->db->createCommand("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, ALTER ON $db.* TO '$login'@'$host';FLUSH PRIVILEGES;")
                 ->execute();
-            $transaction->commit();
             return true;
         } catch(\Exception $e) {
-            $transaction->rollBack();
             throw $e;
         } catch(\Throwable $e) {
-            $transaction->rollBack();
             throw $e;
         }
 

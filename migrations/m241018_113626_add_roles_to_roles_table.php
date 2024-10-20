@@ -3,9 +3,9 @@
 use yii\db\Migration;
 
 /**
- * Handles adding columns to table `{{%roles}}`.
+ * Class m241018_113626_add_roles_to_roles_table
  */
-class m241001_064255_add_default_roles_to_roles_table extends Migration
+class m241018_113626_add_roles_to_roles_table extends Migration
 {
     const TABLE_NAME = '{{%roles}}';
 

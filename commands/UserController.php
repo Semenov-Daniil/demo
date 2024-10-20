@@ -2,10 +2,7 @@
 
 namespace app\commands;
 
-use app\models\Competencies;
 use app\models\ExpertsCompetencies;
-use app\models\Users;
-use Yii;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

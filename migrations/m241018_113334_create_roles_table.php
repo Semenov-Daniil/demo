@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%roles}}`.
  */
-class m241001_064006_create_roles_table extends Migration
+class m241018_113334_create_roles_table extends Migration
 {
     const TABLE_NAME = '{{%roles}}';
 

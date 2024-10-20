@@ -5,9 +5,10 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%users}}`.
  */
-class m241001_063435_create_users_table extends Migration
+class m241018_113822_create_users_table extends Migration
 {
     const TABLE_NAME = '{{%users}}';
+    const TABLE_NAME_ROLES = '{{%roles}}';
     
     /**
      * {@inheritdoc}
@@ -21,8 +22,12 @@ class m241001_063435_create_users_table extends Migration
             'middle_name' => $this->string(255)->defaultValue(null),
             'login' => $this->string(255)->notNull()->unique(),
             'password' => $this->string(255)->notNull(),
+            'roles_id' => $this->integer()->notNull(),
             'auth_key' => $this->string(32)->unique()->notNull(),
         ]);
+
+        $this->createIndex('users-roles_id', self::TABLE_NAME, 'roles_id');
+        $this->addForeignKey('fk-users-roles_id', self::TABLE_NAME, 'roles_id', self::TABLE_NAME_ROLES, 'id', 'RESTRICT', 'CASCADE');
     }
 
     /**
@@ -30,6 +35,9 @@ class m241001_063435_create_users_table extends Migration
      */
     public function safeDown()
     {
+        $this->dropForeignKey('fk-users-roles_id', self::TABLE_NAME);
+        $this->dropIndex('users-roles_id', self::TABLE_NAME);
+        
         $this->dropTable(self::TABLE_NAME);
     }
 }
