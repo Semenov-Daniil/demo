@@ -17,34 +17,15 @@ class FileComponent extends Component
         }
     }
 
-    public static function createDir($dirPath = ''): string|false
+    public static function createDir($dir): string|false
     {
-        if ($dirPath == '') {
-            $dirPath = self::getUniqueDirPath(8);
-        }
-
-        if (FileHelper::createDirectory(Yii::getAlias('@users') . '/' . $dirPath, 0755, true)) {
-            return $dirPath;
-        }
-
-        return false;
+        return !empty($dir) && FileHelper::createDirectory(Yii::getAlias('@users') . '/' . $dir, 0755, true);
     }
 
-    public static function deleteDir($dirPath): void
+    public static function deleteDir($dir): void
     {
-        if (is_dir(Yii::getAlias('@users') . '/' . $dirPath)) {
-            FileHelper::removeDirectory(Yii::getAlias('@users') . '/' . $dirPath);
+        if (!empty($dir) && is_dir(Yii::getAlias('@users') . '/' . $dir)) {
+            FileHelper::removeDirectory(Yii::getAlias('@users') . '/' . $dir);
         }
-    }
-
-    public static function getUniqueDirPath($length)
-    {
-        $dirPath = AppComponent::generateRandomString($length, ['lowercase']);
-    
-        while(is_dir(Yii::getAlias('@users') . '/' . $dirPath)) {
-            $dirPath = Yii::$app->generationString->generateRandomString($length);
-        }
-
-        return $dirPath;
     }
 }

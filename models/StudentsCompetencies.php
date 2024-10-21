@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\components\AppComponent;
 use app\components\DbComponent;
 use app\components\FileComponent;
 use Yii;
@@ -49,7 +50,7 @@ class StudentsCompetencies extends ActiveRecord
         }
 
         if ($this->deleteDbStudent()) {
-            FileComponent::deleteDir($this->dir_title);
+            FileComponent::deleteDir(Users::findOne(['id' => $this->students_id])?->login);
             return true;
         }
         
@@ -206,10 +207,12 @@ class StudentsCompetencies extends ActiveRecord
 
     public function addDirStudent()
     {
-        if ($this->dir_title = FileComponent::createDir()) {
+        $login = Users::findOne(['id' => $this->students_id])?->login;
+        if (FileComponent::createDir($login)) {
             $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
+            $title = AppComponent::generateRandomString(8, ['lowercase']);
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!FileComponent::createDir("$this->dir_title/$this->dir_title-m" . ($i + 1))) {
+                if (!FileComponent::createDir("$login/$title-m" . ($i + 1))) {
                     return false;
                 }
             }
@@ -225,7 +228,7 @@ class StudentsCompetencies extends ActiveRecord
         if (DbComponent::createUser($login, $password)) {
             $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!DbComponent::createDb($login . '_m' . ($i + 1)) && !DbComponent::addRuleDb($login, $login . '_m' . ($i + 1))) {
+                if (!DbComponent::createDb($login . '_m' . ($i + 1)) || !DbComponent::addRuleDb($login, $login . '_m' . ($i + 1))) {
                     return false;
                 }
             }

@@ -55,6 +55,7 @@ class DbComponent extends Component
             $host = self::getHostBd();
             Yii::$app->db->createCommand("
                 CREATE USER '$login'@'$host' IDENTIFIED BY '$password';
+                FLUSH PRIVILEGES;
                 REVOKE ALL PRIVILEGES ON information_schema.* FROM '$login'@'$host';
                 REVOKE ALL PRIVILEGES ON performance_schema.* FROM '$login'@'$host';
                 FLUSH PRIVILEGES;
