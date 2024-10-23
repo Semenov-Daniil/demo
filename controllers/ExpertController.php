@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\ExpertsCompetencies;
+use app\models\Modules;
 use app\models\StudentsCompetencies;
 use app\models\Users;
 use app\models\UsersCompetencies;
@@ -122,7 +123,15 @@ class ExpertController extends Controller
      */
     public function actionModules()
     {
-        return $this->render('modules');
+        $model = new Modules();
+
+        if (Yii::$app->request->isAjax) {
+            $model->toggleStatus();
+        }
+
+        return $this->render('modules', [
+            'dataProvider' => $model->getDataProviderModules(),
+        ]);
     }
 
     /**

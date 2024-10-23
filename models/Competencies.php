@@ -23,6 +23,18 @@ class Competencies extends ActiveRecord
         $scenarios[self::SCENARIO_DEFAULT] = ['title', 'num_modules', '!experts_id'];
         return $scenarios;
     }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+
+        if ($insert) {
+            for ($i = 0; $i < $this->num_modules; $i++) {
+                $module = new Modules(['competencies_id' => $this->experts_id]);
+                $module->save();
+            }
+        }
+    }
     
     /**
      * {@inheritdoc}
