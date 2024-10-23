@@ -33,8 +33,8 @@ $this->title = 'Модули';
                         'template' => '{status}',
                         'buttons' => [
                             'status' => function ($url, $model, $key) {
-                                return Html::beginForm(['/modules', 'id' => $model->id], 'post', ['data-pjax' => '', 'class' => 'toggle-status-form'])
-                                    . Html::checkbox('status', $model->status, ['class' => 'status-switch'])
+                                return Html::beginForm(['/modules', 'id' => $model->id], 'post', ['data-pjax' => '', 'class' => 'form-check form-switch toggle-status-form'])
+                                    . Html::checkbox('status_' . $key, $model->status, ['class' => 'status-switch form-check-input'])
                                     . Html::endForm();
                             },
                         ],
