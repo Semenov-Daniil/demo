@@ -4,13 +4,16 @@ namespace app\models;
 
 use Yii;
 use yii\data\ActiveDataProvider;
+use yii\db\Transaction;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "dm_modules".
  *
  * @property int $id
  * @property int $competencies_id
- * @property int|null $status
+ * @property int $status
+ * @property int $number
  *
  * @property Competencies $competencies
  */
@@ -31,8 +34,9 @@ class Modules extends \yii\db\ActiveRecord
     {
         return [
             [['competencies_id'], 'required'],
-            [['competencies_id', 'status'], 'integer'],
+            [['id', 'competencies_id', 'status', 'number'], 'integer'],
             ['status', 'default', 'value' => 1],
+            ['number', 'default', 'value' => (self::find()->where(['competencies_id' => $this->competencies_id])->count() + 1)],
             [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
         ];
     }
@@ -68,14 +72,176 @@ class Modules extends \yii\db\ActiveRecord
     {
         return new ActiveDataProvider([
             'query' => Modules::find()
-                ->select(['id', 'status'])
+                ->select(['id', 'status', 'number'])
+                ->where(['competencies_id' => Yii::$app->user->id])
                 ,
         ]);
     }
 
-    public function toggleStatus()
+    public function changeStatus()
     {
-        $this->status = $this->status ? 0 : 1; // Или другая логика переключения, если требуется
-        return $this->save();
+        $transaction = Yii::$app->db->beginTransaction();   
+        try {
+            if ($module = self::findOne(['id' => $this->id])) {
+                $module->status = $this->status;
+                
+                if ($module->save()) {
+                    if ($module->changeRulesDbStudent()) {
+                        $transaction->commit();
+                        $answer = [
+                            'code' => 200,
+                            'response' => [
+                                'success' => true
+                            ]
+                        ];
+                    } else {
+                        $transaction->rollBack();
+                        $answer = [
+                            'code' => 500,
+                            'response' => [
+                                'error' => [
+                                    'errors' => 'Failed to change database privileges for student.',
+                                ],
+                            ]
+                        ];
+                    }
+                } else {
+                    $transaction->rollBack();
+                    $answer = [
+                        'code' => 422,
+                        'response' => [
+                            'error' => [
+                                'errors' => $module->errors,
+                            ],
+                        ]
+                    ];
+                }
+            } else {
+                $answer = [
+                    'code' => 404,
+                    'response' => [
+                        'error' => [
+                            'message' => 'Not Found',
+                        ],
+                    ]
+                ];
+            }
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            $answer = [
+                'code' => 500,
+                'response' => [
+                    'error' => [
+                        'errors' => $e->getMessage(),
+                    ],
+                ]
+            ];
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            $answer = [
+                'code' => 500,
+                'response' => [
+                    'error' => [
+                        'errors' => $e->getMessage(),
+                    ],
+                ]
+            ];
+        }
+        return $answer;
+    }
+
+    public function changeRulesDbStudent()
+    {
+        $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
+
+        foreach ($students as $student) {
+            $change = ($this->status ? $student->addRulesDbStudent($this->number) : $student->deleteRulesDbStudent($this->number));
+            if (!$change) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function deleteModule($id)
+    {
+        $transaction = Yii::$app->db->beginTransaction();   
+        try {
+            if ($module = self::findOne(['id' => $id])) {
+                $module->delete();
+                $module->deleteModuleStudent();
+                $answer = [
+                    'code' => 500,
+                    'response' => [
+                        'error' => [
+                            'errors' => 'The Student DB could not be deleted.',
+                        ],
+                    ]
+                ];
+                // if ($module->deleteModuleStudent()) {
+                //     $transaction->commit();
+                //         $answer = [
+                //             'code' => 200,
+                //             'response' => [
+                //                 'success' => true
+                //             ]
+                //         ];
+                // } else {
+                //     $transaction->rollBack();
+                //     $answer = [
+                //         'code' => 500,
+                //         'response' => [
+                //             'error' => [
+                //                 'errors' => 'The Student DB could not be deleted.',
+                //             ],
+                //         ]
+                //     ];
+                // }
+            } else {
+                $answer = [
+                    'code' => 404,
+                    'response' => [
+                        'error' => [
+                            'message' => 'Not Found',
+                        ],
+                    ]
+                ];
+            }
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            $answer = [
+                'code' => 500,
+                'response' => [
+                    'error' => [
+                        'errors' => $e->getMessage(),
+                    ],
+                ]
+            ];
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            $answer = [
+                'code' => 500,
+                'response' => [
+                    'error' => [
+                        'errors' => $e->getMessage(),
+                    ],
+                ]
+            ];
+        }
+        return $answer;
+    }
+
+    public function deleteModuleStudent()
+    {
+        $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
+
+        foreach ($students as $student) {
+            if (!$student->deleteDbStudent($this->number) || !$student->deleteDirStudent($this->number)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

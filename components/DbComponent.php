@@ -103,6 +103,22 @@ class DbComponent extends Component
         return false;
     }
 
+    public static function deleteRuleDb($login, $db)
+    {
+        try {
+            $host = self::getHostBd();
+            Yii::$app->db->createCommand("REVOKE ALL PRIVILEGES ON $db.* FROM '$login'@'$host';FLUSH PRIVILEGES;")
+                ->execute();
+            return true;
+        } catch(\Exception $e) {
+            throw $e;
+        } catch(\Throwable $e) {
+            throw $e;
+        }
+
+        return false;
+    }
+
     public static function getHostBd()
     {
         $dsn = Yii::$app->db->dsn;

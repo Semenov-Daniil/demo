@@ -37,6 +37,7 @@ class ExpertController extends Controller
                 'actions' => [
                     'delete-expert' => ['post'],
                     'delete-student' => ['post'],
+                    'delete-modules' => ['DELETE'],
                 ],
             ],
         ];
@@ -126,7 +127,31 @@ class ExpertController extends Controller
         $model = new Modules();
 
         if (Yii::$app->request->isAjax) {
-            $model->toggleStatus();
+            if ($model->load(Yii::$app->request->post(), '')) {
+                $answer = $model->changeStatus();
+                Yii::$app->response->statusCode = $answer['code'];
+                return $this->asJson($answer['response']);
+            }
+        }
+
+        return $this->render('modules', [
+            'dataProvider' => $model->getDataProviderModules(),
+        ]);
+    }
+
+    /**
+     * Displays modules page.
+     *
+     * @return string
+     */
+    public function actionDeleteModules($id = null)
+    {
+        $model = new Modules();
+
+        if (Yii::$app->request->isAjax) {
+            $answer = $model->deleteModule($id);
+            Yii::$app->response->statusCode = $answer['code'];
+            return $this->asJson($answer['response']);
         }
 
         return $this->render('modules', [

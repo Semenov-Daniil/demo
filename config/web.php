@@ -19,6 +19,9 @@ $config = [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'mbpvOpHTC0G9lSYi96SJZNUs4AL-Ayy_',
             'baseUrl' => '',
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
             'csrfCookie' => [
                 'httpOnly' => true,
                 'expire' => 0,
@@ -61,7 +64,15 @@ $config = [
                 [
                     'class' => 'app\components\RoleBasedUrlRule', 
                     'pattern' => '/<action:.*>',
+                    'verb' => ['GET', 'POST', 'PATH'],
                     'route' => 'expert/<action>',
+                    'roles' => 'expert'
+                ],
+                [
+                    'class' => 'app\components\RoleBasedUrlRule', 
+                    'pattern' => '/<action>/<id>',
+                    'verb' => ['DELETE'],
+                    'route' => 'expert/delete-<action>',
                     'roles' => 'expert'
                 ],
                 [

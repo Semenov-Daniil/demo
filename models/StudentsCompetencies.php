@@ -8,6 +8,7 @@ use app\components\FileComponent;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "dm_students_competencies".
@@ -17,7 +18,9 @@ use yii\db\ActiveRecord;
  * @property string $dir_title
  *
  * @property Competencies $competencies
+ * @property Modules $modules
  * @property Users $students
+ * @property Passwords $passwords
  */
 class StudentsCompetencies extends ActiveRecord
 {
@@ -49,8 +52,8 @@ class StudentsCompetencies extends ActiveRecord
             return false;
         }
 
-        if ($this->deleteDbStudent()) {
-            FileComponent::deleteDir(Users::findOne(['id' => $this->students_id])?->login);
+        if ($this->deleteDataStudent()) {
+            FileComponent::deleteDir($this->users->login);
             return true;
         }
         
@@ -121,6 +124,16 @@ class StudentsCompetencies extends ActiveRecord
     public function getCompetencies()
     {
         return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id']);
+    }
+
+    /**
+     * Gets query for [[Modules]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getModules()
+    {
+        return $this->hasMany(Modules::class, ['competencies_id' => 'competencies_id']);
     }
 
     /**
@@ -197,8 +210,10 @@ class StudentsCompetencies extends ActiveRecord
                 }
             } catch(\Exception $e) {
                 $transaction->rollBack();
+                VarDumper::dump($e, 10, true);die;
             } catch(\Throwable $e) {
                 $transaction->rollBack();
+                VarDumper::dump($e, 10, true);die;
             }
         }
 
@@ -207,12 +222,12 @@ class StudentsCompetencies extends ActiveRecord
 
     public function addDirStudent()
     {
-        $login = Users::findOne(['id' => $this->students_id])?->login;
+        $login = $this->users->login;
         if (FileComponent::createDir($login)) {
-            $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
-            $title = AppComponent::generateRandomString(8, ['lowercase']);
+            $num_modeles = $this->competencies->num_modules;
+            $this->dir_title = AppComponent::generateRandomString(8, ['lowercase']);
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!FileComponent::createDir("$login/$title-m" . ($i + 1))) {
+                if (!FileComponent::createDir("$login/$this->dir_title-m" . ($i + 1))) {
                     return false;
                 }
             }
@@ -223,35 +238,71 @@ class StudentsCompetencies extends ActiveRecord
 
     public function addDbStudent()
     {
-        $login = Users::findOne(['id' => $this->students_id])?->login;
-        $password = Passwords::findOne(['users_id'=>$this->students_id])?->password;
+        $login = $this->users->login;
+        $password = $this->passwords->password;
+        $modules = $this->modules;
         if (DbComponent::createUser($login, $password)) {
-            $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
+            $num_modeles = $this->competencies->num_modules;
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!DbComponent::createDb($login . '_m' . ($i + 1)) || !DbComponent::addRuleDb($login, $login . '_m' . ($i + 1))) {
-                    return false;
+                if (!DbComponent::createDb($login . '_m' . ($i + 1)) || ($modules[$i]->status && !DbComponent::addRuleDb($login, $login . '_m' . ($i + 1)))) {
+                   return false;
                 }
             }
-
             return true;
         }
 
         return false;
     }
 
-    public function deleteDbStudent()
+    public function deleteDataStudent()
     {
-        $login = Users::findOne(['id' => $this->students_id])->login;
+        $login = $this->users->login;
         if (DbComponent::deleteUser($login)) {
-            $num_modeles = Competencies::findOne(['experts_id' => $this->competencies_id])?->num_modules;
+            $num_modeles = $this->competencies->num_modules;
             for($i = 0; $i < $num_modeles; $i++) {
-                if (!DbComponent::deleteDb($login . '_m' . ($i + 1))) {
+                if (!$this->deleteDbStudent($i)) {
                     return false;
                 }
             }
             return true;
         }
 
+        return false;
+    }
+
+    public function deleteDbStudent($numberModule)
+    {
+        $login = $this->users->login;
+        if (!DbComponent::deleteDb($login . '_m' . ($numberModule))) {
+            return false;
+        }
+        return true;
+    }
+
+    public function deleteDirStudent($numberModule)
+    {
+        $login = $this->users->login;
+        if (!FileComponent::deleteDir("$login/$this->dir_title" . '-m' . $numberModule)) {
+            return false;
+        }
+        return true;
+    }
+
+    public function deleteRulesDbStudent($num_module)
+    {
+        $login = $this->users->login;
+        if (DbComponent::deleteRuleDb($login, $login . '_m' . $num_module)) {
+            return true;
+        }
+        return false;
+    }
+
+    public function addRulesDbStudent($num_module)
+    {
+        $login = $this->users->login;
+        if (DbComponent::addRuleDb($login, $login . '_m' . $num_module)) {
+            return true;
+        }
         return false;
     }
 }

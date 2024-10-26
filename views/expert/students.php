@@ -66,12 +66,6 @@ $this->title = 'Студенты';
                         },
                     ],
                     [
-                        'label' => 'Dir',
-                        'value' => function ($model) {
-                            return $model['dir_title'];
-                        },
-                    ],
-                    [
                         'class' => ActionColumn::className(),
                         'template' => '{delete}',
                         'buttons' => [

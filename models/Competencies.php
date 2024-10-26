@@ -14,6 +14,8 @@ use yii\helpers\VarDumper;
  * @property int $num_modules
  *
  * @property Users $users
+ * @property Modules[] $modules
+ * @property StudentsCompetencies[] $studentsCompetencies
  */
 class Competencies extends ActiveRecord
 {
@@ -77,5 +79,25 @@ class Competencies extends ActiveRecord
     public function getUsers()
     {
         return $this->hasOne(Users::class, ['id' => 'experts_id']);
+    }
+
+    /**
+     * Gets query for [[Modules]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getModules()
+    {
+        return $this->hasMany(Modules::class, ['competencies_id' => 'experts_id']);
+    }
+
+    /**
+     * Gets query for [[StudentsCompetencies]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getStudentsCompetencies()
+    {
+        return $this->hasMany(StudentsCompetencies::class, ['competencies_id' => 'experts_id']);
     }
 }
