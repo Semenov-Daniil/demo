@@ -18,7 +18,7 @@ use yii\helpers\VarDumper;
  * @property string $dir_title
  *
  * @property Competencies $competencies
- * @property Modules $modules
+ * @property Modules array $modules
  * @property Users $students
  * @property Passwords $passwords
  */
@@ -30,6 +30,15 @@ class StudentsCompetencies extends ActiveRecord
 
     const SCENARIO_ADD_STUDENT = "add-student";
     const TITLE_ROLE_STUDENT = "student";
+
+    public function init()
+    {
+        parent::init();
+
+        if (!is_dir(Yii::getAlias('@users'))) {
+            FileComponent::createDir(Yii::getAlias('@users'), 0755, true);
+        }
+    }
 
     public function beforeSave($insert)
     {
@@ -184,6 +193,16 @@ class StudentsCompetencies extends ActiveRecord
         ]);
     }
 
+    public function getDirModulesTitle($numberModule)
+    {
+        return "$this->dir_title" . "-m" . $numberModule;
+    }
+
+    public function getDbTitle($login, $numberModule)
+    {
+        return "$login" . "_m" . $numberModule;
+    }
+
     /**
      * Add student
      * 
@@ -210,40 +229,43 @@ class StudentsCompetencies extends ActiveRecord
                 }
             } catch(\Exception $e) {
                 $transaction->rollBack();
-                VarDumper::dump($e, 10, true);die;
             } catch(\Throwable $e) {
                 $transaction->rollBack();
-                VarDumper::dump($e, 10, true);die;
             }
         }
 
         return false;
     }
 
-    public function addDirStudent()
+    public function createDirStudent()
     {
-        $login = $this->users->login;
-        if (FileComponent::createDir($login)) {
-            $num_modeles = $this->competencies->num_modules;
-            $this->dir_title = AppComponent::generateRandomString(8, ['lowercase']);
-            for($i = 0; $i < $num_modeles; $i++) {
-                if (!FileComponent::createDir("$login/$this->dir_title-m" . ($i + 1))) {
-                    return false;
-                }
-            }
-            return true;
+        $login = $this->users?->login;
+        if (FileComponent::createDir(Yii::getAlias('@users') . "/$login")) {
+            return $this->createDirModulesStudent($login);
         }
         return false;
+    }
+
+    public function createDirModulesStudent($login)
+    {
+        $numberModule = $this->competencies->num_modules;
+        $this->dir_title = AppComponent::generateRandomString(8, ['lowercase']);
+        for($i = 0; $i < $numberModule; $i++) {
+            if (!FileComponent::createDir(Yii::getAlias('@users') . "/$login/" . $this->getDirModulesTitle($i+1))) {
+                FileComponent::deleteDir(Yii::getAlias('@users') . "/$login");
+                return false;
+            }
+        }
+        return true;
     }
 
     public function addDbStudent()
     {
         $login = $this->users->login;
         $password = $this->passwords->password;
-        $modules = $this->modules;
         if (DbComponent::createUser($login, $password)) {
-            $num_modeles = $this->competencies->num_modules;
-            for($i = 0; $i < $num_modeles; $i++) {
+            $modules = $this->modules;
+            for($i = 0; $i < count($modules); $i++) {
                 if (!DbComponent::createDb($login . '_m' . ($i + 1)) || ($modules[$i]->status && !DbComponent::addRuleDb($login, $login . '_m' . ($i + 1)))) {
                    return false;
                 }

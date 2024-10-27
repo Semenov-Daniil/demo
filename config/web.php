@@ -7,7 +7,13 @@ $config = [
     'id' => 'demo',
     'name' => 'demo',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+        'log',
+        [
+            'class' => 'app\components\FileComponent',
+            'directories' => ['@users'],
+        ]
+    ],
     'language' => 'ru-Ru',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
@@ -98,9 +104,6 @@ $config = [
             ],
             'timeout' => 1440,
             'useCookies' => true,
-        ],
-        'component' => [
-            'class' => 'app\components\AppComponent',
         ],
     ],
     'params' => $params,

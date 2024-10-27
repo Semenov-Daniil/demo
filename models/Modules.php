@@ -170,7 +170,8 @@ class Modules extends \yii\db\ActiveRecord
         try {
             if ($module = self::findOne(['id' => $id])) {
                 $module->delete();
-                $module->deleteModuleStudent();
+                // $module->deleteModuleStudent();
+                $transaction->rollBack();
                 $answer = [
                     'code' => 500,
                     'response' => [
