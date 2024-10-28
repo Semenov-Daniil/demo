@@ -6,16 +6,16 @@ use app\models\ExpertsCompetencies;
 use app\models\Modules;
 use app\models\StudentsCompetencies;
 use app\models\Users;
-use app\models\UsersCompetencies;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
+use yii\web\Response;
 
 class ExpertController extends Controller
 {
-    public $defaultAction = 'settings';
+    public $defaultAction = 'experts';
 
     public function behaviors()
     {
@@ -35,8 +35,9 @@ class ExpertController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'delete-expert' => ['post'],
-                    'delete-student' => ['post'],
+                    'delete-experts' => ['DELETE'],
+                    'delete-students' => ['DELETE'],
+                    'change-status-modules' => ['PATH'],
                     'delete-modules' => ['DELETE'],
                 ],
             ],
@@ -44,31 +45,15 @@ class ExpertController extends Controller
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function actions()
-    {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-            'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
-        ];
-    }
-
-    /**
-     * Displays settings page.
+     * Displays experts page.
      *
      * @return string
      */
-    public function actionSettings()
+    public function actionExperts(): string
     {
         $model = new ExpertsCompetencies();
 
-        if (Yii::$app->request->isAjax) {
+        if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('add'))) {
             if ($model->load(Yii::$app->request->post()) && $model->addExpert()) {
                 Yii::$app->session->setFlash('success', "Эксперт успешно добавлен.");
                 $model = new ExpertsCompetencies();
@@ -77,23 +62,41 @@ class ExpertController extends Controller
             }
         }
 
-        return $this->render('settings', [
+        return $this->render('experts', [
             'model' => $model,
             'dataProvider' => $model->getDataProviderExperts(20),
         ]);
     }
 
     /**
-     * Displays student page.
+     * Action delete experts.
+     *
+     * @param string|null $id expert ID. 
+     * 
+     * @return void
+     */
+    public function actionDeleteExperts(string|null $id = null): void
+    {
+        if (Yii::$app->request->isAjax) {
+            if (ExpertsCompetencies::deleteExpert($id)) {
+                Yii::$app->session->setFlash('success', "Эксперт успешно удален.");
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
+            }
+        }
+    }
+
+    /**
+     * Displays students page.
      *
      * @return string
      */
-    public function actionStudents()
+    public function actionStudents(): string
     {
         $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
 
-        if (Yii::$app->request->isAjax) {
-            if (Yii::$app->user->can('expert') && $model->load(Yii::$app->request->post()) && $model->addStudent()) {
+        if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('add'))) {
+            if ($model->load(Yii::$app->request->post()) && $model->addStudent()) {
                 Yii::$app->session->setFlash('success', "Студент успешно добавлен.");
                 $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
             } else {
@@ -105,6 +108,24 @@ class ExpertController extends Controller
             'model' => $model,
             'dataProvider' => $model->getDataProviderStudents(20),
         ]);
+    }
+
+    /**
+     * Action delete students.
+     * 
+     * @param string|null $id student ID. 
+     *
+     * @return void
+     */
+    public function actionDeleteStudents(string|null $id = null): void
+    {
+        if (Yii::$app->request->isAjax) {
+            if (StudentsCompetencies::deleteStudent($id)) {
+                Yii::$app->session->setFlash('success', "Студент успешно удален.");
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось удалить студента.");
+            }
+        }
     }
 
     /**
@@ -122,41 +143,50 @@ class ExpertController extends Controller
      *
      * @return string
      */
-    public function actionModules()
+    public function actionModules(): string
     {
-        $model = new Modules();
-
-        if (Yii::$app->request->isAjax) {
-            if ($model->load(Yii::$app->request->post(), '')) {
-                $answer = $model->changeStatus();
-                Yii::$app->response->statusCode = $answer['code'];
-                return $this->asJson($answer['response']);
-            }
-        }
-
         return $this->render('modules', [
-            'dataProvider' => $model->getDataProviderModules(),
+            'dataProvider' => Modules::getDataProviderModules(),
         ]);
     }
 
     /**
-     * Displays modules page.
+     * Action change status modules.
      *
-     * @return string
+     * @return Response
      */
-    public function actionDeleteModules($id = null)
+    public function actionChangeStatusModules(): Response
     {
-        $model = new Modules();
-
-        if (Yii::$app->request->isAjax) {
-            $answer = $model->deleteModule($id);
-            Yii::$app->response->statusCode = $answer['code'];
-            return $this->asJson($answer['response']);
+        if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('change'))) {
+            $model = new Modules();
+            if ($model->load(Yii::$app->request->post(), '')) {
+                if ($model->changeStatus()) {
+                    Yii::$app->response->statusCode = 200;
+                    return $this->asJson(['success' => true]);
+                } else {
+                    Yii::$app->response->statusCode = 500;
+                    return $this->asJson(['success' => false]);
+                }
+            }
         }
+    }
 
-        return $this->render('modules', [
-            'dataProvider' => $model->getDataProviderModules(),
-        ]);
+    /**
+     * Action delete modules.
+     * 
+     * @param string|null $id module ID. 
+     *
+     * @return void
+     */
+    public function actionDeleteModules(string|null $id = null): void
+    {
+        if (Yii::$app->request->isAjax) {
+            if (Modules::deleteModule($id)) {
+                Yii::$app->session->setFlash('success', "Модуль успешно удален.");
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось удалить модуль.");
+            }
+        }
     }
 
     /**
@@ -167,31 +197,5 @@ class ExpertController extends Controller
     public function actionCompetitors()
     {
         return $this->render('competitors');
-    }
-
-    public function actionDeleteExpert()
-    {
-        if (Yii::$app->request->isAjax) {
-            if (Yii::$app->user->can('expert') && Users::deleteUser(Yii::$app->request->post()['id'])) {
-                Yii::$app->session->setFlash('success', "Эксперт успешно удален.");
-            } else {
-                Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
-            }
-        }
-
-        return $this->redirect(['/settings']);
-    }
-
-    public function actionDeleteStudent()
-    {
-        if (Yii::$app->request->isAjax) {
-            if (Yii::$app->user->can('expert') && Users::deleteUser(Yii::$app->request->post()['id'])) {
-                Yii::$app->session->setFlash('success', "Студент успешно удален.");
-            } else {
-                Yii::$app->session->setFlash('error', "Не удалось удалить студента.");
-            }
-        }
-
-        return $this->redirect(['/students']);
     }
 }

@@ -5,6 +5,7 @@
 
 /** @var app\models\Modules $dataProvider */
 
+use app\widgets\Alert;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\helpers\Html;
@@ -18,18 +19,19 @@ $changeStatus = <<<JS
         event.preventDefault();
         $.ajax({
             type: "PATH",
-            url: "/modules",
+            url: "/change-status-modules",
             dataType: 'json',
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify({
                 'id': event.target.dataset.id,
                 'status': event.target.checked ? 1 : 0,
-                '_csrf': $('meta[name="csrf-token"]').attr('content')
+                'change': ''
             }),
             success: function (response) {
                 $.pjax.reload({container: "#pjax-modules"});
             },
             error: function(xhr, status, error) {
+                console.log(error);
                 event.target.checked = !event.target.checked;
             }
         });
@@ -60,12 +62,12 @@ $this->registerJs($deleteModule);
 
 ?>
 <div class="site-modules">
-    <h1><?= Html::encode($this->title) ?></h1>
-    
+    <h3><?= Html::encode($this->title) ?></h3>
     <div>
         <?php Pjax::begin([
             'id' => 'pjax-modules'
         ]); ?>
+            <?= Alert::widget(); ?>
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
                 'pager' => ['class' => \yii\bootstrap5\LinkPager::class],

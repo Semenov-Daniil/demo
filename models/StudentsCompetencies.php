@@ -39,7 +39,7 @@ class StudentsCompetencies extends ActiveRecord
                 $password = $this->passwords->password;
                 $this->dir_prefix = AppComponent::generateRandomString(8, ['lowercase']);
 
-                if ($this->createAccountMySQL($login, $password) && $this->createDbStudent($login) && $this->createDirectoryStudent($login) && $this->createDirectoriesModules($login, $this->dir_prefix)) {
+                if ($this->createAccountMySQL($login, $password) && $this->createDbsStudent($login) && $this->createDirectoryStudent($login) && $this->createDirectoriesModules($login, $this->dir_prefix)) {
                     return true;
                 }
 
@@ -334,7 +334,7 @@ class StudentsCompetencies extends ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurred while creating a databases.
      */
-    public function createDbStudent(string $login): bool
+    public function createDbsStudent(string $login): bool
     {
         $modules = $this->modules;
         for($i = 0; $i < count($modules); $i++) {

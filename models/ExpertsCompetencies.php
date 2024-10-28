@@ -118,7 +118,7 @@ class ExpertsCompetencies extends Model
      * 
      * @return bool Returns the value `true` if the expert was successfully deleted.
      */
-    public static function deleteExpert(int|null $id = null): bool
+    public static function deleteExpert(string|null $id = null): bool
     {
         if (!is_null($id)) {
             return Users::deleteUser($id);

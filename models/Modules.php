@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\components\DbComponent;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\Transaction;
@@ -19,6 +20,24 @@ use yii\helpers\VarDumper;
  */
 class Modules extends \yii\db\ActiveRecord
 {
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            return $this->changePrivilegesDbStudents();
+        } else {
+            return false;
+        }
+    }
+
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        return $this->deleteModulesStudents();
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -64,11 +83,11 @@ class Modules extends \yii\db\ActiveRecord
     }
 
     /**
-     * Get DataProvider experts
+     * Get ActiveDataProvider modules
      * 
-     * @return array
+     * @return ActiveDataProvider
      */
-    public static function getDataProviderModules()
+    public static function getDataProviderModules(): ActiveDataProvider
     {
         return new ActiveDataProvider([
             'query' => Modules::find()
@@ -78,7 +97,14 @@ class Modules extends \yii\db\ActiveRecord
         ]);
     }
 
-    public function changeStatus()
+    /**
+     * Changes the activity status of the module.
+     * 
+     * @return bool returns the value `true` if the status has been successfully changed.
+     * 
+     * @throws Exception|Throwable generated an exception if an error occurred when changing the status.
+     */
+    public function changeStatus(): bool
     {
         $transaction = Yii::$app->db->beginTransaction();   
         try {
@@ -86,77 +112,35 @@ class Modules extends \yii\db\ActiveRecord
                 $module->status = $this->status;
                 
                 if ($module->save()) {
-                    if ($module->changeRulesDbStudent()) {
-                        $transaction->commit();
-                        $answer = [
-                            'code' => 200,
-                            'response' => [
-                                'success' => true
-                            ]
-                        ];
-                    } else {
-                        $transaction->rollBack();
-                        $answer = [
-                            'code' => 500,
-                            'response' => [
-                                'error' => [
-                                    'errors' => 'Failed to change database privileges for student.',
-                                ],
-                            ]
-                        ];
-                    }
-                } else {
-                    $transaction->rollBack();
-                    $answer = [
-                        'code' => 422,
-                        'response' => [
-                            'error' => [
-                                'errors' => $module->errors,
-                            ],
-                        ]
-                    ];
+                    $transaction->commit();
+                    return true;
                 }
-            } else {
-                $answer = [
-                    'code' => 404,
-                    'response' => [
-                        'error' => [
-                            'message' => 'Not Found',
-                        ],
-                    ]
-                ];
+
+                $transaction->rollBack();
             }
+            return false;
         } catch(\Exception $e) {
             $transaction->rollBack();
-            $answer = [
-                'code' => 500,
-                'response' => [
-                    'error' => [
-                        'errors' => $e->getMessage(),
-                    ],
-                ]
-            ];
         } catch(\Throwable $e) {
             $transaction->rollBack();
-            $answer = [
-                'code' => 500,
-                'response' => [
-                    'error' => [
-                        'errors' => $e->getMessage(),
-                    ],
-                ]
-            ];
         }
-        return $answer;
+
+        return false;
     }
 
-    public function changeRulesDbStudent()
+    /**
+     * Changes the privileges of the student databases depending on the activity status of the module.
+     * 
+     * @return bool returns the value `true` if the privileges has been successfully changed.
+     * 
+     */
+    public function changePrivilegesDbStudents(): bool
     {
         $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
 
         foreach ($students as $student) {
-            $change = ($this->status ? $student->addRulesDbStudent($this->number) : $student->deleteRulesDbStudent($this->number));
-            if (!$change) {
+            $login  = $student->users->login; 
+            if (!($this->status ? $student->grantPrivilegesDbStudent($login, $this->number) : $student->revokePrivilegesDbStudent($login, $this->number))) {
                 return false;
             }
         }
@@ -164,81 +148,49 @@ class Modules extends \yii\db\ActiveRecord
         return true;
     }
 
-    public function deleteModule($id)
+    /**
+     * Deletes the module.
+     * 
+     * @param string $id module ID.
+     * 
+     * @return bool return `true` if the module was successfully deleted.
+     */
+    public static function deleteModule(string $id): bool
     {
         $transaction = Yii::$app->db->beginTransaction();   
         try {
             if ($module = self::findOne(['id' => $id])) {
-                $module->delete();
-                // $module->deleteModuleStudent();
+                if ($module->delete()) {
+                    $transaction->commit();
+                    return true;
+                }
+
                 $transaction->rollBack();
-                $answer = [
-                    'code' => 500,
-                    'response' => [
-                        'error' => [
-                            'errors' => 'The Student DB could not be deleted.',
-                        ],
-                    ]
-                ];
-                // if ($module->deleteModuleStudent()) {
-                //     $transaction->commit();
-                //         $answer = [
-                //             'code' => 200,
-                //             'response' => [
-                //                 'success' => true
-                //             ]
-                //         ];
-                // } else {
-                //     $transaction->rollBack();
-                //     $answer = [
-                //         'code' => 500,
-                //         'response' => [
-                //             'error' => [
-                //                 'errors' => 'The Student DB could not be deleted.',
-                //             ],
-                //         ]
-                //     ];
-                // }
-            } else {
-                $answer = [
-                    'code' => 404,
-                    'response' => [
-                        'error' => [
-                            'message' => 'Not Found',
-                        ],
-                    ]
-                ];
             }
+            return false;
         } catch(\Exception $e) {
             $transaction->rollBack();
-            $answer = [
-                'code' => 500,
-                'response' => [
-                    'error' => [
-                        'errors' => $e->getMessage(),
-                    ],
-                ]
-            ];
         } catch(\Throwable $e) {
             $transaction->rollBack();
-            $answer = [
-                'code' => 500,
-                'response' => [
-                    'error' => [
-                        'errors' => $e->getMessage(),
-                    ],
-                ]
-            ];
         }
-        return $answer;
+
+        return false;
     }
 
-    public function deleteModuleStudent()
+    /**
+     * Deletes a module from students.
+     * 
+     * @return bool return `true` if the module was successfully deleted.
+     */
+    public function deleteModulesStudents(): bool
     {
         $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
 
         foreach ($students as $student) {
-            if (!$student->deleteDbStudent($this->number) || !$student->deleteDirStudent($this->number)) {
+            $login  = $student->users->login; 
+            if (DbComponent::deleteDb($student->getDbTitle($login, $this->number))) {
+                $student->deleteDirectoryModule($login, $this->number);
+            } else {
                 return false;
             }
         }
