@@ -7,23 +7,42 @@
 /** @var app\models\UsersCompetencies $dataProvider */
 
 use app\models\Users;
+use app\widgets\Alert;
 use yii\bootstrap5\ActiveForm;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
-use yii\helpers\Html;
+use yii\bootstrap5\Html;
 use yii\helpers\Url;
 use yii\helpers\VarDumper;
 use yii\widgets\Pjax;
 
-$this->title = 'Настройки';
+$this->title = 'Эксперты';
+
+$deleteExpert = <<<JS
+    $("#pjax-experts").on("mousedown", ".btn-delete", function(event_mousedown) {
+        event_mousedown.preventDefault();
+        $(this).on("mouseup", function(event_mouseup) {
+            event_mouseup.preventDefault();
+            $.ajax({
+                type: "DELETE",
+                url: "/experts/" + event_mouseup.target.dataset.id,
+                success: function (response) {
+                    $.pjax.reload({container: "#pjax-experts"});
+                },
+            });
+        });
+    });
+JS;
+
+$this->registerJs($deleteExpert);
 ?>
-<div class="site-settings">
-    <h1><?= Html::encode($this->title) ?></h1>
-    
+<div class="site-experts">
+    <h3><?= Html::encode($this->title) ?></h3>
     <div>
         <?php Pjax::begin([
-            'id' => 'ajax-form'
+            'id' => 'pjax-experts'
         ]); ?>
+            <?= Alert::widget(); ?>
             <?php $form = ActiveForm::begin([
                 'id' => 'add-expert-form',
                 'options' => [
@@ -31,30 +50,41 @@ $this->title = 'Настройки';
                 ],
                 'fieldConfig' => [
                     'template' => "{label}\n{input}\n{error}",
-                    'labelOptions' => ['class' => 'col-lg-1 col-form-label mr-lg-3'],
-                    'inputOptions' => ['class' => 'col-lg-3 form-control'],
-                    'errorOptions' => ['class' => 'col-lg-7 invalid-feedback'],
+                    'labelOptions' => ['class' => 'col-form-label mr-lg-3'],
+                    'inputOptions' => ['class' => 'form-control'],
+                    'errorOptions' => ['class' => 'invalid-feedback'],
                 ],
             ]); ?>
     
-                <?= $form->field($model, 'surname')->textInput() ?>
-        
-                <?= $form->field($model, 'name')->textInput() ?>
-                
-                <?= $form->field($model, 'middle_name')->textInput() ?>
-        
-                <?= $form->field($model, 'title')->textInput() ?>
-                
-                <?= $form->field($model, 'num_modules')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
-        
-                <div class="form-group">
-                    <div>
-                        <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add-button']) ?>
+                <div>
+                    <div class="row">
+                        <div class="col-4">
+                            <?= $form->field($model, 'surname')->textInput() ?>
+                        </div>
+                        <div class="col-4">
+                            <?= $form->field($model, 'name')->textInput() ?>
+                        </div>
+                        <div class="col-4">
+                            <?= $form->field($model, 'middle_name')->textInput() ?>
+                        </div>
                     </div>
                 </div>
-
+                <div>
+                    <div class="row">
+                        <div class="col-6">
+                            <?= $form->field($model, 'title')->textInput() ?>
+                        </div>
+                        <div class="col-6">
+                            <?= $form->field($model, 'num_modules')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div>
+                        <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add']) ?>
+                    </div>
+                </div>
             <?php ActiveForm::end(); ?>
-
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
                 'pager' => ['class' => \yii\bootstrap5\LinkPager::class],
@@ -88,21 +118,20 @@ $this->title = 'Настройки';
                         'template' => '{delete}',
                         'buttons' => [
                             'delete' => function ($url, $model, $key) {
-                                return
-                                    Html::beginForm(['/delete-expert'], 'post', ['data' => ['pjax' => true]])
-                                    . Html::submitButton('Удалить', ['class' => 'btn btn-danger', 'data' => ['method' => 'POST', 'params' => ['id' => $model['id']]]])
-                                    . Html::endForm()
-                                ;
+                                return Html::button('Удалить', ['data' => ['id' => $model['id'], 'pjax' => true], 'class' => 'btn btn-danger btn-delete']);
                             }
                         ],
                         'visibleButtons' => [
                             'delete' => function ($model, $key, $index) {
-                                return Yii::$app->user->can('expert') && Yii::$app->user->id !== $model['id'];
+                                return Yii::$app->user->id !== $model['id'];
                             }
                         ]
                     ],
                 ],
             ]); ?>
         <?php Pjax::end(); ?>
+
+
     </div>
 </div>
+
