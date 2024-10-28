@@ -15,7 +15,7 @@ use yii\helpers\VarDumper;
  *
  * @property int $students_id
  * @property int $competencies_id
- * @property string $dir_title
+ * @property string $dir_prefix
  *
  * @property Competencies $competencies
  * @property Modules array $modules
@@ -31,22 +31,19 @@ class StudentsCompetencies extends ActiveRecord
     const SCENARIO_ADD_STUDENT = "add-student";
     const TITLE_ROLE_STUDENT = "student";
 
-    public function init()
-    {
-        parent::init();
-
-        if (!is_dir(Yii::getAlias('@users'))) {
-            FileComponent::createDir(Yii::getAlias('@users'), 0755, true);
-        }
-    }
-
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
-                if ($this->addDbStudent()) {
-                    return $this->addDirStudent();
+                $login = $this->users->login;
+                $password = $this->passwords->password;
+                $this->dir_prefix = AppComponent::generateRandomString(8, ['lowercase']);
+
+                if ($this->createAccountMySQL($login, $password) && $this->createDbStudent($login) && $this->createDirectoryStudent($login) && $this->createDirectoriesModules($login, $this->dir_prefix)) {
+                    return true;
                 }
+
+                FileComponent::removeDirectory(Yii::getAlias('@users') . "/$login");
                 
                 return false;
             }
@@ -61,8 +58,9 @@ class StudentsCompetencies extends ActiveRecord
             return false;
         }
 
-        if ($this->deleteDataStudent()) {
-            FileComponent::deleteDir($this->users->login);
+        $login = $this->users->login;
+        if ($this->deleteDbStudent($login) && $this->deleteAccountMySQL($login)) {
+            FileComponent::removeDirectory(Yii::getAlias('@users') . "/$login");
             return true;
         }
         
@@ -72,7 +70,7 @@ class StudentsCompetencies extends ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!competencies_id', '!dir_title'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!competencies_id', '!dir_prefix'];
         $scenarios[self::SCENARIO_ADD_STUDENT] = ['surname', 'name', 'middle_name'];
         return $scenarios;
     }
@@ -92,8 +90,8 @@ class StudentsCompetencies extends ActiveRecord
     {
         return [
             [['surname', 'name', 'students_id', 'competencies_id'], 'required'],
-            [['surname', 'name', 'middle_name', 'dir_title'], 'string', 'max' => 255],
-            [['surname', 'name', 'middle_name', 'dir_title'], 'trim'],
+            [['surname', 'name', 'middle_name', 'dir_prefix'], 'string', 'max' => 255],
+            [['surname', 'name', 'middle_name', 'dir_prefix'], 'trim'],
             [['students_id', 'competencies_id'], 'integer'],
             ['middle_name', 'default', 'value' => null],
             [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
@@ -109,7 +107,7 @@ class StudentsCompetencies extends ActiveRecord
         return [
             'students_id' => 'Студент',
             'competencies_id' => 'Компетенция',
-            'dir_title' => 'Директория',
+            'dir_prefix' => 'Директория',
             'surname' => 'Фамилия',
             'name' => 'Имя',
             'middle_name' => 'Отчество',
@@ -168,9 +166,11 @@ class StudentsCompetencies extends ActiveRecord
     /**
      * Get DataProvider students
      * 
-     * @return array
+     * @param int $page page size
+     * 
+     * @return ActiveDataProvider
      */
-    public static function getDataProviderStudents($page)
+    public static function getDataProviderStudents(int $page): ActiveDataProvider
     {
         return new ActiveDataProvider([
             'query' => StudentsCompetencies::find()
@@ -181,7 +181,7 @@ class StudentsCompetencies extends ActiveRecord
                     'middle_name',
                     'login',
                     Passwords::tableName() . '.password',
-                    'dir_title',
+                    'dir_prefix',
                 ])
                 ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_STUDENT), 'competencies_id' => Yii::$app->user->id])
                 ->joinWith('passwords', false)
@@ -193,20 +193,36 @@ class StudentsCompetencies extends ActiveRecord
         ]);
     }
 
-    public function getDirModulesTitle($numberModule)
+    /**
+     * Returns the full name of the student module directory.
+     * 
+     * @param string $prefix prefix directory.
+     * @param int $numberModule module number.
+     * @return string full name directory.
+     */
+    public function getDirectoryModuleTitle(string $prefix, int $numberModule): string
     {
-        return "$this->dir_title" . "-m" . $numberModule;
-    }
-
-    public function getDbTitle($login, $numberModule)
-    {
-        return "$login" . "_m" . $numberModule;
+        return "{$prefix}-m{$numberModule}";
     }
 
     /**
-     * Add student
+     * Returns the full name of the student module database.
      * 
-     * @return bool
+     * @param string $login login student.
+     * @param int $numberModule module number.
+     * @return string full name database.
+     */
+    public function getDbTitle(string $login, int $numberModule): string
+    {
+        return "{$login}_m{$numberModule}";
+    }
+
+    /**
+     * Adds a new user with the `student` role
+     * 
+     * @return bool returns the value `true` if the student has been successfully added.
+     * 
+     * @throws Exception|Throwable throws an exception if an error occurs when adding a student.
      */
     public function addStudent(): bool
     {
@@ -217,7 +233,6 @@ class StudentsCompetencies extends ActiveRecord
             try {
                 $user = new Users();
                 $user->attributes = $this->attributes;
-
                 if ($user->addStudent()) {
                     $student_competenc = new StudentsCompetencies();
                     $student_competenc->students_id = $user->id;
@@ -237,93 +252,154 @@ class StudentsCompetencies extends ActiveRecord
         return false;
     }
 
-    public function createDirStudent()
+    /**
+     * Creates a student directory.
+     * 
+     * @param $login login student.
+     * 
+     * @return bool returns the value `true` if the student directory has been successfully created.
+     */
+    public function createDirectoryStudent(string $login): bool
     {
-        $login = $this->users?->login;
-        if (FileComponent::createDir(Yii::getAlias('@users') . "/$login")) {
-            return $this->createDirModulesStudent($login);
-        }
-        return false;
+        return FileComponent::createDirectory(Yii::getAlias('@users') . "/$login");
     }
 
-    public function createDirModulesStudent($login)
+    /**
+     * Creates a modules directories.
+     * 
+     * @param string $login login student.
+     * @param string $prefix prefix directory.
+     * 
+     * @return bool returns the value `true` if the modules directories has been successfully created.
+     */
+    public function createDirectoriesModules(string $login, string $prefix): bool
     {
         $numberModule = $this->competencies->num_modules;
-        $this->dir_title = AppComponent::generateRandomString(8, ['lowercase']);
         for($i = 0; $i < $numberModule; $i++) {
-            if (!FileComponent::createDir(Yii::getAlias('@users') . "/$login/" . $this->getDirModulesTitle($i+1))) {
-                FileComponent::deleteDir(Yii::getAlias('@users') . "/$login");
+            if (!FileComponent::createDirectory(Yii::getAlias('@users') . "/$login/" . $this->getDirectoryModuleTitle($prefix, $i+1))) {
                 return false;
             }
         }
         return true;
     }
 
-    public function addDbStudent()
+    /**
+     * Deletes a module directory.
+     * 
+     * @param string $login login student.
+     * @param string $prefix prefix directory.
+     * 
+     * @return void
+     */
+    public function deleteDirectoryModule(string $login, int $numberModule): void
     {
-        $login = $this->users->login;
-        $password = $this->passwords->password;
-        if (DbComponent::createUser($login, $password)) {
-            $modules = $this->modules;
-            for($i = 0; $i < count($modules); $i++) {
-                if (!DbComponent::createDb($login . '_m' . ($i + 1)) || ($modules[$i]->status && !DbComponent::addRuleDb($login, $login . '_m' . ($i + 1)))) {
-                   return false;
-                }
-            }
-            return true;
-        }
-
-        return false;
+        FileComponent::removeDirectory(Yii::getAlias('@users') . "/$login/" . $this->getDirectoryModuleTitle($this->dir_prefix, $numberModule));
     }
 
-    public function deleteDataStudent()
+    /**
+     * Creates a new MySQL user using `app\components\DbComponent::createUser()`.
+     * 
+     * @param string $login new user login.
+     * @param string $password new user password.
+     * 
+     * @return bool returns `true` if the user was successfully created.
+     * 
+     * @throws Exception|Throwable throws an exception if an error occurred while creating a account.
+     */
+    public function createAccountMySQL(string $login, string $password): bool
     {
-        $login = $this->users->login;
-        if (DbComponent::deleteUser($login)) {
-            $num_modeles = $this->competencies->num_modules;
-            for($i = 0; $i < $num_modeles; $i++) {
-                if (!$this->deleteDbStudent($i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        return false;
+        return DbComponent::createUser($login, $password);
     }
 
-    public function deleteDbStudent($numberModule)
+    /**
+     * Deletes a new MySQL user using `app\components\DbComponent::deleteUser()`.
+     * 
+     * @param string $login new user login.
+     * 
+     * @return bool returns `true` if the user was successfully deleted.
+     * 
+     * @throws Exception|Throwable throws an exception if an error occurred while deleting a account.
+     */
+    public function deleteAccountMySQL(string $login): bool
     {
-        $login = $this->users->login;
-        if (!DbComponent::deleteDb($login . '_m' . ($numberModule))) {
-            return false;
+        return DbComponent::deleteUser($login);
+    }
+
+    /**
+     * Creates student databases.
+     * 
+     * @param string $login new user login.
+     * 
+     * @return bool returns `true` if the user was successfully created.
+     * 
+     * @throws Exception|Throwable throws an exception if an error occurred while creating a databases.
+     */
+    public function createDbStudent(string $login): bool
+    {
+        $modules = $this->modules;
+        for($i = 0; $i < count($modules); $i++) {
+            if (!DbComponent::createDb($this->getDbTitle($login, $i+1)) || ($modules[$i]->status && !DbComponent::grantPrivileges($login, $this->getDbTitle($login, $i+1)))) {
+                return false;
+            }
         }
         return true;
     }
 
-    public function deleteDirStudent($numberModule)
+    /**
+     * Deletes student databases.
+     * 
+     * @param string $login new user login.
+     * 
+     * @return bool returns `true` if the user was successfully created.
+     * 
+     * @throws Exception|Throwable throws an exception if an error occurred while deleting a databases.
+     */
+    public function deleteDbStudent(string $login): bool
     {
-        $login = $this->users->login;
-        if (!FileComponent::deleteDir("$login/$this->dir_title" . '-m' . $numberModule)) {
-            return false;
+        $modules = $this->modules;
+        for($i = 0; $i < count($modules); $i++) {
+            if (!DbComponent::deleteDb($this->getDbTitle($login, $i+1))) {
+                return false;
+            }
         }
         return true;
     }
 
-    public function deleteRulesDbStudent($num_module)
+    /**
+     * Grants privileges to the database given to the student.
+     * 
+     * @param string $login new user login.
+     * @param int $numberModule module number.
+     * 
+     * @return bool returns `true` if privileges were successfully granted.
+     */
+    public function grantPrivilegesDbStudent(string $login, int $numberModule): bool
     {
-        $login = $this->users->login;
-        if (DbComponent::deleteRuleDb($login, $login . '_m' . $num_module)) {
-            return true;
-        }
-        return false;
+        return DbComponent::grantPrivileges($login, $this->getDbTitle($login, $numberModule));
     }
 
-    public function addRulesDbStudent($num_module)
+    /**
+     * Revokes all the user's privileges on the database given to the student.
+     * 
+     * @param string $login new user login.
+     * @param int $numberModule module number.
+     * 
+     * @return bool returns `true` if the privileges were successfully revoked.
+     */
+    public function revokePrivilegesDbStudent(string $login, int $numberModule): bool
     {
-        $login = $this->users->login;
-        if (DbComponent::addRuleDb($login, $login . '_m' . $num_module)) {
-            return true;
+        return DbComponent::revokePrivileges($login, $this->getDbTitle($login, $numberModule));
+    }
+
+    /**
+     * Deletes the student.
+     * 
+     * @return bool returns the value `true` if the student was successfully deleted.
+     */
+    public static function deleteStudent(int|null $id = null): bool
+    {
+        if (!is_null($id)) {
+            return Users::deleteUser($id);
         }
         return false;
     }

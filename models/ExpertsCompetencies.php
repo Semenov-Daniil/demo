@@ -50,9 +50,11 @@ class ExpertsCompetencies extends Model
     /**
      * Get DataProvider experts
      * 
-     * @return array
+     * @param int $page page size
+     * 
+     * @return ActiveDataProvider
      */
-    public static function getDataProviderExperts($page)
+    public static function getDataProviderExperts(int $page): ActiveDataProvider
     {
         return new ActiveDataProvider([
             'query' => Users::find()
@@ -77,9 +79,11 @@ class ExpertsCompetencies extends Model
     }
 
     /**
-     * Add expert
+     * Adds a new user with the `expert` role
      * 
-     * @return bool
+     * @return bool Returns the value `true` if the expert has been successfully added.
+     * 
+     * @throws Exception|Throwable Throws an exception if an error occurs when adding a expert.
      */
     public function addExpert(): bool
     {
@@ -106,6 +110,19 @@ class ExpertsCompetencies extends Model
             }
         }
 
+        return false;
+    }
+
+    /**
+     * Deletes the expert.
+     * 
+     * @return bool Returns the value `true` if the expert was successfully deleted.
+     */
+    public static function deleteExpert(int|null $id = null): bool
+    {
+        if (!is_null($id)) {
+            return Users::deleteUser($id);
+        }
         return false;
     }
 }
