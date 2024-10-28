@@ -18,15 +18,27 @@ class FileComponent extends Component implements BootstrapInterface
         }
     }
 
-    public static function createDirectory($dir): string|false
+    /**
+     * Creates a new directory.
+     * 
+     * @param string $path path of the directory to be created. 
+     * @return bool whether the directory is created successfully
+     */
+    public static function createDirectory(string $path): bool
     {
-        return !empty($dir) && FileHelper::createDirectory($dir, 0755, true);
+        return !empty($path) && FileHelper::createDirectory($path, 0755, true);
     }
 
-    public static function removeDirectory($dir): void
+    /**
+     * Removes a directory (and all its content) recursively.
+     * 
+     * @param string $path path of the directory to be created. 
+     * @return void
+     */
+    public static function removeDirectory(string $path): void
     {
-        if (!empty($dir) && is_dir($dir)) {
-            FileHelper::removeDirectory($dir);
+        if (!empty($path) && is_dir($path)) {
+            FileHelper::removeDirectory($path);
         }
     }
 }
