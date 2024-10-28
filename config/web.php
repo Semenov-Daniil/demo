@@ -72,20 +72,20 @@ $config = [
                     'pattern' => '/<action:.*>',
                     'verb' => ['GET', 'POST', 'PATH'],
                     'route' => 'expert/<action>',
-                    'roles' => 'expert'
+                    'role' => 'expert'
                 ],
                 [
                     'class' => 'app\components\RoleBasedUrlRule', 
                     'pattern' => '/<action>/<id>',
                     'verb' => ['DELETE'],
                     'route' => 'expert/delete-<action>',
-                    'roles' => 'expert'
+                    'role' => 'expert'
                 ],
                 [
                     'class' => 'app\components\RoleBasedUrlRule', 
                     'pattern' => '/<action:.*>',
                     'route' => 'student/<action>',
-                    'roles' => 'student'
+                    'role' => 'student'
                 ],
 
                 '/' => 'site/index',
