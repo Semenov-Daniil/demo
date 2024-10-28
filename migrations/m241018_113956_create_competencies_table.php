@@ -17,7 +17,6 @@ class m241018_113956_create_competencies_table extends Migration
         $this->createTable(self::TABLE_NAME, [
             'experts_id' => $this->primaryKey(),
             'title' => $this->string(255)->notNull(),
-            'num_modules' => $this->integer()->notNull()->defaultValue(1),
         ]);
 
         $this->addForeignKey('fk-competencies-experts_id', self::TABLE_NAME, 'experts_id', '{{%users}}', 'id', 'CASCADE', 'CASCADE');

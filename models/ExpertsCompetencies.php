@@ -16,7 +16,7 @@ class ExpertsCompetencies extends Model
     public string $name = '';
     public string $middle_name = '';
     public string $title = '';
-    public int $num_modules = 1;
+    public int $module_count = 1;
 
     const TITLE_ROLE_EXPERT = "expert";
 
@@ -26,9 +26,9 @@ class ExpertsCompetencies extends Model
     public function rules(): array
     {
         return [
-            [['surname', 'name', 'title', 'num_modules'], 'required'],
+            [['surname', 'name', 'title', 'module_count'], 'required'],
             [['surname', 'name', 'middle_name', 'title'], 'string', 'max' => 255],
-            [['num_modules'], 'integer', 'min' => 1],
+            [['module_count'], 'integer', 'min' => 1],
             [['surname', 'name', 'middle_name', 'title'], 'trim'],
         ];
     }
@@ -43,7 +43,7 @@ class ExpertsCompetencies extends Model
             'name' => 'Имя',
             'middle_name' => 'Отчество',
             'title' => 'Название компетенции',
-            'num_modules' => 'Кол-во модулей',
+            'module_count' => 'Кол-во модулей',
         ];
     }
 
@@ -56,6 +56,10 @@ class ExpertsCompetencies extends Model
      */
     public static function getDataProviderExperts(int $page): ActiveDataProvider
     {
+        $subQuery = Modules::find()
+            ->select('COUNT(*)')
+            ->where(Modules::tableName() . '.competencies_id = ' . Competencies::tableName() . '.experts_id');
+
         return new ActiveDataProvider([
             'query' => Users::find()
                 ->select([
@@ -66,7 +70,7 @@ class ExpertsCompetencies extends Model
                     'login',
                     Passwords::tableName() . '.password',
                     Competencies::tableName() . '.title',
-                    Competencies::tableName() . '.num_modules',
+                    'module_count' => $subQuery
                 ])
                 ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
                 ->joinWith('passwords', false)

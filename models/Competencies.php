@@ -11,7 +11,6 @@ use yii\helpers\VarDumper;
  *
  * @property int $experts_id
  * @property string $title
- * @property int $num_modules
  *
  * @property Users $users
  * @property Modules[] $modules
@@ -19,10 +18,12 @@ use yii\helpers\VarDumper;
  */
 class Competencies extends ActiveRecord
 {
+    public int $module_count = 1;
+
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'num_modules', '!experts_id'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'module_count', '!experts_id'];
         return $scenarios;
     }
 
@@ -31,7 +32,7 @@ class Competencies extends ActiveRecord
         parent::afterSave($insert, $changedAttributes);
 
         if ($insert) {
-            for ($i = 0; $i < $this->num_modules; $i++) {
+            for ($i = 0; $i < $this->module_count; $i++) {
                 $module = new Modules(['competencies_id' => $this->experts_id]);
                 $module->save();
             }
@@ -52,8 +53,8 @@ class Competencies extends ActiveRecord
     public function rules()
     {
         return [
-            [['title', 'num_modules'], 'required'],
-            [['num_modules'], 'integer', 'min' => 1],
+            [['title', 'module_count'], 'required'],
+            [['module_count'], 'integer', 'min' => 1],
             [['title'], 'string', 'max' => 255],
             [['experts_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['experts_id' => 'id']],
         ];
@@ -67,7 +68,14 @@ class Competencies extends ActiveRecord
         return [
             'experts_id' => 'Эксперт',
             'title' => 'Название тестирования',
-            'num_modules' => 'Кол-во модулей',
+            'module_count' => 'Кол-во модулей',
+        ];
+    }
+
+    public function attributes() {
+        return [
+            ...parent::attributes(),
+            'module_count',
         ];
     }
 

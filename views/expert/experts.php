@@ -75,7 +75,7 @@ $this->registerJs($deleteExpert);
                             <?= $form->field($model, 'title')->textInput() ?>
                         </div>
                         <div class="col-6">
-                            <?= $form->field($model, 'num_modules')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
+                            <?= $form->field($model, 'module_count')->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
                         </div>
                     </div>
                 </div>
@@ -108,9 +108,9 @@ $this->registerJs($deleteExpert);
                         },
                     ],
                     [
-                        'attribute' => 'Num modules',
+                        'attribute' => 'Count modules',
                         'value' => function($model) {
-                            return $model['num_modules'];
+                            return $model['module_count'];
                         },
                     ],
                     [
