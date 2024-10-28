@@ -7,6 +7,7 @@
 /** @var app\models\UsersCompetencies $dataProvider */
 
 use app\models\Users;
+use app\widgets\Alert;
 use yii\bootstrap5\ActiveForm;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
@@ -16,14 +17,33 @@ use yii\helpers\VarDumper;
 use yii\widgets\Pjax;
 
 $this->title = 'Студенты';
+
+$deleteStudent = <<<JS
+    $("#pjax-student").on("mousedown", ".btn-delete", function(event_mousedown) {
+        event_mousedown.preventDefault();
+        $(this).on("mouseup", function(event_mouseup) {
+            event_mouseup.preventDefault();
+            $.ajax({
+                type: "DELETE",
+                url: "/students/" + event_mouseup.target.dataset.id,
+                success: function (response) {
+                    $.pjax.reload({container: "#pjax-student"});
+                },
+            });
+        });
+    });
+JS;
+
+$this->registerJs($deleteStudent);
 ?>
 <div class="site-students">
-    <h1><?= Html::encode($this->title) ?></h1>
+    <h3><?= Html::encode($this->title) ?></h3>
     
     <div>
         <?php Pjax::begin([
-            'id' => 'ajax-form'
+            'id' => 'pjax-student'
         ]); ?>
+            <?= Alert::widget(); ?>
             <?php $form = ActiveForm::begin([
                 'id' => 'add-student-form',
                 'options' => [
@@ -31,23 +51,31 @@ $this->title = 'Студенты';
                 ],
                 'fieldConfig' => [
                     'template' => "{label}\n{input}\n{error}",
-                    'labelOptions' => ['class' => 'col-lg-1 col-form-label mr-lg-3'],
-                    'inputOptions' => ['class' => 'col-lg-3 form-control'],
-                    'errorOptions' => ['class' => 'col-lg-7 invalid-feedback'],
+                    'labelOptions' => ['class' => 'col-form-label mr-lg-3'],
+                    'inputOptions' => ['class' => 'form-control'],
+                    'errorOptions' => ['class' => 'invalid-feedback'],
                 ],
             ]); ?>
     
-            <?= $form->field($model, 'surname')->textInput() ?>
-    
-            <?= $form->field($model, 'name')->textInput() ?>
-            
-            <?= $form->field($model, 'middle_name')->textInput() ?>
-    
-            <div class="form-group">
                 <div>
-                    <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add-button']) ?>
+                    <div class="row">
+                        <div class="col-4">
+                            <?= $form->field($model, 'surname')->textInput() ?>
+                        </div>
+                        <div class="col-4">
+                            <?= $form->field($model, 'name')->textInput() ?>
+                        </div>
+                        <div class="col-4">
+                            <?= $form->field($model, 'middle_name')->textInput() ?>
+                        </div>
+                    </div>
                 </div>
-            </div>
+    
+                <div class="form-group">
+                    <div>
+                        <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add']) ?>
+                    </div>
+                </div>
             <?php ActiveForm::end(); ?>
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
@@ -70,11 +98,7 @@ $this->title = 'Студенты';
                         'template' => '{delete}',
                         'buttons' => [
                             'delete' => function ($url, $model, $key) {
-                                return
-                                    Html::beginForm(['/delete-student'], 'post', ['data' => ['pjax' => true]])
-                                    . Html::submitButton('Удалить', ['class' => 'btn btn-danger', 'data' => ['method' => 'POST', 'params' => ['id' => $model['students_id']]]])
-                                    . Html::endForm()
-                                ;
+                                return Html::button('Удалить', ['data' => ['id' => $model['students_id'], 'pjax' => true], 'class' => 'btn btn-danger btn-delete']);
                             }
                         ],
                         'visibleButtons' => [
