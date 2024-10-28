@@ -43,7 +43,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
     Yii::$app->user->can('expert') 
     && array_push($items, 
-        ['label' => 'Настройки', 'url' => ['expert/settings']],
+        ['label' => 'Эксперты', 'url' => ['expert/experts']],
         ['label' => 'Студенты', 'url' => ['expert/students']],
         ['label' => 'Файлы', 'url' => ['expert/files']],
         ['label' => 'Модули', 'url' => ['expert/modules']],
@@ -71,12 +71,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         <?php if (!empty($this->params['breadcrumbs'])): ?>
             <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
         <?php endif ?>
-        <?php Pjax::begin([
-            'id' => 'ajax-main'
-        ]); ?>
-            <?= Alert::widget() ?>
-            <?= $content ?>
-        <?php Pjax::end(); ?>
+        <?= $content ?>
     </div>
 </main>
 

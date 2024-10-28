@@ -11,13 +11,12 @@ use yii\bootstrap5\Html;
 use yii\widgets\Pjax;
 
 $this->title = 'Авторизация';
-
 ?>
 <div class="user-login">
     <h1><?= Html::encode($this->title) ?></h1>
 
     <?php Pjax::begin([
-        'id' => 'ajax-form'
+        'id' => 'pjax-login'
     ]); ?>
         <?php $form = ActiveForm::begin([
             'id' => 'login-form',

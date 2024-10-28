@@ -35,11 +35,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
 <main id="main" class="d-flex flex-shrink-0 flex-fill" role="main">
     <div class="d-flex flex-fill justify-content-center align-items-center">
-        <?php Pjax::begin([
-            'id' => 'ajax-main'
-        ]); ?>
-            <?= $content ?>
-        <?php Pjax::end(); ?>
+        <?= $content ?>
     </div>
 </main>
 
