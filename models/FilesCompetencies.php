@@ -101,7 +101,14 @@ class FilesCompetencies extends \yii\db\ActiveRecord
         return $model;
     }
 
-    public function copyFileStudent($compDir, $filename, $students)
+    /**
+     * Copies files to students.
+     * 
+     * @param string $compDir the directory where the file is copied from.
+     * @param array $filename file name.
+     * @param array $students an array with student data.
+     */
+    public function copyFileStudents(string $compDir, string $filename, array $students): void
     {
         foreach ($students as $student) {
             $studentPath = Yii::getAlias('@users') . "/" . $student['login'] . "/public";
@@ -116,7 +123,16 @@ class FilesCompetencies extends \yii\db\ActiveRecord
         }
     }
 
-    public function saveFile($dir, $students, $file)
+    /**
+     * Saves the file
+     * 
+     * @param string $dir the file's save directory.
+     * @param array $students an array of students who need to copy the saved file.
+     * @param yii\web\UploadedFile $file the file to save.
+     * 
+     * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
+     */
+    public function saveFile(string $dir, array $students, yii\web\UploadedFile $file): void
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
@@ -129,17 +145,15 @@ class FilesCompetencies extends \yii\db\ActiveRecord
                 throw new Exception("The file could not be saved $dir/$model->title.$model->extension");
             }
 
-            $this->copyFileStudent($dir, "$model->title.$model->extension", $students);
+            $this->copyFileStudents($dir, "$model->title.$model->extension", $students);
 
             $transaction->commit();
         } catch(\Exception $e) {
-            FileComponent::removeDirectory("$dir/$model->title.$model->extension");
+            unlink("$dir/$model->title.$model->extension");
             $transaction->rollBack();
-            var_dump($e);die;
         } catch(\Throwable $e) {
-            FileComponent::removeDirectory("$dir/$model->title.$model->extension");
+            unlink("$dir/$model->title.$model->extension");
             $transaction->rollBack();
-            var_dump($e);die;
         } 
     }
 
