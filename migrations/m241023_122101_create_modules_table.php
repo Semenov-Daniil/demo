@@ -8,7 +8,6 @@ use yii\db\Migration;
 class m241023_122101_create_modules_table extends Migration
 {
     const TABLE_NAME = '{{%modules}}';
-    const TABLE_NAME_USERS = '{{%users}}';
     const TABLE_NAME_COMPETENCIES = '{{%competencies}}';
 
     /**
