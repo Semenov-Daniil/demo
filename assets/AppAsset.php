@@ -24,6 +24,12 @@ class AppAsset extends AssetBundle
         'css/login.css'
     ];
     public $js = [
+        "https://use.fontawesome.com/releases/v5.3.1/js/all.js",
+    ];
+    public $jsOptions = [
+        'defer' => true,
+        'position' => \yii\web\View::POS_HEAD,
+        'crossorigin' => 'anonymous'
     ];
     public $depends = [
         'yii\web\YiiAsset',
