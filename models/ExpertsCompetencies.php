@@ -85,9 +85,9 @@ class ExpertsCompetencies extends Model
     /**
      * Adds a new user with the `expert` role
      * 
-     * @return bool Returns the value `true` if the expert has been successfully added.
+     * @return bool returns the value `true` if the expert has been successfully added.
      * 
-     * @throws Exception|Throwable Throws an exception if an error occurs when adding a expert.
+     * @throws Exception|Throwable throws an exception if an error occurs when adding a expert.
      */
     public function addExpert(): bool
     {

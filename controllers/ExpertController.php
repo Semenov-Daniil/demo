@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\components\FileComponent;
 use app\models\ExpertsCompetencies;
 use app\models\FilesCompetencies;
 use app\models\Modules;
@@ -139,9 +140,9 @@ class ExpertController extends Controller
     {
         $model = new FilesCompetencies(['scenario' => FilesCompetencies::SCENARIO_UPLOAD_FILE]);
 
-        if (Yii::$app->request->isAjax) {
+        if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('add'))) {
             $model->files = UploadedFile::getInstances($model, 'files');
-            if ($model->uploadFiles()) {
+            if (!empty($model->files) && $model->uploadFiles()) {
                 Yii::$app->session->setFlash('success', "Файл(-ы) успешно добавлен(-ы).");
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось добавить файл(-ы).");
@@ -149,8 +150,27 @@ class ExpertController extends Controller
         }
 
         return $this->render('files', [
-            "model" => $model
+            'model' => $model,
+            'dataProvider' => $model->getDataProviderFiles(),
         ]);
+    }
+
+    /**
+     * Action delete students.
+     * 
+     * @param string|null $id student ID. 
+     *
+     * @return void
+     */
+    public function actionDeleteFiles(string|null $id = null): void
+    {
+        if (Yii::$app->request->isAjax) {
+            if (FilesCompetencies::deleteFile($id)) {
+                Yii::$app->session->setFlash('success', "Файл успешно удален.");
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось удалить файл.");
+            }
+        }
     }
 
     /**
@@ -212,5 +232,32 @@ class ExpertController extends Controller
     public function actionCompetitors()
     {
         return $this->render('competitors');
+    }
+
+    public function actionDownload($competence, $filename)
+    {
+        $file = FilesCompetencies::find()
+            ->select([
+                "CONCAT(filename, '.', extension) AS originFullName",
+                "type",
+                "extension",
+            ])
+            ->where([FilesCompetencies::tableName() . '.title' => $filename, 'dir_title' => $competence])
+            ->joinWith('competencies', false)
+            ->asArray()
+            ->one()
+            ;
+
+        $filePath = Yii::getAlias('@competencies') . "/$competence/$filename." . $file['extension'];
+
+        if (file_exists($filePath)) {
+            return Yii::$app->response
+                ->sendStreamAsFile(fopen($filePath, 'r'), $file['originFullName'], [
+                    'mimeType' => $file['type'],
+                ])
+                ->send();
+        }
+
+        return $this->redirect(['/files']);
     }
 }

@@ -2,7 +2,9 @@
 
 namespace app\models;
 
+use app\components\FileComponent;
 use Yii;
+use yii\data\ActiveDataProvider;
 
 /**
  * This is the model class for table "dm_files_competencies".
@@ -12,6 +14,7 @@ use Yii;
  * @property string $title
  * @property string $filename
  * @property string $extension
+ * @property string $type
  *
  * @property Competencies $competencies
  */
@@ -42,11 +45,11 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['competencies_id', 'title', 'filename', 'extension'], 'required'],
+            [['competencies_id', 'title', 'filename', 'extension', 'type'], 'required'],
             [['competencies_id'], 'integer'],
-            [['title', 'filename', 'extension'], 'string', 'max' => 255],
+            [['title', 'filename', 'extension', 'type'], 'string', 'max' => 255],
             [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
-            [['files'], 'file', 'skipOnEmpty' => false, 'maxFiles' => 0]
+            [['files'], 'file', 'skipOnEmpty' => false, 'maxFiles' => 0, 'maxSize' => FileComponent::getMaxSizeFiles()]
         ];
     }
 
@@ -75,14 +78,42 @@ class FilesCompetencies extends \yii\db\ActiveRecord
         return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id'])->inverseOf('files-competencies');
     }
 
-    public function uploadFiles()
+    /**
+     * Add file competence
+     * 
+     * @param string $baseName the name of the uploaded file.
+     * @param string $extension the extension of the downloaded file.
+     * @param string $type the type of the downloaded file.
+     * 
+     * @return FilesCompetencies
+     */
+    public function addFileCompetence(string $baseName, string $extension, string $type): FilesCompetencies
+    {
+        $model = new FilesCompetencies();
+        $model->competencies_id = Yii::$app->user->id;
+        $model->title = Yii::$app->security->generateRandomString();
+        $model->filename = $baseName;
+        $model->extension = $extension;
+        $model->type = $type;
+        $model->save();
+        return $model;
+    }
+
+    /**
+     * Uploads files
+     * 
+     * @return bool returns the value `true` if the files were uploaded successfully.
+     * 
+     * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
+     */
+    public function uploadFiles(): bool
     {
         if ($this->validate()) {
             $transaction = Yii::$app->db->beginTransaction();
             try {
                 $dir = Yii::getAlias('@competencies') . '/' . Competencies::findOne(['experts_id' => Yii::$app->user->id])?->dir_title;
                 foreach ($this->files as $file) {
-                    $model = $this->addFileCompetence($file->baseName, $file->extension);
+                    $model = $this->addFileCompetence($file->baseName, $file->extension, $file->type);
                     if ($model->hasErrors()) {
                         $transaction->rollBack();
                         return false;
@@ -102,21 +133,41 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     }
 
     /**
-     * Add file competence
+     * Get DataProvider files
      * 
-     * @param string $baseName the name of the uploaded file.
-     * @param string $extension the extension of the downloaded file.
-     * 
-     * @return FilesCompetencies
+     * @return ActiveDataProvider
      */
-    public function addFileCompetence(string $baseName, string $extension): FilesCompetencies
+    public static function getDataProviderFiles(): ActiveDataProvider
     {
-        $model = new FilesCompetencies();
-        $model->competencies_id = Yii::$app->user->id;
-        $model->title = Yii::$app->security->generateRandomString();
-        $model->filename = $baseName;
-        $model->extension = $extension;
-        $model->save();
-        return $model;
+        return new ActiveDataProvider([
+            'query' => self::find()
+                ->select([
+                    self::tableName() . '.id as fileId',
+                    "CONCAT(filename, '.', extension) AS originFullName",
+                    self::tableName() . ".title as saveName",
+                    "dir_title as dirTitle"
+                ])
+                ->joinWith('competencies', false)
+                ->asArray()
+            ,
+            'key' => function ($model) {
+                return $model['fileId'];
+            },
+        ]);
+    }
+
+    /**
+     * Deletes the file.
+     * 
+     * @param string|null $id student ID.
+     * 
+     * @return bool returns the value `true` if the file was successfully deleted.
+     */
+    public static function deleteFile(string|null $id)
+    {
+        if (!is_null($id)) {
+            
+        }
+        return false;
     }
 }

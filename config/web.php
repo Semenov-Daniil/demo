@@ -73,6 +73,12 @@ $config = [
 
                 [
                     'class' => 'app\components\RoleBasedUrlRule', 
+                    'pattern' => '/download/<competence>/<filename>',
+                    'route' => 'expert/download',
+                    'role' => 'expert'
+                ],
+                [
+                    'class' => 'app\components\RoleBasedUrlRule', 
                     'pattern' => '/<action:.*>',
                     'verb' => ['GET', 'POST', 'PATH'],
                     'route' => 'expert/<action>',

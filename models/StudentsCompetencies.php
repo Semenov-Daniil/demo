@@ -394,9 +394,11 @@ class StudentsCompetencies extends ActiveRecord
     /**
      * Deletes the student.
      * 
+     * @param string|null $id student ID.
+     * 
      * @return bool returns the value `true` if the student was successfully deleted.
      */
-    public static function deleteStudent(int|null $id = null): bool
+    public static function deleteStudent(string|null $id = null): bool
     {
         if (!is_null($id)) {
             return Users::deleteUser($id);

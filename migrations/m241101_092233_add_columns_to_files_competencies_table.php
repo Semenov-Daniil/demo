@@ -16,6 +16,7 @@ class m241101_092233_add_columns_to_files_competencies_table extends Migration
     {
         $this->addColumn(self::TABLE_NAME, 'filename', $this->string(255)->notNull());
         $this->addColumn(self::TABLE_NAME, 'extension', $this->string(255)->notNull());
+        $this->addColumn(self::TABLE_NAME, 'type', $this->string(255)->notNull());
     }
 
     /**
@@ -23,6 +24,7 @@ class m241101_092233_add_columns_to_files_competencies_table extends Migration
      */
     public function safeDown()
     {
+        $this->dropColumn(self::TABLE_NAME, 'type');
         $this->dropColumn(self::TABLE_NAME, 'extension');
         $this->dropColumn(self::TABLE_NAME, 'filename');
     }

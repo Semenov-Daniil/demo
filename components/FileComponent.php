@@ -41,4 +41,37 @@ class FileComponent extends Component implements BootstrapInterface
             FileHelper::removeDirectory($path);
         }
     }
+
+    
+    public static function getMaxSizeFiles(): int|float|null
+    {
+        $result = null;
+        $input = trim(ini_get('upload_max_filesize'));
+        $value = substr($input, 0, -1);
+        $unit = strtolower(substr($input, -1));
+
+        if (!is_numeric($value)) {
+            return $result;
+        }
+
+        $value = (float)$value;
+
+        switch ($unit) {
+            case 'k':
+                $result = $value * 1024;
+                break;
+            case 'm':
+                $result = $value * 1024 * 1024;
+                break;
+            case 'g':
+                $result = $value * 1024 * 1024 * 1024;
+                break;
+            default:
+                if (is_numeric($input)) {
+                    $result = (int)$input;
+                }
+        }
+
+        return $result;
+    }
 }
