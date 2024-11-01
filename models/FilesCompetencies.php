@@ -3,6 +3,8 @@
 namespace app\models;
 
 use app\components\FileComponent;
+use app\controllers\StudentController;
+use Exception;
 use Yii;
 use yii\data\ActiveDataProvider;
 
@@ -99,6 +101,48 @@ class FilesCompetencies extends \yii\db\ActiveRecord
         return $model;
     }
 
+    public function copyFileStudent($compDir, $filename, $students)
+    {
+        foreach ($students as $student) {
+            $studentPath = Yii::getAlias('@users') . "/" . $student['login'] . "/public";
+
+            if (!is_dir($studentPath)) {
+                FileComponent::createDirectory($studentPath);
+            }
+
+            if (!copy("$compDir/$filename", "$studentPath/$filename")) {
+                throw new Exception("Failed to copy file from $compDir/$filename to $studentPath/$filename");
+            }
+        }
+    }
+
+    public function saveFile($dir, $students, $file)
+    {
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $model = $this->addFileCompetence($file->baseName, $file->extension, $file->type);
+            if ($model->hasErrors()) {
+                $transaction->rollBack();
+            }
+
+            if (!$file->saveAs("$dir/$model->title.$model->extension")) {
+                throw new Exception("The file could not be saved $dir/$model->title.$model->extension");
+            }
+
+            $this->copyFileStudent($dir, "$model->title.$model->extension", $students);
+
+            $transaction->commit();
+        } catch(\Exception $e) {
+            FileComponent::removeDirectory("$dir/$model->title.$model->extension");
+            $transaction->rollBack();
+            var_dump($e);die;
+        } catch(\Throwable $e) {
+            FileComponent::removeDirectory("$dir/$model->title.$model->extension");
+            $transaction->rollBack();
+            var_dump($e);die;
+        } 
+    }
+
     /**
      * Uploads files
      * 
@@ -109,24 +153,22 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     public function uploadFiles(): bool
     {
         if ($this->validate()) {
-            $transaction = Yii::$app->db->beginTransaction();
-            try {
-                $dir = Yii::getAlias('@competencies') . '/' . Competencies::findOne(['experts_id' => Yii::$app->user->id])?->dir_title;
-                foreach ($this->files as $file) {
-                    $model = $this->addFileCompetence($file->baseName, $file->extension, $file->type);
-                    if ($model->hasErrors()) {
-                        $transaction->rollBack();
-                        return false;
-                    }
-                    $file->saveAs("$dir/$model->title.$model->extension");
-                }
-                $transaction->commit();
-                return true;
-            } catch(\Exception $e) {
-                $transaction->rollBack();
-            } catch(\Throwable $e) {
-                $transaction->rollBack();
-            } 
+            $dir = Yii::getAlias('@competencies') . '/' . Competencies::findOne(['experts_id' => Yii::$app->user->id])?->dir_title;
+            $students = StudentsCompetencies::find()
+                ->select([
+                    "students_id",
+                    "login",
+                ])
+                ->where(['competencies_id' => Yii::$app->user->id])
+                ->joinWith('users', false)
+                ->asArray()
+                ->all()
+                ;
+
+            foreach ($this->files as $file) {
+                $this->saveFile($dir, $students, $file); 
+            }
+            return true;
         }
 
         return false;

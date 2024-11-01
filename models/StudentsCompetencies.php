@@ -183,7 +183,7 @@ class StudentsCompetencies extends ActiveRecord
                     Passwords::tableName() . '.password',
                     'dir_prefix',
                 ])
-                ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_STUDENT), 'competencies_id' => Yii::$app->user->id])
+                ->where(['competencies_id' => Yii::$app->user->id])
                 ->joinWith('passwords', false)
                 ->joinWith('users', false)
                 ->asArray(),
@@ -243,8 +243,10 @@ class StudentsCompetencies extends ActiveRecord
                     }
                 }
             } catch(\Exception $e) {
+                FileComponent::removeDirectory(Yii::getAlias('@users') . "/$user->login");
                 $transaction->rollBack();
             } catch(\Throwable $e) {
+                FileComponent::removeDirectory(Yii::getAlias('@users') . "/$user->login");
                 $transaction->rollBack();
             }
         }
@@ -274,7 +276,7 @@ class StudentsCompetencies extends ActiveRecord
      */
     public function createDirectoriesModules(string $login, string $prefix): bool
     {
-        $numberModule = $this->competencies->num_modules;
+        $numberModule = count($this->competencies->modules);
         for($i = 0; $i < $numberModule; $i++) {
             if (!FileComponent::createDirectory(Yii::getAlias('@users') . "/$login/" . $this->getDirectoryModuleTitle($prefix, $i+1))) {
                 return false;
