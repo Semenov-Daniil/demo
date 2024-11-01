@@ -15,7 +15,11 @@ Thumbs.db
 # composer vendor dir
 /vendor
 
-/users
+#users folder
+/users/*
+
+#competencies folder
+/competencies/*
 
 # composer itself is not needed
 composer.phar

@@ -57,8 +57,8 @@ $deleteModule = <<<JS
     });
 JS;
 
-$this->registerJs($changeStatus);
-$this->registerJs($deleteModule);
+$this->registerJs($changeStatus, $this::POS_READY);
+$this->registerJs($deleteModule, $this::POS_READY);
 
 ?>
 <div class="site-modules">

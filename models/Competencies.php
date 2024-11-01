@@ -2,6 +2,9 @@
 
 namespace app\models;
 
+use app\components\AppComponent;
+use app\components\DbComponent;
+use app\components\FileComponent;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
@@ -11,6 +14,7 @@ use yii\helpers\VarDumper;
  *
  * @property int $experts_id
  * @property string $title
+ * @property string $dir_title
  *
  * @property Users $users
  * @property Modules[] $modules
@@ -23,8 +27,22 @@ class Competencies extends ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'module_count', '!experts_id'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'module_count', '!experts_id', '!dir_title'];
         return $scenarios;
+    }
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($this->isNewRecord) {
+                $this->dir_title = $this->getUniqueStr('dir_title', 8, ['lowercase']);
+
+                return FileComponent::createDirectory(Yii::getAlias('@competencies') . '/' . $this->dir_title);
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function afterSave($insert, $changedAttributes)
@@ -37,6 +55,17 @@ class Competencies extends ActiveRecord
                 $module->save();
             }
         }
+    }
+
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        FileComponent::removeDirectory(Yii::getAlias('@competencies') . '/' . $this->dir_title);
+
+        return true;
     }
     
     /**
@@ -55,7 +84,8 @@ class Competencies extends ActiveRecord
         return [
             [['title', 'module_count'], 'required'],
             [['module_count'], 'integer', 'min' => 1],
-            [['title'], 'string', 'max' => 255],
+            [['experts_id'], 'integer'],
+            [['title', 'dir_title'], 'string', 'max' => 255],
             [['experts_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['experts_id' => 'id']],
         ];
     }
@@ -69,6 +99,7 @@ class Competencies extends ActiveRecord
             'experts_id' => 'Эксперт',
             'title' => 'Название тестирования',
             'module_count' => 'Кол-во модулей',
+            'dir_title' => 'Название директории'
         ];
     }
 
@@ -86,7 +117,7 @@ class Competencies extends ActiveRecord
      */
     public function getUsers()
     {
-        return $this->hasOne(Users::class, ['id' => 'experts_id']);
+        return $this->hasOne(Users::class, ['id' => 'experts_id'])->inverseOf('competencies');
     }
 
     /**
@@ -96,7 +127,7 @@ class Competencies extends ActiveRecord
      */
     public function getModules()
     {
-        return $this->hasMany(Modules::class, ['competencies_id' => 'experts_id']);
+        return $this->hasMany(Modules::class, ['competencies_id' => 'experts_id'])->inverseOf('competencies');
     }
 
     /**
@@ -106,6 +137,34 @@ class Competencies extends ActiveRecord
      */
     public function getStudentsCompetencies()
     {
-        return $this->hasMany(StudentsCompetencies::class, ['competencies_id' => 'experts_id']);
+        return $this->hasMany(StudentsCompetencies::class, ['competencies_id' => 'experts_id'])->inverseOf('competencies');
+    }
+
+    /**
+     * Gets query for [[FilesCompetencies]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getFilesCompetencies()
+    {
+        return $this->hasMany(FilesCompetencies::class, ['competencies_id' => 'experts_id'])->inverseOf('competencies');
+    }
+
+    /**
+     * @param string $attr the name of the attribute to set a unique string value
+     * @param int $length the length string
+     * @param array $charSets An array of character sets to generate a string. Each element is a string of characters.
+     * 
+     * @return string a unique string is returned for this attribute.
+     */
+    public function getUniqueStr(string $attr, int $length = 32, array $charSets = []): string
+    {
+        $str = $charSets ? AppComponent::generateRandomString($length, $charSets) : Yii::$app->security->generateRandomString($length);
+    
+        while(!DbComponent::isUniqueValue(self::class, $attr, $str)) {
+            $str = $charSets ? AppComponent::generateRandomString($length, $charSets) : Yii::$app->security->generateRandomString($length);
+        }
+
+        return $str;
     }
 }

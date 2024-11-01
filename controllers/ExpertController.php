@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\ExpertsCompetencies;
+use app\models\FilesCompetencies;
 use app\models\Modules;
 use app\models\StudentsCompetencies;
 use app\models\Users;
@@ -12,6 +13,7 @@ use yii\filters\VerbFilter;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\Response;
+use yii\web\UploadedFile;
 
 class ExpertController extends Controller
 {
@@ -135,7 +137,20 @@ class ExpertController extends Controller
      */
     public function actionFiles()
     {
-        return $this->render('files');
+        $model = new FilesCompetencies(['scenario' => FilesCompetencies::SCENARIO_UPLOAD_FILE]);
+
+        if (Yii::$app->request->isAjax) {
+            $model->files = UploadedFile::getInstances($model, 'files');
+            if ($model->uploadFiles()) {
+                Yii::$app->session->setFlash('success', "Файл(-ы) успешно добавлен(-ы).");
+            } else {
+                Yii::$app->session->setFlash('error', "Не удалось добавить файл(-ы).");
+            }
+        }
+
+        return $this->render('files', [
+            "model" => $model
+        ]);
     }
 
     /**

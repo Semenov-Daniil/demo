@@ -197,4 +197,20 @@ class DbComponent extends Component
         preg_match('/host=([^;]+)/', Yii::$app->db->dsn, $matches);
         return $matches[1];
     }
+
+    /**
+     * Checks for the unique value of this attribute.
+     * 
+     * @param string $class the class in which the check takes place
+     * @param string $attr the name of the attribute that is being checked
+     * @param mixed $value the value that is being checked
+     * 
+     * @return bool
+     */
+    public static function isUniqueValue(string $class, string $attr, mixed $value): bool
+    {
+        return !$class::find()
+            ->where([$attr => $value])
+            ->exists();
+    }
 }

@@ -34,7 +34,7 @@ $deleteExpert = <<<JS
     });
 JS;
 
-$this->registerJs($deleteExpert);
+$this->registerJs($deleteExpert, $this::POS_READY);
 ?>
 <div class="site-experts">
     <h3><?= Html::encode($this->title) ?></h3>

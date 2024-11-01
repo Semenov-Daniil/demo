@@ -6,12 +6,23 @@ $db = require __DIR__ . '/db.php';
 $config = [
     'id' => 'demo-console',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+        'log',
+        [
+            'class' => 'app\components\FileComponent',
+            'directories' => [
+                '@users',
+                '@competencies'
+            ],
+        ]
+    ],
     'controllerNamespace' => 'app\commands',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
         '@tests' => '@app/tests',
+        '@users' => '@app/users',
+        '@competencies' => '@app/competencies',
     ],
     'components' => [
         'cache' => [

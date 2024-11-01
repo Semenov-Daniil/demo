@@ -11,7 +11,10 @@ $config = [
         'log',
         [
             'class' => 'app\components\FileComponent',
-            'directories' => ['@users'],
+            'directories' => [
+                '@users',
+                '@competencies'
+            ],
         ]
     ],
     'language' => 'ru-Ru',
@@ -19,6 +22,7 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
         '@users' => '@app/users',
+        '@competencies' => '@app/competencies',
     ],
     'components' => [
         'request' => [

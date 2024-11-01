@@ -43,7 +43,7 @@ class Modules extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'dm_modules';
+        return '{{%modules}}';
     }
 
     /**

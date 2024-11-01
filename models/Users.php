@@ -3,6 +3,7 @@
 namespace app\models;
 
 use app\components\AppComponent;
+use app\components\FileComponent;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\db\Transaction;
@@ -79,6 +80,8 @@ class Users extends ActiveRecord implements IdentityInterface
                     return false;
                 }
             }
+
+            FileComponent::removeDirectory(Yii::getAlias('@competencies') . '/' . $this->competencies->dir_title);
         }
 
         return true;
@@ -247,7 +250,6 @@ class Users extends ActiveRecord implements IdentityInterface
     /**
      * Add user
      * 
-     * @param array $data 
      * @return bool
      */
     public function addUser(): bool
@@ -298,10 +300,8 @@ class Users extends ActiveRecord implements IdentityInterface
             $transaction->rollBack();
         } catch(\Exception $e) {
             $transaction->rollBack();
-            var_dump($e);die;
         } catch(\Throwable $e) {
             $transaction->rollBack();
-            var_dump($e);die;
         }
 
         return false;
