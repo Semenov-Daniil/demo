@@ -5,6 +5,7 @@ namespace app\models;
 use app\components\AppComponent;
 use app\components\DbComponent;
 use app\components\FileComponent;
+use Exception;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
@@ -39,7 +40,7 @@ class StudentsCompetencies extends ActiveRecord
                 $password = $this->passwords->password;
                 $this->dir_prefix = AppComponent::generateRandomString(8, ['lowercase']);
 
-                if ($this->createAccountMySQL($login, $password) && $this->createDbsStudent($login) && $this->createDirectoryStudent($login) && $this->createDirectoriesModules($login, $this->dir_prefix)) {
+                if ($this->createAccountMySQL($login, $password) && $this->createDbsStudent($login) && $this->createDirectoryStudent($login) && $this->createDirectoriesModules($login, $this->dir_prefix) && $this->copyFilesCompetencies($login)) {
                     return true;
                 }
 
@@ -296,6 +297,43 @@ class StudentsCompetencies extends ActiveRecord
     public function deleteDirectoryModule(string $login, int $numberModule): void
     {
         FileComponent::removeDirectory(Yii::getAlias('@users') . "/$login/" . $this->getDirectoryModuleTitle($this->dir_prefix, $numberModule));
+    }
+
+    /**
+     * Copies competence files to the student.
+     * 
+     * @param $login student's login.
+     * 
+     * @return bool `true` on success or `false` on failure.
+     * 
+     * @throws Exception throws an exception if an error occurs when copying files.
+     */
+    public function copyFilesCompetencies(string $login): bool
+    {
+        try {
+            $files = $this->competencies->filesCompetencies;
+
+            if (!empty($files)) {
+                $competencePath = Yii::getAlias('@competencies') . "/" . $this->competencies->dir_title;
+                $studentPath = Yii::getAlias('@users') . "/$login/public";
+    
+                if (!is_dir($studentPath)) {
+                    FileComponent::createDirectory($studentPath);
+                }
+    
+                foreach ($files as $file) {
+                    if (!copy("$competencePath/$file->title.$file->extension", "$studentPath/$file->title.$file->extension")) {
+                        throw new Exception("Failed to copy file from $competencePath/$file->title.$file->extension to $studentPath/$file->title.$file->extension");
+                    }
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        return false;
     }
 
     /**

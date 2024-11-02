@@ -165,7 +165,7 @@ class ExpertController extends Controller
     public function actionDeleteFiles(string|null $id = null): void
     {
         if (Yii::$app->request->isAjax) {
-            if (FilesCompetencies::deleteFile($id)) {
+            if (FilesCompetencies::deleteFileCompetence($id)) {
                 Yii::$app->session->setFlash('success', "Файл успешно удален.");
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось удалить файл.");

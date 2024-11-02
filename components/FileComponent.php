@@ -42,7 +42,27 @@ class FileComponent extends Component implements BootstrapInterface
         }
     }
 
-    
+    /**
+     * Deletes the file at the specified path.
+     * 
+     * @param string $path the path to the file. 
+     * 
+     * @return bool `true` on success or `false` on failure.
+     */
+    public static function deleteFile(string $path): bool
+    {
+        if (file_exists($path)) {
+            return unlink($path);
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the maximum file size in bytes to download.
+     * 
+     * @return int|float|null
+     */
     public static function getMaxSizeFiles(): int|float|null
     {
         $result = null;

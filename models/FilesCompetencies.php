@@ -33,6 +33,17 @@ class FilesCompetencies extends \yii\db\ActiveRecord
         return $scenarios;
     }
 
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        $competencePath = Yii::getAlias('@competencies') . "/" . $this->competencies->dir_title;
+
+        return $this->deleteFilesStudents() && FileComponent::deleteFile("$competencePath/$this->title.$this->extension");
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -77,7 +88,7 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      */
     public function getCompetencies()
     {
-        return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id'])->inverseOf('files-competencies');
+        return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id'])->inverseOf('filesCompetencies');
     }
 
     /**
@@ -149,10 +160,10 @@ class FilesCompetencies extends \yii\db\ActiveRecord
 
             $transaction->commit();
         } catch(\Exception $e) {
-            unlink("$dir/$model->title.$model->extension");
+            FileComponent::deleteFile("$dir/$model->title.$model->extension");
             $transaction->rollBack();
         } catch(\Throwable $e) {
-            unlink("$dir/$model->title.$model->extension");
+            FileComponent::deleteFile("$dir/$model->title.$model->extension");
             $transaction->rollBack();
         } 
     }
@@ -203,6 +214,7 @@ class FilesCompetencies extends \yii\db\ActiveRecord
                     self::tableName() . ".title as saveName",
                     "dir_title as dirTitle"
                 ])
+                ->where(['competencies_id' => Yii::$app->user->id])
                 ->joinWith('competencies', false)
                 ->asArray()
             ,
@@ -219,11 +231,38 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      * 
      * @return bool returns the value `true` if the file was successfully deleted.
      */
-    public static function deleteFile(string|null $id)
+    public static function deleteFileCompetence(string|null $id)
     {
         if (!is_null($id)) {
-            
+            if ($model = self::findOne(['id' => $id])) {
+                if ($model->delete()) {
+                    return true;
+                }
+            }
         }
         return false;
+    }
+
+    /**
+     * Deletes a file from students.
+     * 
+     * @return bool `true` on success or `false` on failure.
+     */
+    public function deleteFilesStudents(): bool
+    {
+        $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
+
+        foreach ($students as $student) {
+            $studentPath = Yii::getAlias('@users') . "/" . $student->users->login . "/public";
+            if (FileComponent::deleteFile("$studentPath/$this->title.$this->extension")) {
+                if (empty(glob("$studentPath/*"))) {
+                    FileComponent::removeDirectory($studentPath);
+                }
+            } else {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
