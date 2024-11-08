@@ -5,32 +5,35 @@ namespace app\commands;
 use app\models\ExpertsCompetencies;
 use yii\console\Controller;
 use yii\console\ExitCode;
+use yii\helpers\Console;
 
 class UserController extends Controller
 {
-    public $defaultAction = 'init';
-
     /**
      * This command creates user expert.
      * 
      * @return int Exit code
      */
-    public function actionCreateExpert()
+    public function actionCreateExpert(int $count = 1)
     {
-        $model = new ExpertsCompetencies();
-        
-        $model->load([
-            'surname' => 'Main',
-            'name' => 'Expert',
-            'title' => 'Сompetence',
-            'num_modules' => 4
-        ], '');
-
-        if ($model->addExpert()) {
-            echo "\nExpert create\n";
-            return ExitCode::OK;
+        for ($i = 0; $i < $count; $i++) {
+            $model = new ExpertsCompetencies();
+            
+            $model->load([
+                'surname' => 'Main',
+                'name' => 'Expert',
+                'title' => 'Сompetence',
+                'module_count' => 4
+            ], '');
+    
+            if ($model->addExpert()) {
+                $this->stdout("Expert №" . $i + 1 . " has been successfully created!\n", Console::BG_GREEN);
+            } else {
+                $this->stdout("Expert №" . $i + 1 . " has not been created!\n", Console::BG_RED);
+            }
+    
         }
 
-        return ExitCode::UNSPECIFIED_ERROR;
+        return ExitCode::OK;
     }
 }

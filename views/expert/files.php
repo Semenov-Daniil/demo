@@ -65,6 +65,15 @@ $this->registerJs($deleteFile, $this::POS_READY);
                 </div>
 
             <?php ActiveForm::end(); ?>
+            
+            <div>
+                <?php
+                    //echo '<label class="control-label">Add Attachments</label>';
+                    //echo FileInput::widget([
+                    //     'name' => 'attachment',
+                    // ]);
+                ?>
+            </div>
 
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,

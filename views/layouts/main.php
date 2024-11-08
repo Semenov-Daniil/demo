@@ -53,7 +53,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                     . Html::beginForm(['logout'])
                     . Html::submitButton(
                         'Выход (' . Yii::$app->user->identity->login . ')',
-                        ['class' => 'nav-link logout']
+                        ['class' => 'nav-link btn btn-link logout']
                     )
                     . Html::endForm()
                     . '</li>';
