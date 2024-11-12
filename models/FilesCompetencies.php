@@ -202,9 +202,11 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     /**
      * Get DataProvider files
      * 
+     * @param int $records number of records.
+     * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderFiles(): ActiveDataProvider
+    public static function getDataProviderFiles(int $records): ActiveDataProvider
     {
         return new ActiveDataProvider([
             'query' => self::find()
@@ -221,6 +223,9 @@ class FilesCompetencies extends \yii\db\ActiveRecord
             'key' => function ($model) {
                 return $model['fileId'];
             },
+            'pagination' => [
+                'pageSize' => $records,
+            ],
         ]);
     }
 
@@ -264,5 +269,28 @@ class FilesCompetencies extends \yii\db\ActiveRecord
         }
 
         return true;
+    }
+
+    /**
+     * Finds a file by its name and directory.
+     * 
+     * @param string $filename file name.
+     * @param string $competence the name of the competence directory.
+     * 
+     * @return array|null if the file is found, it returns the file data as an `array`, otherwise it returns `null`.
+     */
+    public static function findFile(string $filename, string $competence): array|null
+    {
+        return self::find()
+            ->select([
+                "CONCAT(filename, '.', extension) AS originFullName",
+                "type",
+                "extension",
+            ])
+            ->where([self::tableName() . '.title' => $filename, 'dir_title' => $competence])
+            ->joinWith('competencies', false)
+            ->asArray()
+            ->one()
+            ;
     }
 }

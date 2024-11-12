@@ -18,30 +18,17 @@ use yii\widgets\Pjax;
 
 $this->title = 'Студенты';
 
-$deleteStudent = <<<JS
-    $("#pjax-student").on("mousedown", ".btn-delete", function(event_mousedown) {
-        event_mousedown.preventDefault();
-        $(this).on("mouseup", function(event_mouseup) {
-            event_mouseup.preventDefault();
-            $.ajax({
-                type: "DELETE",
-                url: "/students/" + event_mouseup.target.dataset.id,
-                success: function (response) {
-                    $.pjax.reload({container: "#pjax-student"});
-                },
-            });
-        });
-    });
-JS;
-
-$this->registerJs($deleteStudent, $this::POS_READY);
+$this->registerJsFile('/js/students.js', ['depends' => 'yii\web\JqueryAsset']);
 ?>
 <div class="site-students">
+
     <h3><?= Html::encode($this->title) ?></h3>
     
     <div>
         <?php Pjax::begin([
-            'id' => 'pjax-student'
+            'id' => 'pjax-students-form',
+            'enablePushState' => false,
+            'timeout' => 10000,
         ]); ?>
             <?= Alert::widget(); ?>
             <?php $form = ActiveForm::begin([
@@ -77,24 +64,35 @@ $this->registerJs($deleteStudent, $this::POS_READY);
                     </div>
                 </div>
             <?php ActiveForm::end(); ?>
+        <?php Pjax::end(); ?>
+
+        <?php Pjax::begin([
+            'id' => 'pjax-students',
+            'enablePushState' => false,
+            'timeout' => 10000,
+        ]); ?>
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
                 'pager' => ['class' => \yii\bootstrap5\LinkPager::class],
+                'layout' => "
+                    <div class=\"mt-3\">{pager}</div>\n
+                    <div >{items}</div>\n
+                    <div class=\"mt-3\">{pager}</div>",
                 'columns' => [
                     [
-                        'label' => 'Full name',
+                        'label' => 'Полное имя',
                         'value' => function ($model) {
-                            return trim($model['surname']) . ' ' . trim($model['name']) . ($model['middle_name'] ? (' ' . trim($model['middle_name'])) : '');
+                            return $model['fullName'];
                         },
                     ],
                     [
-                        'label' => 'Login/Password',
+                        'label' => 'Логин/Пароль',
                         'value' => function ($model) {
-                            return $model['login'] . '/' . $model['password'];
+                            return $model['loginPassword'];
                         },
                     ],
                     [
-                        'class' => ActionColumn::className(),
+                        'class' => ActionColumn::class,
                         'template' => '{delete}',
                         'buttons' => [
                             'delete' => function ($url, $model, $key) {

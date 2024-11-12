@@ -167,29 +167,25 @@ class StudentsCompetencies extends ActiveRecord
     /**
      * Get DataProvider students
      * 
-     * @param int $page page size
+     * @param int $records number of records.
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderStudents(int $page): ActiveDataProvider
+    public static function getDataProviderStudents(int $records): ActiveDataProvider
     {
         return new ActiveDataProvider([
             'query' => StudentsCompetencies::find()
                 ->select([
-                    'students_id',
-                    'surname',
-                    'name',
-                    'middle_name',
-                    'login',
-                    Passwords::tableName() . '.password',
-                    'dir_prefix',
+                    "students_id",
+                    "CONCAT(surname, ' ', name, COALESCE(CONCAT(' ', middle_name), '')) AS fullName",
+                    "CONCAT(login, '/', " . Passwords::tableName() . '.password' . ") AS loginPassword",
                 ])
                 ->where(['competencies_id' => Yii::$app->user->id])
                 ->joinWith('passwords', false)
                 ->joinWith('users', false)
                 ->asArray(),
             'pagination' => [
-                'pageSize' => $page,
+                'pageSize' => $records,
             ],
         ]);
     }

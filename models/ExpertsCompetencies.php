@@ -50,11 +50,11 @@ class ExpertsCompetencies extends Model
     /**
      * Get DataProvider experts
      * 
-     * @param int $page page size
+     * @param int $records number of records.
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderExperts(int $page): ActiveDataProvider
+    public static function getDataProviderExperts(int $records): ActiveDataProvider
     {
         $subQuery = Modules::find()
             ->select('COUNT(*)')
@@ -63,21 +63,18 @@ class ExpertsCompetencies extends Model
         return new ActiveDataProvider([
             'query' => Users::find()
                 ->select([
-                    'id',
-                    'surname',
-                    'name',
-                    'middle_name',
-                    'login',
-                    Passwords::tableName() . '.password',
-                    Competencies::tableName() . '.title',
-                    'module_count' => $subQuery
+                    "id",
+                    "CONCAT(surname, ' ', name, COALESCE(CONCAT(' ', middle_name), '')) AS fullName",
+                    "CONCAT(login, '/', " . Passwords::tableName() . '.password' . ") AS loginPassword",
+                    Competencies::tableName() . ".title",
+                    "moduleCount" => $subQuery
                 ])
                 ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
                 ->joinWith('passwords', false)
                 ->joinWith('competencies', false)
                 ->asArray(),
             'pagination' => [
-                'pageSize' => $page,
+                'pageSize' => $records,
             ],
         ]);
     }

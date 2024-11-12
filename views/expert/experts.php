@@ -3,44 +3,29 @@
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 
-/** @var app\models\UsersCompetencies $model */
-/** @var app\models\UsersCompetencies $dataProvider */
+/** @var app\models\ExpertsCompetencies $model */
+/** @var app\models\ExpertsCompetencies $dataProvider */
 
-use app\models\Users;
 use app\widgets\Alert;
 use yii\bootstrap5\ActiveForm;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\bootstrap5\Html;
-use yii\helpers\Url;
-use yii\helpers\VarDumper;
 use yii\widgets\Pjax;
 
 $this->title = 'Эксперты';
 
-$deleteExpert = <<<JS
-    $("#pjax-experts").on("mousedown", ".btn-delete", function(event_mousedown) {
-        event_mousedown.preventDefault();
-        $(this).on("mouseup", function(event_mouseup) {
-            event_mouseup.preventDefault();
-            $.ajax({
-                type: "DELETE",
-                url: "/experts/" + event_mouseup.target.dataset.id,
-                success: function (response) {
-                    $.pjax.reload({container: "#pjax-experts"});
-                },
-            });
-        });
-    });
-JS;
-
-$this->registerJs($deleteExpert, $this::POS_READY);
+$this->registerJsFile('/js/experts.js', ['depends' => 'yii\web\JqueryAsset']);
 ?>
 <div class="site-experts">
+
     <h3><?= Html::encode($this->title) ?></h3>
+
     <div>
         <?php Pjax::begin([
-            'id' => 'pjax-experts'
+            'id' => 'pjax-experts-form',
+            'enablePushState' => false,
+            'timeout' => 10000,
         ]); ?>
             <?= Alert::widget(); ?>
             <?php $form = ActiveForm::begin([
@@ -55,7 +40,6 @@ $this->registerJs($deleteExpert, $this::POS_READY);
                     'errorOptions' => ['class' => 'invalid-feedback'],
                 ],
             ]); ?>
-    
                 <div>
                     <div class="row">
                         <div class="col-4">
@@ -85,36 +69,47 @@ $this->registerJs($deleteExpert, $this::POS_READY);
                     </div>
                 </div>
             <?php ActiveForm::end(); ?>
+        <?php Pjax::end(); ?>
+
+        <?php Pjax::begin([
+            'id' => 'pjax-experts',
+            'enablePushState' => false,
+            'timeout' => 10000,
+        ]); ?>
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
                 'pager' => ['class' => \yii\bootstrap5\LinkPager::class],
+                'layout' => "
+                    <div class=\"mt-3\">{pager}</div>\n
+                    <div>{items}</div>\n
+                    <div class=\"mt-3\">{pager}</div>",
                 'columns' => [
                     [
-                        'label' => 'Full name',
+                        'label' => 'Полное имя',
                         'value' => function ($model) {
-                            return trim($model['surname']) . ' ' . trim($model['name']) . ($model['middle_name'] ? (' ' . trim($model['middle_name'])) : '');
+                            return $model['fullName'];
                         },
                     ],
                     [
-                        'label' => 'Login/Password',
+                        'label' => 'Логин/Пароль',
                         'value' => function ($model) {
-                            return $model['login'] . '/' . $model['password'];
+                            return $model['loginPassword'];
                         },
                     ],
                     [
-                        'attribute' => 'Competencies',
+                        'attribute' => 'Компетенция',
                         'value' => function($model) {
                             return $model['title'];
                         },
                     ],
                     [
-                        'attribute' => 'Count modules',
+                        'attribute' => 'Кол-во модулей',
                         'value' => function($model) {
-                            return $model['module_count'];
+                            return $model['moduleCount'];
                         },
                     ],
                     [
-                        'class' => ActionColumn::className(),
+                        'class' => ActionColumn::class,
                         'template' => '{delete}',
                         'buttons' => [
                             'delete' => function ($url, $model, $key) {

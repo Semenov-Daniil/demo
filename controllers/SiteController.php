@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\FilesCompetencies;
 use app\models\LoginForm;
 use app\models\Passwords;
 use app\models\Roles;
@@ -26,7 +27,7 @@ class SiteController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['index', 'logout'],
+                        'actions' => ['index', 'logout', 'download'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -39,6 +40,7 @@ class SiteController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'logout' => ['post'],
+                    'download' => ['get'],
                 ],
             ],
         ];
@@ -102,5 +104,28 @@ class SiteController extends Controller
             Yii::$app->user->logout();
         }
         return $this->goHome();
+    }
+
+    /**
+     * File download
+     * 
+     * @param string $filename file name.
+     * @param string $competence the name of the competence directory.
+     */
+    public function actionDownload(string $competence, string $filename)
+    {
+        if ($file = FilesCompetencies::findFile($filename, $competence)) {
+            $filePath = Yii::getAlias('@competencies') . "/$competence/$filename." . $file['extension'];
+    
+            if (file_exists($filePath)) {
+                return Yii::$app->response
+                    ->sendStreamAsFile(fopen($filePath, 'r'), $file['originFullName'], [
+                        'mimeType' => $file['type'],
+                    ])
+                    ->send();
+            }
+        }
+
+        return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
     }
 }

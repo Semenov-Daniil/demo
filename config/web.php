@@ -70,13 +70,8 @@ $config = [
             'showScriptName' => false,
             'rules' => [
                 '<action:(login|logout)>' => 'site/<action>',
+                'GET download/<competence>/<filename>' => 'site/download',
 
-                [
-                    'class' => 'app\components\RoleBasedUrlRule', 
-                    'pattern' => '/download/<competence>/<filename>',
-                    'route' => 'expert/download',
-                    'role' => 'expert'
-                ],
                 [
                     'class' => 'app\components\RoleBasedUrlRule', 
                     'pattern' => '/<action:.*>',

@@ -63,6 +63,10 @@ class ExpertController extends Controller
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось добавить эксперта.");
             }
+
+            return $this->renderAjax('experts', [
+                'model' => $model,
+            ]);
         }
 
         return $this->render('experts', [
@@ -72,19 +76,33 @@ class ExpertController extends Controller
     }
 
     /**
+     * Find experts info.
+     */
+    public function actionInfoExperts()
+    {
+        if (Yii::$app->request->isAjax) {
+            $model = new ExpertsCompetencies();
+            return $this->renderAjax('experts', [
+                'model' => $model,
+                'dataProvider' => $model->getDataProviderExperts(20),
+            ]);
+        }
+    }
+
+    /**
      * Action delete experts.
      *
      * @param string|null $id expert ID. 
      * 
      * @return void
      */
-    public function actionDeleteExperts(string|null $id = null): void
+    public function actionDeleteExperts(string|null $id = null)
     {
         if (Yii::$app->request->isAjax) {
             if (ExpertsCompetencies::deleteExpert($id)) {
-                Yii::$app->session->setFlash('success', "Эксперт успешно удален.");
+                // Yii::$app->session->setFlash('success', "Эксперт успешно удален.");
             } else {
-                Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
+                // Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
             }
         }
     }
@@ -105,12 +123,30 @@ class ExpertController extends Controller
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
             }
+
+            return $this->renderAjax('students', [
+                'model' => $model,
+            ]);
         }
 
         return $this->render('students', [
             'model' => $model,
             'dataProvider' => $model->getDataProviderStudents(20),
         ]);
+    }
+
+    /**
+     * Find students info.
+     */
+    public function actionInfoStudents()
+    {
+        if (Yii::$app->request->isAjax) {
+            $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
+            return $this->renderAjax('students', [
+                'model' => $model,
+                'dataProvider' => $model->getDataProviderStudents(20),
+            ]);
+        }
     }
 
     /**
@@ -124,9 +160,9 @@ class ExpertController extends Controller
     {
         if (Yii::$app->request->isAjax) {
             if (StudentsCompetencies::deleteStudent($id)) {
-                Yii::$app->session->setFlash('success', "Студент успешно удален.");
+                // Yii::$app->session->setFlash('success', "Студент успешно удален.");
             } else {
-                Yii::$app->session->setFlash('error', "Не удалось удалить студента.");
+                // Yii::$app->session->setFlash('error', "Не удалось удалить студента.");
             }
         }
     }
@@ -142,17 +178,38 @@ class ExpertController extends Controller
 
         if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('add'))) {
             $model->files = UploadedFile::getInstances($model, 'files');
+
             if (!empty($model->files) && $model->uploadFiles()) {
                 Yii::$app->session->setFlash('success', "Файл(-ы) успешно добавлен(-ы).");
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось добавить файл(-ы).");
             }
+
+            return $this->renderAjax('files', [
+                'model' => $model,
+            ]);
         }
 
         return $this->render('files', [
             'model' => $model,
-            'dataProvider' => $model->getDataProviderFiles(),
+            'dataProvider' => $model->getDataProviderFiles(20),
         ]);
+    }
+
+    /**
+     * Find files info.
+     *
+     * @return string
+     */
+    public function actionInfoFiles()
+    {
+        if (Yii::$app->request->isAjax) {
+            $model = new FilesCompetencies();
+            return $this->renderAjax('files', [
+                'model' => $model,
+                'dataProvider' => $model->getDataProviderFiles(20),
+            ]);
+        }
     }
 
     /**
@@ -166,9 +223,9 @@ class ExpertController extends Controller
     {
         if (Yii::$app->request->isAjax) {
             if (FilesCompetencies::deleteFileCompetence($id)) {
-                Yii::$app->session->setFlash('success', "Файл успешно удален.");
+                // Yii::$app->session->setFlash('success', "Файл успешно удален.");
             } else {
-                Yii::$app->session->setFlash('error', "Не удалось удалить файл.");
+                // Yii::$app->session->setFlash('error', "Не удалось удалить файл.");
             }
         }
     }
@@ -187,20 +244,18 @@ class ExpertController extends Controller
 
     /**
      * Action change status modules.
-     *
-     * @return Response
      */
-    public function actionChangeStatusModules(): Response
+    public function actionChangeStatusModules()
     {
-        if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('change'))) {
+        if (Yii::$app->request->isAjax) {
             $model = new Modules();
             if ($model->load(Yii::$app->request->post(), '')) {
                 if ($model->changeStatus()) {
                     Yii::$app->response->statusCode = 200;
-                    return $this->asJson(['success' => true]);
+                    return $this->asJson(['status' => $model->status]);
                 } else {
                     Yii::$app->response->statusCode = 500;
-                    return $this->asJson(['success' => false]);
+                    return $this->asJson(['status' => !$model->status]);
                 }
             }
         }
@@ -217,9 +272,9 @@ class ExpertController extends Controller
     {
         if (Yii::$app->request->isAjax) {
             if (Modules::deleteModule($id)) {
-                Yii::$app->session->setFlash('success', "Модуль успешно удален.");
+                // Yii::$app->session->setFlash('success', "Модуль успешно удален.");
             } else {
-                Yii::$app->session->setFlash('error', "Не удалось удалить модуль.");
+                // Yii::$app->session->setFlash('error', "Не удалось удалить модуль.");
             }
         }
     }
@@ -232,32 +287,5 @@ class ExpertController extends Controller
     public function actionCompetitors()
     {
         return $this->render('competitors');
-    }
-
-    public function actionDownload($competence, $filename)
-    {
-        $file = FilesCompetencies::find()
-            ->select([
-                "CONCAT(filename, '.', extension) AS originFullName",
-                "type",
-                "extension",
-            ])
-            ->where([FilesCompetencies::tableName() . '.title' => $filename, 'dir_title' => $competence])
-            ->joinWith('competencies', false)
-            ->asArray()
-            ->one()
-            ;
-
-        $filePath = Yii::getAlias('@competencies') . "/$competence/$filename." . $file['extension'];
-
-        if (file_exists($filePath)) {
-            return Yii::$app->response
-                ->sendStreamAsFile(fopen($filePath, 'r'), $file['originFullName'], [
-                    'mimeType' => $file['type'],
-                ])
-                ->send();
-        }
-
-        return $this->redirect(['/files']);
     }
 }
