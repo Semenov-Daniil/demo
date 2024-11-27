@@ -13,20 +13,19 @@ $config = [
             'class' => 'app\components\FileComponent',
             'directories' => [
                 '@users',
-                '@competencies'
+                '@events'
             ],
         ]
     ],
     'language' => 'ru-Ru',
     'aliases' => [
-        '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
-        '@users' => '@app/users',
-        '@competencies' => '@app/competencies',
+        '@bower'  => '@vendor/bower-asset',
+        '@npm'    => '@vendor/npm-asset',
+        '@users'  => '@app/users',
+        '@events' => '@app/events',
     ],
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'mbpvOpHTC0G9lSYi96SJZNUs4AL-Ayy_',
             'baseUrl' => '',
             'parsers' => [

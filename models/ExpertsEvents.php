@@ -8,15 +8,15 @@ use yii\data\ActiveDataProvider;
 use yii\helpers\VarDumper;
 
 /**
- * ExpertsCompetencies is the model underlying the communication between Experts and Competencies.
+ * ExpertsEvents is the model underlying the communication between Experts and Events.
  */
-class ExpertsCompetencies extends Model 
+class ExpertsEvents extends Model 
 {
     public string $surname = '';
     public string $name = '';
-    public string $middle_name = '';
+    public string $patronymic = '';
     public string $title = '';
-    public int $module_count = 1;
+    public int $countModules = 1;
 
     const TITLE_ROLE_EXPERT = "expert";
 
@@ -26,10 +26,9 @@ class ExpertsCompetencies extends Model
     public function rules(): array
     {
         return [
-            [['surname', 'name', 'title', 'module_count'], 'required'],
-            [['surname', 'name', 'middle_name', 'title'], 'string', 'max' => 255],
-            [['module_count'], 'integer', 'min' => 1],
-            [['surname', 'name', 'middle_name', 'title'], 'trim'],
+            [['surname', 'name', 'title', 'countModules'], 'required'],
+            [['surname', 'name', 'patronymic', 'title'], 'string', 'max' => 255],
+            [['countModules'], 'integer', 'min' => 1],
         ];
     }
 
@@ -41,9 +40,9 @@ class ExpertsCompetencies extends Model
         return [
             'surname' => 'Фамилия',
             'name' => 'Имя',
-            'middle_name' => 'Отчество',
-            'title' => 'Название компетенции',
-            'module_count' => 'Кол-во модулей',
+            'patronymic' => 'Отчество',
+            'title' => 'Название события',
+            'countModules' => 'Кол-во модулей',
         ];
     }
 
@@ -58,21 +57,23 @@ class ExpertsCompetencies extends Model
     {
         $subQuery = Modules::find()
             ->select('COUNT(*)')
-            ->where(Modules::tableName() . '.competencies_id = ' . Competencies::tableName() . '.experts_id');
+            ->where(Modules::tableName() . '.events_id = ' . Events::tableName() . '.id');
+
+        $query = Users::find()
+            ->select([
+                "id",
+                "CONCAT(surname, ' ', name, COALESCE(CONCAT(' ', patronymic), '')) AS fullName",
+                "CONCAT(login, '/', " . Passwords::tableName() . '.password' . ") AS loginPassword",
+                "title",
+                "countModules" => $subQuery
+            ])
+            ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
+            ->joinWith('passwords', false)
+            ->joinWith('events', false)
+        ;
 
         return new ActiveDataProvider([
-            'query' => Users::find()
-                ->select([
-                    "id",
-                    "CONCAT(surname, ' ', name, COALESCE(CONCAT(' ', middle_name), '')) AS fullName",
-                    "CONCAT(login, '/', " . Passwords::tableName() . '.password' . ") AS loginPassword",
-                    Competencies::tableName() . ".title",
-                    "moduleCount" => $subQuery
-                ])
-                ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
-                ->joinWith('passwords', false)
-                ->joinWith('competencies', false)
-                ->asArray(),
+            'query' => $query,
             'pagination' => [
                 'pageSize' => $records,
             ],
@@ -96,10 +97,10 @@ class ExpertsCompetencies extends Model
                 $user = new Users();
                 $user->attributes = $this->attributes;
                 if ($user->addExpert()) {
-                    $competence = new Competencies();
-                    $competence->attributes = $this->attributes;
-                    $competence->experts_id = $user->id;
-                    if ($competence->save()) {
+                    $event = new Events();
+                    $event->attributes = $this->attributes;
+                    $event->experts_id = $user->id;
+                    if ($event->save()) {
                         $transaction->commit();
                         return true;
                     }

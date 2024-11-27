@@ -12,17 +12,17 @@ $config = [
             'class' => 'app\components\FileComponent',
             'directories' => [
                 '@users',
-                '@competencies'
+                '@events'
             ],
         ]
     ],
     'controllerNamespace' => 'app\commands',
     'aliases' => [
-        '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
-        '@tests' => '@app/tests',
-        '@users' => '@app/users',
-        '@competencies' => '@app/competencies',
+        '@bower'  => '@vendor/bower-asset',
+        '@npm'    => '@vendor/npm-asset',
+        '@tests'  => '@app/tests',
+        '@users'  => '@app/users',
+        '@events' => '@app/events',
     ],
     'components' => [
         'cache' => [

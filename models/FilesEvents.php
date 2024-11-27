@@ -9,18 +9,18 @@ use Yii;
 use yii\data\ActiveDataProvider;
 
 /**
- * This is the model class for table "dm_files_competencies".
+ * This is the model class for table "dm_files_events".
  *
  * @property int $id
- * @property int $competencies_id
- * @property string $title
- * @property string $filename
+ * @property int $events_id
+ * @property string $save_name
+ * @property string $origin_name
  * @property string $extension
  * @property string $type
  *
- * @property Competencies $competencies
+ * @property Events $event
  */
-class FilesCompetencies extends \yii\db\ActiveRecord
+class FilesEvents extends \yii\db\ActiveRecord
 {
     public array $files = [];
 
@@ -39,9 +39,10 @@ class FilesCompetencies extends \yii\db\ActiveRecord
             return false;
         }
 
-        $competencePath = Yii::getAlias('@competencies') . "/" . $this->competencies->dir_title;
+        $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
+        $eventPath = Yii::getAlias('@events') . "/" . $event->dir_title;
 
-        return $this->deleteFilesStudents() && FileComponent::deleteFile("$competencePath/$this->title.$this->extension");
+        return $this->deleteFilesStudents($event->id) && FileComponent::deleteFile("$eventPath/$this->save_name.$this->extension");
     }
 
     /**
@@ -49,7 +50,7 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%files_competencies}}';
+        return '{{%files_events}}';
     }
 
     /**
@@ -58,10 +59,10 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['competencies_id', 'title', 'filename', 'extension', 'type'], 'required'],
-            [['competencies_id'], 'integer'],
-            [['title', 'filename', 'extension', 'type'], 'string', 'max' => 255],
-            [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
+            [['events_id', 'save_name', 'origin_name', 'extension', 'type'], 'required'],
+            [['events_id'], 'integer'],
+            [['save_name', 'origin_name', 'extension', 'type'], 'string', 'max' => 255],
+            [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'experts_id']],
             [['files'], 'file', 'skipOnEmpty' => false, 'maxFiles' => 0, 'maxSize' => FileComponent::getMaxSizeFiles()]
         ];
     }
@@ -73,9 +74,9 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'competencies_id' => 'Competencies ID',
-            'title' => 'Title',
-            'filename' => 'Название файла',
+            'events_id' => 'Competencies ID',
+            'save_name' => 'Сохраненное имя',
+            'origin_name' => 'Оригинальное имя',
             'extension' => 'Расширение',
             'files' => 'Файлы',
         ];
@@ -86,26 +87,27 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getCompetencies()
+    public function getEvent()
     {
-        return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id'])->inverseOf('filesCompetencies');
+        return $this->hasOne(Events::class, ['experts_id' => 'events_id'])->inverseOf('files');
     }
 
     /**
      * Add file competence
      * 
+     * @param string $eventId ID event.
      * @param string $baseName the name of the uploaded file.
      * @param string $extension the extension of the downloaded file.
      * @param string $type the type of the downloaded file.
      * 
-     * @return FilesCompetencies
+     * @return FilesEvents
      */
-    public function addFileCompetence(string $baseName, string $extension, string $type): FilesCompetencies
+    public function addFileEvent(int $eventId, string $baseName, string $extension, string $type): FilesEvents
     {
-        $model = new FilesCompetencies();
-        $model->competencies_id = Yii::$app->user->id;
-        $model->title = Yii::$app->security->generateRandomString();
-        $model->filename = $baseName;
+        $model = new FilesEvents();
+        $model->events_id = $eventId;
+        $model->save_name = Yii::$app->security->generateRandomString();
+        $model->origin_name = $baseName;
         $model->extension = $extension;
         $model->type = $type;
         $model->save();
@@ -122,7 +124,7 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     public function copyFileStudents(string $compDir, string $filename, array $students): void
     {
         foreach ($students as $student) {
-            $studentPath = Yii::getAlias('@users') . "/" . $student['login'] . "/public";
+            $studentPath = Yii::getAlias('@users') . "/" . $student->login . "/public";
 
             if (!is_dir($studentPath)) {
                 FileComponent::createDirectory($studentPath);
@@ -137,33 +139,35 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     /**
      * Saves the file
      * 
+     * @param int $eventId ID event.
      * @param string $dir the file's save directory.
      * @param array $students an array of students who need to copy the saved file.
      * @param yii\web\UploadedFile $file the file to save.
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
      */
-    public function saveFile(string $dir, array $students, yii\web\UploadedFile $file): void
+    public function saveFile(int $eventId, string $dir, array $students, yii\web\UploadedFile $file): void
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $model = $this->addFileCompetence($file->baseName, $file->extension, $file->type);
+            $model = $this->addFileEvent($eventId, $file->baseName, $file->extension, $file->type);
+
             if ($model->hasErrors()) {
                 $transaction->rollBack();
             }
 
-            if (!$file->saveAs("$dir/$model->title.$model->extension")) {
-                throw new Exception("The file could not be saved $dir/$model->title.$model->extension");
+            if (!$file->saveAs("$dir/$model->save_name.$model->extension")) {
+                throw new Exception("The file could not be saved $dir/$model->save_name.$model->extension");
             }
 
-            $this->copyFileStudents($dir, "$model->title.$model->extension", $students);
+            $this->copyFileStudents($dir, "$model->save_name.$model->extension", $students);
 
             $transaction->commit();
         } catch(\Exception $e) {
-            FileComponent::deleteFile("$dir/$model->title.$model->extension");
+            FileComponent::deleteFile("$dir/$model->save_name.$model->extension");
             $transaction->rollBack();
         } catch(\Throwable $e) {
-            FileComponent::deleteFile("$dir/$model->title.$model->extension");
+            FileComponent::deleteFile("$dir/$model->save_name.$model->extension");
             $transaction->rollBack();
         } 
     }
@@ -178,20 +182,20 @@ class FilesCompetencies extends \yii\db\ActiveRecord
     public function uploadFiles(): bool
     {
         if ($this->validate()) {
-            $dir = Yii::getAlias('@competencies') . '/' . Competencies::findOne(['experts_id' => Yii::$app->user->id])?->dir_title;
-            $students = StudentsCompetencies::find()
+            $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
+            $dir = Yii::getAlias('@events') . '/' . $event?->dir_title;
+            $students = StudentsEvents::find()
                 ->select([
                     "students_id",
                     "login",
                 ])
-                ->where(['competencies_id' => Yii::$app->user->id])
+                ->where(['events_id' => $event->id])
                 ->joinWith('users', false)
-                ->asArray()
                 ->all()
                 ;
 
             foreach ($this->files as $file) {
-                $this->saveFile($dir, $students, $file); 
+                $this->saveFile($event?->id, $dir, $students, $file); 
             }
             return true;
         }
@@ -208,18 +212,21 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      */
     public static function getDataProviderFiles(int $records): ActiveDataProvider
     {
+        $eventId = Events::findOne(['experts_id' =>  Yii::$app->user->id])?->id;
+
+        $query = self::find()
+            ->select([
+                self::tableName() . '.id as fileId',
+                "CONCAT(origin_name, '.', extension) AS originName",
+                self::tableName() . ".save_name as saveName",
+                "dir_title as dirTitle"
+            ])
+            ->where(['events_id' => $eventId])
+            ->joinWith('events', false)
+        ;
+
         return new ActiveDataProvider([
-            'query' => self::find()
-                ->select([
-                    self::tableName() . '.id as fileId',
-                    "CONCAT(filename, '.', extension) AS originFullName",
-                    self::tableName() . ".title as saveName",
-                    "dir_title as dirTitle"
-                ])
-                ->where(['competencies_id' => Yii::$app->user->id])
-                ->joinWith('competencies', false)
-                ->asArray()
-            ,
+            'query' => $query,
             'key' => function ($model) {
                 return $model['fileId'];
             },
@@ -236,7 +243,7 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      * 
      * @return bool returns the value `true` if the file was successfully deleted.
      */
-    public static function deleteFileCompetence(string|null $id)
+    public static function deleteFileEvent(string|null $id)
     {
         if (!is_null($id)) {
             if ($model = self::findOne(['id' => $id])) {
@@ -253,18 +260,14 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      * 
      * @return bool `true` on success or `false` on failure.
      */
-    public function deleteFilesStudents(): bool
+    public function deleteFilesStudents(int $eventId): bool
     {
-        $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
+        $students = StudentsEvents::findAll(['events_id' => $eventId]);
 
         foreach ($students as $student) {
-            $studentPath = Yii::getAlias('@users') . "/" . $student->users->login . "/public";
-            if (FileComponent::deleteFile("$studentPath/$this->title.$this->extension")) {
-                if (empty(glob("$studentPath/*"))) {
-                    FileComponent::removeDirectory($studentPath);
-                }
-            } else {
-                return false;
+            $studentFile = Yii::getAlias('@users') . "/" . $student->users->login . "/public/" . "$this->save_name.$this->extension";
+            if (!FileComponent::deleteFile($studentFile)) {
+                return false; 
             }
         }
 
@@ -275,20 +278,20 @@ class FilesCompetencies extends \yii\db\ActiveRecord
      * Finds a file by its name and directory.
      * 
      * @param string $filename file name.
-     * @param string $competence the name of the competence directory.
+     * @param string $event the name of the event directory.
      * 
      * @return array|null if the file is found, it returns the file data as an `array`, otherwise it returns `null`.
      */
-    public static function findFile(string $filename, string $competence): array|null
+    public static function findFile(string $filename, string $event): array|null
     {
         return self::find()
             ->select([
-                "CONCAT(filename, '.', extension) AS originFullName",
+                "CONCAT(origin_name, '.', extension) AS originName",
                 "type",
                 "extension",
             ])
-            ->where([self::tableName() . '.title' => $filename, 'dir_title' => $competence])
-            ->joinWith('competencies', false)
+            ->where(['save_name' => $filename, 'dir_title' => $event])
+            ->joinWith('events', false)
             ->asArray()
             ->one()
             ;

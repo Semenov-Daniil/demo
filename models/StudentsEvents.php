@@ -23,7 +23,7 @@ use yii\helpers\VarDumper;
  * @property Users $students
  * @property Passwords $passwords
  */
-class StudentsCompetencies extends ActiveRecord
+class StudentsEvents extends ActiveRecord
 {
     public string $surname = '';
     public string $name = '';

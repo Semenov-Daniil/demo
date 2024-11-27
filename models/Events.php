@@ -10,24 +10,26 @@ use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
 /**
- * This is the model class for table "dm_competencies".
+ * This is the model class for table "dm_events".
  *
+ * @property int $id
  * @property int $experts_id
  * @property string $title
  * @property string $dir_title
  *
  * @property Users $users
  * @property Modules[] $modules
- * @property StudentsCompetencies[] $studentsCompetencies
+ * @property StudentsEvents[] $students
+ * @property FilesEvents[] $files
  */
-class Competencies extends ActiveRecord
+class Events extends ActiveRecord
 {
-    public int $module_count = 1;
+    public int $countModules = 1;
 
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'module_count', '!experts_id', '!dir_title'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'countModules', '!experts_id', '!dir_title'];
         return $scenarios;
     }
 
@@ -37,7 +39,7 @@ class Competencies extends ActiveRecord
             if ($this->isNewRecord) {
                 $this->dir_title = $this->getUniqueStr('dir_title', 8, ['lowercase']);
 
-                return FileComponent::createDirectory(Yii::getAlias('@competencies') . '/' . $this->dir_title);
+                return FileComponent::createDirectory(Yii::getAlias('@events') . '/' . $this->dir_title);
             }
             return true;
         } else {
@@ -50,8 +52,8 @@ class Competencies extends ActiveRecord
         parent::afterSave($insert, $changedAttributes);
 
         if ($insert) {
-            for ($i = 0; $i < $this->module_count; $i++) {
-                $module = new Modules(['competencies_id' => $this->experts_id]);
+            for ($i = 0; $i < $this->countModules; $i++) {
+                $module = new Modules(['events_id' => $this->id]);
                 $module->save();
             }
         }
@@ -63,7 +65,7 @@ class Competencies extends ActiveRecord
             return false;
         }
 
-        FileComponent::removeDirectory(Yii::getAlias('@competencies') . '/' . $this->dir_title);
+        FileComponent::removeDirectory(Yii::getAlias('@events') . '/' . $this->dir_title);
 
         return true;
     }
@@ -73,7 +75,7 @@ class Competencies extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%competencies}}';
+        return '{{%events}}';
     }
 
     /**
@@ -82,11 +84,12 @@ class Competencies extends ActiveRecord
     public function rules()
     {
         return [
-            [['title', 'module_count'], 'required'],
-            [['module_count'], 'integer', 'min' => 1],
+            [['title', 'countModules'], 'required'],
+            [['countModules'], 'integer', 'min' => 1],
             [['experts_id'], 'integer'],
             [['title', 'dir_title'], 'string', 'max' => 255],
             [['experts_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['experts_id' => 'id']],
+            [['title', 'dir_title'], 'trim'],
         ];
     }
 
@@ -96,9 +99,10 @@ class Competencies extends ActiveRecord
     public function attributeLabels()
     {
         return [
+            'id' => 'ID',
             'experts_id' => 'Эксперт',
-            'title' => 'Название тестирования',
-            'module_count' => 'Кол-во модулей',
+            'title' => 'Название события',
+            'countModules' => 'Кол-во модулей',
             'dir_title' => 'Название директории'
         ];
     }
@@ -106,7 +110,7 @@ class Competencies extends ActiveRecord
     public function attributes() {
         return [
             ...parent::attributes(),
-            'module_count',
+            'countModules',
         ];
     }
 
@@ -117,7 +121,7 @@ class Competencies extends ActiveRecord
      */
     public function getUsers()
     {
-        return $this->hasOne(Users::class, ['id' => 'experts_id'])->inverseOf('competencies');
+        return $this->hasOne(Users::class, ['id' => 'experts_id'])->inverseOf('events');
     }
 
     /**
@@ -127,27 +131,27 @@ class Competencies extends ActiveRecord
      */
     public function getModules()
     {
-        return $this->hasMany(Modules::class, ['competencies_id' => 'experts_id'])->inverseOf('competencies');
+        return $this->hasMany(Modules::class, ['events_id' => 'id'])->inverseOf('events');
     }
 
     /**
-     * Gets query for [[StudentsCompetencies]].
+     * Gets query for [[StudentsEvents]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getStudentsCompetencies()
+    public function getStudents()
     {
-        return $this->hasMany(StudentsCompetencies::class, ['competencies_id' => 'experts_id'])->inverseOf('competencies');
+        return $this->hasMany(StudentsEvents::class, ['events_id' => 'id'])->inverseOf('events');
     }
 
     /**
-     * Gets query for [[FilesCompetencies]].
+     * Gets query for [[Filesevents]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getFilesCompetencies()
+    public function getFiles()
     {
-        return $this->hasMany(FilesCompetencies::class, ['competencies_id' => 'experts_id'])->inverseOf('competencies');
+        return $this->hasMany(FilesEvents::class, ['events_id' => 'id'])->inverseOf('events');
     }
 
     /**
