@@ -8,7 +8,7 @@ use yii\db\Migration;
 class m241023_122101_create_modules_table extends Migration
 {
     const TABLE_NAME = '{{%modules}}';
-    const TABLE_NAME_COMPETENCIES = '{{%competencies}}';
+    const TABLE_NAME_EVENTS = '{{%events}}';
 
     /**
      * {@inheritdoc}
@@ -17,13 +17,13 @@ class m241023_122101_create_modules_table extends Migration
     {
         $this->createTable(self::TABLE_NAME, [
             'id' => $this->primaryKey(),
-            'competencies_id' => $this->integer()->notNull(),
+            'events_id' => $this->integer()->notNull(),
             'status' => $this->tinyInteger(1)->defaultValue(1)->notNull(),
             'number' => $this->integer()->notNull(),
         ]);
 
-        $this->createIndex('modules-competencies_id', self::TABLE_NAME, 'competencies_id');
-        $this->addForeignKey('fk-modules-competencies_id', self::TABLE_NAME, 'competencies_id', self::TABLE_NAME_COMPETENCIES, 'experts_id', 'CASCADE', 'CASCADE');
+        $this->createIndex('idx-modules-events_id', self::TABLE_NAME, 'events_id');
+        $this->addForeignKey('fk-modules-events_id', self::TABLE_NAME, 'events_id', self::TABLE_NAME_EVENTS, 'id', 'CASCADE', 'CASCADE');
     }
 
     /**
@@ -31,8 +31,8 @@ class m241023_122101_create_modules_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropForeignKey('fk-modules-competencies_id', self::TABLE_NAME);
-        $this->dropIndex('modules-competencies_id', self::TABLE_NAME);
+        $this->dropForeignKey('fk-modules-events_id', self::TABLE_NAME);
+        $this->dropIndex('idx-modules-events_id', self::TABLE_NAME);
 
         $this->dropTable(self::TABLE_NAME);
     }

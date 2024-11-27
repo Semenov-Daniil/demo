@@ -97,13 +97,13 @@ $this->registerJsFile('/js/experts.js', ['depends' => 'yii\web\JqueryAsset']);
                         },
                     ],
                     [
-                        'attribute' => 'Компетенция',
+                        'label' => 'Компетенция',
                         'value' => function($model) {
                             return $model['title'];
                         },
                     ],
                     [
-                        'attribute' => 'Кол-во модулей',
+                        'label' => 'Кол-во модулей',
                         'value' => function($model) {
                             return $model['moduleCount'];
                         },

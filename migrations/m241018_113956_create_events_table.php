@@ -1,0 +1,38 @@
+<?php
+
+use yii\db\Migration;
+
+/**
+ * Handles the creation of table `{{%events}}`.
+ */
+class m241018_113956_create_events_table extends Migration
+{
+    const TABLE_NAME = '{{%events}}';
+
+    /**
+     * {@inheritdoc}
+     */
+    public function safeUp()
+    {
+        $this->createTable(self::TABLE_NAME, [
+            'id' => $this->primaryKey(),
+            'experts_id' => $this->integer()->notNull(),
+            'title' => $this->string(255)->notNull(),
+            'dir_title' => $this->string(255)->notNull(),
+        ]);
+
+        $this->createIndex('idx-events-experts_id', self::TABLE_NAME, 'experts_id', '{{%users}}', 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('fk-events-experts_id', self::TABLE_NAME, 'experts_id', '{{%users}}', 'id', 'CASCADE', 'CASCADE');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function safeDown()
+    {
+        $this->dropForeignKey('fk-events-experts_id', self::TABLE_NAME);
+        $this->dropIndex('idx-events-experts_id', self::TABLE_NAME);
+
+        $this->dropTable(self::TABLE_NAME);
+    }
+}
