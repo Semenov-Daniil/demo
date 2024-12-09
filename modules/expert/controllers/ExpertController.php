@@ -1,19 +1,15 @@
 <?php
 
-namespace app\controllers;
+namespace app\modules\expert\controllers;
 
-use app\components\FileComponent;
-use app\models\ExpertsCompetencies;
-use app\models\FilesCompetencies;
+use app\models\ExpertsEvents;
+use app\models\FilesEvents;
 use app\models\Modules;
-use app\models\StudentsCompetencies;
-use app\models\Users;
+use app\models\StudentsEvents;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\helpers\VarDumper;
 use yii\web\Controller;
-use yii\web\Response;
 use yii\web\UploadedFile;
 
 class ExpertController extends Controller
@@ -23,18 +19,6 @@ class ExpertController extends Controller
     public function behaviors()
     {
         return [
-            'access' => [
-                'class' => AccessControl::class,
-                'rules' => [
-                    [
-                        'allow' => true,
-                        'roles' => ['expert'],
-                    ],  
-                ],
-                'denyCallback' => function ($rule, $action) {
-                    Yii::$app->user->isGuest ? $this->redirect(['login']) : $this->redirect(['/']);
-                }
-            ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
@@ -54,24 +38,22 @@ class ExpertController extends Controller
      */
     public function actionExperts(): string
     {
-        $model = new ExpertsCompetencies();
+        $model = new ExpertsEvents();
 
         if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('add'))) {
             if ($model->load(Yii::$app->request->post()) && $model->addExpert()) {
                 Yii::$app->session->setFlash('success', "Эксперт успешно добавлен.");
-                $model = new ExpertsCompetencies();
+                $model = new ExpertsEvents();
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось добавить эксперта.");
             }
-
-            return $this->renderAjax('experts', [
-                'model' => $model,
-            ]);
         }
+
+        $dataProvider = $model->getDataProviderExperts(20);
 
         return $this->render('experts', [
             'model' => $model,
-            'dataProvider' => $model->getDataProviderExperts(20),
+            'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -81,7 +63,7 @@ class ExpertController extends Controller
     public function actionInfoExperts()
     {
         if (Yii::$app->request->isAjax) {
-            $model = new ExpertsCompetencies();
+            $model = new ExpertsEvents();
             return $this->renderAjax('experts', [
                 'model' => $model,
                 'dataProvider' => $model->getDataProviderExperts(20),
@@ -92,17 +74,17 @@ class ExpertController extends Controller
     /**
      * Action delete experts.
      *
-     * @param string|null $id expert ID. 
+     * @param string $id expert ID. 
      * 
      * @return void
      */
-    public function actionDeleteExperts(string|null $id = null)
+    public function actionDeleteExperts(string $id): void
     {
         if (Yii::$app->request->isAjax) {
-            if (ExpertsCompetencies::deleteExpert($id)) {
-                // Yii::$app->session->setFlash('success', "Эксперт успешно удален.");
+            if (ExpertsEvents::deleteExpert($id)) {
+                Yii::$app->session->setFlash('info', "Эксперт успешно удален.");
             } else {
-                // Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
+                Yii::$app->session->setFlash('error', "Не удалось удалить эксперта.");
             }
         }
     }
@@ -114,12 +96,12 @@ class ExpertController extends Controller
      */
     public function actionStudents(): string
     {
-        $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
+        $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_ADD_STUDENT]);
 
         if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('add'))) {
             if ($model->load(Yii::$app->request->post()) && $model->addStudent()) {
                 Yii::$app->session->setFlash('success', "Студент успешно добавлен.");
-                $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
+                $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_ADD_STUDENT]);
             } else {
                 Yii::$app->session->setFlash('error', "Не удалось добавить студента.");
             }
@@ -141,7 +123,7 @@ class ExpertController extends Controller
     public function actionInfoStudents()
     {
         if (Yii::$app->request->isAjax) {
-            $model = new StudentsCompetencies(['scenario' => StudentsCompetencies::SCENARIO_ADD_STUDENT]);
+            $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_ADD_STUDENT]);
             return $this->renderAjax('students', [
                 'model' => $model,
                 'dataProvider' => $model->getDataProviderStudents(20),
@@ -159,7 +141,7 @@ class ExpertController extends Controller
     public function actionDeleteStudents(string|null $id = null): void
     {
         if (Yii::$app->request->isAjax) {
-            if (StudentsCompetencies::deleteStudent($id)) {
+            if (StudentsEvents::deleteStudent($id)) {
                 // Yii::$app->session->setFlash('success', "Студент успешно удален.");
             } else {
                 // Yii::$app->session->setFlash('error', "Не удалось удалить студента.");
@@ -174,7 +156,7 @@ class ExpertController extends Controller
      */
     public function actionFiles()
     {
-        $model = new FilesCompetencies(['scenario' => FilesCompetencies::SCENARIO_UPLOAD_FILE]);
+        $model = new FilesEvents(['scenario' => FilesEvents::SCENARIO_UPLOAD_FILE]);
 
         if (Yii::$app->request->isAjax && !is_null(Yii::$app->request->post('add'))) {
             $model->files = UploadedFile::getInstances($model, 'files');
@@ -204,7 +186,7 @@ class ExpertController extends Controller
     public function actionInfoFiles()
     {
         if (Yii::$app->request->isAjax) {
-            $model = new FilesCompetencies();
+            $model = new FilesEvents();
             return $this->renderAjax('files', [
                 'model' => $model,
                 'dataProvider' => $model->getDataProviderFiles(20),
@@ -222,7 +204,7 @@ class ExpertController extends Controller
     public function actionDeleteFiles(string|null $id = null): void
     {
         if (Yii::$app->request->isAjax) {
-            if (FilesCompetencies::deleteFileCompetence($id)) {
+            if (FilesEvents::deleteFileEvent($id)) {
                 // Yii::$app->session->setFlash('success', "Файл успешно удален.");
             } else {
                 // Yii::$app->session->setFlash('error', "Не удалось удалить файл.");

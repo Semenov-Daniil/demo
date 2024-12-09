@@ -38,29 +38,16 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         'brandUrl' => Yii::$app->homeUrl,
         'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top']
     ]);
-
-    $items = [];
-
-    Yii::$app->user->can('expert') 
-    && array_push($items, 
-        ['label' => 'Эксперты', 'url' => ['expert/experts']],
-        ['label' => 'Студенты', 'url' => ['expert/students']],
-        ['label' => 'Файлы', 'url' => ['expert/files']],
-        ['label' => 'Модули', 'url' => ['expert/modules']],
-        ['label' => 'Участники', 'url' => ['expert/competitors']]);
-    
-    !Yii::$app->user->isGuest && $items[] = '<li class="nav-item">'
-                    . Html::beginForm(['logout'])
-                    . Html::submitButton(
-                        'Выход (' . Yii::$app->user->identity->login . ')',
-                        ['class' => 'nav-link btn btn-link logout']
-                    )
-                    . Html::endForm()
-                    . '</li>';
-
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav'],
-        'items' => $items,
+        'items' => [
+            ['label' => 'Эксперты', 'url' => ['expert/experts'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Студенты', 'url' => ['expert/students'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Файлы', 'url' => ['expert/files'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Модули', 'url' => ['expert/modules'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Участники', 'url' => ['expert/event'], 'visible' => Yii::$app->user->can('expert')],
+            ['label' => 'Выход', 'url' => ['/logout'], 'visible' => !Yii::$app->user->isGuest, 'linkOptions' => ['data' => ['method' => 'post']]],
+        ],
     ]);
     NavBar::end();
     ?>

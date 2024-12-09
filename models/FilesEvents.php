@@ -217,12 +217,12 @@ class FilesEvents extends \yii\db\ActiveRecord
         $query = self::find()
             ->select([
                 self::tableName() . '.id as fileId',
-                "CONCAT(origin_name, '.', extension) AS originName",
-                self::tableName() . ".save_name as saveName",
-                "dir_title as dirTitle"
+                'CONCAT(origin_name, \'.\', extension) AS originName',
+                self::tableName() . '.save_name as saveName',
+                'dir_title as dirTitle'
             ])
             ->where(['events_id' => $eventId])
-            ->joinWith('events', false)
+            ->joinWith('event', false)
         ;
 
         return new ActiveDataProvider([

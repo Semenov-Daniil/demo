@@ -3,6 +3,7 @@
 namespace app\commands;
 
 use app\models\ExpertsCompetencies;
+use app\models\ExpertsEvents;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\helpers\Console;
@@ -17,7 +18,7 @@ class UserController extends Controller
     public function actionCreateExpert(int $count = 1)
     {
         for ($i = 0; $i < $count; $i++) {
-            $model = new ExpertsCompetencies();
+            $model = new ExpertsEvents();
             
             $model->load([
                 'surname' => 'Main',

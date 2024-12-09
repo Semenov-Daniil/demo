@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\FilesCompetencies;
+use app\models\FilesEvents;
 use app\models\LoginForm;
 use app\models\Passwords;
 use app\models\Roles;
@@ -64,7 +65,7 @@ class SiteController extends Controller
 
     public function actionIndex()
     {
-        return $this->goHome();
+        return $this->redirect([(Yii::$app->user->can('expert') ? '/expert' : '/account')]);
     }
 
     /**
@@ -87,12 +88,12 @@ class SiteController extends Controller
                 'expert' => Users::find()
                     ->select(['login', Passwords::tableName() . '.password'])
                     ->where(['roles_id' => Roles::getRoleId('expert')])
-                    ->joinWith('passwords', false)
+                    ->joinWith('openPassword', false)
                     ->one(),
                 'student' => Users::find()
                     ->select(['login', Passwords::tableName() . '.password'])
                     ->where(['roles_id' => Roles::getRoleId('student')])
-                    ->joinWith('passwords', false)
+                    ->joinWith('openPassword', false)
                     ->one(),
             ]
         ]);
@@ -110,12 +111,12 @@ class SiteController extends Controller
      * File download
      * 
      * @param string $filename file name.
-     * @param string $competence the name of the competence directory.
+     * @param string $event the name of the event directory.
      */
-    public function actionDownload(string $competence, string $filename)
+    public function actionDownload(string $event, string $filename)
     {
-        if ($file = FilesCompetencies::findFile($filename, $competence)) {
-            $filePath = Yii::getAlias('@competencies') . "/$competence/$filename." . $file['extension'];
+        if ($file = FilesEvents::findFile($filename, $event)) {
+            $filePath = Yii::getAlias('@competencies') . "/$event/$filename." . $file['extension'];
     
             if (file_exists($filePath)) {
                 return Yii::$app->response

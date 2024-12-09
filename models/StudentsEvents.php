@@ -15,13 +15,13 @@ use yii\helpers\VarDumper;
  * This is the model class for table "dm_students_competencies".
  *
  * @property int $students_id
- * @property int $competencies_id
+ * @property int $events_id
  * @property string $dir_prefix
  *
- * @property Competencies $competencies
- * @property Modules array $modules
- * @property Users $students
- * @property Passwords $passwords
+ * @property Events $event
+ * @property Modules[] $modules
+ * @property Users $student
+ * @property Passwords $password
  */
 class StudentsEvents extends ActiveRecord
 {
@@ -71,7 +71,7 @@ class StudentsEvents extends ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!competencies_id', '!dir_prefix'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!events_id', '!dir_prefix'];
         $scenarios[self::SCENARIO_ADD_STUDENT] = ['surname', 'name', 'middle_name'];
         return $scenarios;
     }
@@ -81,7 +81,7 @@ class StudentsEvents extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%students_competencies}}';
+        return '{{%students_events}}';
     }
 
     /**
@@ -90,12 +90,12 @@ class StudentsEvents extends ActiveRecord
     public function rules()
     {
         return [
-            [['surname', 'name', 'students_id', 'competencies_id'], 'required'],
+            [['surname', 'name', 'students_id', 'events_id'], 'required'],
             [['surname', 'name', 'middle_name', 'dir_prefix'], 'string', 'max' => 255],
             [['surname', 'name', 'middle_name', 'dir_prefix'], 'trim'],
-            [['students_id', 'competencies_id'], 'integer'],
+            [['students_id', 'events_id'], 'integer'],
             ['middle_name', 'default', 'value' => null],
-            [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
+            [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
             [['students_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['students_id' => 'id']],
         ];
     }
@@ -107,7 +107,7 @@ class StudentsEvents extends ActiveRecord
     {
         return [
             'students_id' => 'Студент',
-            'competencies_id' => 'Компетенция',
+            'events_id' => 'Компетенция',
             'dir_prefix' => 'Директория',
             'surname' => 'Фамилия',
             'name' => 'Имя',
@@ -125,13 +125,13 @@ class StudentsEvents extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Competencies]].
+     * Gets query for [[Events]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getCompetencies()
+    public function getEvent()
     {
-        return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id']);
+        return $this->hasOne(Events::class, ['experts_id' => 'events_id']);
     }
 
     /**
@@ -141,7 +141,7 @@ class StudentsEvents extends ActiveRecord
      */
     public function getModules()
     {
-        return $this->hasMany(Modules::class, ['competencies_id' => 'competencies_id']);
+        return $this->hasMany(Modules::class, ['events_id' => 'events_id']);
     }
 
     /**
@@ -149,7 +149,7 @@ class StudentsEvents extends ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getUsers()
+    public function getUser()
     {
         return $this->hasOne(Users::class, ['id' => 'students_id']);
     }
@@ -159,7 +159,7 @@ class StudentsEvents extends ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getPasswords(): object
+    public function getPassword(): object
     {
         return $this->hasOne(Passwords::class, ['users_id' => 'students_id']);
     }
@@ -174,16 +174,17 @@ class StudentsEvents extends ActiveRecord
     public static function getDataProviderStudents(int $records): ActiveDataProvider
     {
         return new ActiveDataProvider([
-            'query' => StudentsCompetencies::find()
+            'query' => self::find()
                 ->select([
-                    "students_id",
-                    "CONCAT(surname, ' ', name, COALESCE(CONCAT(' ', middle_name), '')) AS fullName",
-                    "CONCAT(login, '/', " . Passwords::tableName() . '.password' . ") AS loginPassword",
+                    'students_id',
+                    'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', middle_name), \'\')) AS fullName',
+                    'CONCAT(login, \'/\', ' . Passwords::tableName() . '.password) AS loginPassword',
                 ])
-                ->where(['competencies_id' => Yii::$app->user->id])
-                ->joinWith('passwords', false)
-                ->joinWith('users', false)
-                ->asArray(),
+                ->where(['events_id' => Yii::$app->user->id])
+                ->joinWith('password', false)
+                ->joinWith('user', false)
+                ->asArray()
+            ,
             'pagination' => [
                 'pageSize' => $records,
             ],
@@ -231,9 +232,9 @@ class StudentsEvents extends ActiveRecord
                 $user = new Users();
                 $user->attributes = $this->attributes;
                 if ($user->addStudent()) {
-                    $student_competenc = new StudentsCompetencies();
+                    $student_competenc = new StudentsEvents();
                     $student_competenc->students_id = $user->id;
-                    $student_competenc->competencies_id = Yii::$app->user->id;
+                    $student_competenc->events_id = Yii::$app->user->id;
                     if ($student_competenc->save()) {
                         $transaction->commit();
                         return true;

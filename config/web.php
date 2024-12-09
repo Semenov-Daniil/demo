@@ -68,32 +68,12 @@ $config = [
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                '<action:(login|logout)>' => 'site/<action>',
-                'GET download/<competence>/<filename>' => 'site/download',
-
-                [
-                    'class' => 'app\components\RoleBasedUrlRule', 
-                    'pattern' => '/<action:.*>',
-                    'verb' => ['GET', 'POST', 'PATH'],
-                    'route' => 'expert/<action>',
-                    'role' => 'expert'
-                ],
-                [
-                    'class' => 'app\components\RoleBasedUrlRule', 
-                    'pattern' => '/<action>/<id>',
-                    'verb' => ['DELETE'],
-                    'route' => 'expert/delete-<action>',
-                    'role' => 'expert'
-                ],
-                [
-                    'class' => 'app\components\RoleBasedUrlRule', 
-                    'pattern' => '/<action:.*>',
-                    'route' => 'student/<action>',
-                    'role' => 'student'
-                ],
-
                 '/' => 'site/index',
-                '<action>' => 'site/<action>',
+                '<action:(login|logout)>' => 'site/<action>',
+                '/expert' => 'expert/expert',
+                '/expert/<action>' => 'expert/expert/<action>',
+                '/account' => 'account/event',
+                'GET download/<event>/<filename>' => 'site/download',
             ],
         ],
         'authManager' => [
@@ -108,6 +88,16 @@ $config = [
             ],
             'timeout' => 1440,
             'useCookies' => true,
+        ],
+    ],
+    'modules' => [
+        'expert' => [
+            'class' => 'app\modules\expert\Module',
+            'defaultRoute' => 'expert'
+        ],
+        'account' => [
+            'class' => 'app\modules\account\Module',
+            'defaultRoute' => 'event'
         ],
     ],
     'params' => $params,

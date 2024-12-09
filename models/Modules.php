@@ -5,18 +5,16 @@ namespace app\models;
 use app\components\DbComponent;
 use Yii;
 use yii\data\ActiveDataProvider;
-use yii\db\Transaction;
-use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "dm_modules".
  *
  * @property int $id
- * @property int $competencies_id
+ * @property int $events_id
  * @property int $status
  * @property int $number
  *
- * @property Competencies $competencies
+ * @property Events $event
  */
 class Modules extends \yii\db\ActiveRecord
 {
@@ -52,11 +50,11 @@ class Modules extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['competencies_id'], 'required'],
-            [['id', 'competencies_id', 'status', 'number'], 'integer'],
+            [['events_id'], 'required'],
+            [['id', 'events_id', 'status', 'number'], 'integer'],
             ['status', 'default', 'value' => 1],
-            ['number', 'default', 'value' => (self::find()->where(['competencies_id' => $this->competencies_id])->count() + 1)],
-            [['competencies_id'], 'exist', 'skipOnError' => true, 'targetClass' => Competencies::class, 'targetAttribute' => ['competencies_id' => 'experts_id']],
+            ['number', 'default', 'value' => (self::find()->where(['events_id' => $this->events_id])->count() + 1)],
+            [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
         ];
     }
 
@@ -67,19 +65,19 @@ class Modules extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'competencies_id' => 'Компетенция',
+            'events_id' => 'Компетенция',
             'status' => 'Статус',
         ];
     }
 
     /**
-     * Gets query for [[Competencies]].
+     * Gets query for [[Events]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getCompetencies()
+    public function getEvent()
     {
-        return $this->hasOne(Competencies::class, ['experts_id' => 'competencies_id']);
+        return $this->hasOne(Events::class, ['experts_id' => 'events_id']);
     }
 
     /**
@@ -92,7 +90,7 @@ class Modules extends \yii\db\ActiveRecord
         return new ActiveDataProvider([
             'query' => Modules::find()
                 ->select(['id', 'status', 'number'])
-                ->where(['competencies_id' => Yii::$app->user->id])
+                ->where(['events_id' => Yii::$app->user->id])
                 ,
         ]);
     }
@@ -136,7 +134,7 @@ class Modules extends \yii\db\ActiveRecord
      */
     public function changePrivilegesDbStudents(): bool
     {
-        $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
+        $students = StudentsEvents::findAll(['events_id' => $this->events_id]);
 
         foreach ($students as $student) {
             $login  = $student->users->login; 
@@ -184,7 +182,7 @@ class Modules extends \yii\db\ActiveRecord
      */
     public function deleteModulesStudents(): bool
     {
-        $students = StudentsCompetencies::findAll(['competencies_id' => $this->competencies_id]);
+        $students = StudentsEvents::findAll(['events_id' => $this->events_id]);
 
         foreach ($students as $student) {
             $login  = $student->users->login; 

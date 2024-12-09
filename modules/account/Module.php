@@ -1,13 +1,20 @@
 <?php
 
-namespace app\controllers;
+namespace app\modules\account;
 
 use Yii;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 
-class StudentController extends Controller
+/**
+ * account module definition class
+ */
+class Module extends \yii\base\Module
 {
+    /**
+     * {@inheritdoc}
+     */
+    public $controllerNamespace = 'app\modules\account\controllers';
+
     public function behaviors()
     {
         return [
@@ -17,22 +24,22 @@ class StudentController extends Controller
                     [
                         'allow' => true,
                         'roles' => ['student'],
-                    ]
+                    ],  
                 ],
                 'denyCallback' => function ($rule, $action) {
-                    Yii::$app->user->isGuest ? $this->redirect(['login']) : $this->redirect(['/']);
+                    Yii::$app->user->isGuest ? $this->redirect(['/login']) : $this->redirect(['/']);
                 }
             ],
         ];
     }
 
     /**
-     * Displays homepage student.
-     *
-     * @return string
+     * {@inheritdoc}
      */
-    public function actionIndex()
+    public function init()
     {
-        return $this->render('index');
+        parent::init();
+
+        // custom initialization code goes here
     }
 }

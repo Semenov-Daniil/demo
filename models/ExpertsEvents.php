@@ -61,15 +61,16 @@ class ExpertsEvents extends Model
 
         $query = Users::find()
             ->select([
-                "id",
-                "CONCAT(surname, ' ', name, COALESCE(CONCAT(' ', patronymic), '')) AS fullName",
-                "CONCAT(login, '/', " . Passwords::tableName() . '.password' . ") AS loginPassword",
-                "title",
-                "countModules" => $subQuery
+                Users::tableName() . '.id',
+                'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
+                'CONCAT(login, \'/\', ' . Passwords::tableName() . '.password) AS loginPassword',
+                'title as event',
+                'countModules' => $subQuery
             ])
             ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
-            ->joinWith('passwords', false)
-            ->joinWith('events', false)
+            ->joinWith('openPassword', false)
+            ->joinWith('event', false)
+            ->asArray()
         ;
 
         return new ActiveDataProvider([

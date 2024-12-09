@@ -18,13 +18,13 @@ use yii\web\IdentityInterface;
  * @property string $password
  * @property string $surname
  * @property string $name
- * @property string|null $middle_name
+ * @property string|null $patronymic
  * @property string|null $auth_key
  * @property int $roles_id
  *
- * @property Competencies $competencies
- * @property Passwords $passwords
- * @property Roles $roles
+ * @property Events $event
+ * @property Passwords $openPassword
+ * @property Roles $role
  */
 class Users extends ActiveRecord implements IdentityInterface
 {
@@ -43,7 +43,7 @@ class Users extends ActiveRecord implements IdentityInterface
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['surname', 'name', 'middle_name', '!roles_id', '!auth_key', '!login', '!password', '!temp_password'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['surname', 'name', 'patronymic', '!roles_id', '!auth_key', '!login', '!password', '!temp_password'];
         return $scenarios;
     }
 
@@ -69,11 +69,11 @@ class Users extends ActiveRecord implements IdentityInterface
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_STUDENT)) {
-            return StudentsCompetencies::findOne(['students_id' => $this->id])->delete();
+            return StudentsEvents::findOne(['students_id' => $this->id])->delete();
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
-            $students = StudentsCompetencies::findAll(['competencies_id' => $this->id]);
+            $students = StudentsEvents::findAll(['events_id' => $this->event->id]);
 
             foreach ($students as $student) {
                 if (!Users::findOne(['id' => $student->students_id])->delete()) {
@@ -81,7 +81,7 @@ class Users extends ActiveRecord implements IdentityInterface
                 }
             }
 
-            FileComponent::removeDirectory(Yii::getAlias('@competencies') . '/' . $this->competencies->dir_title);
+            FileComponent::removeDirectory(Yii::getAlias('@events') . '/' . $this->event->dir_title);
         }
 
         return true;
@@ -112,10 +112,10 @@ class Users extends ActiveRecord implements IdentityInterface
         return [
             [['surname', 'name'], 'required'],
             [['roles_id'], 'integer'],
-            [['login', 'password', 'surname', 'name', 'middle_name'], 'string', 'max' => 255],
+            [['login', 'password', 'surname', 'name', 'patronymic'], 'string', 'max' => 255],
             ['auth_key', 'string', 'max' => 32],
-            [['surname', 'name', 'middle_name', 'login', 'password', 'auth_key'], 'trim'],
-            ['middle_name', 'default', 'value' => null],
+            [['surname', 'name', 'patronymic', 'login', 'password', 'auth_key'], 'trim'],
+            ['patronymic', 'default', 'value' => null],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
         ];
     }
@@ -131,7 +131,7 @@ class Users extends ActiveRecord implements IdentityInterface
             'password' => 'Пароль',
             'surname' => 'Фамилия',
             'name' => 'Имя',
-            'middle_name' => 'Отчество',
+            'patronymic' => 'Отчество',
             'auth_key' => 'Auth Key',
         ];
     }
@@ -141,7 +141,7 @@ class Users extends ActiveRecord implements IdentityInterface
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRoles(): object
+    public function getRole(): object
     {
         return $this->hasOne(Roles::class, ['id' => 'roles_id'])->inverseOf('users');
     }
@@ -151,19 +151,19 @@ class Users extends ActiveRecord implements IdentityInterface
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getPasswords(): object
+    public function getOpenPassword(): object
     {
         return $this->hasOne(Passwords::class, ['users_id' => 'id'])->inverseOf('users');
     }
 
     /**
-     * Gets query for [[Competencies]].
+     * Gets query for [[Events]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getCompetencies(): object
+    public function getEvent(): object
     {
-        return $this->hasOne(Competencies::class, ['experts_id' => 'id'])->inverseOf('users');
+        return $this->hasOne(Events::class, ['experts_id' => 'id'])->inverseOf('users');
     }
 
     /**
