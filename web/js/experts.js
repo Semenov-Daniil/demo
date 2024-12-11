@@ -1,7 +1,7 @@
 $(() => {
 
-    $("#pjax-experts").on("click", ".btn-delete", function(event_mousedown) {
-        event_mousedown.preventDefault();
+    $("#pjax-experts").on("click", ".btn-delete", function(event) {
+        event.preventDefault();
         
         $.ajax({
             type: "DELETE",

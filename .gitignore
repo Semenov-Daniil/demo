@@ -19,7 +19,7 @@ Thumbs.db
 /users/*
 
 #competencies folder
-/competencies/*
+/events/*
 
 # composer itself is not needed
 composer.phar

@@ -17,7 +17,7 @@ use yii\helpers\VarDumper;
  * @property string $title
  * @property string $dir_title
  *
- * @property Users $users
+ * @property Users $expert
  * @property Modules[] $modules
  * @property StudentsEvents[] $students
  * @property FilesEvents[] $files
@@ -119,9 +119,9 @@ class Events extends ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getUsers()
+    public function getExpert()
     {
-        return $this->hasOne(Users::class, ['id' => 'experts_id'])->inverseOf('events');
+        return $this->hasOne(Users::class, ['id' => 'experts_id']);
     }
 
     /**
@@ -131,7 +131,7 @@ class Events extends ActiveRecord
      */
     public function getModules()
     {
-        return $this->hasMany(Modules::class, ['events_id' => 'id'])->inverseOf('events');
+        return $this->hasMany(Modules::class, ['events_id' => 'id']);
     }
 
     /**
@@ -141,7 +141,7 @@ class Events extends ActiveRecord
      */
     public function getStudents()
     {
-        return $this->hasMany(StudentsEvents::class, ['events_id' => 'id'])->inverseOf('events');
+        return $this->hasMany(StudentsEvents::class, ['events_id' => 'id']);
     }
 
     /**
@@ -151,7 +151,29 @@ class Events extends ActiveRecord
      */
     public function getFiles()
     {
-        return $this->hasMany(FilesEvents::class, ['events_id' => 'id'])->inverseOf('events');
+        return $this->hasMany(FilesEvents::class, ['events_id' => 'id']);
+    }
+
+    /**
+     * Find event id by expert.
+     *
+     * @param int $expertId id expert
+     * @return int|null id event
+     */
+    public static function getIdByExpert(int $expertId): int|null
+    {
+        return self::findOne(['experts_id' => $expertId])?->id;
+    }
+
+    /**
+     * Find event by expert.
+     *
+     * @param int $expertId id expert
+     * @return int|null id event
+     */
+    public static function getEventByExpert(int $expertId): int|null
+    {
+        return self::findOne(['experts_id' => $expertId]);
     }
 
     /**

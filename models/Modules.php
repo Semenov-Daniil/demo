@@ -5,6 +5,7 @@ namespace app\models;
 use app\components\DbComponent;
 use Yii;
 use yii\data\ActiveDataProvider;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "dm_modules".
@@ -77,7 +78,7 @@ class Modules extends \yii\db\ActiveRecord
      */
     public function getEvent()
     {
-        return $this->hasOne(Events::class, ['experts_id' => 'events_id']);
+        return $this->hasOne(Events::class, ['id' => 'events_id']);
     }
 
     /**
@@ -87,11 +88,13 @@ class Modules extends \yii\db\ActiveRecord
      */
     public static function getDataProviderModules(): ActiveDataProvider
     {
+        $event_id = Events::getIdByExpert(Yii::$app->user->id);
+
         return new ActiveDataProvider([
             'query' => Modules::find()
                 ->select(['id', 'status', 'number'])
-                ->where(['events_id' => Yii::$app->user->id])
-                ,
+                ->where(['events_id' => $event_id])
+            ,
         ]);
     }
 
@@ -108,7 +111,7 @@ class Modules extends \yii\db\ActiveRecord
         try {
             if ($module = self::findOne(['id' => $this->id])) {
                 $module->status = $this->status;
-                
+
                 if ($module->save()) {
                     $transaction->commit();
                     return true;
@@ -137,7 +140,7 @@ class Modules extends \yii\db\ActiveRecord
         $students = StudentsEvents::findAll(['events_id' => $this->events_id]);
 
         foreach ($students as $student) {
-            $login  = $student->users->login; 
+            $login  = $student->user->login; 
             if (!($this->status ? $student->grantPrivilegesDbStudent($login, $this->number) : $student->revokePrivilegesDbStudent($login, $this->number))) {
                 return false;
             }
@@ -182,10 +185,14 @@ class Modules extends \yii\db\ActiveRecord
      */
     public function deleteModulesStudents(): bool
     {
-        $students = StudentsEvents::findAll(['events_id' => $this->events_id]);
-
+        $students = StudentsEvents::find()
+            ->where(['events_id' => $this->events_id])
+            ->joinWith('user')
+            ->all()
+        ;
+        
         foreach ($students as $student) {
-            $login  = $student->users->login; 
+            $login = $student->user->login; 
             if (DbComponent::deleteDb($student->getDbTitle($login, $this->number))) {
                 $student->deleteDirectoryModule($login, $this->number);
             } else {

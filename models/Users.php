@@ -69,7 +69,10 @@ class Users extends ActiveRecord implements IdentityInterface
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_STUDENT)) {
-            return StudentsEvents::findOne(['students_id' => $this->id])->delete();
+            if ($student = StudentsEvents::findOne(['students_id' => $this->id])) {
+                return $student->delete();
+            }
+            return true;
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {

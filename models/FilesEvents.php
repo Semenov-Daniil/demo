@@ -7,6 +7,7 @@ use app\controllers\StudentController;
 use Exception;
 use Yii;
 use yii\data\ActiveDataProvider;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "dm_files_events".
@@ -89,7 +90,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public function getEvent()
     {
-        return $this->hasOne(Events::class, ['experts_id' => 'events_id'])->inverseOf('files');
+        return $this->hasOne(Events::class, ['experts_id' => 'events_id']);
     }
 
     /**
@@ -124,7 +125,7 @@ class FilesEvents extends \yii\db\ActiveRecord
     public function copyFileStudents(string $compDir, string $filename, array $students): void
     {
         foreach ($students as $student) {
-            $studentPath = Yii::getAlias('@users') . "/" . $student->login . "/public";
+            $studentPath = Yii::getAlias('@users') . "/" . $student['login'] . "/public";
 
             if (!is_dir($studentPath)) {
                 FileComponent::createDirectory($studentPath);
@@ -186,17 +187,21 @@ class FilesEvents extends \yii\db\ActiveRecord
             $dir = Yii::getAlias('@events') . '/' . $event?->dir_title;
             $students = StudentsEvents::find()
                 ->select([
-                    "students_id",
-                    "login",
+                    'students_id',
+                    'login',
                 ])
-                ->where(['events_id' => $event->id])
-                ->joinWith('users', false)
+                ->where(['events_id' => $event?->id])
+                ->joinWith('user', false)
+                ->asArray()
                 ->all()
-                ;
+            ;
 
             foreach ($this->files as $file) {
-                $this->saveFile($event?->id, $dir, $students, $file); 
+                if (!$this->saveFile($event?->id, $dir, $students, $file)) {
+                    return false;
+                }
             }
+
             return true;
         }
 
@@ -223,6 +228,7 @@ class FilesEvents extends \yii\db\ActiveRecord
             ])
             ->where(['events_id' => $eventId])
             ->joinWith('event', false)
+            ->asArray()
         ;
 
         return new ActiveDataProvider([
@@ -265,7 +271,7 @@ class FilesEvents extends \yii\db\ActiveRecord
         $students = StudentsEvents::findAll(['events_id' => $eventId]);
 
         foreach ($students as $student) {
-            $studentFile = Yii::getAlias('@users') . "/" . $student->users->login . "/public/" . "$this->save_name.$this->extension";
+            $studentFile = Yii::getAlias('@users') . "/" . $student->user->login . "/public/" . "$this->save_name.$this->extension";
             if (!FileComponent::deleteFile($studentFile)) {
                 return false; 
             }
@@ -291,7 +297,7 @@ class FilesEvents extends \yii\db\ActiveRecord
                 "extension",
             ])
             ->where(['save_name' => $filename, 'dir_title' => $event])
-            ->joinWith('events', false)
+            ->joinWith('event', false)
             ->asArray()
             ->one()
             ;

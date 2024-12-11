@@ -53,7 +53,7 @@ $this->registerJsFile('/js/modules.js', ['depends' => 'yii\web\JqueryAsset']);
                         'template' => '{delete}',
                         'buttons' => [
                             'delete' => function ($url, $model, $key) {
-                                return Html::button('Удалить', ['data' => ['id' => $model->id, 'pjax' => true], 'class' => 'btn btn-danger btn-delete']);
+                                return Html::a('Удалить', ['delete-modules', 'id' => $model->id], ['data' => ['pjax' => 0], 'class' => 'btn btn-danger btn-delete']);
                             }
                         ],
                         'visibleButtons' => [

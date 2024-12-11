@@ -116,11 +116,11 @@ class SiteController extends Controller
     public function actionDownload(string $event, string $filename)
     {
         if ($file = FilesEvents::findFile($filename, $event)) {
-            $filePath = Yii::getAlias('@competencies') . "/$event/$filename." . $file['extension'];
+            $filePath = Yii::getAlias('@events') . "/$event/$filename." . $file['extension'];
     
             if (file_exists($filePath)) {
                 return Yii::$app->response
-                    ->sendStreamAsFile(fopen($filePath, 'r'), $file['originFullName'], [
+                    ->sendStreamAsFile(fopen($filePath, 'r'), $file['originName'], [
                         'mimeType' => $file['type'],
                     ])
                     ->send();

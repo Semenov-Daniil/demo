@@ -4,7 +4,7 @@ $(() => {
         const checkbox = $(this);
         $.ajax({
             type: "PATH",
-            url: "/change-status-modules",
+            url: "change-status-modules",
             dataType: 'json',
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify({
@@ -20,22 +20,15 @@ $(() => {
         });
     });
 
-    $("#pjax-modules").on("mousedown", ".btn-delete", function(event_mousedown) {
-        event_mousedown.preventDefault();
-        $(this).on("mouseup", function(event_mouseup) {
-            event_mouseup.preventDefault();
-            $.ajax({
-                type: "DELETE",
-                url: "/modules/" + $(this).data('id'),
-                success(response) {
-                    $.pjax.reload({
-                        container: "#pjax-modules",
-                        push: false,
-                        replace: false,
-                        timeout: 10000
-                    });
-                },
-            });
+    $("#pjax-modules").on("click", ".btn-delete", function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            type: "DELETE",
+            url: $(this).attr('href'),
+            success(response) {
+                $.pjax.reload("#pjax-modules");
+            },
         });
     });
 })
