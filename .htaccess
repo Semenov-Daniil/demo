@@ -1,0 +1,10 @@
+Options +FollowSymLinks
+IndexIgnore */*
+
+RewriteEngine on
+
+RewriteCond %{REQUEST_URI} ^/expert
+RewriteRule ^expert\/?(.*)$ backend/web/$1
+
+RewriteCond %{REQUEST_URI} !^/(expert)
+RewriteRule ^(.*)$ frontend/web/$1
