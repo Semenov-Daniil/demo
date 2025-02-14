@@ -3,6 +3,8 @@ return [
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
+        '@events' => '@common/events',
+        '@students' => '@common/students'
     ],
     'language' => 'ru-RU',
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
@@ -17,6 +19,16 @@ return [
                     '@backend/views' => '@common/views',
                 ],
             ],
+        ],
+        'authManager' => [
+            'class' => 'yii\rbac\DbManager',
+            'defaultRoles' => ['student', 'expert'],
+        ],
+        'dbComponent' => [
+            'class' => 'common\components\DbComponent'
+        ],
+        'fileComponent' => [
+            'class' => 'common\components\FileComponent'
         ],
     ],
 ];

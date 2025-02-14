@@ -11,15 +11,17 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
+    'defaultRoute' => 'student/index',
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-frontend',
             'baseUrl' => '',
         ],
         'user' => [
-            'identityClass' => 'common\models\User',
+            'identityClass' => 'common\models\Users',
             'enableAutoLogin' => true,
             'identityCookie' => ['name' => '_identity-frontend', 'httpOnly' => true],
+            'loginUrl' => ['student/login'],
         ],
         'session' => [
             // this is the name of the session cookie used for login on the frontend

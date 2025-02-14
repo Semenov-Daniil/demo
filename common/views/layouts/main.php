@@ -21,8 +21,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>" data-layout="semibox" data-topbar="light" data-layout-position="fixed" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg"
-data-sidebar-image="none" data-preloader="disable" data-theme="material" data-theme-colors="default">
+<html lang="<?= Yii::$app->language ?>" data-layout="semibox" data-layout-width="fluid" data-layout-position="fixed" data-topbar="light" data-layout-style="default" data-sidebar-size="lg" data-preloader="disable" data-sidebar="dark" data-theme="material">
 
 <head>
     <title><?= Html::encode($this->title) ?></title>
@@ -80,31 +79,29 @@ data-sidebar-image="none" data-preloader="disable" data-theme="material" data-th
                             </button>
                         </div>
 
+                        <?php if (!Yii::$app->user->isGuest): ?>
                         <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button" class="btn material-shadow-none" id="page-header-user-dropdown"
                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="d-flex align-items-center">
-                                    <!-- <img class="rounded-circle header-profile-user" src="assets/images/users/avatar-1.jpg" alt="Header Avatar" /> -->
-                                    <span class="text-start">
-                                        <span class="d-inline-block fw-medium user-name-text">User</span>
+                                    <?= Html::img(Yii::getAlias('@web/images/users/user-dummy-img.jpg'), ['class' => 'rounded-circle header-profile-user', 'alt' => 'Avatar'])?>
+                                    <span class="text-start ms-xl-2">
+                                        <span class="d-inline-block ms-1 fw-medium user-name-text"><?= Yii::$app->user->identity->login ?></span>
                                     </span>
                                 </span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <!-- item-->
-                                <h6 class="dropdown-header">Welcome User!</h6>
-                                <a class="dropdown-item" href="auth-logout-basic.html">
-                                    <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i>
-                                    <span class="align-middle" data-key="t-logout">Logout</span>
-                                </a>
+                                <?= Html::a('<i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i><span class="align-middle" data-key="t-logout">Выход</span>', ['logout'], ['class' => 'dropdown-item', 'data' => ['method' => 'post']]) ?>
                             </div>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </header>
 
         <!-- ========== App Menu ========== -->
+   
         <div class="app-menu navbar-menu">
             <!-- LOGO -->
             <div class="navbar-brand-box">
@@ -741,6 +738,7 @@ data-sidebar-image="none" data-preloader="disable" data-theme="material" data-th
 
             <div class="sidebar-background"></div>
         </div>
+       
         <!-- Left Sidebar End -->
 
         <!-- ============================================================== -->

@@ -12,15 +12,17 @@ return [
     'controllerNamespace' => 'backend\controllers',
     'bootstrap' => ['log'],
     'modules' => [],
+    'defaultRoute' => 'expert/experts',
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-backend',
             'baseUrl' => '/expert'
         ],
         'user' => [
-            'identityClass' => 'common\models\User',
+            'identityClass' => 'common\models\Users',
             'enableAutoLogin' => true,
             'identityCookie' => ['name' => '_identity-backend', 'httpOnly' => true],
+            'loginUrl' => ['expert/login'],
         ],
         'session' => [
             // this is the name of the session cookie used for login on the backend
