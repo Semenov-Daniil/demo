@@ -20,10 +20,10 @@ class AppAsset extends AssetBundle
         'css/custom.min.css'
     ];
     public $js = [
-        [
-            'js/layout.js',
-            'position' => View::POS_HEAD,
-        ],
+        // [
+        //     'js/layout.js',
+        //     'position' => View::POS_HEAD,
+        // ],
         'libs/bootstrap/js/bootstrap.bundle.min.js',
         'libs/simplebar/simplebar.min.js',
         'libs/node-waves/waves.min.js',

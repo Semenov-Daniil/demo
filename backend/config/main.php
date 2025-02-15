@@ -10,7 +10,16 @@ return [
     'id' => 'app-backend',
     'basePath' => dirname(__DIR__),
     'controllerNamespace' => 'backend\controllers',
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+        'log',
+        [
+            'class' => 'common\components\FileComponent',
+            'directories' => [
+                '@common/students',
+                '@common/events'
+            ],
+        ]
+    ],
     'modules' => [],
     'defaultRoute' => 'expert/experts',
     'components' => [
@@ -45,6 +54,7 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                '/<action>' => '/expert/<action>'
             ],
         ],
         

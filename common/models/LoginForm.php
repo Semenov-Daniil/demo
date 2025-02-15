@@ -63,12 +63,18 @@ class LoginForm extends Model
      * Logs in a user using the provided login and password.
      * @return bool whether the user is logged in successfully
      */
-    public function login()
+    public function login($role)
     {
         $this->validate();
 
         if (!$this->hasErrors()) {
-            return Yii::$app->user->login($this->getUser());
+            $user = $this->getUser();
+
+            if ($user->role->title == $role) {
+                return Yii::$app->user->login($this->getUser());
+            }
+
+            $this->addError('password', 'Неправильный «' . $this->getAttributeLabel('login') . '» или «' . $this->getAttributeLabel('password') .  '».');
         }
 
         return false;

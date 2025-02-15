@@ -6,7 +6,10 @@ use common\models\ExpertsEvents;
 use common\models\FilesEvents;
 use common\models\LoginForm;
 use common\models\Modules;
+use common\models\Passwords;
+use common\models\Roles;
 use common\models\StudentsEvents;
+use common\models\Users;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -28,7 +31,7 @@ class ExpertController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'experts'],
+                        'actions' => ['logout', 'experts', 'index'],
                         'allow' => true,
                         'roles' => ['expert'],
                     ],
@@ -60,7 +63,7 @@ class ExpertController extends Controller
         $this->layout = 'login';
 
         $model = new LoginForm();
-        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login()) {
+        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login('expert')) {
             return $this->redirect(['/']);
         }
 
@@ -68,6 +71,14 @@ class ExpertController extends Controller
 
         return $this->render('login', [
             'model' => $model,
+            'expert' => Users::find()
+                ->select([
+                    'login', Passwords::tableName() . '.password'
+                ])
+                ->where(['roles_id' => Roles::getRoleId('expert')])
+                ->joinWith('openPassword', false)
+                ->asArray()
+                ->one(),
         ]);
     }
 
@@ -81,6 +92,17 @@ class ExpertController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
+    }
+
+    
+    /**
+     * Displays homepage.
+     *
+     * @return string
+     */
+    public function actionIndex()
+    {
+        return $this->render('index');
     }
 
     /**

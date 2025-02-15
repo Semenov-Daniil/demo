@@ -7,6 +7,9 @@ use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\LoginForm;
+use common\models\Passwords;
+use common\models\Roles;
+use common\models\Users;
 
 /**
  * Site controller
@@ -25,7 +28,7 @@ class StudentController extends Controller
                     [
                         'actions' => ['index', 'logout', 'error'],
                         'allow' => true,
-                        'roles' => ['@'],
+                        'roles' => ['student'],
                     ],
                     [
                         'actions' => ['login'],
@@ -82,7 +85,7 @@ class StudentController extends Controller
         $this->layout = 'login';
 
         $model = new LoginForm();
-        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login()) {
+        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login('student')) {
             return $this->redirect(['/']);
         }
 
@@ -90,6 +93,14 @@ class StudentController extends Controller
 
         return $this->render('login', [
             'model' => $model,
+            'student' => Users::find()
+                ->select([
+                    'login', Passwords::tableName() . '.password'
+                ])
+                ->where(['roles_id' => Roles::getRoleId('student')])
+                ->joinWith('openPassword', false)
+                ->asArray()
+                ->one(),
         ]);
     }
 

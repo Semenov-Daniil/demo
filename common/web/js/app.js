@@ -4,7 +4,7 @@
 	/**
 	 *  global variables
 	 */
-	var navbarMenuHTML = document.querySelector(".navbar-menu").innerHTML;
+	var navbarMenuHTML =  document.querySelector(".navbar-menu") ? document.querySelector(".navbar-menu").innerHTML : '';
 	var horizontalMenuSplit = 7; // after this number all horizontal menus will be moved in More menu options
 	var default_lang = "en"; // set Default Language
 	var language = localStorage.getItem("language");
@@ -350,9 +350,9 @@
 		}
 	}
 
-	/**
-	 * Generate two column menu
-	 */
+	// /**
+	//  * Generate two column menu
+	//  */
 	function twoColumnMenuGenerate() {
 		var isTwoColumn = document.documentElement.getAttribute("data-layout");
 		var isValues = sessionStorage.getItem("defaultAttribute");
@@ -596,7 +596,7 @@
 		/**
 		 * Vertical layout menu scroll add
 		 */
-		if (document.documentElement.getAttribute("data-layout") == "vertical" || document.documentElement.getAttribute("data-layout") == "semibox") {
+		if (document.documentElement.getAttribute("data-sidebar-visibility") == "show" && (document.documentElement.getAttribute("data-layout") == "vertical" || document.documentElement.getAttribute("data-layout") == "semibox")) {
 			document.getElementById("two-column-menu").innerHTML = "";
 			if (document.querySelector(".navbar-menu")) {
 				document.querySelector(".navbar-menu").innerHTML = navbarMenuHTML;
@@ -801,25 +801,25 @@
 
 	function windowLoadContent() {
 		// Demo show code
-		document.addEventListener("DOMContentLoaded", function () {
-			var checkbox = document.getElementsByClassName("code-switcher");
-			Array.from(checkbox).forEach(function (check) {
-				check.addEventListener("change", function () {
-					var card = check.closest(".card");
-					var preview = card.querySelector(".live-preview");
-					var code = card.querySelector(".code-view");
+		// document.addEventListener("DOMContentLoaded", function () {
+		// 	var checkbox = document.getElementsByClassName("code-switcher");
+		// 	Array.from(checkbox).forEach(function (check) {
+		// 		check.addEventListener("change", function () {
+		// 			var card = check.closest(".card");
+		// 			var preview = card.querySelector(".live-preview");
+		// 			var code = card.querySelector(".code-view");
 
-					if (check.checked) {
-						preview.classList.add("d-none");
-						code.classList.remove("d-none");
-					} else {
-						preview.classList.remove("d-none");
-						code.classList.add("d-none");
-					}
-				});
-			});
-			feather.replace();
-		});
+		// 			if (check.checked) {
+		// 				preview.classList.add("d-none");
+		// 				code.classList.remove("d-none");
+		// 			} else {
+		// 				preview.classList.remove("d-none");
+		// 				code.classList.add("d-none");
+		// 			}
+		// 		});
+		// 	});
+		// 	feather.replace();
+		// });
 
 		window.addEventListener("resize", windowResizeHover);
 		windowResizeHover();
@@ -907,11 +907,12 @@
 
 	// two-column sidebar active js
 	function initActiveMenu() {
-		var currentPath = location.pathname == "/" ? "index.html" : location.pathname.substring(1);
-		currentPath = currentPath.substring(currentPath.lastIndexOf("/") + 1);
-		if (currentPath) {
+		var currentPath = location.pathname == "/expert" ? "/expert/experts" : location.pathname;
+		
+		if (currentPath && document.documentElement.getAttribute("data-sidebar-visibility") == "show") {
 			// navbar-nav
 			var a = document.getElementById("navbar-nav").querySelector('[href="' + currentPath + '"]');
+
 			if (a) {
 				a.classList.add("active");
 				var parentCollapseDiv = a.closest(".collapse.menu-dropdown");
@@ -1006,72 +1007,72 @@
 		}
 
 		// notification messages
-		if (document.getElementsByClassName("notification-check")) {
-			function emptyNotification() {
-				Array.from(document.querySelectorAll("#notificationItemsTabContent .tab-pane")).forEach(function (elem) {
-					if (elem.querySelectorAll(".notification-item").length > 0) {
-						if (elem.querySelector(".view-all")) {
-							elem.querySelector(".view-all").style.display = "block";
-						}
-					} else {
-						if (elem.querySelector(".view-all")) {
-							elem.querySelector(".view-all").style.display = "none";
-						}
-						var emptyNotificationElem = elem.querySelector(".empty-notification-elem")
-						if (!emptyNotificationElem) {
-							elem.innerHTML += '<div class="empty-notification-elem">\
-							<div class="w-25 w-sm-50 pt-3 mx-auto">\
-								<img src="assets/images/svg/bell.svg" class="img-fluid" alt="user-pic">\
-							</div>\
-							<div class="text-center pb-5 mt-2">\
-								<h6 class="fs-18 fw-semibold lh-base">Hey! You have no any notifications </h6>\
-							</div>\
-						</div>'
-						}
-					}
-				});
-			}
-			emptyNotification();
+		// if (document.getElementsByClassName("notification-check")) {
+		// 	function emptyNotification() {
+		// 		Array.from(document.querySelectorAll("#notificationItemsTabContent .tab-pane")).forEach(function (elem) {
+		// 			if (elem.querySelectorAll(".notification-item").length > 0) {
+		// 				if (elem.querySelector(".view-all")) {
+		// 					elem.querySelector(".view-all").style.display = "block";
+		// 				}
+		// 			} else {
+		// 				if (elem.querySelector(".view-all")) {
+		// 					elem.querySelector(".view-all").style.display = "none";
+		// 				}
+		// 				var emptyNotificationElem = elem.querySelector(".empty-notification-elem")
+		// 				if (!emptyNotificationElem) {
+		// 					elem.innerHTML += '<div class="empty-notification-elem">\
+		// 					<div class="w-25 w-sm-50 pt-3 mx-auto">\
+		// 						<img src="assets/images/svg/bell.svg" class="img-fluid" alt="user-pic">\
+		// 					</div>\
+		// 					<div class="text-center pb-5 mt-2">\
+		// 						<h6 class="fs-18 fw-semibold lh-base">Hey! You have no any notifications </h6>\
+		// 					</div>\
+		// 				</div>'
+		// 				}
+		// 			}
+		// 		});
+		// 	}
+		// 	emptyNotification();
 
 
-			Array.from(document.querySelectorAll(".notification-check input")).forEach(function (element) {
-				element.addEventListener("change", function (el) {
-					el.target.closest(".notification-item").classList.toggle("active");
+		// 	Array.from(document.querySelectorAll(".notification-check input")).forEach(function (element) {
+		// 		element.addEventListener("change", function (el) {
+		// 			el.target.closest(".notification-item").classList.toggle("active");
 
-					var checkedCount = document.querySelectorAll('.notification-check input:checked').length;
+		// 			var checkedCount = document.querySelectorAll('.notification-check input:checked').length;
 
-					if (el.target.closest(".notification-item").classList.contains("active")) {
-						(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
-					} else {
-						(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
-					}
-					document.getElementById("select-content").innerHTML = checkedCount
-				});
+		// 			if (el.target.closest(".notification-item").classList.contains("active")) {
+		// 				(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
+		// 			} else {
+		// 				(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
+		// 			}
+		// 			document.getElementById("select-content").innerHTML = checkedCount
+		// 		});
 
-				var notificationDropdown = document.getElementById('notificationDropdown')
-				notificationDropdown.addEventListener('hide.bs.dropdown', function (event) {
-					element.checked = false;
-					document.querySelectorAll('.notification-item').forEach(function (item) {
-						item.classList.remove("active");
-					})
-					document.getElementById('notification-actions').style.display = '';
-				});
-			});
+		// 		var notificationDropdown = document.getElementById('notificationDropdown')
+		// 		notificationDropdown.addEventListener('hide.bs.dropdown', function (event) {
+		// 			element.checked = false;
+		// 			document.querySelectorAll('.notification-item').forEach(function (item) {
+		// 				item.classList.remove("active");
+		// 			})
+		// 			document.getElementById('notification-actions').style.display = '';
+		// 		});
+		// 	});
 
-			var removeItem = document.getElementById('removeNotificationModal');
-			removeItem.addEventListener('show.bs.modal', function (event) {
-				document.getElementById("delete-notification").addEventListener("click", function () {
-					Array.from(document.querySelectorAll(".notification-item")).forEach(function (element) {
-						if (element.classList.contains("active")) {
-							element.remove();
-						}
-					});
-					emptyNotification();
+		// 	var removeItem = document.getElementById('removeNotificationModal');
+		// 	removeItem.addEventListener('show.bs.modal', function (event) {
+		// 		document.getElementById("delete-notification").addEventListener("click", function () {
+		// 			Array.from(document.querySelectorAll(".notification-item")).forEach(function (element) {
+		// 				if (element.classList.contains("active")) {
+		// 					element.remove();
+		// 				}
+		// 			});
+		// 			emptyNotification();
 
-					document.getElementById("NotificationModalbtn-close").click();
-				})
-			})
-		}
+		// 			document.getElementById("NotificationModalbtn-close").click();
+		// 		})
+		// 	})
+		// }
 	}
 
 	function initComponents() {
@@ -1164,8 +1165,9 @@
 	}
 
 	function hideShowLayoutOptions(dataLayout) {
+		var twoColumnMenu = document.getElementById("two-column-menu");
 		if (dataLayout == "vertical") {
-			document.getElementById("two-column-menu").innerHTML = "";
+			twoColumnMenu?.innerHTML && (twoColumnMenu.innerHTML = "");
 			if (document.querySelector(".navbar-menu")) {
 				document.querySelector(".navbar-menu").innerHTML = navbarMenuHTML;
 			}
@@ -1213,7 +1215,7 @@
 				document.getElementById("sidebar-visibility").style.display = "none";
 			}
 		} else if (dataLayout == "semibox") {
-			document.getElementById("two-column-menu").innerHTML = "";
+			twoColumnMenu?.innerHTML && (twoColumnMenu.innerHTML = "");
 			if (document.querySelector(".navbar-menu")) {
 				document.querySelector(".navbar-menu").innerHTML = navbarMenuHTML;
 			}
@@ -1237,7 +1239,7 @@
 
 	// add listener Sidebar Hover icon on change layout from setting
 	function addEventListenerOnSmHoverMenu() {
-		document.getElementById("vertical-hover").addEventListener("click", function () {
+		document.getElementById("vertical-hover")?.addEventListener("click", function () {
 			if (document.documentElement.getAttribute("data-sidebar-size") === "sm-hover") {
 				document.documentElement.setAttribute("data-sidebar-size", "sm-hover-active");
 			} else if (document.documentElement.getAttribute("data-sidebar-size") === "sm-hover-active") {
@@ -2084,7 +2086,7 @@
 	}
 
 	function init() {
-		setDefaultAttribute();
+		// setDefaultAttribute();
 		twoColumnMenuGenerate();
 		isCustomDropdown();
 		isCustomDropdownResponsive();
@@ -2097,7 +2099,7 @@
 		initComponents();
 		resetLayout();
 		pluginData();
-		initLanguage();
+		// initLanguage();
 		isCollapseMenu();
 		initMenuItemScroll();
 	}

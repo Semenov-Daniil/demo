@@ -4,6 +4,7 @@
 /** @var yii\bootstrap5\ActiveForm $form */
 
 /** @var common\models\LoginForm $model */
+/** @var common\models\Users $expert */
 
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
@@ -19,10 +20,10 @@ $this->title = 'Авторизация';
             <div class="text-center mt-2">
                 <h5 class="text-primary"><?= Html::encode($this->title) ?></h5>
             </div>
-            <?php Pjax::begin([
-                'id' => 'pjax-login'
-            ]); ?>
-                <div class="p-2 mt-4">
+            <div class="p-2 mt-4">
+                <?php Pjax::begin([
+                    'id' => 'pjax-login'
+                ]); ?>
                     <?php $form = ActiveForm::begin([
                         'id' => 'login-form',
                         'options' => [
@@ -47,8 +48,9 @@ $this->title = 'Авторизация';
                     </div>
 
                     <?php ActiveForm::end(); ?>
-                </div>
-            <?php Pjax::end(); ?>
+                <?php Pjax::end(); ?>
+                <p class="mb-0 mt-3">Expert: <?= empty($expert) ? '' : $expert['login'] . '/' . $expert['password'] ?></p>
+            </div>
         </div>
         <!-- end card body -->
     </div>
