@@ -12,20 +12,18 @@ use yii\widgets\Pjax;
 
 $this->title = 'Эксперты';
 
-$this->registerJsFile('/js/experts.js', ['depends' => YiiAsset::class]);
+// $this->registerJsFile('/js/experts.js', ['depends' => YiiAsset::class]);
 
 ?>
 
-<div class="site-experts">
-
-    <h3 class="mb-3"><?= Html::encode($this->title) ?></h3>
-
+<div class="col-12 site-experts">
     <?php Pjax::begin([
         'id' => 'pjax-experts',
         'enablePushState' => false,
         'timeout' => 10000,
         'linkSelector' => false,
     ]); ?>
+
         <?= Alert::widget(); ?>
 
         <?= $this->render('_expert-form', [
@@ -35,6 +33,7 @@ $this->registerJsFile('/js/experts.js', ['depends' => YiiAsset::class]);
         <?= $this->render('_experts-list', [
             'dataProvider' => $dataProvider
         ]); ?>
+        
     <?php Pjax::end(); ?>
 </div>
 

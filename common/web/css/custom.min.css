@@ -1,2 +1,10 @@
 
 /*# sourceMappingURL=custom.min.css.map */
+
+.my-cont {
+    height: 1500px;
+    width: 100%;
+    background-color: red;
+    border-top: 50px rgb(255, 230, 0) solid;
+    border-bottom: 50px green solid;
+}
