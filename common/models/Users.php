@@ -80,14 +80,14 @@ class Users extends ActiveRecord implements IdentityInterface
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
             $students = StudentsEvents::findAll(['events_id' => $this->event->id]);
-
+            
             foreach ($students as $student) {
                 if (!Users::findOne(['id' => $student->students_id])->delete()) {
                     return false;
                 }
             }
 
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@events') . '/' . $this->event->dir_title);
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@events/') . $this->event->dir_title);
         }
 
         return true;
@@ -169,7 +169,7 @@ class Users extends ActiveRecord implements IdentityInterface
      */
     public function getEvent(): object
     {
-        return $this->hasOne(Events::class, ['experts_id' => 'id'])->inverseOf('users');
+        return $this->hasOne(Events::class, ['experts_id' => 'id'])->inverseOf('expert');
     }
 
     /**

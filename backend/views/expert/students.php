@@ -6,19 +6,17 @@
 /** @var app\models\StudentsEvents $model */
 /** @var app\models\StudentsEvents $dataProvider */
 
-use app\widgets\Alert;
+use common\widgets\Alert;
 use yii\helpers\Html;
 use yii\widgets\Pjax;
 
 $this->title = 'Студенты';
 
-$this->registerJsFile('/js/students.js', ['depends' => 'yii\web\JqueryAsset']);
+$this->registerJsFile('@web/js/students.js', ['depends' => 'yii\web\JqueryAsset']);
 
 ?>
-<div class="site-students">
+<div class="col-12 site-students">
 
-    <h3 class="mb-3"><?= Html::encode($this->title) ?></h3>
-    
     <?php Pjax::begin([
         'id' => 'pjax-students',
         'enablePushState' => false,

@@ -34,3 +34,24 @@ use yii\bootstrap5\Html;
     <?php ActiveForm::end(); ?>
 </div>
 
+<!-- <div class="card">
+    <div class="card-body">
+        <p class="text-muted">DropzoneJS is an open source library that provides drag’n’drop file uploads with image previews.</p>
+
+        <div class="dropzone dz-clickable">
+            
+            <div class="dz-message needsclick">
+                <div class="mb-3">
+                    <i class="display-4 text-muted ri-upload-cloud-2-fill"></i>
+                </div>
+
+                <h4>Drop files here or click to upload.</h4>
+            </div>
+        </div>
+
+        <ul class="list-unstyled mb-0" id="dropzone-preview">
+            
+        <li class="mt-2 dz-processing dz-success dz-complete" id=""> 
+    </div>
+</div> -->
+

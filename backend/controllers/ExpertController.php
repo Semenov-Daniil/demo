@@ -29,9 +29,10 @@ class ExpertController extends Controller
                     [
                         'actions' => ['login', 'error'],
                         'allow' => true,
+                        'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['logout', 'experts', 'index'],
+                        //'actions' => ['logout', 'experts', 'delete-experts', 'students', 'delete-students', 'modules', 'change-status-modules', 'delete-modules'],
                         'allow' => true,
                         'roles' => ['expert'],
                     ],
@@ -92,17 +93,6 @@ class ExpertController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
-    }
-
-    
-    /**
-     * Displays homepage.
-     *
-     * @return string
-     */
-    public function actionIndex()
-    {
-        return $this->render('index');
     }
 
     /**
@@ -233,6 +223,29 @@ class ExpertController extends Controller
                 Yii::$app->session->setFlash('error', 'Не удалось удалить файл.');
             }
         }
+    }
+
+    /**
+     * File download
+     * 
+     * @param string $filename file name.
+     * @param string $event the name of the event directory.
+     */
+    public function actionDownload(string $dir, string $filename)
+    {
+        if ($file = FilesEvents::findFile($filename, $dir)) {
+            $filePath = Yii::getAlias("@events/$dir/$filename." . $file['extension']);
+    
+            if (file_exists($filePath)) {
+                return Yii::$app->response
+                    ->sendStreamAsFile(fopen($filePath, 'r'), $file['originName'], [
+                        'mimeType' => $file['type'],
+                    ])
+                    ->send();
+            }
+        }
+
+        return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
     }
 
     /**

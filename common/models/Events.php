@@ -124,7 +124,7 @@ class Events extends ActiveRecord
      */
     public function getExpert()
     {
-        return $this->hasOne(Users::class, ['id' => 'experts_id']);
+        return $this->hasOne(Users::class, ['id' => 'experts_id'])->inverseOf('event');
     }
 
     /**
@@ -172,9 +172,9 @@ class Events extends ActiveRecord
      * Find event by expert.
      *
      * @param int $expertId id expert
-     * @return int|null id event
+     * @return static|null id event
      */
-    public static function getEventByExpert(int $expertId): int|null
+    public static function getEventByExpert(int $expertId): static|null
     {
         return self::findOne(['experts_id' => $expertId]);
     }

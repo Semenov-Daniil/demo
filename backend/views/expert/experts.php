@@ -12,7 +12,7 @@ use yii\widgets\Pjax;
 
 $this->title = 'Эксперты';
 
-// $this->registerJsFile('/js/experts.js', ['depends' => YiiAsset::class]);
+$this->registerJsFile('@web/js/experts.js', ['depends' => YiiAsset::class]);
 
 ?>
 

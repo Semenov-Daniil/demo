@@ -24,6 +24,7 @@ use yii\helpers\VarDumper;
 class FilesEvents extends \yii\db\ActiveRecord
 {
     public array $files = [];
+    public array $students = [];
 
     const SCENARIO_UPLOAD_FILE = "upload-file";
 
@@ -63,8 +64,8 @@ class FilesEvents extends \yii\db\ActiveRecord
             [['events_id', 'save_name', 'origin_name', 'extension', 'type'], 'required'],
             [['events_id'], 'integer'],
             [['save_name', 'origin_name', 'extension', 'type'], 'string', 'max' => 255],
-            [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'experts_id']],
-            [['files'], 'file', 'skipOnEmpty' => false, 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles()]
+            [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
+            [['files'], 'file', 'skipOnEmpty' => false, 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE]
         ];
     }
 
@@ -90,7 +91,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public function getEvent()
     {
-        return $this->hasOne(Events::class, ['experts_id' => 'events_id']);
+        return $this->hasOne(Events::class, ['id' => 'events_id']);
     }
 
     /**
@@ -103,16 +104,20 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @return FilesEvents
      */
-    public function addFileEvent(int $eventId, string $baseName, string $extension, string $type): FilesEvents
+    public function saveFileEvent(array $data): FilesEvents
     {
         $model = new FilesEvents();
-        $model->events_id = $eventId;
+        $model->load($data, '');
         $model->save_name = Yii::$app->security->generateRandomString();
-        $model->origin_name = $baseName;
-        $model->extension = $extension;
-        $model->type = $type;
-        $model->save();
-        return $model;
+        
+        $model->validate();
+
+        if (!$model->hasErrors()) {
+            $model->save();
+            return $model;
+        }
+
+        return false;
     }
 
     /**
@@ -122,10 +127,10 @@ class FilesEvents extends \yii\db\ActiveRecord
      * @param array $filename file name.
      * @param array $students an array with student data.
      */
-    public function copyFileStudents(string $compDir, string $filename, array $students): void
+    public function copyFileStudents(string $compDir, string $filename): void
     {
-        foreach ($students as $student) {
-            $studentPath = Yii::getAlias('@users') . "/" . $student['login'] . "/public";
+        foreach ($this->students as $student) {
+            $studentPath = Yii::getAlias('@students/' . $student['login'] . '/public');
 
             if (!is_dir($studentPath)) {
                 Yii::$app->fileComponent->createDirectory($studentPath);
@@ -147,13 +152,18 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
      */
-    public function saveFile(int $eventId, string $dir, array $students, yii\web\UploadedFile $file): void
+    public function saveFile(int $eventId, string $dir, yii\web\UploadedFile $file): bool
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $model = $this->addFileEvent($eventId, $file->baseName, $file->extension, $file->type);
+            $model = $this->saveFileEvent([
+                'events_id' => $eventId, 
+                'origin_name' => $file->baseName, 
+                'extension' => $file->extension,
+                'type' => $file->type
+            ]);
 
-            if ($model->hasErrors()) {
+            if (!$model) {
                 $transaction->rollBack();
             }
 
@@ -161,9 +171,10 @@ class FilesEvents extends \yii\db\ActiveRecord
                 throw new Exception("The file could not be saved $dir/$model->save_name.$model->extension");
             }
 
-            $this->copyFileStudents($dir, "$model->save_name.$model->extension", $students);
+            $this->copyFileStudents($dir, "$model->save_name.$model->extension");
 
             $transaction->commit();
+            return true;
         } catch(\Exception $e) {
             Yii::$app->fileComponent->deleteFile("$dir/$model->save_name.$model->extension");
             $transaction->rollBack();
@@ -171,6 +182,8 @@ class FilesEvents extends \yii\db\ActiveRecord
             Yii::$app->fileComponent->deleteFile("$dir/$model->save_name.$model->extension");
             $transaction->rollBack();
         } 
+
+        return false;
     }
 
     /**
@@ -184,10 +197,10 @@ class FilesEvents extends \yii\db\ActiveRecord
     {
         if ($this->validate()) {
             $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
-            $dir = Yii::getAlias('@events') . '/' . $event?->dir_title;
-            $students = StudentsEvents::find()
+            $dir = Yii::getAlias("@events/$event->dir_title");
+
+            $this->students = StudentsEvents::find()
                 ->select([
-                    'students_id',
                     'login',
                 ])
                 ->where(['events_id' => $event?->id])
@@ -197,10 +210,12 @@ class FilesEvents extends \yii\db\ActiveRecord
             ;
 
             foreach ($this->files as $file) {
-                if (!$this->saveFile($event?->id, $dir, $students, $file)) {
+                if (!$this->saveFile($event?->id, $dir, $file)) {
                     return false;
                 }
             }
+
+            $this->students = [];
 
             return true;
         }
@@ -217,7 +232,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public static function getDataProviderFiles(int $records): ActiveDataProvider
     {
-        $eventId = Events::findOne(['experts_id' =>  Yii::$app->user->id])?->id;
+        $eventId = Yii::$app->user->identity->event?->id;
 
         $query = self::find()
             ->select([
@@ -271,7 +286,7 @@ class FilesEvents extends \yii\db\ActiveRecord
         $students = StudentsEvents::findAll(['events_id' => $eventId]);
 
         foreach ($students as $student) {
-            $studentFile = Yii::getAlias('@users') . "/" . $student->user->login . "/public/" . "$this->save_name.$this->extension";
+            $studentFile = Yii::getAlias('@students') . "/" . $student->user->login . "/public/" . "$this->save_name.$this->extension";
             if (!Yii::$app->fileComponent->deleteFile($studentFile)) {
                 return false; 
             }

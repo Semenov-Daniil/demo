@@ -25,7 +25,11 @@ return [
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-backend',
-            'baseUrl' => '/expert'
+            'baseUrl' => '/expert',
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+                'multipart/form-data' => 'yii\web\MultipartFormDataParser',
+            ],
         ],
         'user' => [
             'identityClass' => 'common\models\Users',
@@ -54,7 +58,8 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                '/<action>' => '/expert/<action>'
+                '/download/<dir>/<filename>' => '/expert/download',
+                '/<action>' => '/expert/<action>',
             ],
         ],
         

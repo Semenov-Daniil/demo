@@ -47,7 +47,7 @@ class StudentsEvents extends ActiveRecord
                     return true;
                 }
 
-                Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@users') . "/$login");
+                Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@students') . "/$login");
                 
                 return false;
             }
@@ -63,8 +63,10 @@ class StudentsEvents extends ActiveRecord
         }
 
         $login = $this->user->login;
+
+        
         if ($this->deleteDbStudent($login) && $this->deleteAccountMySQL($login)) {
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@users') . "/$login");
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@students') . "/$login");
             return true;
         }
         
@@ -134,7 +136,7 @@ class StudentsEvents extends ActiveRecord
      */
     public function getEvent()
     {
-        return $this->hasOne(Events::class, ['experts_id' => 'events_id']);
+        return $this->hasOne(Events::class, ['id' => 'events_id']);
     }
 
     /**
@@ -246,14 +248,14 @@ class StudentsEvents extends ActiveRecord
                     }
                 }
             } catch(\Exception $e) {
-                Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@users') . "/$user->login");
+                Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$user->login"));
                 $this->deleteDbStudent($user->login);
                 $this->deleteAccountMySQL($user->login);
                 $user->delete();
                 $transaction->rollBack();
                 VarDumper::dump( $e, $depth = 10, $highlight = true);die;
             } catch(\Throwable $e) {
-                Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@users') . "/$user->login");
+                Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$user->login"));
                 $this->deleteDbStudent($user->login);
                 $this->deleteAccountMySQL($user->login);
                 $user->delete();
@@ -274,8 +276,8 @@ class StudentsEvents extends ActiveRecord
      */
     public function createDirectoryStudent(string $login): bool
     {
-        if (Yii::$app->fileComponent->createDirectory(Yii::getAlias('@users') . "/$login")) {
-            return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@users') . "/$login/public");
+        if (Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login")) {
+            return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login/public");
         }
 
         return false;
@@ -291,13 +293,14 @@ class StudentsEvents extends ActiveRecord
      */
     public function createDirectoriesModules(string $login, string $prefix): bool
     {
-        $numberModule = count($this->event->modules);
+        $modules = $this->event->modules;
 
-        for($i = 0; $i < $numberModule; $i++) {
-            if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias('@users') . "/$login/" . $this->getDirectoryModuleTitle($prefix, $i+1))) {
+        foreach ($modules as $module) {
+            if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/") . $this->getDirectoryModuleTitle($prefix, $module->number))) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -311,7 +314,7 @@ class StudentsEvents extends ActiveRecord
      */
     public function deleteDirectoryModule(string $login, int $numberModule): void
     {
-        Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@users') . "/$login/" . $this->getDirectoryModuleTitle($this->dir_prefix, $numberModule));
+        Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@students') . "/$login/" . $this->getDirectoryModuleTitle($this->dir_prefix, $numberModule));
     }
 
     /**
@@ -330,7 +333,7 @@ class StudentsEvents extends ActiveRecord
 
             if (!empty($files)) {
                 $competencePath = Yii::getAlias('@events') . "/" . $this->event->dir_title;
-                $studentPath = Yii::getAlias('@users') . "/$login/public";
+                $studentPath = Yii::getAlias('@students') . "/$login/public";
     
                 if (!is_dir($studentPath)) {
                     Yii::$app->fileComponent->createDirectory($studentPath);
@@ -392,11 +395,13 @@ class StudentsEvents extends ActiveRecord
     public function createDbsStudent(string $login): bool
     {
         $modules = $this->modules;
-        for($i = 0; $i < count($modules); $i++) {
-            if (!Yii::$app->dbComponent->createDb($this->getDbTitle($login, $i+1)) || ($modules[$i]->status && !Yii::$app->dbComponent->grantPrivileges($login, $this->getDbTitle($login, $i+1)))) {
+
+        foreach ($modules as $module) {
+            if (!Yii::$app->dbComponent->createDb($this->getDbTitle($login, $module->number)) || ($module->status && !Yii::$app->dbComponent->grantPrivileges($login, $this->getDbTitle($login, $module->number)))) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -411,17 +416,14 @@ class StudentsEvents extends ActiveRecord
      */
     public function deleteDbStudent(string $login): bool
     {
-        $countModules = count($this->modules);
+        $modules = $this->modules;
 
-        if (!$countModules) {
-            $countModules = count(Events::getEventByExpert(Yii::$app->user->id)?->modules);
-        }
-
-        for($i = 0; $i < $countModules; $i++) {
-            if (!Yii::$app->dbComponent->deleteDb($this->getDbTitle($login, $i+1))) {
+        foreach ($modules as $module) {
+            if (!Yii::$app->dbComponent->deleteDb($this->getDbTitle($login, $module->number))) {
                 return false;
             }
         }
+
         return true;
     }
 
