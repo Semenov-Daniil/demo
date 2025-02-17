@@ -6,16 +6,17 @@
 
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
+use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
 $this->title = 'Файлы';
 
-$this->registerCssFile('@common/web/libs/dropzone/dropzone.css');
+$this->registerCssFile('@web/libs/dropzone/dropzone.css');
 
-$this->registerJsFile('@web/js/files.js', ['depends' => 'yii\web\JqueryAsset']);
+$this->registerJsFile('@web/js/files.js', ['depends' => YiiAsset::class]);
 
-$this->registerJsFile('@common/web/libs/dropzone/dropzone-min.js', ['depends' => 'yii\web\JqueryAsset']);
-$this->registerJsFile('@common/web/js/pages/form-file-upload.init.js', ['depends' => 'yii\web\JqueryAsset']);
+$this->registerJsFile('@web/libs/dropzone/dropzone-min.js', ['depends' => YiiAsset::class]);
+$this->registerJsFile('@web/js/pages/form-file-upload.init.js', ['depends' => YiiAsset::class]);
 
 ?>
 <div class="site-files">

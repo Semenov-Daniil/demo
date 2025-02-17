@@ -65,7 +65,7 @@ class FilesEvents extends \yii\db\ActiveRecord
             [['events_id'], 'integer'],
             [['save_name', 'origin_name', 'extension', 'type'], 'string', 'max' => 255],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
-            [['files'], 'file', 'skipOnEmpty' => false, 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE]
+            [['files'], 'image', 'extensions' => 'png, jpg', 'on' => self::SCENARIO_UPLOAD_FILE]
         ];
     }
 
@@ -195,6 +195,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public function uploadFiles(): bool
     {
+        
         if ($this->validate()) {
             $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
             $dir = Yii::getAlias("@events/$event->dir_title");

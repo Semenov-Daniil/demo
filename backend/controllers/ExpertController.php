@@ -192,14 +192,23 @@ class ExpertController extends Controller
         $dataProvider = $model->getDataProviderFiles(20);
 
         if (Yii::$app->request->isPost) {
-            $model->files = UploadedFile::getInstances($model, 'files');
+            $model->files = UploadedFile::getInstancesByName('files');
 
             if ($model->uploadFiles()) {
                 Yii::$app->session->setFlash('success', 'Файл(-ы) успешно добавлен(-ы).');
             } else {
                 Yii::$app->session->setFlash('error', 'Не удалось добавить файл(-ы).');
             }
+
+            Yii::$app->response->statusCode = 422;
+    
+            return $this->asJson([
+                0 => [
+                    'message' => 'test'
+                ]
+            ]);
         }
+
 
         return $this->render('files', [
             'model' => $model,
