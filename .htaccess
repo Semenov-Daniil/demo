@@ -1,5 +1,10 @@
-php_value post_max_size 120M
-php_value upload_max_filesize 100M
+Options +FollowSymLinks
+IndexIgnore */*
 
 RewriteEngine on
-RewriteRule ^(.*)$ web/$1
+
+RewriteCond %{REQUEST_URI} ^/expert
+RewriteRule ^expert\/?(.*)$ backend/web/$1
+
+RewriteCond %{REQUEST_URI} !^/(expert)
+RewriteRule ^(.*)$ frontend/web/$1
