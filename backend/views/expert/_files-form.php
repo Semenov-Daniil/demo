@@ -8,75 +8,6 @@ use yii\bootstrap5\Html;
 /** @var app\models\FilesEvents $model */
 ?>
 
-<!-- <div class="files-from my-5">
-    <?php $form = ActiveForm::begin([
-        'id' => 'add-files-form',
-        'options' => [
-            'data' => [
-                'pjax' => true
-            ]
-        ],
-        'fieldConfig' => [
-            'template' => "{label}\n{input}\n{error}",
-            'labelOptions' => ['class' => 'col-form-label mr-lg-3'],
-            'inputOptions' => ['class' => 'form-control'],
-            'errorOptions' => ['class' => 'invalid-feedback'],
-        ],
-    ]); ?>
-        
-        <?= $form->field($model, 'files[]')->fileInput(['multiple' => true])->label(false); ?>
-        
-        <div class="form-group">
-            <div>
-                <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add']) ?>
-            </div>
-        </div>
-    <?php ActiveForm::end(); ?>
-</div> -->
-
-<!-- <div class="card">
-    <div class="card-body">
-        <p class="text-muted">DropzoneJS is an open source library that provides drag’n’drop file uploads with image previews.</p>
-    
-        <div class="dropzone">
-            <div class="fallback">
-                <input name="file" type="file" multiple="multiple">
-            </div>
-            <div class="dz-message needsclick">
-                <div class="mb-3">
-                    <i class="display-4 text-muted ri-upload-cloud-2-fill"></i>
-                </div>
-    
-                <h4>Drop files here or click to upload.</h4>
-            </div>
-        </div>
-    
-        <ul class="list-unstyled mb-0" id="dropzone-preview">
-            <li class="mt-2" id="dropzone-preview-list">
-                <div class="border rounded">
-                    <div class="d-flex p-2">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="avatar-sm bg-light rounded">
-                                <i class="ri-file-2-line img-fluid rounded d-block"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="pt-1">
-                                <h5 class="fs-14 mb-1" data-dz-name>&nbsp;</h5>
-                                <p class="fs-13 text-muted mb-0" data-dz-size></p>
-                                <strong class="error text-danger" data-dz-errormessage></strong>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0 ms-3">
-                            <button data-dz-remove class="btn btn-sm btn-danger">Delete</button>
-                        </div>
-                    </div>
-                </div>
-            </li>
-        </ul>
-    </div>
-</div> -->
-
 <div class="card">
     <div class="card-body">
         <?php $form = ActiveForm::begin([
@@ -104,15 +35,13 @@ use yii\bootstrap5\Html;
                     <i class="display-4 text-muted ri-upload-cloud-2-fill"></i>
                 </div>
     
-                <h4>Drop files here or click to upload.</h4>
+                <h4>Перетащите файлы или нажмите, чтобы загрузить.</h4>
             </div>
             
         <?php ActiveForm::end(); ?>
 
-        <div class="form-group mt-3">
-            <div>
-                <?= Html::submitButton('Добавить', ['class' => 'btn btn-success btn-upload-file', 'name' => 'add']) ?>
-            </div>
+        <div class="d-flex mt-3">
+            <?= Html::submitButton('Добавить', ['class' => 'btn btn-success ms-auto btn-upload-file', 'name' => 'add']) ?>
         </div>
 
         <ul class="list-unstyled mb-0" id="dropzone-preview">
@@ -127,6 +56,7 @@ use yii\bootstrap5\Html;
                             <div class="pt-1">
                                 <h5 class="fs-14 mb-1" data-dz-name>&nbsp;</h5>
                                 <p class="fs-13 text-muted mb-0" data-dz-size></p>
+                                <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
                                 <strong class="error text-danger" data-dz-errormessage></strong>
                             </div>
                         </div>
@@ -139,5 +69,6 @@ use yii\bootstrap5\Html;
         </ul>
     </div>
 </div>
+
 
 

@@ -21,21 +21,20 @@ $this->registerJsFile('@web/js/pages/form-file-upload.init.js', ['depends' => Yi
 ?>
 <div class="site-files">
     <div>
+        <?= $this->render('_files-form', [
+            'model' => $model
+        ]); ?>
+
         <?php Pjax::begin([
             'id' => 'pjax-files',
             'enablePushState' => false,
             'timeout' => 10000,
         ]); ?>
 
-            <?= Alert::widget(); ?>
-
-            <?= $this->render('_files-form', [
-                'model' => $model
-            ]); ?>
-
             <?= $this->render('_files-list', [
                 'dataProvider' => $dataProvider
             ]); ?>
+
         <?php Pjax::end(); ?>
     </div>
 </div>

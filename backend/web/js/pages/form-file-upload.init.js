@@ -1,17 +1,15 @@
 $(() => {
     
     const form = $('#upload-form');
-
-    console.log(form);
     
-    let dropzonePreviewNode = document.querySelector("#dropzone-preview-list");
+    const dropzonePreviewNode = $('#dropzone-preview-list')[0];
     dropzonePreviewNode.id = "";
     
-    let previewTemplate = dropzonePreviewNode.parentNode.innerHTML;
+    const previewTemplate = dropzonePreviewNode.parentNode.innerHTML;
     
     dropzonePreviewNode.parentNode.removeChild(dropzonePreviewNode);
     
-    let dropzone = new Dropzone(form[0], {
+    const dropzone = new Dropzone(form[0], {
         url: form.attr('action'),
         method: "post",
         previewTemplate: previewTemplate,
@@ -29,24 +27,48 @@ $(() => {
         dropzone.processQueue();
     });
 
-    dropzone.on("sendingmultiple", function() {
-        // Gets triggered when the form is actually being sent.
-        // Hide the success button or the complete form.
-        console.log('sendimg');
-    });
     dropzone.on("successmultiple", function(files, response) {
-        // Gets triggered when the files have successfully been sent.
-        // Redirect user or notify of success.
-        console.log('success');
-        console.log(files);
+        this.removeAllFiles();
     });
-    dropzone.on("errormultiple", function(files, response) {
-        // Gets triggered when there was an error sending the files.
-        // Maybe show form again, and notify user of error
-        console.log('err');
-        console.log(files);
 
-        console.log(response);
+    dropzone.on('error', function (file, response) {
+        let isError = false;
+
+        for (let responseFile of response.files) {
+            if (file.name == responseFile.filename) {
+                isError = true;
+
+                for (let node of file.previewElement.querySelectorAll("[data-dz-errormessage]")) {
+                    for (let error of responseFile.errors) {
+                        if (node.textContent) {
+                            node.textContent = error;
+                        } else {
+                            node.textContent += error + '\n';
+                        }
+                    }
+                }
+
+                file.status = Dropzone.QUEUED;
+
+                break;
+            }
+        }
+
+        if (!isError) {
+            this.removeFile(file);
+        }
+
+    });
+
+    dropzone.on('queuecomplete', function (files) {
+        $.pjax.reload('#pjax-files');
+    });
+
+    dropzone.on('uploadprogress', function (file, progress) {
+        console.log(file, progress);
+
+        const uploadProgress = file.previewElement.querySelector("[data-dz-uploadprogress]");
+        uploadProgress.style.width = progress + '%';
     });
 
 

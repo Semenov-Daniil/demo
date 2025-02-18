@@ -28,10 +28,13 @@ use yii\grid\GridView;
             ],
             [
                 'class' => ActionColumn::class,
-                'template' => '{delete}',
+                'template' => '<div class="d-flex flex-wrap gap-2 justify-content-end">{delete}{download}</div>',
                 'buttons' => [
                     'delete' => function ($url, $model, $key) {
                         return Html::a('Удалить', ['delete-files', 'id' => $model['fileId']], ['class' => 'btn btn-danger btn-delete', 'data' => ['pjax' => 0]]);
+                    },
+                    'download' => function ($url, $model, $key) {
+                        return Html::a('Скачать', ["/download/" . $model['dirTitle'] . "/" . $model['saveName']], ['class' => 'btn btn-primary', 'data' => ['pjax' => 0]]);
                     }
                 ],
             ],
