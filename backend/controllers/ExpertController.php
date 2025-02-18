@@ -197,7 +197,7 @@ class ExpertController extends Controller
             $answer = $model->uploadFiles();
 
             Yii::$app->response->statusCode = (count($answer) ? 422 : 200);
-    
+
             return $this->asJson([
                 'error' => '',
                 'files' => $answer

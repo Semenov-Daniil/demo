@@ -12,12 +12,13 @@ class AppAsset extends AssetBundle
 {
     public $sourcePath = '@common/web/';
     public $css = [
-        'libs/jsvectormap/jsvectormap.min.css',
-        'libs/swiper/swiper-bundle.min.css',
+        // aos
+        'libs/aos/aos.css',
+
         'css/bootstrap.min.css',
         'css/icons.min.css',
         'css/app.css',
-        'css/custom.min.css'
+        'css/custom.min.css',
     ];
     public $js = [
         // [
@@ -33,6 +34,10 @@ class AppAsset extends AssetBundle
         // 'https://cdn.jsdelivr.net/npm/toastify-js',
 
         // 'js/toastify-js.js',
+
+        // aos
+        'libs/aos/aos.js',
+        'js/pages/animation-aos.init.js',
         
         'libs/choices.js/public/assets/scripts/choices.min.js',
         'libs/flatpickr/flatpickr.min.js',

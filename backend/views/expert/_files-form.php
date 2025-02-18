@@ -8,6 +8,10 @@ use yii\bootstrap5\Html;
 /** @var app\models\FilesEvents $model */
 ?>
 
+<!-- <div class="progress progress-sm">
+    <div class="progress-bar bg-success" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+</div> -->
+
 <div class="card">
     <div class="card-body">
         <?php $form = ActiveForm::begin([
@@ -45,18 +49,21 @@ use yii\bootstrap5\Html;
         </div>
 
         <ul class="list-unstyled mb-0" id="dropzone-preview">
-            <li class="mt-2" id="dropzone-preview-list">
+            <li class="mt-2 dz-preview-item d-none" id="dropzone-preview-list">
                 <div class="border rounded">
                     <div class="d-flex p-2">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="avatar-sm preview-img bg-light rounded">
+                        <div class="d-flex flex-shrink-0 align-items-center me-3">
+                            <div class="d-flex align-items-center justify-content-center avatar-sm preview-img bg-light rounded">
+                                <i class="display-6 text-muted ri-file-3-fill"></i>
                             </div>
                         </div>
                         <div class="flex-grow-1">
                             <div class="pt-1">
                                 <h5 class="fs-14 mb-1" data-dz-name>&nbsp;</h5>
                                 <p class="fs-13 text-muted mb-0" data-dz-size></p>
-                                <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
+                                <div class="dz-progress progress progress-sm mt-1">
+                                    <div class="dz-upload progress-bar animated-progress bg-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-dz-uploadprogress></div>
+                                </div>
                                 <strong class="error text-danger" data-dz-errormessage></strong>
                             </div>
                         </div>
