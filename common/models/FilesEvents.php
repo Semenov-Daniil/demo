@@ -67,7 +67,7 @@ class FilesEvents extends \yii\db\ActiveRecord
             [['save_name', 'origin_name', 'extension', 'type'], 'string', 'max' => 255],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
             [['files'], 'file', 'skipOnEmpty' => true, 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE],
-            [['file'], 'file', 'maxSize' => '254'],
+            [['file'], 'file', 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles()],
         ];
     }
 
@@ -184,7 +184,6 @@ class FilesEvents extends \yii\db\ActiveRecord
         } catch(\Exception $e) {
             if ($model) Yii::$app->fileComponent->deleteFile("$dir/$model->save_name.$model->extension");
             $transaction->rollBack();
-            var_dump($e);die;
         } catch(\Throwable $e) {
             if ($model) Yii::$app->fileComponent->deleteFile("$dir/$model->save_name.$model->extension");
             $transaction->rollBack();

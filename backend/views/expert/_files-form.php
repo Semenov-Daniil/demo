@@ -45,7 +45,7 @@ use yii\bootstrap5\Html;
         <?php ActiveForm::end(); ?>
 
         <div class="d-flex mt-3">
-            <?= Html::submitButton('Добавить', ['class' => 'btn btn-success ms-auto btn-upload-file', 'name' => 'add']) ?>
+            <?= Html::button('Загрузить файл', ['class' => 'btn btn-success ms-auto btn-upload-file', 'name' => 'add']) ?>
         </div>
 
         <ul class="list-unstyled mb-0" id="dropzone-preview">

@@ -5,6 +5,8 @@ $(() => {
     const dropzonePreviewNode = $('#dropzone-preview-list')[0];
     dropzonePreviewNode.id = "";
     dropzonePreviewNode.classList.remove('d-none');
+
+    // console.log(dropzonePreviewNode.parentNode.innerHTML);
     
     const previewTemplate = dropzonePreviewNode.parentNode.innerHTML;
     
@@ -21,8 +23,8 @@ $(() => {
         maxFiles: 100,
         paramName: "files",
         // maxFilesize: 102400,
-        maxFilesize: 20,
-        dictFileTooBig: "Файл слишком большой ({{filesize}}MiB). Максимальный размер файла: {{maxFilesize}}MiB.",
+        // maxFilesize: 20,
+        dictFileTooBig: "Файл слишком большой ({{filesize}}MB). Максимальный размер файла: {{maxFilesize}}MB.",
         cache: false,
 
         removedfile: function (file) {

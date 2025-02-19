@@ -192,7 +192,14 @@ class ExpertController extends Controller
         $dataProvider = $model->getDataProviderFiles(20);
 
         if (Yii::$app->request->isPost) {
-            $model->files = UploadedFile::getInstancesByName('files');
+
+            var_dump($_FILES);die;
+
+            try {
+                $model->files = UploadedFile::getInstancesByName('files');
+            } catch (\Exception $e) {
+                var_dump($e);die;
+            }
 
             $answer = $model->uploadFiles();
 

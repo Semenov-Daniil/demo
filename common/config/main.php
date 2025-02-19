@@ -30,5 +30,10 @@ return [
         'fileComponent' => [
             'class' => 'common\components\FileComponent'
         ],
+        'assetManager' => [
+            // 'appendTimestamp' => true,
+            // 'linkAssets' => true,
+            'forceCopy' => true,
+        ]
     ],
 ];

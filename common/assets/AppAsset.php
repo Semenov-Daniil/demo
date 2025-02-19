@@ -36,8 +36,8 @@ class AppAsset extends AssetBundle
         // 'js/toastify-js.js',
 
         // aos
-        'libs/aos/aos.js',
-        'js/pages/animation-aos.init.js',
+        // 'libs/aos/aos.js',
+        // 'js/pages/animation-aos.init.js',
         
         'libs/choices.js/public/assets/scripts/choices.min.js',
         'libs/flatpickr/flatpickr.min.js',
