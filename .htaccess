@@ -1,6 +1,9 @@
 Options +FollowSymLinks
 IndexIgnore */*
 
+php_value post_max_size 120M
+php_value upload_max_filesize 100M
+
 RewriteEngine on
 
 RewriteCond %{REQUEST_URI} ^/expert

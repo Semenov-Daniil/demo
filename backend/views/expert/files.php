@@ -6,10 +6,21 @@
 
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
+use yii\web\View;
 use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
 $this->title = 'Файлы';
+
+$options = [
+    'maxFileSize' => Yii::$app->fileComponent->getMaxSizeFiles('m'),
+];
+
+$this->registerJs(
+    "const yiiOptions = ".\yii\helpers\Json::htmlEncode($options).";",
+    View::POS_HEAD,
+    'yiiOptions'
+);
 
 $this->registerCssFile('@web/libs/dropzone/dropzone.css');
 
@@ -21,9 +32,15 @@ $this->registerJsFile('@web/js/pages/form-file-upload.init.js', ['depends' => Yi
 ?>
 <div class="site-files">
     <div>
-        <?= $this->render('_files-form', [
-            'model' => $model
-        ]); ?>
+        <?php Pjax::begin([
+            'id' => 'pjax-upload-file',
+            'enablePushState' => false,
+            'timeout' => 10000,
+        ])?>
+            <?= $this->render('_files-form', [
+                'model' => $model
+            ]); ?>
+        <?php Pjax::end(); ?>
 
         <?php Pjax::begin([
             'id' => 'pjax-files',

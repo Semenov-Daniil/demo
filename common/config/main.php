@@ -34,6 +34,14 @@ return [
             // 'appendTimestamp' => true,
             // 'linkAssets' => true,
             'forceCopy' => true,
+            'bundles' => [
+                'yii\bootstrap5\BootstrapAsset' => [
+                    'css' => []
+                ],
+                'yii\bootstrap5\BootstrapPluginAsset' => [
+                    'js'=>[]
+                ],
+            ],
         ]
     ],
 ];

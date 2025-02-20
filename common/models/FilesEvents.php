@@ -24,7 +24,7 @@ use yii\helpers\VarDumper;
 class FilesEvents extends \yii\db\ActiveRecord
 {
     public array $files = [];
-    public $file;
+    public object $file;
     public array $students = [];
 
     const SCENARIO_UPLOAD_FILE = "upload-file";
@@ -66,8 +66,8 @@ class FilesEvents extends \yii\db\ActiveRecord
             [['events_id'], 'integer'],
             [['save_name', 'origin_name', 'extension', 'type'], 'string', 'max' => 255],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
-            [['files'], 'file', 'skipOnEmpty' => true, 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE],
-            [['file'], 'file', 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles()],
+            [['files'], 'file', 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE],
+            [['file'], 'image', 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles()],
         ];
     }
 
@@ -205,11 +205,10 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public function uploadFiles(): array
     {
-        $answer = [];
+        $result = [];
 
         $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
         $dir = Yii::getAlias("@events/$event->dir_title");
-
         $this->students = StudentsEvents::find()
             ->select([
                 'login',
@@ -224,7 +223,7 @@ class FilesEvents extends \yii\db\ActiveRecord
             $saveFile = $this->saveFile($event?->id, $dir, $file);
 
             if (is_array($saveFile)) {
-                $answer[] = [
+                $result[] = [
                     'filename' => $file->name,
                     'errors' => $saveFile['file']
                 ];
@@ -238,7 +237,7 @@ class FilesEvents extends \yii\db\ActiveRecord
 
         $this->students = [];
 
-        return $answer;
+        return $result;
 
         // if ($this->validate()) {
         // }

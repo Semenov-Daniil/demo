@@ -9,6 +9,13 @@ use yii\helpers\FileHelper;
 
 class FileComponent extends Component implements BootstrapInterface
 {
+    const VALID_UNITS = [
+        'b' => 1,
+        'k' => 1024,
+        'm' => 1024 ** 2,
+        'g' => 1024 ** 3,
+    ];
+
     public array $directories = [];
 
     public function bootstrap($app)
@@ -59,39 +66,37 @@ class FileComponent extends Component implements BootstrapInterface
     }
 
     /**
-     * Returns the maximum file size in bytes to download.
+     * Returns the maximum file size that can be uploaded to the server, in the specified unit.
      * 
-     * @return int|float|null
+     * @param string $dataUnit the unit of measure in which you want to return the result.
+     *                         - 'b' - bytes
+     *                         - 'k' - kilobytes
+     *                         - 'm' - megabytes
+     *                         - 'g' - gigabytes
+     * @return int|float returns the maximum file size in the specified unit.
      */
-    public static function getMaxSizeFiles(): int|float|null
+    public static function getMaxSizeFiles(string $dataUnit = 'b'): int|float
     {
-        $result = null;
-        $input = trim(ini_get('upload_max_filesize'));
-        $value = substr($input, 0, -1);
-        $unit = strtolower(substr($input, -1));
+        $result = 0;
 
-        if (!is_numeric($value)) {
+        if (!isset(self::VALID_UNITS[$dataUnit])) {
             return $result;
         }
 
-        $value = (float)$value;
+        $input = trim(ini_get('upload_max_filesize'));
+        $value = (float)substr($input, 0, -1);
+        $unit = strtolower(substr($input, -1));
 
-        switch ($unit) {
-            case 'k':
-                $result = $value * 1024;
-                break;
-            case 'm':
-                $result = $value * 1024 * 1024;
-                break;
-            case 'g':
-                $result = $value * 1024 * 1024 * 1024;
-                break;
-            default:
-                if (is_numeric($input)) {
-                    $result = (int)$input;
-                }
+        if (is_numeric($input)) {
+            return (int)$input;
         }
 
-        return $result;
+        if (!isset(self::VALID_UNITS[$unit])) {
+            return $result;
+        }
+
+        $sizeInBytes = $value * self::VALID_UNITS[$unit];
+
+        return $sizeInBytes / self::VALID_UNITS[$dataUnit];
     }
 }

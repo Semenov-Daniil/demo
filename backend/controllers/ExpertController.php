@@ -192,8 +192,7 @@ class ExpertController extends Controller
         $dataProvider = $model->getDataProviderFiles(20);
 
         if (Yii::$app->request->isPost) {
-
-            var_dump($_FILES);die;
+            $data = Yii::$app->request->post();
 
             try {
                 $model->files = UploadedFile::getInstancesByName('files');
@@ -201,16 +200,48 @@ class ExpertController extends Controller
                 var_dump($e);die;
             }
 
-            $answer = $model->uploadFiles();
+            $answer = $model->uploadFiles();    
 
-            Yii::$app->response->statusCode = (count($answer) ? 422 : 200);
+            if (isset($data['dropzone']) && $data['dropzone']) {
+                Yii::$app->response->statusCode = (count($answer) ? 422 : 200);
+    
+                return $this->asJson([
+                    'files' => $answer
+                ]);
+            }
 
-            return $this->asJson([
-                'error' => '',
-                'files' => $answer
+            return $this->renderAjax('_files-form', [
+                'model' => $model,
             ]);
         }
 
+        if (Yii::$app->request->isAjax) {
+            $get = Yii::$app->request->get();
+
+            if (isset($get['_pjax'])) {
+                switch ($get['_pjax']) {
+                    case '#pjax-upload-file':
+                        $result = $this->renderAjax('_files-form', [
+                            'model' => $model,
+                        ]);
+
+                        break;
+                    case '#pjax-files':
+                        $result = $this->renderAjax('_files-list', [
+                            'dataProvider' => $dataProvider,
+                        ]);
+
+                        break;
+                    default:
+                        $result = $this->render('files', [
+                            'model' => $model,
+                            'dataProvider' => $dataProvider,
+                        ]);
+                }
+
+                return $result;
+            }
+        }
 
         return $this->render('files', [
             'model' => $model,

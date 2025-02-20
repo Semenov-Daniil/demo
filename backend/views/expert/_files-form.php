@@ -2,20 +2,17 @@
 
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
+use yii\widgets\Pjax;
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\FilesEvents $model */
 ?>
 
-<!-- <div class="progress progress-sm">
-    <div class="progress-bar bg-success" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
-</div> -->
-
 <div class="card">
     <div class="card-body">
         <?php $form = ActiveForm::begin([
-            'id' => 'upload-form',
+            'id' => 'upload-file-form',
             'options' => [
                 'class' => 'dropzone',
                 'data' => [
@@ -29,11 +26,6 @@ use yii\bootstrap5\Html;
                 'errorOptions' => ['class' => 'invalid-feedback'],
             ],
         ]); ?>
-
-            <div class="fallback">
-                <?= $form->field($model, 'files[]')->fileInput(['multiple' => true, 'name' => 'files[]'])->label(false); ?>
-            </div>
-
             <div class="dz-message needsclick">
                 <div class="mb-3">
                     <i class="display-4 text-muted ri-upload-cloud-2-fill"></i>
@@ -41,11 +33,24 @@ use yii\bootstrap5\Html;
     
                 <h4>Перетащите файлы или нажмите, чтобы загрузить.</h4>
             </div>
-            
+
+            <div class="fallback">
+                <?= $form->field($model, 'files[]')->fileInput(['multiple' => true, 'name' => 'files[]'])->label(false); ?>
+            </div>
         <?php ActiveForm::end(); ?>
 
         <div class="d-flex mt-3">
-            <?= Html::button('Загрузить файл', ['class' => 'btn btn-success ms-auto btn-upload-file', 'name' => 'add']) ?>
+            <?= Html::button('
+                <span class="cnt-text">Сохранить файлы</span>
+                <span class="d-flex align-items-center d-none cnt-load">
+                    <span class="spinner-border flex-shrink-0" role="status">
+                        <span class="visually-hidden">Сохранение...</span>
+                    </span>
+                    <span class="flex-grow-1 ms-2">
+                        Сохранение...
+                    </span>
+                </span>
+            ', ['class' => 'btn btn-success btn-load ms-auto btn-upload-file', 'name' => 'add']) ?>
         </div>
 
         <ul class="list-unstyled mb-0" id="dropzone-preview">
@@ -61,10 +66,10 @@ use yii\bootstrap5\Html;
                             <div class="pt-1">
                                 <h5 class="fs-14 mb-1" data-dz-name>&nbsp;</h5>
                                 <p class="fs-13 text-muted mb-0" data-dz-size></p>
-                                <div class="dz-progress progress progress-sm mt-1">
+                                <strong class="error text-danger" data-dz-errormessage></strong>
+                                <div class="dz-progress progress progress-sm mt-1 d-none">
                                     <div class="dz-upload progress-bar animated-progress bg-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-dz-uploadprogress></div>
                                 </div>
-                                <strong class="error text-danger" data-dz-errormessage></strong>
                             </div>
                         </div>
                         <div class="flex-shrink-0 ms-3">
@@ -76,6 +81,3 @@ use yii\bootstrap5\Html;
         </ul>
     </div>
 </div>
-
-
-
