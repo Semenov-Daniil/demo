@@ -1,8 +1,12 @@
 Options +FollowSymLinks
 IndexIgnore */*
 
-php_value post_max_size 120M
-php_value upload_max_filesize 100M
+LimitRequestBody 10737418240
+
+php_value post_max_size 12G
+php_value upload_max_filesize 10G
+php_value max_execution_time 300
+php_value max_input_time 300
 
 RewriteEngine on
 

@@ -189,24 +189,51 @@ class ExpertController extends Controller
     public function actionFiles()
     {
         $model = new FilesEvents(['scenario' => FilesEvents::SCENARIO_UPLOAD_FILE]);
-        $dataProvider = $model->getDataProviderFiles(20);
+        // $dataProvider = $model->getDataProviderFiles(20);
+
+        if (Yii::$app->request->isGet && Yii::$app->request->isPjax) {
+            $get = Yii::$app->request->get();
+
+            switch ((isset($get['_pjax']) ? $get['_pjax'] : '')) {
+                case '#pjax-upload-file':
+                    $result = $this->renderAjax('_files-form', [
+                        'model' => $model,
+                    ]);
+                    break;
+                case '#pjax-files':
+                    $result = $this->renderAjax('_files-list', [
+                        'dataProvider' => $model->getDataProviderFiles(20),
+                    ]); 
+                    break;
+                default:
+                    $result = $this->renderAjax('files', [
+                        'model' => $model,
+                        'dataProvider' => $model->getDataProviderFiles(20),
+                    ]);
+            }
+
+            return $result;
+        }
 
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post();
+            $error = '';
 
             try {
                 $model->files = UploadedFile::getInstancesByName('files');
+
+                $result = $model->processFiles();  
+
             } catch (\Exception $e) {
                 var_dump($e);die;
-            }
-
-            $answer = $model->uploadFiles();    
-
+                Yii::$app->response->statusCode = 422;
+                $error = $e->getMessage();
+            }   
+            
             if (isset($data['dropzone']) && $data['dropzone']) {
-                Yii::$app->response->statusCode = (count($answer) ? 422 : 200);
-    
                 return $this->asJson([
-                    'files' => $answer
+                    'files' => $result,
+                    'error' => $error
                 ]);
             }
 
@@ -215,37 +242,9 @@ class ExpertController extends Controller
             ]);
         }
 
-        if (Yii::$app->request->isAjax) {
-            $get = Yii::$app->request->get();
-
-            if (isset($get['_pjax'])) {
-                switch ($get['_pjax']) {
-                    case '#pjax-upload-file':
-                        $result = $this->renderAjax('_files-form', [
-                            'model' => $model,
-                        ]);
-
-                        break;
-                    case '#pjax-files':
-                        $result = $this->renderAjax('_files-list', [
-                            'dataProvider' => $dataProvider,
-                        ]);
-
-                        break;
-                    default:
-                        $result = $this->render('files', [
-                            'model' => $model,
-                            'dataProvider' => $dataProvider,
-                        ]);
-                }
-
-                return $result;
-            }
-        }
-
         return $this->render('files', [
             'model' => $model,
-            'dataProvider' => $dataProvider,
+            'dataProvider' => $model->getDataProviderFiles(20),
         ]);
     }
 

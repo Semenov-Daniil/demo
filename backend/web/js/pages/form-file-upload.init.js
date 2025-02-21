@@ -12,7 +12,7 @@ $(() => {
     
     dropzonePreviewNode.remove();
 
-    const dropzone = new Dropzone(form[0], {
+    const dropzone = new Dropzone('.dropzone', {
         url: form.attr('action'),
         method: "post",
         previewTemplate: previewTemplate,
@@ -20,12 +20,12 @@ $(() => {
         autoProcessQueue: false,
         uploadMultiple: true,
         parallelUploads: 1,
-        maxFiles: 100,
+        maxFiles: 20,
         paramName: "files",
         maxFilesize: (options?.maxFileSize ? options.maxFileSize : '50'),
         dictFileTooBig: "Файл слишком большой ({{filesize}}MB). Максимальный размер файла: {{maxFilesize}}MB.",
         cache: false,
-        forceFallback: true,
+        // forceFallback: true,
 
         removedfile: function (file) {
             const previewElement = $(file.previewElement);
@@ -84,7 +84,17 @@ $(() => {
             }, 10);
         });
     
-        dropzone.on('sending', function (file) {
+        dropzone.on('sending', function (file, xhr, formData) {
+            (new FormData(form[0])).forEach((value, key) => {
+                if (!formData.has(key)) {
+                    formData.append(key, value);
+                }
+            });
+            
+            if (!formData.has('dropzone')) {
+                formData.append('dropzone', 1);
+            }
+
             $('.btn-upload-file').find('.cnt-text').addClass('d-none');
             $('.btn-upload-file').find('.cnt-load').removeClass('d-none');
             $('.btn-upload-file').prop('disabled', true);
@@ -95,17 +105,18 @@ $(() => {
         });
         
         dropzone.on('error', function (file, message) {
-            if (typeof message == "object" && message?.files) {
+            if (typeof message == "object" && message.files) {
                 for (let responseData of message.files) {
                     if (file.name == responseData.filename) {
                         addErrors(file, responseData.errors);
-                        $(file.previewElement).find('[data-dz-uploadprogress]').removeClass('bg-success').addClass('bg-danger');
                         break;
                     }
                 }
             } else {
                 addError(file, (typeof message == "string" ? message : 'Не удалось загрузить файл.'));
             }
+
+            $(file.previewElement).find('[data-dz-uploadprogress]').removeClass('bg-success').addClass('bg-danger');
         });
     
         const addErrors = (file, errors) => {
@@ -155,33 +166,6 @@ $(() => {
             }
         }
     } else {
-        $('#pjax-upload-file').on('click', '.btn-upload-file', function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            let formPjax = $('#upload-file-form');
-
-            if (formPjax.find('.is-valid').length > 0) {
-                let formData = new FormData(form[0]);
-                formData.append('dropzone', 0);
-        
-                $.ajax({
-                    url: formPjax.attr('action'),
-                    method: "post",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (data) {
-                        $.pjax.reload('#pjax-upload-file');
-                    },
-                    error: function (data) {
-                        $('#pjax-upload-file').html(data);
-                    },
-                });
-            }
-
-        });
-
         $('#pjax-upload-file').on('pjax:complete', function () {
             $.pjax.reload('#pjax-files');
         });

@@ -62,7 +62,7 @@ class FileComponent extends Component implements BootstrapInterface
             return unlink($path);
         }
 
-        return false;
+        return true;
     }
 
     /**

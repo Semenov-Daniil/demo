@@ -8,6 +8,7 @@ use Exception;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\helpers\VarDumper;
+use yii\validators\FileValidator;
 
 /**
  * This is the model class for table "dm_files_events".
@@ -25,14 +26,18 @@ class FilesEvents extends \yii\db\ActiveRecord
 {
     public array $files = [];
     public object $file;
-    public array $students = [];
+    public int|null $eventId = null;
+    public string $expertPath = '';
+    public array $studentPaths = [];
 
     const SCENARIO_UPLOAD_FILE = "upload-file";
+    const SCENARIO_VALIDATE_FILE = "validate-file";
 
     public function scenarios()
     {
         $scenarios = parent::scenarios();
         $scenarios[self::SCENARIO_UPLOAD_FILE] = ['files'];
+        $scenarios[self::SCENARIO_VALIDATE_FILE] = ['file'];
         return $scenarios;
     }
 
@@ -66,8 +71,11 @@ class FilesEvents extends \yii\db\ActiveRecord
             [['events_id'], 'integer'],
             [['save_name', 'origin_name', 'extension', 'type'], 'string', 'max' => 255],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
+
+            [['file'], 'file', 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'skipOnError' => false, 'on' => self::SCENARIO_VALIDATE_FILE],
+
+            [['files'], 'required', 'on' => self::SCENARIO_UPLOAD_FILE],
             [['files'], 'file', 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE],
-            [['file'], 'image', 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles()],
         ];
     }
 
@@ -96,6 +104,46 @@ class FilesEvents extends \yii\db\ActiveRecord
         return $this->hasOne(Events::class, ['id' => 'events_id']);
     }
 
+    public function deleteFailedFile($file)
+    {
+        if ($this->save_name) {
+            $filePath = "$this->expertPath/$this->save_name.$file->extension";
+            Yii::$app->fileComponent->deleteFile($filePath);
+
+            foreach ($this->studentPaths as $studentPath) {
+                $studentPath = Yii::getAlias($studentPath['alias']);
+                Yii::$app->fileComponent->deleteFile("$studentPath/$this->save_name.$file->extension");
+            }
+        }
+    }
+
+    /**
+     * Copies files to students.
+     * 
+     * @param string $compDir the directory where the file is copied from.
+     * @param array $filename file name.
+     * @param array $students an array with student data.
+     */
+    public function copyFileToStudents(string $filePath, string $filename): array
+    {
+        $errors = [];
+
+        foreach ($this->studentPaths as $studentPath) {
+            $studentPath = Yii::getAlias($studentPath['alias']);
+
+            if (!is_dir($studentPath)) {
+                Yii::$app->fileComponent->createDirectory($studentPath);
+            }
+
+            if (!copy($filePath, "$studentPath/$filename")) {
+                $errors[] = 'Не удалось скопировать файл.';
+                break;
+            }
+        }
+
+        return $errors;
+    }
+
     /**
      * Add file competence
      * 
@@ -106,55 +154,26 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @return FilesEvents
      */
-    public function saveFileEvent(int $eventId, string $dir, yii\web\UploadedFile $file): FilesEvents
+    public function saveFileEventToDb(yii\web\UploadedFile $file): bool
     {
         $model = new FilesEvents();
-
-        $model->events_id = $eventId;
-        $model->file = $file;
+        $model->events_id = $this->events_id;
         $model->origin_name = $file->baseName;
         $model->extension = $file->extension;
         $model->type = $file->type;
-        $model->save_name = Yii::$app->security->generateRandomString();
-        
-        // $model->validate();
+        $model->save_name = $this->save_name;
 
-        // if (!$model->hasErrors()) {
-        //     $model->save();
-        //     return $model;
-        // }
-
-        if ($model->save()) {
-            if ($file->saveAs("$dir/$model->save_name.$model->extension")) {
-                $this->copyFileStudents($dir, "$model->save_name.$model->extension");
-            } else {
-                $model->addError('file', 'Не удалось сохранить файл.');
-            }
-        }
-
-        return $model;
+        return $model->save();
     }
 
-    /**
-     * Copies files to students.
-     * 
-     * @param string $compDir the directory where the file is copied from.
-     * @param array $filename file name.
-     * @param array $students an array with student data.
-     */
-    public function copyFileStudents(string $compDir, string $filename): void
+    public function validateFile($file)
     {
-        foreach ($this->students as $student) {
-            $studentPath = Yii::getAlias('@students/' . $student['login'] . '/public');
+        $validator = new FilesEvents(['scenario' => self::SCENARIO_VALIDATE_FILE, 'file' => $file]);
 
-            if (!is_dir($studentPath)) {
-                Yii::$app->fileComponent->createDirectory($studentPath);
-            }
-
-            if (!copy("$compDir/$filename", "$studentPath/$filename")) {
-                throw new Exception("Failed to copy file from $compDir/$filename to $studentPath/$filename");
-            }
-        }
+        return [
+            'isValid' => $validator->validate(),
+            'errors' => $validator->getErrors('file')
+        ];
     }
 
     /**
@@ -167,33 +186,40 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
      */
-    public function saveFile(int $eventId, string $dir, yii\web\UploadedFile $file): array|bool
+    public function processFile(yii\web\UploadedFile $file)
     {
-        $transaction = Yii::$app->db->beginTransaction();
-        $model = null;
-        try {
-            $model = $this->saveFileEvent($eventId, $dir, $file);
-
-            if ($model->hasErrors()) {
-                $transaction->rollBack();
-                return $model->getErrors();
-            }
-
-            $transaction->commit();
-            return true;
-        } catch(\Exception $e) {
-            if ($model) Yii::$app->fileComponent->deleteFile("$dir/$model->save_name.$model->extension");
-            $transaction->rollBack();
-        } catch(\Throwable $e) {
-            if ($model) Yii::$app->fileComponent->deleteFile("$dir/$model->save_name.$model->extension");
-            $transaction->rollBack();
-        } 
-
-        return [
-            'file' => [
-                'Не удалось сохранить файл.'
-            ]
+        $fileInfo = [
+            'filename' => $file->name,
+            'errors' => []
         ];
+
+        $fileValidate = $this->validateFile($file);
+
+        if (!$fileValidate['isValid']) {
+            $fileInfo['errors'] = $fileValidate['errors'];
+            return $fileInfo;
+        }
+
+        $this->save_name = Yii::$app->security->generateRandomString() . '_' . time();
+        $filePath = "$this->expertPath/$this->save_name.$file->extension";
+        if (!$file->saveAs($filePath)) {
+            $fileInfo['errors'][] = "Не удалось сохранить файл $file->name.";
+            return $fileInfo;
+        }
+
+        if (!$this->saveFileEventToDb($file)) {
+            $fileInfo['errors'][] = "Не удалось сохранить запись файла $file->name в базе данных.";
+            Yii::$app->fileComponent->deleteFile($filePath);
+            return $fileInfo;
+        }
+
+        $copyErrors = $this->copyFileToStudents($filePath, $this->save_name);
+        if (!empty($copyErrors)) {
+            $fileInfo['errors'] = array_merge($fileInfo['errors'], $copyErrors);
+            return $fileInfo;
+        }
+
+        return $fileInfo;
     }
 
     /**
@@ -203,46 +229,51 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
      */
-    public function uploadFiles(): array
+    public function processFiles(): array
     {
         $result = [];
 
         $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
-        $dir = Yii::getAlias("@events/$event->dir_title");
-        $this->students = StudentsEvents::find()
+
+        $this->events_id = $event?->id;
+        $this->expertPath = Yii::getAlias("@events/$event->dir_title");
+        $this->studentPaths = StudentsEvents::find()
             ->select([
-                'login',
+                'CONCAT("@students/", login, "/public") as alias',
             ])
-            ->where(['events_id' => $event?->id])
+            ->where(['events_id' => $this->eventId])
             ->joinWith('user', false)
             ->asArray()
             ->all()
         ;
 
         foreach ($this->files as $file) {
-            $saveFile = $this->saveFile($event?->id, $dir, $file);
+            $transaction = Yii::$app->db->beginTransaction();
 
-            if (is_array($saveFile)) {
-                $result[] = [
-                    'filename' => $file->name,
-                    'errors' => $saveFile['file']
-                ];
+            try {
+                $fileInfo = $this->processFile($file);
+                
+                if (!empty($fileInfo['errors'])) {
+                    $result[] = $fileInfo;
+                    $this->addError('files', ...$fileInfo['errors']);
+                    $transaction->rollBack();
+                    $this->deleteFailedFile($file);
+                    continue;
+                }
+
+                $transaction->commit();
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
+                $this->deleteFailedFile($file);
+            } catch (\Throwable $e) {
+                $transaction->rollBack();
+                $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
+                $this->deleteFailedFile($file);
             }
-
-            // var_dump($answer);die;
-            // if (!$this->saveFile($event?->id, $dir, $file)) {
-            //     return false;
-            // }
         }
 
-        $this->students = [];
-
         return $result;
-
-        // if ($this->validate()) {
-        // }
-
-        // return ;
     }
 
     /**
