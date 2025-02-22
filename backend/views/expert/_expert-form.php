@@ -51,7 +51,7 @@ use yii\bootstrap5\Html;
                         </div>
                         {error}
                     ',
-                ])->textInput(['class' => 'quantity', 'type' => 'number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1)]) ?>
+                ])->textInput(['type' => 'number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1)]) ?>
 
                 <div class="col-12 text-end">
                     <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add']) ?>

@@ -28,4 +28,39 @@ $(() => {
             return offset === 0 ? '-' : '';
         });
     });
+
+    // $('#pjax-experts').on('change', '.input-step input', function(event) {
+    //     if ($(this).hasClass('is-invalid')) {
+    //         console.log($(this).parent().addClass('is-invalid border-danger'));
+    //     }
+
+    //     if ($(this).hasClass('is-valid')) {
+    //         console.log($(this).parent().addClass('is-valid border-success'));
+    //     }
+    // });
+
+    const inputCountModules = $('#expertsevents-countmodules')[0];
+    const config = { attributes: true, attributeFilter: ['class'] };
+
+    const watchChangeClass = function(mutationsList, observer) {
+        for (let mutation of mutationsList) {
+            if (mutation.type === 'attributes') {
+                if (mutation.attributeName === 'class') {
+                    if ($(mutation.target).hasClass('is-invalid')) {
+                        $(mutation.target).parent().removeClass('is-valid border-success');
+                        $(mutation.target).parent().addClass('is-invalid border-danger');
+                    }
+            
+                    if ($(mutation.target).hasClass('is-valid')) {
+                        $(mutation.target).parent().removeClass('is-invalid border-danger');
+                        $(mutation.target).parent().addClass('is-valid border-success');
+                    }
+                }
+            }
+        }
+    };
+
+    const observer = new MutationObserver(watchChangeClass);
+
+    observer.observe(inputCountModules, config);
 });
