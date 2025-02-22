@@ -1,40 +1,46 @@
-
 /*# sourceMappingURL=custom.min.css.map */
 
 .my-cont {
-    height: 1500px;
-    width: 100%;
-    background-color: red;
-    border-top: 50px rgb(255, 230, 0) solid;
-    border-bottom: 50px green solid;
+  height: 1500px;
+  width: 100%;
+  background-color: red;
+  border-top: 50px rgb(255, 230, 0) solid;
+  border-bottom: 50px green solid;
 }
 
 .dz-preview-item {
-    animation: fadeInScale 0.3s ease-in-out;
+  animation: fadeInScale 0.3s ease-in-out;
 }
 
 .dz-preview-item.fade-out {
-    animation: fadeOutScale 0.3s ease-in-out forwards;
+  animation: fadeOutScale 0.3s ease-in-out forwards;
+}
+
+.input-step input {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
 }
 
 @keyframes fadeInScale {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes fadeOutScale {
-    from {
-      opacity: 1;
-      transform: scale(1);
-    }
-    to {
-      opacity: 0;
-      transform: scale(0.8);
-    }
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }

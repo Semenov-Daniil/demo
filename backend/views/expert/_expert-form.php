@@ -8,37 +8,52 @@ use yii\bootstrap5\Html;
 /** @var app\models\ExpertsEvents $model */
 ?>
 
-<div class="card expert-from">
+<div class="card">
+    <div class="card-header align-items-center d-flex">
+        <h4 class="card-title mb-0 flex-grow-1">Добавление эксперта</h4>
+    </div>
+
     <div class="card-body">
         <?php $form = ActiveForm::begin([
             'id' => 'add-expert-form',
             'options' => [
                 'data' => [
                     'pjax' => true
-                ]
+                ],
             ],
             'fieldConfig' => [
                 'template' => "{label}\n{input}\n{error}",
-                'labelOptions' => ['class' => 'col-form-label mr-lg-3'],
+                'labelOptions' => ['class' => 'col-12 col-form-label mr-lg-3'],
                 'inputOptions' => ['class' => 'form-control'],
-                'errorOptions' => ['class' => 'invalid-feedback'],
+                'errorOptions' => ['class' => 'col-12 invalid-feedback'],
             ],
         ]); ?>
-            <div class="row g-3">
-                <?= $form->field($model, 'surname', ['options' => ['class' => 'col-12 col-md-4']])->textInput() ?>
+
+            <div class="row">
+                <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
         
-                <?= $form->field($model, 'name', ['options' => ['class' => 'col-12 col-md-4']])->textInput() ?>
+                <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+
+                <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+
+                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3']])->textInput() ?>
         
-                <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-12 col-md-4']])->textInput() ?>
-            </div>
-            <div class="row g-3 mt-0">
-                <?= $form->field($model, 'title', ['options' => ['class' => 'col-12 col-md-6']])->textInput() ?>
-        
-                <?= $form->field($model, 'countModules', ['options' => ['class' => 'col-12 col-md-6']])->textInput(['type' => 'number', 'min' => 1, 'value' => 1]) ?>
-            </div>
-            
-            <div class="form-group my-3">
-                <div>
+                <?= $form->field($model, 'countModules', [
+                    'options' => [
+                        'class' => 'col-md-4 mb-3',
+                    ],
+                    'template' => '
+                        {label}
+                        <div class="input-step full-width">
+                            <button type="button" class="minus material-shadow">–</button>
+                            {input}
+                            <button type="button" class="plus material-shadow">+</button>
+                        </div>
+                        {error}
+                    ',
+                ])->textInput(['class' => 'quantity', 'type' => 'number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1)]) ?>
+
+                <div class="col-12 text-end">
                     <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add']) ?>
                 </div>
             </div>

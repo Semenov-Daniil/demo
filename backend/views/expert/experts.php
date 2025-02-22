@@ -13,7 +13,7 @@ use yii\widgets\Pjax;
 $this->title = 'Эксперты';
 
 $this->registerJsFile('@web/js/experts.js', ['depends' => YiiAsset::class]);
-
+$this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => YiiAsset::class]);
 ?>
 
 <div class="col-12 site-experts">
