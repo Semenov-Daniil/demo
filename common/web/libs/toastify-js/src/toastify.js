@@ -103,7 +103,7 @@
 
       // Creating the DOM object
       var divElement = document.createElement("div");
-      divElement.className = "toastify on " + this.options.className;
+      divElement.className = "toastify on toast show overflow-hidden m-0 " + this.options.className;
 
       // Positioning toast to left or right or center
       if (!!this.options.position) {
@@ -178,8 +178,9 @@
           "click",
           function(event) {
             event.stopPropagation();
-            this.removeElement(this.toastElement);
-            window.clearTimeout(this.toastElement.timeOutValue);
+            console.log(this);
+            // this.removeElement(this.toastElement);
+            // window.clearTimeout(this.toastElement.timeOutValue);
           }.bind(this)
         );
 

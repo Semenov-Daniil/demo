@@ -1,6 +1,6 @@
 $(() => {
     
-    $('#pjax-experts').on('click', '.input-step .plus', function (event) {
+    $('#pjax-add-expert').on('click', '.input-step .plus', function (event) {
         let input = $(this).prevAll('input'),
             max = input.prop('max');
 
@@ -11,7 +11,7 @@ $(() => {
         }
     });
 
-    $('#pjax-experts').on('click', '.input-step .minus', function (event) {
+    $('#pjax-add-expert').on('click', '.input-step .minus', function (event) {
         let input = $(this).nextAll('input'),
             min = input.prop('min');
 
@@ -22,22 +22,12 @@ $(() => {
         }
     });
 
-    $('#pjax-experts').on('input', '.input-step input', function(event) {
+    $('#pjax-add-expert').on('input', '.input-step input', function(event) {
         this.value = this.value.replace(/[^0-9\-]/g, '');
         this.value = this.value.replace(/\-+/g, function(match, offset) {
             return offset === 0 ? '-' : '';
         });
     });
-
-    // $('#pjax-experts').on('change', '.input-step input', function(event) {
-    //     if ($(this).hasClass('is-invalid')) {
-    //         console.log($(this).parent().addClass('is-invalid border-danger'));
-    //     }
-
-    //     if ($(this).hasClass('is-valid')) {
-    //         console.log($(this).parent().addClass('is-valid border-success'));
-    //     }
-    // });
 
     const inputCountModules = $('#expertsevents-countmodules')[0];
     const config = { attributes: true, attributeFilter: ['class'] };

@@ -44,10 +44,19 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                '/flash' => '/flash', 
+                '/flash/<action>' => '/flash/base/<action>',
+                
                 '/<action>' => '/student/<action>'
             ],
         ],
         
+    ],
+    'modules' => [
+        'flash' => [
+            'class' => 'common\modules\flash\Module',
+            'defaultRoute' => 'base'
+        ],
     ],
     'params' => $params,
 ];

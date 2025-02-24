@@ -15,10 +15,15 @@ class AppAsset extends AssetBundle
         // aos
         'libs/aos/aos.css',
 
+        // 'libs/toastr/toastr.css',
+        'libs/noty/lib/noty.css',
+        'css/noty-team-vz.css',
+
         'css/bootstrap.min.css',
         'css/icons.min.css',
         'css/app.css',
         'css/custom.min.css',
+        
     ];
     public $js = [
         // [
@@ -33,7 +38,9 @@ class AppAsset extends AssetBundle
 
         // 'https://cdn.jsdelivr.net/npm/toastify-js',
 
-        // 'js/toastify-js.js',
+        // 'libs/toastr/toastr.min.js',
+        'libs/toastify-js/src/toastify.js',
+        'libs/noty/lib/noty.js',
 
         // aos
         // 'libs/aos/aos.js',
@@ -46,6 +53,7 @@ class AppAsset extends AssetBundle
         'libs/jsvectormap/maps/world-merc.js',
         'libs/swiper/swiper-bundle.min.js',
         // 'js/pages/dashboard-ecommerce.init.js',
+        'js/alert-toastify.js',
         'js/app.js'
     ];
     public $depends = [

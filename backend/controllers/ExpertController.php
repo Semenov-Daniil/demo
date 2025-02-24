@@ -103,14 +103,21 @@ class ExpertController extends Controller
     public function actionExperts(): string
     {
         $model = new ExpertsEvents();
-        $dataProvider = $model->getDataProviderExperts(20);
+        $dataProvider = $model->getDataProviderExperts(10);
 
         if (Yii::$app->request->isPost) {
-            if ($model->load(Yii::$app->request->post()) && $model->addExpert()) {
-                Yii::$app->session->setFlash('success', 'Эксперт успешно добавлен.');
+            if ($model->load(Yii::$app->request->post()) && $model->addExpert()) {  
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Эксперт успешно добавлен.',
+                    'type' => 'success'
+                ]);
+
                 $model = new ExpertsEvents();
             } else {
-                Yii::$app->session->setFlash('error', 'Не удалось добавить эксперта.');
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Не удалось добавить эксперта.',
+                    'type' => 'error'
+                ]);
             }
         }
 
@@ -131,9 +138,15 @@ class ExpertController extends Controller
     {
         if (Yii::$app->request->isAjax) {
             if (ExpertsEvents::deleteExpert($id)) {
-                Yii::$app->session->setFlash('info', 'Эксперт успешно удален.');
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Эксперт успешно удален.',
+                    'type' => 'success'
+                ]);
             } else {
-                Yii::$app->session->setFlash('error', 'Не удалось удалить эксперта.');
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Не удалось удалить эксперта.',
+                    'type' => 'error'
+                ]);
             }
         }
     }

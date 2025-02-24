@@ -1,0 +1,60 @@
+.noty_theme__vz {
+    --vz-toast-zindex: 1090;
+    --vz-toast-padding-x: 0.75rem;
+    --vz-toast-padding-y: 0.5rem;
+    --vz-toast-spacing: calc(var(--vz-grid-gutter-width) * 1);
+    --vz-toast-max-width: 350px;
+    --vz-toast-font-size: 0.875rem;
+    --vz-toast-color: ;
+    --vz-toast-bg: var(--vz-secondary-bg);
+    --vz-toast-border-width: var(--vz-border-width);
+    --vz-toast-border-color: var(--vz-border-color);
+    --vz-toast-border-radius: var(--vz-border-radius);
+    --vz-toast-box-shadow: var(--vz-box-shadow);
+    --vz-toast-header-color: var(--vz-secondary-color);
+    --vz-toast-header-bg: var(--vz-secondary-bg);
+    --vz-toast-header-border-color: var(--vz-border-color);
+    width: var(--vz-toast-max-width);
+    max-width: 100%;
+    font-size: var(--vz-toast-font-size);
+    color: var(--vz-toast-color);
+    pointer-events: auto;
+    background-color: var(--vz-toast-bg);
+    background-clip: padding-box;
+    border: var(--vz-toast-border-width) solid var(--vz-toast-border-color);
+    -webkit-box-shadow: var(--vz-toast-box-shadow);
+            box-shadow: var(--vz-toast-box-shadow);
+    border-radius: var(--vz-toast-border-radius);
+}
+
+.noty_type__primary .toast-body {
+    color: var(--vz-primary);
+}
+
+.noty_type__success .toast-body {
+    color: var(--vz-success);
+}
+
+.noty_type__warning .toast-body {
+    color: var(--vz-warning);
+}
+
+.noty_type__error .toast-body {
+    color: var(--vz-danger);
+}
+
+.noty_theme__vz .btn-close {
+    background: 0 0 !important;
+}
+
+.noty_theme__vz .btn-close::after {
+    background: 0 0 !important;
+    content: "\f0156" !important;
+    font-size: 18px;
+    line-height: 15px;
+    font-family: "Material Design Icons" !important;
+}
+
+.noty_theme__vz:not(:last-child) {
+    margin-bottom: 0.75rem;
+}

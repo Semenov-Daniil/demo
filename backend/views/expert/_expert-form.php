@@ -54,7 +54,16 @@ use yii\bootstrap5\Html;
                 ])->textInput(['type' => 'number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1)]) ?>
 
                 <div class="col-12 text-end">
-                    <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add']) ?>
+                    <?= Html::submitButton('
+                        <span class="cnt-text">Добавить эксперта</span>
+                        <span class="d-flex align-items-center d-none cnt-load">
+                            <span class="spinner-border flex-shrink-0" role="status">
+                            </span>
+                            <span class="flex-grow-1 ms-2">
+                                Добавление...
+                            </span>
+                        </span>
+                    ', ['class' => 'btn btn-success btn-load ms-auto btn-add-expert', 'name' => 'add']) ?>
                 </div>
             </div>
         <?php ActiveForm::end(); ?>

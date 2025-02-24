@@ -20,7 +20,12 @@ return [
             ],
         ]
     ],
-    'modules' => [],
+    'modules' => [
+        'flash' => [
+            'class' => 'common\modules\flash\Module',
+            'defaultRoute' => 'base'
+        ],
+    ],
     'defaultRoute' => 'expert/experts',
     'components' => [
         'request' => [
@@ -59,6 +64,10 @@ return [
             'showScriptName' => false,
             'rules' => [
                 '/download/<dir>/<filename>' => '/expert/download',
+                
+                '/flash' => '/flash', 
+                '/flash/<action>' => '/flash/base/<action>',
+
                 '/<action>' => '/expert/<action>',
             ],
         ],
