@@ -68,8 +68,6 @@ return [
                 '/flash' => '/flash', 
                 '/flash/<action>' => '/flash/base/<action>',
 
-                'DELETE /expert/<id>' => '/expert/delete-experts/<id>',
-
                 '/<action>' => '/expert/<action>',
             ],
         ],

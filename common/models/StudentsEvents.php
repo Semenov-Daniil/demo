@@ -22,7 +22,7 @@ use yii\helpers\VarDumper;
  * @property Events $event
  * @property Modules[] $modules
  * @property Users $user
- * @property Passwords $password
+ * @property EncryptedPasswords $encryptedPassword
  */
 class StudentsEvents extends ActiveRecord
 {
@@ -40,7 +40,7 @@ class StudentsEvents extends ActiveRecord
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
                 $login = $this->user->login;
-                $password = $this->password->password;
+                $password = EncryptedPasswords::decryptByPassword($this->encryptedPassword->encrypted_password);
                 $this->dir_prefix = $this->generateRandomString(8, ['lowercase']);
 
                 if ($this->createAccountMySQL($login, $password) && $this->createDbsStudent($login) && $this->createDirectoryStudent($login) && $this->createDirectoriesModules($login, $this->dir_prefix) && $this->copyFilesEvents($login)) {
@@ -64,7 +64,6 @@ class StudentsEvents extends ActiveRecord
 
         $login = $this->user->login;
 
-        
         if ($this->deleteDbStudent($login) && $this->deleteAccountMySQL($login)) {
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@students') . "/$login");
             return true;
@@ -164,9 +163,9 @@ class StudentsEvents extends ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getPassword(): object
+    public function getEncryptedPassword(): object
     {
-        return $this->hasOne(Passwords::class, ['users_id' => 'students_id']);
+        return $this->hasOne(EncryptedPasswords::class, ['users_id' => 'students_id'])->inverseOf('user');
     }
 
     /**
@@ -185,10 +184,11 @@ class StudentsEvents extends ActiveRecord
                 ->select([
                     'students_id',
                     'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
-                    'CONCAT(login, \'/\', ' . Passwords::tableName() . '.password) AS loginPassword',
+                    'login',
+                    EncryptedPasswords::tableName() . '.encrypted_password AS encryptedPassword',
                 ])
                 ->where(['events_id' => $event_id])
-                ->joinWith('password', false)
+                ->joinWith('encryptedPassword', false)
                 ->joinWith('user', false)
                 ->asArray()
             ,
@@ -222,6 +222,18 @@ class StudentsEvents extends ActiveRecord
         return "{$login}_m{$numberModule}";
     }
 
+    public function clearFailedStudent($user): void
+    {
+        try {
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$user->login"));
+            $this->deleteDbStudent($user->login);
+            $this->deleteAccountMySQL($user->login);
+            $user->delete();
+        } catch (\Exception $e) {
+        } catch(\Throwable $e) {
+        }
+    }
+
     /**
      * Adds a new user with the `student` role
      * 
@@ -234,32 +246,32 @@ class StudentsEvents extends ActiveRecord
         $this->validate();
         
         if (!$this->hasErrors()) {
-            $transaction = Yii::$app->db->beginTransaction();   
+            $transaction = Yii::$app->db->beginTransaction();
+
             try {
                 $user = new Users();
                 $user->attributes = $this->attributes;
+
                 if ($user->addStudent()) {
                     $student_event = new StudentsEvents();
                     $student_event->students_id = $user->id;
                     $student_event->events_id = Events::getIdByExpert(Yii::$app->user->id);
+                    
                     if ($student_event->save()) {
                         $transaction->commit();
                         return true;
                     }
                 }
-            } catch(\Exception $e) {
-                Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$user->login"));
-                $this->deleteDbStudent($user->login);
-                $this->deleteAccountMySQL($user->login);
-                $user->delete();
+
+                $this->clearFailedStudent($user);
                 $transaction->rollBack();
+            } catch(\Exception $e) {
+                $transaction->rollBack();
+                $this->clearFailedStudent($user);
                 VarDumper::dump( $e, $depth = 10, $highlight = true);die;
             } catch(\Throwable $e) {
-                Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$user->login"));
-                $this->deleteDbStudent($user->login);
-                $this->deleteAccountMySQL($user->login);
-                $user->delete();
                 $transaction->rollBack();
+                $this->clearFailedStudent($user);
                 VarDumper::dump( $e, $depth = 10, $highlight = true);die;
             }
         }
@@ -466,5 +478,21 @@ class StudentsEvents extends ActiveRecord
             return Users::deleteUser($id);
         }
         return false;
+    }
+
+    public static function deleteEventStudents(int|array $eventsId)
+    {
+        $students = self::find()
+            ->where(['events_id' => $eventsId])
+            ->all()
+        ;
+
+        foreach ($students as $student) {
+            if (!Users::findOne(['id' => $student->students_id])?->delete()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

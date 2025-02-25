@@ -29,28 +29,36 @@ $(() => {
         });
     });
 
-    const inputCountModules = $('#expertsevents-countmodules')[0];
-    const config = { attributes: true, attributeFilter: ['class'] };
-
-    const watchChangeClass = function(mutationsList, observer) {
-        for (let mutation of mutationsList) {
-            if (mutation.type === 'attributes') {
-                if (mutation.attributeName === 'class') {
-                    if ($(mutation.target).hasClass('is-invalid')) {
-                        $(mutation.target).parent().removeClass('is-valid border-success');
-                        $(mutation.target).parent().addClass('is-invalid border-danger');
-                    }
-            
-                    if ($(mutation.target).hasClass('is-valid')) {
-                        $(mutation.target).parent().removeClass('is-invalid border-danger');
-                        $(mutation.target).parent().addClass('is-valid border-success');
+    function watchCountModules () {
+        const inputCountModules = $('#expertsevents-countmodules')[0];
+        const config = { attributes: true, attributeFilter: ['class'] };
+    
+        const watchChangeClass = function(mutationsList, observer) {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'attributes') {
+                    if (mutation.attributeName === 'class') {
+                        if ($(mutation.target).hasClass('is-invalid')) {
+                            $(mutation.target).parent().removeClass('is-valid border-success');
+                            $(mutation.target).parent().addClass('is-invalid border-danger');
+                        }
+                
+                        if ($(mutation.target).hasClass('is-valid')) {
+                            $(mutation.target).parent().removeClass('is-invalid border-danger');
+                            $(mutation.target).parent().addClass('is-valid border-success');
+                        }
                     }
                 }
             }
-        }
-    };
+        };
+    
+        const observer = new MutationObserver(watchChangeClass);
+    
+        observer.observe(inputCountModules, config);
+    }
 
-    const observer = new MutationObserver(watchChangeClass);
+    $('#pjax-add-expert').on('pjax:complete', function (event) {
+        watchCountModules();
+    });
 
-    observer.observe(inputCountModules, config);
+    watchCountModules();
 });

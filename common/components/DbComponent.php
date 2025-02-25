@@ -4,6 +4,7 @@ namespace common\components;
 
 use Yii;
 use yii\base\Component;
+use yii\db\Query;
 
 class DbComponent extends Component
 {
@@ -110,11 +111,14 @@ class DbComponent extends Component
     public static function deleteUser(string $login): bool
     {
         try {
-            Yii::$app->db->createCommand("DROP USER :login@:host;", [
-                ':login' => $login,
-                ':host' => self::getHost(),
-            ])
-                ->execute();
+            if (self::hasUserByLogin($login)) {
+                Yii::$app->db->createCommand("DROP USER :login@:host;", [
+                    ':login' => $login,
+                    ':host' => self::getHost(),
+                ])
+                    ->execute();
+            }
+
             return true;
         } catch(\Exception $e) {
             throw $e;
@@ -198,6 +202,14 @@ class DbComponent extends Component
         return $matches[1];
     }
 
+    public static function hasUserByLogin(string $login)
+    {
+        return (new Query())
+            ->from('mysql.user')
+            ->where(['User' => $login])
+            ->exists();
+    }
+
     /**
      * Checks for the unique value of this attribute.
      * 
@@ -209,9 +221,8 @@ class DbComponent extends Component
      */
     public static function isUniqueValue(string $class, string $attr, mixed $value): bool
     {
-        return 'test';
-        // return !$class::find()
-        //     ->where([$attr => $value])
-        //     ->exists();
+        return !$class::find()
+            ->where([$attr => $value])
+            ->exists();
     }
 }

@@ -196,4 +196,15 @@ class Events extends ActiveRecord
 
         return $str;
     }
+
+    public static function removeDirectory($eventsId)
+    {
+        $events = self::findAll(['id' => $eventsId]);
+
+        foreach ($events as $event) {
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@events/') . $event->dir_title);
+        }
+
+        return true;
+    }
 }

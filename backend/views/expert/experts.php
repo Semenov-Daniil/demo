@@ -23,7 +23,7 @@ $this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => Yii
     <?php Pjax::begin([
         'id' => 'pjax-add-expert',
         'enablePushState' => false,
-        'timeout' => 10000,
+        'timeout' => 100000,
     ]); ?>
 
         <?= $this->render('_expert-form', [
@@ -35,7 +35,7 @@ $this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => Yii
     <?php Pjax::begin([
         'id' => 'pjax-experts',
         'enablePushState' => false,
-        'timeout' => 10000,
+        'timeout' => 100000,
     ]); ?>
 
         <?= $this->render('_experts-list', [

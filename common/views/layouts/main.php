@@ -23,7 +23,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>" data-theme="material" data-theme-colors="blue" data-layout="semibox" data-preloader="disable" data-sidebar-visibility="<?= Yii::$app->user->can('expert') ? 'show' : 'hidden' ?>" data-layout-width="fluid" data-layout-position="fixed" data-topbar="light" data-layout-style="default" data-sidebar="dark" data-sidebar-size="lg">
+<html lang="<?= Yii::$app->language ?>" data-theme="material" data-theme-colors="default" data-layout="semibox" data-preloader="disable" data-sidebar-visibility="<?= Yii::$app->user->can('expert') ? 'show' : 'hidden' ?>" data-layout-width="fluid" data-layout-position="fixed" data-topbar="light" data-layout-style="default" data-sidebar="dark" data-sidebar-size="lg">
 
 <head>
     <title><?= Html::encode($this->title) ?></title>

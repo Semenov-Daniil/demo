@@ -135,22 +135,29 @@ class ExpertController extends Controller
      * 
      * @return void
      */
-    public function actionDeleteExperts(string|null $id = null): void
+    public function actionDeleteExperts(): void
     {
-        if (!is_null($id) && ExpertsEvents::deleteExpert($id)) {
+        $experts = [];
+
+        if ($this->request->get('id')) {
+            $experts[] = $this->request->get('id');
+        }
+
+        if ($this->request->post('selection')) {
+            $experts = array_unique(array_merge($experts, $this->request->post('selection')));
+        }
+
+        if (count($experts) && ExpertsEvents::deleteExperts($experts)) {
             Yii::$app->session->addFlash('toast-alert', [
-                'text' => 'Эксперт успешно удален.',
+                'text' => count($experts) > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.',
                 'type' => 'success'
             ]);
         } else {
             Yii::$app->session->addFlash('toast-alert', [
-                'text' => 'Не удалось удалить эксперта.',
+                'text' => count($experts) > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.',
                 'type' => 'error'
             ]);
         }
-
-        // if (Yii::$app->request->isAjax) {
-        // }
     }
 
     /**
@@ -165,10 +172,16 @@ class ExpertController extends Controller
 
         if (Yii::$app->request->isPost) {
             if ($model->load(Yii::$app->request->post()) && $model->addStudent()) {
-                Yii::$app->session->setFlash('success', 'Студент успешно добавлен.');
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Студент успешно добавлен.',
+                    'type' => 'success'
+                ]);
                 $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_ADD_STUDENT]);
             } else {
-                Yii::$app->session->setFlash('error', 'Не удалось добавить студента.');
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Не удалось добавить студента.',
+                    'type' => 'error'
+                ]);
             }
         }
 

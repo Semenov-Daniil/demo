@@ -80,21 +80,7 @@ class Users extends ActiveRecord implements IdentityInterface
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
-            $students = StudentsEvents::find()
-                ->where(['experts_id' => $this->id])
-                ->joinWith('event')
-                ->all()
-            ;
-
-            var_dump($students);die;
-            
-            foreach ($students as $student) {
-                if (!Users::findOne(['id' => $student->students_id])->delete()) {
-                    return false;
-                }
-            }
-
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@events/') . $this->event->dir_title);
+            return StudentsEvents::deleteEventStudents($this->event->id) && Events::removeDirectory($this->event->id);
         }
 
         return true;
@@ -236,7 +222,9 @@ class Users extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * @param string $attr the name of the attribute that we are checking
+     * Checks for the unique value of this attribute.
+     * 
+     * @param string $attr The name of the attribute that we are checking
      * @return bool
      */
     public function isUnique(string $attr): bool
@@ -316,6 +304,7 @@ class Users extends ActiveRecord implements IdentityInterface
             $transaction->rollBack();
         } catch(\Exception $e) {
             $transaction->rollBack();
+            var_dump($e);die;
         } catch(\Throwable $e) {
             $transaction->rollBack();
         }

@@ -127,8 +127,19 @@ class ExpertsEvents extends Model
      * 
      * @return bool Returns the value `true` if the expert was successfully deleted.
      */
-    public static function deleteExpert(string $id): bool
+    public static function deleteExpert(string|int $id): bool
     {
         return Users::deleteUser($id);
+    }
+
+    public static function deleteExperts(array $experts): bool
+    {
+        foreach ($experts as $expertId) {
+            if (!self::deleteExpert($expertId)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
