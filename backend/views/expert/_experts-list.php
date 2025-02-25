@@ -1,5 +1,6 @@
 <?php
 
+use common\models\EncryptedPasswords;
 use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
@@ -35,7 +36,7 @@ use yii\grid\GridView;
                 [
                     'label' => 'Логин/Пароль',
                     'value' => function ($model) {
-                        return $model['loginPassword'];
+                        return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
                     },
                 ],
                 [

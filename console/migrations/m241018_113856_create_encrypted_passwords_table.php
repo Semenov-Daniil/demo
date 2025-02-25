@@ -3,9 +3,9 @@
 use yii\db\Migration;
 
 /**
- * Handles the creation of table `{{%passwords}}`.
+ * Handles the creation of table `{{%encrypted_passwords}}`.
  */
-class m241018_113856_create_passwords_table extends Migration
+class m241018_113856_create_encrypted_passwords_table extends Migration
 {
     const TABLE_NAME = '{{%encrypted_passwords}}';
     const USERS_TABLE_NAME = '{{%users}}';

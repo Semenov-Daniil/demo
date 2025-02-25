@@ -63,12 +63,13 @@ class ExpertsEvents extends Model
             ->select([
                 Users::tableName() . '.id',
                 'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
-                'CONCAT(login, \'/\', ' . Passwords::tableName() . '.password) AS loginPassword',
+                'login',
+                EncryptedPasswords::tableName() . '.encrypted_password AS encryptedPassword',
                 'title as event',
                 'countModules' => $subQuery
             ])
             ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
-            ->joinWith('openPassword', false)
+            ->joinWith('encryptedPassword', false)
             ->joinWith('event', false)
             ->asArray()
         ;

@@ -6,6 +6,7 @@
 /** @var common\models\LoginForm $model */
 /** @var common\models\Users $expert */
 
+use common\models\EncryptedPasswords;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 use yii\widgets\Pjax;
@@ -49,7 +50,7 @@ $this->title = 'Авторизация';
 
                     <?php ActiveForm::end(); ?>
                 <?php Pjax::end(); ?>
-                <p class="mb-0 mt-3">Expert: <?= empty($expert) ? '' : $expert['login'] . '/' . $expert['password'] ?></p>
+                <p class="mb-0 mt-3">Expert: <?= empty($expert) ? '' : $expert['login'] . '/' . EncryptedPasswords::decryptByPassword($expert['encrypted_password']) ?></p>
             </div>
         </div>
         <!-- end card body -->

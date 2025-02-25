@@ -2,6 +2,7 @@
 
 namespace backend\controllers;
 
+use common\models\EncryptedPasswords;
 use common\models\ExpertsEvents;
 use common\models\FilesEvents;
 use common\models\LoginForm;
@@ -74,10 +75,10 @@ class ExpertController extends Controller
             'model' => $model,
             'expert' => Users::find()
                 ->select([
-                    'login', Passwords::tableName() . '.password'
+                    'login', EncryptedPasswords::tableName() . '.encrypted_password'
                 ])
                 ->where(['roles_id' => Roles::getRoleId('expert')])
-                ->joinWith('openPassword', false)
+                ->joinWith('encryptedPassword', false)
                 ->asArray()
                 ->one(),
         ]);

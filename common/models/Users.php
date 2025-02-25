@@ -24,7 +24,7 @@ use yii\web\IdentityInterface;
  * @property int $roles_id
  *
  * @property Events $event
- * @property Passwords $openPassword
+ * @property EncryptedPasswords $encryptedPassword
  * @property Roles $role
  */
 class Users extends ActiveRecord implements IdentityInterface
@@ -105,7 +105,7 @@ class Users extends ActiveRecord implements IdentityInterface
         parent::afterSave($insert, $changedAttributes);
 
         if ($insert) {
-            Passwords::addPassword(['users_id' => $this->id, 'password' => $this->temp_password]);
+            EncryptedPasswords::addEncryptedPassword($this->id, $this->temp_password);
         }
     }
 
@@ -160,13 +160,13 @@ class Users extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * Gets query for [[Passwords]].
+     * Gets query for [[EncryptedPasswords]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getOpenPassword(): object
+    public function getEncryptedPassword(): object
     {
-        return $this->hasOne(Passwords::class, ['users_id' => 'id'])->inverseOf('users');
+        return $this->hasOne(EncryptedPasswords::class, ['users_id' => 'id'])->inverseOf('user');
     }
 
     /**
