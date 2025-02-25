@@ -8,7 +8,7 @@ use yii\db\Migration;
 class m241023_122101_create_modules_table extends Migration
 {
     const TABLE_NAME = '{{%modules}}';
-    const TABLE_NAME_EVENTS = '{{%events}}';
+    const EVENTS_TABLE_NAME = '{{%events}}';
 
     /**
      * {@inheritdoc}
@@ -23,7 +23,7 @@ class m241023_122101_create_modules_table extends Migration
         ]);
 
         $this->createIndex('idx-modules-events_id', self::TABLE_NAME, 'events_id');
-        $this->addForeignKey('fk-modules-events_id', self::TABLE_NAME, 'events_id', self::TABLE_NAME_EVENTS, 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('fk-modules-events_id', self::TABLE_NAME, 'events_id', self::EVENTS_TABLE_NAME, 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

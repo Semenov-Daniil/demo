@@ -8,7 +8,7 @@ use yii\db\Migration;
 class m241030_122531_create_files_events_table extends Migration
 {
     const TABLE_NAME = '{{%files_events}}';
-    const TABLE_NAME_EVENTS = '{{%events}}';
+    const EVENTS_TABLE_NAME = '{{%events}}';
 
     /**
      * {@inheritdoc}
@@ -25,7 +25,7 @@ class m241030_122531_create_files_events_table extends Migration
         ]);
 
         $this->createIndex('idx-files_events-events_id', self::TABLE_NAME, 'events_id');
-        $this->addForeignKey('fk-files_events-events_id', self::TABLE_NAME, 'events_id', self::TABLE_NAME_EVENTS, 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('fk-files_events-events_id', self::TABLE_NAME, 'events_id', self::EVENTS_TABLE_NAME, 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

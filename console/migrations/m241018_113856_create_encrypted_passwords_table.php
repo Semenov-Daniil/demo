@@ -7,8 +7,8 @@ use yii\db\Migration;
  */
 class m241018_113856_create_passwords_table extends Migration
 {
-    const TABLE_NAME = '{{%passwords}}';
-    const TABLE_NAME_USERS = '{{%users}}';
+    const TABLE_NAME = '{{%encrypted_passwords}}';
+    const USERS_TABLE_NAME = '{{%users}}';
 
     /**
      * {@inheritdoc}
@@ -17,10 +17,10 @@ class m241018_113856_create_passwords_table extends Migration
     {
         $this->createTable(self::TABLE_NAME, [
             'users_id' => $this->primaryKey(),
-            'password' => $this->string(255)->notNull(),
+            'encrypted_password' => $this->string(255)->notNull(),
         ]);
 
-        $this->addForeignKey('fk-passwords-users_id', self::TABLE_NAME, 'users_id', self::TABLE_NAME_USERS, 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('fk-encrypted_password-users_id', self::TABLE_NAME, 'users_id', self::USERS_TABLE_NAME, 'id', 'CASCADE', 'CASCADE');
     }
 
     /**
@@ -28,7 +28,7 @@ class m241018_113856_create_passwords_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropForeignKey('fk-passwords-users_id', self::TABLE_NAME);
+        $this->dropForeignKey('fk-encrypted_password-users_id', self::TABLE_NAME);
         
         $this->dropTable(self::TABLE_NAME);
     }

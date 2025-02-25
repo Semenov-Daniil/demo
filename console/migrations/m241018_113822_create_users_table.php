@@ -8,7 +8,7 @@ use yii\db\Migration;
 class m241018_113822_create_users_table extends Migration
 {
     const TABLE_NAME = '{{%users}}';
-    const TABLE_NAME_ROLES = '{{%roles}}';
+    const ROLES_TABLE_NAME = '{{%roles}}';
     
     /**
      * {@inheritdoc}
@@ -27,7 +27,7 @@ class m241018_113822_create_users_table extends Migration
         ]);
 
         $this->createIndex('idx-users-roles_id', self::TABLE_NAME, 'roles_id');
-        $this->addForeignKey('fk-users-roles_id', self::TABLE_NAME, 'roles_id', self::TABLE_NAME_ROLES, 'id', 'RESTRICT', 'CASCADE');
+        $this->addForeignKey('fk-users-roles_id', self::TABLE_NAME, 'roles_id', self::ROLES_TABLE_NAME, 'id', 'RESTRICT', 'CASCADE');
     }
 
     /**

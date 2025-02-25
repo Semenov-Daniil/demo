@@ -8,6 +8,7 @@ use yii\db\Migration;
 class m241018_113956_create_events_table extends Migration
 {
     const TABLE_NAME = '{{%events}}';
+    const USERS_TABLE_NAME = '{{%users}}';
 
     /**
      * {@inheritdoc}
@@ -21,8 +22,8 @@ class m241018_113956_create_events_table extends Migration
             'dir_title' => $this->string(255)->notNull(),
         ]);
 
-        $this->createIndex('idx-events-experts_id', self::TABLE_NAME, 'experts_id', '{{%users}}', 'id', 'CASCADE', 'CASCADE');
-        $this->addForeignKey('fk-events-experts_id', self::TABLE_NAME, 'experts_id', '{{%users}}', 'id', 'CASCADE', 'CASCADE');
+        $this->createIndex('idx-events-experts_id', self::TABLE_NAME, 'experts_id', self::USERS_TABLE_NAME, 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('fk-events-experts_id', self::TABLE_NAME, 'experts_id', self::USERS_TABLE_NAME, 'id', 'CASCADE', 'CASCADE');
     }
 
     /**
