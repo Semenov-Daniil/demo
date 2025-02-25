@@ -134,21 +134,22 @@ class ExpertController extends Controller
      * 
      * @return void
      */
-    public function actionDeleteExperts(string $id): void
+    public function actionDeleteExperts(string|null $id = null): void
     {
-        if (Yii::$app->request->isAjax) {
-            if (ExpertsEvents::deleteExpert($id)) {
-                Yii::$app->session->addFlash('toast-alert', [
-                    'text' => 'Эксперт успешно удален.',
-                    'type' => 'success'
-                ]);
-            } else {
-                Yii::$app->session->addFlash('toast-alert', [
-                    'text' => 'Не удалось удалить эксперта.',
-                    'type' => 'error'
-                ]);
-            }
+        if (!is_null($id) && ExpertsEvents::deleteExpert($id)) {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => 'Эксперт успешно удален.',
+                'type' => 'success'
+            ]);
+        } else {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => 'Не удалось удалить эксперта.',
+                'type' => 'error'
+            ]);
         }
+
+        // if (Yii::$app->request->isAjax) {
+        // }
     }
 
     /**

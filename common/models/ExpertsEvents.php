@@ -93,7 +93,8 @@ class ExpertsEvents extends Model
         $this->validate();
 
         if (!$this->hasErrors()) {
-            $transaction = Yii::$app->db->beginTransaction();   
+            $transaction = Yii::$app->db->beginTransaction();
+
             try {
                 $user = new Users();
                 $user->attributes = $this->attributes;
@@ -108,6 +109,8 @@ class ExpertsEvents extends Model
                         return true;
                     }
                 }
+
+                $transaction->rollBack();
             } catch(\Exception $e) {
                 $transaction->rollBack();
             } catch(\Throwable $e) {
@@ -123,11 +126,8 @@ class ExpertsEvents extends Model
      * 
      * @return bool Returns the value `true` if the expert was successfully deleted.
      */
-    public static function deleteExpert(string|null $id = null): bool
+    public static function deleteExpert(string $id): bool
     {
-        if (!is_null($id)) {
-            return Users::deleteUser($id);
-        }
-        return false;
+        return Users::deleteUser($id);
     }
 }

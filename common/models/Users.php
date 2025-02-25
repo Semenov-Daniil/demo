@@ -75,11 +75,18 @@ class Users extends ActiveRecord implements IdentityInterface
             if ($student = StudentsEvents::findOne(['students_id' => $this->id])) {
                 return $student->delete();
             }
+
             return true;
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
-            $students = StudentsEvents::findAll(['events_id' => $this->event->id]);
+            $students = StudentsEvents::find()
+                ->where(['experts_id' => $this->id])
+                ->joinWith('event')
+                ->all()
+            ;
+
+            var_dump($students);die;
             
             foreach ($students as $student) {
                 if (!Users::findOne(['id' => $student->students_id])->delete()) {
@@ -296,13 +303,16 @@ class Users extends ActiveRecord implements IdentityInterface
      */
     public static function deleteUser(int $id = null): bool
     {
-        $transaction = Yii::$app->db->beginTransaction();   
+        $transaction = Yii::$app->db->beginTransaction();  
+
         try {
             $user = self::findOne(['id' => $id]);
+
             if (!empty($user) && $user->delete()) {
                 $transaction->commit();
                 return true;
             }
+
             $transaction->rollBack();
         } catch(\Exception $e) {
             $transaction->rollBack();
