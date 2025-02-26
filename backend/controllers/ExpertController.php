@@ -106,8 +106,18 @@ class ExpertController extends Controller
         $model = new ExpertsEvents();
         $dataProvider = $model->getDataProviderExperts(10);
 
-        if (Yii::$app->request->isPost) {
-            if ($model->load(Yii::$app->request->post()) && $model->addExpert()) {  
+        return $this->render('experts', [
+            'model' => $model,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    public function actionCreateExpert(): string
+    {
+        $model = new ExpertsEvents();
+
+        if ($this->request->isPost) {
+            if ($model->load(Yii::$app->request->post()) && $model->createExpert()) {  
                 Yii::$app->session->addFlash('toast-alert', [
                     'text' => 'Эксперт успешно добавлен.',
                     'type' => 'success'
@@ -122,8 +132,28 @@ class ExpertController extends Controller
             }
         }
 
-        return $this->render('experts', [
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_expert-form', [
+                'model' => $model,
+            ]);
+        }
+
+        return $this->render('_expert-form', [
             'model' => $model,
+        ]);
+    }
+
+    public function actionAllExperts(): string
+    {
+        $dataProvider = ExpertsEvents::getDataProviderExperts(10);
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_experts-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('_experts-list', [
             'dataProvider' => $dataProvider,
         ]);
     }
@@ -135,17 +165,12 @@ class ExpertController extends Controller
      * 
      * @return void
      */
-    public function actionDeleteExperts(): void
+    public function actionDeleteExperts(): string
     {
+        $dataProvider = ExpertsEvents::getDataProviderExperts(10);
         $experts = [];
 
-        if ($this->request->get('id')) {
-            $experts[] = $this->request->get('id');
-        }
-
-        if ($this->request->post('selection')) {
-            $experts = array_unique(array_merge($experts, $this->request->post('selection')));
-        }
+        $experts = ($this->request->get('id') ? [$this->request->get('id')] : ($this->request->post('selection') ? $this->request->post('selection') : []));
 
         if (count($experts) && ExpertsEvents::deleteExperts($experts)) {
             Yii::$app->session->addFlash('toast-alert', [
@@ -158,6 +183,16 @@ class ExpertController extends Controller
                 'type' => 'error'
             ]);
         }
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_experts-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('_experts-list', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
 
     /**

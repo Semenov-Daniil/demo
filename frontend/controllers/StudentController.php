@@ -2,6 +2,7 @@
 
 namespace frontend\controllers;
 
+use common\models\EncryptedPasswords;
 use Yii;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -95,10 +96,10 @@ class StudentController extends Controller
             'model' => $model,
             'student' => Users::find()
                 ->select([
-                    'login', Passwords::tableName() . '.password'
+                    'login', EncryptedPasswords::tableName() . '.encrypted_password'
                 ])
                 ->where(['roles_id' => Roles::getRoleId('student')])
-                ->joinWith('openPassword', false)
+                ->joinWith('encryptedPassword', false)
                 ->asArray()
                 ->one(),
         ]);

@@ -111,10 +111,40 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                         ],
                         'items' => [
                             '<li class="menu-title"><i class="ri-more-fill"></i><span data-key="t-menu">Меню</span></li>',
-                            ['label' => '<i class="ri-user-settings-line"></i><span data-key="t-experts">Эксперты</span>', 'encode' => false, 'url' => ['experts'], 'linkOptions' => ['class' => 'nav-link menu-link', 'data-key' => 't-experts']],
-                            ['label' => '<i class="ri-user-add-line"></i><span data-key="t-students">Студенты</span>', 'encode' => false, 'url' => ['students'], 'linkOptions' => ['class' => 'nav-link menu-link', 'data-key' => 't-students']],
-                            ['label' => '<i class="ri-equalizer-line"></i><span data-key="t-modules">Модули</span>', 'encode' => false, 'url' => ['modules'], 'linkOptions' => ['class' => 'nav-link menu-link', 'data-key' => 't-modules']],
-                            ['label' => '<i class="ri-upload-2-fill"></i><span data-key="t-files">Файлы</span>', 'encode' => false, 'url' => ['files'], 'linkOptions' => ['class' => 'nav-link menu-link', 'data-key' => 't-files']],
+                            [
+                                'label' => '<i class="ri-user-settings-line"></i><span data-key="t-experts">Эксперты</span>', 
+                                'encode' => false, 
+                                'url' => ['/experts'], 
+                                'linkOptions' => [
+                                    'class' => 'nav-link menu-link', 
+                                    'data-key' => 't-experts'
+                                ],
+                                'active' => (Yii::$app->request->getPathInfo() == '' || Yii::$app->request->getPathInfo() == 'experts')
+                            ],
+                            [
+                                'label' => '<i class="ri-user-add-line"></i><span data-key="t-students">Студенты</span>', 
+                                'encode' => false, 
+                                'url' => ['/students'], 
+                                'linkOptions' => [
+                                    'class' => 'nav-link menu-link', 'data-key' => 't-students'
+                                ]
+                            ],
+                            [
+                                'label' => '<i class="ri-equalizer-line"></i><span data-key="t-modules">Модули</span>', 
+                                'encode' => false, 
+                                'url' => ['/modules'], 
+                                'linkOptions' => [
+                                    'class' => 'nav-link menu-link', 'data-key' => 't-modules'
+                                ]
+                            ],
+                            [
+                                'label' => '<i class="ri-upload-2-fill"></i><span data-key="t-files">Файлы</span>', 
+                                'encode' => false, 
+                                'url' => ['/files'], 
+                                'linkOptions' => [
+                                    'class' => 'nav-link menu-link', 'data-key' => 't-files'
+                                ]
+                            ],
                         ],
                     ]);
                 ?>

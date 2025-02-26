@@ -18,7 +18,6 @@ use yii\grid\GridView;
     ])?>
         <div class="card-header align-items-center d-flex position-relative border-bottom-0">
             <h4 class="card-title mb-0 flex-grow-1">Эксперты</h4>
-            <?= Html::a('Удалить выбранные', ['delete-experts'], ['class' => 'btn btn-sm btn-danger btn-delete-check position-absolute bottom-0 end-0 translate-middle-y me-3 d-none', 'data' => ['pjax' => 0]])?>
         </div>
 
         <div class="card-body">
@@ -27,19 +26,32 @@ use yii\grid\GridView;
                 'pager' => [
                     'class' => \yii\bootstrap5\LinkPager::class,
                     'listOptions' => [
-                        'class' => 'pagination m-0',
+                        'class' => 'pagination pagination-separated m-0',
                     ],
+                    'maxButtonCount' => 5,
+                    'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
+                    'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>'
                 ],
                 'tableOptions' => [
                     'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
                 ],
                 'layout' => "
-                    <div class='table-responsive table-card table-responsive'>
+                    <div class=\"table-responsive table-card table-responsive\">
                         <div>
                             {items}
                         </div>
-                        <div class='d-flex gap-2 flex-wrap justify-content-between p-3'>
-                            <div class='gridjs-summary'>
+                        <div id=\"collapseAllActions\" class=\"collapse\">
+                            <div class=\"p-3 row gx-0 gy-0 gap-2\">
+                                <div class=\"col text-body-secondary\">
+                                    Действие с выбранными экспертами:
+                                </div>
+                                <div class=\"col-auto\">
+                                    ".Html::a('Удалить выбранные', ['delete-experts'], ['class' => 'btn btn-danger btn-delete-check', 'data' => ['method' => 'delete']])."
+                                </div>
+                            </div>
+                        </div>
+                        <div class=\"d-flex gap-2 flex-wrap justify-content-between align-items-center p-3 gridjs-pagination\">
+                            <div class=\"text-body-secondary\">
                                 {summary}
                             </div>
                             <div>
@@ -65,7 +77,6 @@ use yii\grid\GridView;
                         'cssClass' => 'form-check-input',
 
                         'checkboxOptions' => function ($model, $key, $index, $column) {
-
                             if (Yii::$app->user->id == $model['id']) {
                                 return ['disabled' => true, 'class' => 'd-none'];
                             }
@@ -112,7 +123,7 @@ use yii\grid\GridView;
                         ',
                         'buttons' => [
                             'delete' => function ($url, $model, $key) {
-                                return Html::a('<i class="ri-delete-bin-2-line"></i>', ['delete-experts', 'id' => $model['id']], ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['pjax' => 0]]);
+                                return Html::a('<i class="ri-delete-bin-2-line"></i>', ['delete-experts', 'id' => $model['id']], ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['method' => 'delete']]);
                             }
                         ],
                         'visibleButtons' => [

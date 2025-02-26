@@ -16,6 +16,7 @@ use yii\bootstrap5\Html;
     <div class="card-body">
         <?php $form = ActiveForm::begin([
             'id' => 'add-expert-form',
+            'action' => ['create-expert'],
             'options' => [
                 'data' => [
                     'pjax' => true

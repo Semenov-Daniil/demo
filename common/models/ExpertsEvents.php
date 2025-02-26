@@ -5,6 +5,7 @@ namespace common\models;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
+use yii\db\Expression;
 use yii\helpers\VarDumper;
 
 /**
@@ -71,6 +72,9 @@ class ExpertsEvents extends Model
             ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
             ->joinWith('encryptedPassword', false)
             ->joinWith('event', false)
+            ->orderBy([
+                new Expression('CASE WHEN ' . Users::tableName() . '.id = ' . Yii::$app->user->id . ' THEN 0 ELSE 1 END')
+            ])
             ->asArray()
         ;
 
@@ -89,7 +93,7 @@ class ExpertsEvents extends Model
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when adding a expert.
      */
-    public function addExpert(): bool
+    public function createExpert(): bool
     {
         $this->validate();
 

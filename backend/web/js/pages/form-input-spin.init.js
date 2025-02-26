@@ -9,17 +9,27 @@ $(() => {
             currentValue++
             input.val(currentValue);
         }
+
+        input.removeClass('is-invalid is-valid');
+        $('.input-step').removeClass('is-valid is-invalid');
     });
 
     $('#pjax-add-expert').on('click', '.input-step .minus', function (event) {
         let input = $(this).nextAll('input'),
             min = input.prop('min');
 
+        if (input.val() === '') {
+            input.val(((min && !isNaN(min)) ? min : 0));
+        }
+
         if (!min || (!isNaN(min) && parseInt(input.val()) > Number(min))) {
             let currentValue = input.val();
             currentValue--
             input.val(currentValue);
         }
+
+        input.removeClass('is-invalid is-valid');
+        $('.input-step').removeClass('is-valid is-invalid');
     });
 
     $('#pjax-add-expert').on('input', '.input-step input', function(event) {
@@ -38,13 +48,13 @@ $(() => {
                 if (mutation.type === 'attributes') {
                     if (mutation.attributeName === 'class') {
                         if ($(mutation.target).hasClass('is-invalid')) {
-                            $(mutation.target).parent().removeClass('is-valid border-success');
-                            $(mutation.target).parent().addClass('is-invalid border-danger');
+                            $(mutation.target).parent().removeClass('is-valid');
+                            $(mutation.target).parent().addClass('is-invalid');
                         }
                 
                         if ($(mutation.target).hasClass('is-valid')) {
-                            $(mutation.target).parent().removeClass('is-invalid border-danger');
-                            $(mutation.target).parent().addClass('is-valid border-success');
+                            $(mutation.target).parent().removeClass('is-invalid');
+                            $(mutation.target).parent().addClass('is-valid');
                         }
                     }
                 }
