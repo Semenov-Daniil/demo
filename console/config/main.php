@@ -28,7 +28,8 @@ return [
                 '@yii/rbac/migrations',
             ],
         ],
-        'user' => 'console\controllers\UserController'
+        'user' => 'console\controllers\UserController',
+        'clear' => 'console\controllers\ClearController',
     ],
     'components' => [
         'log' => [
