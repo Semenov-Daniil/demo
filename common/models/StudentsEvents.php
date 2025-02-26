@@ -46,8 +46,6 @@ class StudentsEvents extends ActiveRecord
                 if ($this->createAccountMySQL($login, $password) && $this->createDbsStudent($login) && $this->createDirectoryStudent($login) && $this->createDirectoriesModules($login, $this->dir_prefix) && $this->copyFilesEvents($login)) {
                     return true;
                 }
-
-                Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@students') . "/$login");
                 
                 return false;
             }
@@ -222,16 +220,20 @@ class StudentsEvents extends ActiveRecord
         return "{$login}_m{$numberModule}";
     }
 
-    public function clearFailedStudent($user): void
+    public function deleteDataStudent(): bool
     {
         try {
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$user->login"));
-            $this->deleteDbStudent($user->login);
-            $this->deleteAccountMySQL($user->login);
-            $user->delete();
+            $login = $this->user->login;
+
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$login"));
+            $this->deleteDbStudent($login);
+            $this->deleteAccountMySQL($login);
+            return Users::deleteUser($this->students_id);
         } catch (\Exception $e) {
         } catch(\Throwable $e) {
         }
+
+        return false;
     }
 
     /**
@@ -241,7 +243,7 @@ class StudentsEvents extends ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when adding a student.
      */
-    public function addStudent(): bool
+    public function createStudent(): bool
     {
         $this->validate();
         
@@ -252,7 +254,7 @@ class StudentsEvents extends ActiveRecord
                 $user = new Users();
                 $user->attributes = $this->attributes;
 
-                if ($user->addStudent()) {
+                if ($user->createStudent()) {
                     $student_event = new StudentsEvents();
                     $student_event->students_id = $user->id;
                     $student_event->events_id = Events::getIdByExpert(Yii::$app->user->id);
@@ -263,15 +265,15 @@ class StudentsEvents extends ActiveRecord
                     }
                 }
 
-                $this->clearFailedStudent($user);
+                $this->deleteDataStudent();
                 $transaction->rollBack();
             } catch(\Exception $e) {
                 $transaction->rollBack();
-                $this->clearFailedStudent($user);
+                $this->deleteDataStudent();
                 VarDumper::dump( $e, $depth = 10, $highlight = true);die;
             } catch(\Throwable $e) {
                 $transaction->rollBack();
-                $this->clearFailedStudent($user);
+                $this->deleteDataStudent();
                 VarDumper::dump( $e, $depth = 10, $highlight = true);die;
             }
         }
@@ -288,11 +290,7 @@ class StudentsEvents extends ActiveRecord
      */
     public function createDirectoryStudent(string $login): bool
     {
-        if (Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login")) {
-            return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login/public");
-        }
-
-        return false;
+        return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login") && Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login/public");
     }
 
     /**
@@ -330,7 +328,7 @@ class StudentsEvents extends ActiveRecord
     }
 
     /**
-     * Copies competence files to the student.
+     * Copies event files to the student.
      * 
      * @param $login student's login.
      * 
@@ -340,30 +338,24 @@ class StudentsEvents extends ActiveRecord
      */
     public function copyFilesEvents(string $login): bool
     {
-        try {
-            $files = $this->event->files;
+        $event = $this->event;
 
-            if (!empty($files)) {
-                $competencePath = Yii::getAlias('@events') . "/" . $this->event->dir_title;
-                $studentPath = Yii::getAlias('@students') . "/$login/public";
-    
-                if (!is_dir($studentPath)) {
-                    Yii::$app->fileComponent->createDirectory($studentPath);
-                }
-    
-                foreach ($files as $file) {
-                    if (!copy("$competencePath/$file->save_name.$file->extension", "$studentPath/$file->save_name.$file->extension")) {
-                        throw new Exception("Failed to copy file from $competencePath/$file->save_name.$file->extension to $studentPath/$file->save_name.$file->extension");
-                    }
-                }
+        if (!empty($event->files)) {
+            $eventPath = Yii::getAlias("@events/$event->dir_title");
+            $studentPath = Yii::getAlias("@students/$login/public");
+
+            if (!is_dir($studentPath)) {
+                Yii::$app->fileComponent->createDirectory($studentPath);
             }
 
-            return true;
-        } catch (\Exception $e) {
-            throw $e;
+            foreach ($event->files as $file) {
+                if (!copy("$eventPath/$file->save_name.$file->extension", "$studentPath/$file->save_name.$file->extension")) {
+                    return false;
+                }
+            }
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -426,7 +418,7 @@ class StudentsEvents extends ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurred while deleting a databases.
      */
-    public function deleteDbStudent(string $login): bool
+    public  function deleteDbStudent(string $login): bool
     {
         $modules = $this->modules;
 
@@ -475,15 +467,15 @@ class StudentsEvents extends ActiveRecord
     public static function deleteStudent(string|null $id = null): bool
     {
         if (!is_null($id)) {
-            return Users::deleteUser($id);
+            return StudentsEvents::findOne(['students_id' => $id])?->deleteDataStudent();
         }
         return false;
     }
 
-    public static function deleteStudents(array $students): bool
+    public static function deleteStudents(array $studentsID): bool
     {
-        foreach ($students as $studentId) {
-            if (!self::deleteStudent($studentId)) {
+        foreach ($studentsID as $id) {
+            if (!self::deleteStudent($id)) {
                 return false;
             }
         }
@@ -491,15 +483,15 @@ class StudentsEvents extends ActiveRecord
         return true;
     }
 
-    public static function deleteEventStudents(int|array $eventsId)
+    public static function deleteStudentsEvent(int|array $eventsID)
     {
         $students = self::find()
-            ->where(['events_id' => $eventsId])
+            ->where(['events_id' => $eventsID])
             ->all()
         ;
 
         foreach ($students as $student) {
-            if (!Users::findOne(['id' => $student->students_id])?->delete()) {
+            if (!$student->deleteDataStudent()) {
                 return false;
             }
         }

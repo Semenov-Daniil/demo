@@ -160,12 +160,12 @@ class Events extends ActiveRecord
     /**
      * Find event id by expert.
      *
-     * @param int $expertId id expert
+     * @param int $expertID id expert
      * @return int|null id event
      */
-    public static function getIdByExpert(int $expertId): int|null
+    public static function getIdByExpert(int $expertID): int|null
     {
-        return self::findOne(['experts_id' => $expertId])?->id;
+        return self::findOne(['experts_id' => $expertID])?->id;
     }
 
     /**

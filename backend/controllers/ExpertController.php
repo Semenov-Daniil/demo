@@ -216,7 +216,7 @@ class ExpertController extends Controller
         $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_CREATE_STUDENT]);
 
         if ($this->request->isPost) {
-            if ($model->load(Yii::$app->request->post()) && $model->addStudent()) {
+            if ($model->load(Yii::$app->request->post()) && $model->createStudent()) {
                 Yii::$app->session->addFlash('toast-alert', [
                     'text' => 'Студент успешно добавлен.',
                     'type' => 'success'
