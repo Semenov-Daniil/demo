@@ -18,20 +18,21 @@ $this->registerJsFile('@web/js/experts.js', ['depends' => YiiAsset::class]);
 $this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => YiiAsset::class]);
 ?>
 
-<div class="col-12 site-experts">
-
+<div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-add-expert',
         'enablePushState' => false,
         'timeout' => 100000,
     ]); ?>
-
+    
         <?= $this->render('_expert-form', [
             'model' => $model
         ]); ?>
-
+    
     <?php Pjax::end(); ?>
+</div>
 
+<div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-experts',
         'enablePushState' => false,

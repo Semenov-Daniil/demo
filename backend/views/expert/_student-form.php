@@ -8,10 +8,15 @@ use yii\bootstrap5\Html;
 /** @var app\models\StudentsEvents $model */
 ?>
 
-<div class="card student-from">
+<div class="card">
+    <div class="card-header align-items-center d-flex">
+        <h4 class="card-title mb-0 flex-grow-1">Добавление студента</h4>
+    </div>
+
     <div class="card-body">
         <?php $form = ActiveForm::begin([
             'id' => 'add-student-form',
+            'action' => ['/create-student'],
             'options' => [
                 'data' => [
                     'pjax' => true
@@ -19,26 +24,29 @@ use yii\bootstrap5\Html;
             ],
             'fieldConfig' => [
                 'template' => "{label}\n{input}\n{error}",
-                'labelOptions' => ['class' => 'col-form-label mr-lg-3'],
+                'labelOptions' => ['class' => 'col-12 col-form-label mr-lg-3'],
                 'inputOptions' => ['class' => 'form-control'],
-                'errorOptions' => ['class' => 'invalid-feedback'],
+                'errorOptions' => ['class' => 'col-12 invalid-feedback'],
             ],
         ]); ?>
-            <div class="row g-3">
-                <div class="col-4">
-                    <?= $form->field($model, 'surname')->textInput() ?>
-                </div>
-                <div class="col-4">
-                    <?= $form->field($model, 'name')->textInput() ?>
-                </div>
-                <div class="col-4">
-                    <?= $form->field($model, 'patronymic')->textInput() ?>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <div>
-                    <?= Html::submitButton('Добавить', ['class' => 'btn btn-success', 'name' => 'add']) ?>
+            <div class="row">
+                <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+
+                <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+
+                <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+
+                <div class="col-12 text-end">
+                    <?= Html::submitButton('
+                        <span class="cnt-text">Добавить студента</span>
+                        <span class="d-flex align-items-center d-none cnt-load">
+                            <span class="spinner-border flex-shrink-0" role="status">
+                            </span>
+                            <span class="flex-grow-1 ms-2">
+                                Добавление...
+                            </span>
+                        </span>
+                    ', ['class' => 'btn btn-success btn-load ms-auto btn-add-student', 'name' => 'add']) ?>
                 </div>
             </div>
         <?php ActiveForm::end(); ?>

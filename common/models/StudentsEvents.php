@@ -32,7 +32,7 @@ class StudentsEvents extends ActiveRecord
     public string $name = '';
     public string|null $patronymic = '';
 
-    const SCENARIO_ADD_STUDENT = "add-student";
+    const SCENARIO_CREATE_STUDENT = "create-student";
     const TITLE_ROLE_STUDENT = "student";
 
     public function beforeSave($insert)
@@ -76,7 +76,7 @@ class StudentsEvents extends ActiveRecord
     {
         $scenarios = parent::scenarios();
         $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!events_id', '!dir_prefix'];
-        $scenarios[self::SCENARIO_ADD_STUDENT] = ['surname', 'name', 'patronymic'];
+        $scenarios[self::SCENARIO_CREATE_STUDENT] = ['surname', 'name', 'patronymic'];
         return $scenarios;
     }
 
@@ -478,6 +478,17 @@ class StudentsEvents extends ActiveRecord
             return Users::deleteUser($id);
         }
         return false;
+    }
+
+    public static function deleteStudents(array $students): bool
+    {
+        foreach ($students as $studentId) {
+            if (!self::deleteStudent($studentId)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public static function deleteEventStudents(int|array $eventsId)

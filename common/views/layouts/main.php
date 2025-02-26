@@ -183,12 +183,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                  
-                    <?= Alert::widget() ?>
-                    <?= $content ?>
-                    
-                </div>
+                <?= $content ?>
             </div>
             <!-- container-fluid -->
         </div>

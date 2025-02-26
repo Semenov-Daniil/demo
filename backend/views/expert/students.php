@@ -8,14 +8,28 @@
 
 use common\widgets\Alert;
 use yii\helpers\Html;
+use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
 $this->title = 'Студенты';
 
-$this->registerJsFile('@web/js/students.js', ['depends' => 'yii\web\JqueryAsset']);
+$this->registerJsFile('@web/js/students.js', ['depends' => YiiAsset::class]);
 
 ?>
-<div class="col-12 site-students">
+
+<div class="row">
+    <?php Pjax::begin([
+        'id' => 'pjax-add-student',
+        'enablePushState' => false,
+        'timeout' => 10000,
+    ]); ?>
+        <?= $this->render('_student-form', [
+            'model' => $model
+        ]) ?>
+    <?php Pjax::end(); ?>
+</div>
+
+<div class="row">
 
     <?php Pjax::begin([
         'id' => 'pjax-students',
@@ -23,12 +37,6 @@ $this->registerJsFile('@web/js/students.js', ['depends' => 'yii\web\JqueryAsset'
         'timeout' => 10000,
         'linkSelector' => false,
     ]); ?>
-        <?= Alert::widget(); ?>
-        
-        <?= $this->render('_student-form', [
-            'model' => $model
-        ]) ?>
-
         <?= $this->render('_students-list', [
             'dataProvider' => $dataProvider
         ]) ?>

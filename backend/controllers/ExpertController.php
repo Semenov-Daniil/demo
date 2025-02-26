@@ -202,16 +202,26 @@ class ExpertController extends Controller
      */
     public function actionStudents(): string
     {
-        $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_ADD_STUDENT]);
-        $dataProvider = $model->getDataProviderStudents(20);
+        $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_CREATE_STUDENT]);
+        $dataProvider = $model->getDataProviderStudents(10);
 
-        if (Yii::$app->request->isPost) {
+        return $this->render('students', [
+            'model' => $model,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    public function actionCreateStudent(): string
+    {
+        $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_CREATE_STUDENT]);
+
+        if ($this->request->isPost) {
             if ($model->load(Yii::$app->request->post()) && $model->addStudent()) {
                 Yii::$app->session->addFlash('toast-alert', [
                     'text' => 'Студент успешно добавлен.',
                     'type' => 'success'
                 ]);
-                $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_ADD_STUDENT]);
+                $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_CREATE_STUDENT]);
             } else {
                 Yii::$app->session->addFlash('toast-alert', [
                     'text' => 'Не удалось добавить студента.',
@@ -220,8 +230,28 @@ class ExpertController extends Controller
             }
         }
 
-        return $this->render('students', [
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_student-form', [
+                'model' => $model,
+            ]);
+        }
+
+        return $this->render('_student-form', [
             'model' => $model,
+        ]);
+    }
+
+    public function actionAllStudents(): string
+    {
+        $dataProvider = StudentsEvents::getDataProviderStudents(10);
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_students-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('_students-list', [
             'dataProvider' => $dataProvider,
         ]);
     }
@@ -233,15 +263,34 @@ class ExpertController extends Controller
      *
      * @return void
      */
-    public function actionDeleteStudents(string|null $id = null): void
+    public function actionDeleteStudents(): string
     {
-        if (Yii::$app->request->isAjax) {
-            if (StudentsEvents::deleteStudent($id)) {
-                Yii::$app->session->setFlash('info', 'Студент успешно удален.');
-            } else {
-                Yii::$app->session->setFlash('error', 'Не удалось удалить студента.');
-            }
+        $dataProvider = StudentsEvents::getDataProviderStudents(10);
+        $students = [];
+
+        $students = ($this->request->get('id') ? [$this->request->get('id')] : ($this->request->post('selection') ? $this->request->post('selection') : []));
+
+        if (count($students) && StudentsEvents::deleteStudents($students)) {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => count($students) > 1 ? 'Студенты успешно удалены.' : 'Студент успешно удален.',
+                'type' => 'success'
+            ]);
+        } else {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => count($students) > 1 ? 'Не удалось удалить студентов.' : 'Не удалось удалить студента.',
+                'type' => 'error'
+            ]);
         }
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_students-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('_students-list', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
 
     /**

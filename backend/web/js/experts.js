@@ -26,7 +26,10 @@ $(() => {
         let expertsChecked = JSON.parse(localStorage.getItem('expertsChecked') || '{}');
 
         if ($(this).prop('checked')) {
-            expertsChecked[$(this).val()] = true;
+
+            if (!$(this).hasClass('select-on-check-all')) {
+                expertsChecked[$(this).val()] = true;
+            }
 
             $('#collapseAllActions').collapse('show');
         } else {
@@ -47,7 +50,7 @@ $(() => {
     function updateExpertsChecked() {
         let expertsChecked = JSON.parse(localStorage.getItem('expertsChecked') || '{}');
     
-        $('#pjax-experts input[type="checkbox"]').each(function() {
+        $('#pjax-experts input[type="checkbox"]:not([name="selection_all"])').each(function() {
             if (expertsChecked[$(this).val()]) {
                 $(this).prop('checked', true);
                 $('#collapseAllActions').collapse('show');

@@ -10,16 +10,16 @@ use yii\grid\GridView;
 ?>
 
 <div class="card experts-list">
-    <?= Html::beginForm(['experts'], 'delete', [
+    <div class="card-header align-items-center d-flex position-relative border-bottom-0">
+        <h4 class="card-title mb-0 flex-grow-1">Эксперты</h4>
+    </div>
+
+    <?= Html::beginForm(['delete-experts'], 'delete', [
         'class' => 'delete-experts-form',
         'data' => [
             'pjax' => true
         ],
     ])?>
-        <div class="card-header align-items-center d-flex position-relative border-bottom-0">
-            <h4 class="card-title mb-0 flex-grow-1">Эксперты</h4>
-        </div>
-
         <div class="card-body">
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
