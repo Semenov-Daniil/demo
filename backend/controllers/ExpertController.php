@@ -15,6 +15,7 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
 
 class ExpertController extends Controller
@@ -44,7 +45,7 @@ class ExpertController extends Controller
                 'actions' => [
                     'delete-experts' => ['DELETE'],
                     'delete-students' => ['DELETE'],
-                    'change-status-modules' => ['PATH'],
+                    'change-status-module' => ['PATH'],
                     'delete-modules' => ['DELETE'],
                 ],
             ],
@@ -408,28 +409,78 @@ class ExpertController extends Controller
      */
     public function actionModules(): string
     {
+        $model = new Modules(['scenario' => Modules::SCENARIO_CREATE_MODULES]);
+        $dataProvider = Modules::getDataProviderModules(10);
+
         return $this->render('modules', [
-            'dataProvider' => Modules::getDataProviderModules(),
+            'model' => $model,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    public function actionCreateModule()
+    {
+        if (Modules::createModule()) {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => 'Модуль успешно создан.',
+                'type' => 'success'
+            ]);
+        } else {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => 'Не удалось создать модуль.',
+                'type' => 'error'
+            ]);
+        }
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_modules-list', [
+                'dataProvider' => Modules::getDataProviderModules(10),
+            ]);
+        }
+
+        return $this->render('modules', [
+            'dataProvider' => Modules::getDataProviderModules(10),
         ]);
     }
 
     /**
-     * Action change status modules.
+     * Action change status module.
      */
-    public function actionChangeStatusModules()
+    public function actionChangeStatusModule()
     {
-        if (Yii::$app->request->isAjax) {
-            $model = new Modules();
-            if ($model->load(Yii::$app->request->post(), '')) {
-                if ($model->changeStatus()) {
-                    Yii::$app->response->statusCode = 200;
-                    return $this->asJson(['status' => $model->status]);
-                } else {
-                    Yii::$app->response->statusCode = 500;
-                    return $this->asJson(['status' => !$model->status]);
-                }
-            }
+        $id = Yii::$app->request->post('id');
+        $status = Yii::$app->request->post('status');
+        $isChangeStatus = false;
+        $model = $this->findModul($id);
+
+        try {
+            $isChangeStatus = $model->changeStatus($status);
+        } catch (\Exception $e) {
         }
+
+        if ($isChangeStatus) {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => "Модуль $model->number " . ($model->status ? 'включен' : 'выключен') . '.',
+                'type' => 'success'
+            ]);
+        } else {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => "Не удалось " . (!$status ? 'включить' : 'выключить') . " модуль $model?->number.",
+                'type' => 'error'
+            ]);
+        }
+        
+        if ($this->request->isAjax) {
+            return $this->asJson([
+                'success' => $isChangeStatus,
+                'module' => [
+                    'id' => $model?->id,
+                    'status' => $model?->status,
+                ]
+            ]);
+        }
+
+        return $this->actionModules();
     }
 
     /**
@@ -439,15 +490,21 @@ class ExpertController extends Controller
      *
      * @return void
      */
-    public function actionDeleteModules(string|null $id = null): void
+    public function actionDeleteModules(string|null $id = null): string
     {
-        if (Yii::$app->request->isAjax) {
-            if (Modules::deleteModule($id)) {
-                Yii::$app->session->setFlash('success', 'Модуль успешно удален.');
-            } else {
-                Yii::$app->session->setFlash('error', 'Не удалось удалить модуль.');
-            }
+        if (Modules::deleteModule($id)) {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => "Модуль удален успешно.",
+                'type' => 'success'
+            ]);
+        } else {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => "Не удалось удалить модуль.",
+                'type' => 'error'
+            ]);
         }
+
+        return $this->actionModules();
     }
 
     /**
@@ -458,5 +515,19 @@ class ExpertController extends Controller
     public function actionCompetitors()
     {
         return $this->render('competitors');
+    }
+
+    protected function findModul($id)
+    {
+        if (($model = Modules::findOne(['id' => $id])) !== null) {
+            return $model;
+        }
+
+        Yii::$app->session->addFlash('toast-alert', [
+            'text' => "Модуль не найден.",
+            'type' => 'error'
+        ]);
+
+        throw new NotFoundHttpException('Модуль не найден.');
     }
 }

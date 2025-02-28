@@ -1,6 +1,6 @@
 $(() => {
     
-    $('#pjax-add-expert').on('click', '.input-step .plus', function (event) {
+    $('#pjax-add-expert, #pjax-create-module').on('click', '.input-step .plus', function (event) {
         let input = $(this).prevAll('input'),
             max = input.prop('max');
 
@@ -14,7 +14,7 @@ $(() => {
         $('.input-step').removeClass('is-valid is-invalid');
     });
 
-    $('#pjax-add-expert').on('click', '.input-step .minus', function (event) {
+    $('#pjax-add-expert, #pjax-create-module').on('click', '.input-step .minus', function (event) {
         let input = $(this).nextAll('input'),
             min = input.prop('min');
 
@@ -32,15 +32,8 @@ $(() => {
         $('.input-step').removeClass('is-valid is-invalid');
     });
 
-    $('#pjax-add-expert').on('input', '.input-step input', function(event) {
-        this.value = this.value.replace(/[^0-9\-]/g, '');
-        this.value = this.value.replace(/\-+/g, function(match, offset) {
-            return offset === 0 ? '-' : '';
-        });
-    });
-
     function watchCountModules () {
-        const inputCountModules = $('#expertsevents-countmodules')[0];
+        const inputCountModules = $('.input-step input[type="number"]')[0];
         const config = { attributes: true, attributeFilter: ['class'] };
     
         const watchChangeClass = function(mutationsList, observer) {
@@ -66,7 +59,7 @@ $(() => {
         observer.observe(inputCountModules, config);
     }
 
-    $('#pjax-add-expert').on('pjax:complete', function (event) {
+    $('#pjax-add-expert, #pjax-create-module').on('pjax:complete', function (event) {
         watchCountModules();
     });
 

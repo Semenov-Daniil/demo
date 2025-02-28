@@ -3,64 +3,35 @@
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 
-/** @var app\models\Modules $dataProvider */
+/** @var app\models\Modules $model */
+/** @var yii\data\ActiveDataProvider $dataProvider */
 
+use common\assets\AppAsset;
 use common\widgets\Alert;
+use yii\bootstrap5\Modal;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\helpers\Html;
 use yii\web\View;
+use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
 $this->title = 'Модули';
 
-$this->registerJsFile('@web/js/modules.js', ['depends' => 'yii\web\JqueryAsset']);
+$this->registerJsFile('@web/js/modules.js', ['depends' => AppAsset::class]);
+
 ?>
-<div class="col-12 site-modules">
+
+<div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-modules',
         'enablePushState' => false,
         'timeout' => 10000,
     ]); ?>
-        <?= Alert::widget(); ?>
-        <?= GridView::widget([
-            'dataProvider' => $dataProvider,
-            'layout' => "
-                <div class=\"mt-3\">{pager}</div>\n
-                <div >{items}</div>\n
-                <div class=\"mt-3\">{pager}</div>",
-            'pager' => ['class' => \yii\bootstrap5\LinkPager::class],
-            'columns' => [
-                [
-                    'label' => '№ Модуля',
-                    'value' => function($model, $key, $index, $column) {
-                        return 'Модуль ' . $model->number;
-                    }
-                ],
-                [
-                    'label' => 'Статус',
-                    'format' => 'raw',
-                    'value' => function ($model) {
-                        return "<div class=\"form-check form-switch\">" 
-                                . Html::checkbox('status_' . $model->number, $model->status, ['data' => ['id' => $model->id, 'pjax' => true], 'class' => 'form-check-input switch-status'])
-                                . "</div>";
-                    },
-                ],
-                [
-                    'class' => ActionColumn::class,
-                    'template' => '{delete}',
-                    'buttons' => [
-                        'delete' => function ($url, $model, $key) {
-                            return Html::a('Удалить', ['delete-modules', 'id' => $model->id], ['data' => ['pjax' => 0], 'class' => 'btn btn-danger btn-delete']);
-                        }
-                    ],
-                    'visibleButtons' => [
-                        'delete' => function ($model, $key, $index) {
-                            return Yii::$app->user->can('expert');
-                        }
-                    ]
-                ],
-            ],
-        ]); ?>
+
+        <?= $this->render('_modules-list', [
+            'dataProvider' => $dataProvider
+        ])?>
+    
     <?php Pjax::end(); ?>
 </div>

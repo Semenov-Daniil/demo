@@ -293,6 +293,11 @@ class StudentsEvents extends ActiveRecord
         return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login") && Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login/public");
     }
 
+    public function createDirectoriesModule($module)
+    {
+        return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students/' . $this->user->login . '/' . $this->getDirectoryModuleTitle($this->dir_prefix, $module->number)));
+    }
+
     /**
      * Creates a modules directories.
      * 
@@ -385,6 +390,11 @@ class StudentsEvents extends ActiveRecord
     public function deleteAccountMySQL(string $login): bool
     {
         return Yii::$app->dbComponent->deleteUser($login);
+    }
+
+    public function createDbModule($module)
+    {
+        return Yii::$app->dbComponent->createDb($this->getDbTitle($this->user->login, $module->number)) && Yii::$app->dbComponent->grantPrivileges($this->user->login, $this->getDbTitle($this->user->login, $module->number));
     }
 
     /**

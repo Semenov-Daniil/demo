@@ -3,7 +3,10 @@
 namespace common\models;
 
 use app\components\DbComponent;
+use common\modules\flash\Module;
+use Exception;
 use Yii;
+use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use yii\helpers\VarDumper;
 
@@ -19,10 +22,25 @@ use yii\helpers\VarDumper;
  */
 class Modules extends \yii\db\ActiveRecord
 {
+    const SCENARIO_CREATE_MODULES = 'create-modules';
+
+    public int $countModules = 1;
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_CREATE_MODULES] = ['countModules'];
+        return $scenarios;
+    }
+
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            return $this->changePrivilegesDbStudents();
+            if (!$this->isNewRecord) {
+                return $this->changePrivilegesDbStudents();
+            }
+
+            return true;
         } else {
             return false;
         }
@@ -54,8 +72,11 @@ class Modules extends \yii\db\ActiveRecord
             [['events_id'], 'required'],
             [['id', 'events_id', 'status', 'number'], 'integer'],
             ['status', 'default', 'value' => 1],
-            ['number', 'default', 'value' => (self::find()->where(['events_id' => $this->events_id])->count() + 1)],
+            ['number', 'default', 'value' => ($this->nextNumModule())],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
+            ['countModules', 'number', 'min' => 1],
+
+            ['countModules', 'required', 'on' => self::SCENARIO_CREATE_MODULES],
         ];
     }
 
@@ -68,6 +89,8 @@ class Modules extends \yii\db\ActiveRecord
             'id' => 'ID',
             'events_id' => 'Компетенция',
             'status' => 'Статус',
+            'number' => 'Номер модуля',
+            'countModules' => 'Кол-во модулей',
         ];
     }
 
@@ -81,12 +104,26 @@ class Modules extends \yii\db\ActiveRecord
         return $this->hasOne(Events::class, ['id' => 'events_id']);
     }
 
+    public function nextNumModule()
+    {
+        $lastModule = self::find()
+            ->where(['events_id' => $this->events_id])
+            ->orderBy([
+                'id' => SORT_DESC
+            ])
+            ->limit(1)
+            ->one()
+        ;
+        
+        return is_null($lastModule) ? 1 : (++$lastModule->number);
+    }
+
     /**
      * Get ActiveDataProvider modules
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderModules(): ActiveDataProvider
+    public static function getDataProviderModules(int $records): ActiveDataProvider
     {
         $event_id = Events::getIdByExpert(Yii::$app->user->id);
 
@@ -95,7 +132,46 @@ class Modules extends \yii\db\ActiveRecord
                 ->select(['id', 'status', 'number'])
                 ->where(['events_id' => $event_id])
             ,
+            'pagination' => [
+                'pageSize' => $records,
+            ],
         ]);
+    }
+
+    public static function createModule()
+    {
+        $transaction = Yii::$app->db->beginTransaction();
+
+        try {
+            $module = new Modules();
+            $module->events_id = Events::getEventByExpert(Yii::$app->user->id)?->id;
+            
+            if ($module->save()) {
+                $students = StudentsEvents::findAll(['events_id' => $module->events_id]);
+                
+                foreach ($students as $student) {
+                    if (!$student->createDbModule($module) || !$student->createDirectoriesModule($module)) {
+                        $transaction->rollBack();
+                        self::deleteModule($module?->id);
+                        return false;
+                    }
+                }
+
+                $transaction->commit();
+                return true;
+            }
+
+            $transaction->rollBack();
+            self::deleteModule($module?->id);
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            self::deleteModule($module?->id);
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            self::deleteModule($module?->id);
+        }
+
+        return false;
     }
 
     /**
@@ -105,28 +181,35 @@ class Modules extends \yii\db\ActiveRecord
      * 
      * @throws Exception|Throwable generated an exception if an error occurred when changing the status.
      */
-    public function changeStatus(): bool
+    public function changeStatus(int $status): bool
     {
-        $transaction = Yii::$app->db->beginTransaction();   
+        $this->status = $status;
+        return $this->save();
+    }
+
+    public function changeStatuses(array $modules)
+    {
+        $result = [];
+        $model = new Modules();
+        $transaction = Yii::$app->db->beginTransaction();
+
         try {
-            if ($module = self::findOne(['id' => $this->id])) {
-                $module->status = $this->status;
-
-                if ($module->save()) {
-                    $transaction->commit();
-                    return true;
+            foreach ($modules as $module) {
+                if (isset($module['id']) && isset($module['status'])) {
+                    $result[] = [
+                        'success' => $model->changeStatus($module['id'], $module['status']),
+                        'id' => $module['id'],
+                        'status' => $module['status'],
+                    ];
                 }
-
-                $transaction->rollBack();
             }
-            return false;
         } catch(\Exception $e) {
             $transaction->rollBack();
         } catch(\Throwable $e) {
             $transaction->rollBack();
         }
 
-        return false;
+        return $result;
     }
 
     /**
@@ -171,6 +254,7 @@ class Modules extends \yii\db\ActiveRecord
             return false;
         } catch(\Exception $e) {
             $transaction->rollBack();
+            var_dump($e);die;
         } catch(\Throwable $e) {
             $transaction->rollBack();
         }

@@ -2,6 +2,7 @@
 
 namespace common\components;
 
+use Exception;
 use Yii;
 use yii\base\Component;
 use yii\db\Query;
@@ -30,7 +31,7 @@ class DbComponent extends Component
     {
         try {
             $title = Yii::$app->db->quoteTableName($title);
-            Yii::$app->db->createCommand("CREATE DATABASE $title;")
+            Yii::$app->db->createCommand("CREATE DATABASE IF NOT EXISTS $title;")
                 ->execute();
             return true;
         } catch(\Exception $e) {
@@ -53,7 +54,7 @@ class DbComponent extends Component
     {
         try {
             $title = Yii::$app->db->quoteTableName($title);
-            Yii::$app->db->createCommand("DROP DATABASE $title;")
+            Yii::$app->db->createCommand("DROP DATABASE IF EXISTS $title;")
                 ->execute();
             return true;
         } catch(\Exception $e) {
@@ -78,18 +79,20 @@ class DbComponent extends Component
     public static function createUser(string $login, string $password): bool
     {
         try {
-            Yii::$app->db->createCommand("
-                CREATE USER :login@:host IDENTIFIED BY :password;
-                REVOKE ALL PRIVILEGES ON information_schema.* FROM :login@:host;
-                REVOKE ALL PRIVILEGES ON performance_schema.* FROM :login@:host;
-                FLUSH PRIVILEGES;
-            ", [
-                ':login' => $login,
-                ':host' => self::getHost(),
-                ':password' => $password,
-            ])
-                ->execute();
-            return true;
+            if (!self::hasUserByLogin($login)) {
+                Yii::$app->db->createCommand("
+                    CREATE USER :login@:host IDENTIFIED BY :password;
+                    REVOKE ALL PRIVILEGES ON information_schema.* FROM :login@:host;
+                    REVOKE ALL PRIVILEGES ON performance_schema.* FROM :login@:host;
+                    FLUSH PRIVILEGES;
+                ", [
+                    ':login' => $login,
+                    ':host' => self::getHost(),
+                    ':password' => $password,
+                ])
+                    ->execute();
+                return true;
+            }
         } catch(\Exception $e) {
             throw $e;
         } catch(\Throwable $e) {
@@ -142,16 +145,18 @@ class DbComponent extends Component
     public static function grantPrivileges(string $login, string $db): bool
     {
         try {
-            $db = Yii::$app->db->quoteTableName($db);
-            Yii::$app->db->createCommand("
-                GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, ALTER ON $db.* TO :login@:host;
-                FLUSH PRIVILEGES;
-            ", [
-                ':login' => $login,
-                ':host' => self::getHost(),
-            ])
-                ->execute();
-            return true;
+            if (self::hasDatabase($db)) {
+                $db = Yii::$app->db->quoteTableName($db);
+                Yii::$app->db->createCommand("
+                    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, ALTER ON $db.* TO :login@:host;
+                    FLUSH PRIVILEGES;
+                ", [
+                    ':login' => $login,
+                    ':host' => self::getHost(),
+                ])
+                    ->execute();
+                return true;
+            }
         } catch(\Exception $e) {
             throw $e;
         } catch(\Throwable $e) {
@@ -174,16 +179,18 @@ class DbComponent extends Component
     public static function revokePrivileges(string $login, string $db): bool
     {
         try {
-            $db = Yii::$app->db->quoteTableName($db);
-            Yii::$app->db->createCommand("
-                REVOKE ALL PRIVILEGES ON $db.* FROM :login@:host;
-                FLUSH PRIVILEGES;
-            ", [
-                ':login' => $login,
-                ':host' => self::getHost(),
-            ])
-                ->execute();
-            return true;
+            if (self::hasDatabase($db)) {
+                $db = Yii::$app->db->quoteTableName($db);
+                Yii::$app->db->createCommand("
+                    REVOKE ALL PRIVILEGES ON $db.* FROM :login@:host;
+                    FLUSH PRIVILEGES;
+                ", [
+                    ':login' => $login,
+                    ':host' => self::getHost(),
+                ])
+                    ->execute();
+                return true;
+            }
         } catch(\Exception $e) {
             throw $e;
         } catch(\Throwable $e) {
@@ -204,10 +211,24 @@ class DbComponent extends Component
 
     public static function hasUserByLogin(string $login)
     {
-        return (new Query())
-            ->from('mysql.user')
-            ->where(['User' => $login])
-            ->exists();
+        try {
+            return (new Query())
+                ->from('mysql.user')
+                ->where(['User' => $login])
+                ->exists();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public static function hasDatabase(string $dbName)
+    {
+        try {
+            $databases = Yii::$app->db->createCommand('SHOW DATABASES')->queryColumn();
+            return in_array($dbName, $databases);
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 
     /**

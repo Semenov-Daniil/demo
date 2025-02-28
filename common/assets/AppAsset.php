@@ -26,25 +26,13 @@ class AppAsset extends AssetBundle
         
     ];
     public $js = [
-        // [
-        //     'js/layout.js',
-        //     'position' => View::POS_HEAD,
-        // ],
         'libs/bootstrap/js/bootstrap.bundle.min.js',
         'libs/simplebar/simplebar.min.js',
         'libs/node-waves/waves.min.js',
         'libs/feather-icons/feather.min.js',
         'js/pages/plugins/lord-icon-2.1.0.js',
 
-        // 'https://cdn.jsdelivr.net/npm/toastify-js',
-
-        // 'libs/toastr/toastr.min.js',
-        'libs/toastify-js/src/toastify.js',
         'libs/noty/lib/noty.js',
-
-        // aos
-        // 'libs/aos/aos.js',
-        // 'js/pages/animation-aos.init.js',
         
         'libs/choices.js/public/assets/scripts/choices.min.js',
         'libs/flatpickr/flatpickr.min.js',

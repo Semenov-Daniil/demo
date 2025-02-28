@@ -9,17 +9,17 @@ use yii\grid\GridView;
 ?>
 
 <div class="card students-list">
-    <div class="card-header align-items-center d-flex position-relative">
+    <div class="card-header align-items-center d-flex position-relative border-bottom-0">
         <h4 class="card-title mb-0 flex-grow-1">Студенты</h4>
     </div>
 
-    <?= Html::beginForm(['delete-students'], 'delete', [
-        'class' => 'delete-students-form',
-        'data' => [
-            'pjax' => true
-        ],
-    ])?>
-        <div class="card-body">
+    <div class="card-body">
+        <?= Html::beginForm(['delete-students'], 'delete', [
+            'class' => 'delete-students-form',
+            'data' => [
+                'pjax' => true
+            ],
+        ])?>
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
                 'pager' => [
@@ -68,13 +68,17 @@ use yii\grid\GridView;
                             'class' => 'select-on-check-all form-check-input',
                         ]),
                         'headerOptions' => [
-                            'class' => 'text-center'
+                            'class' => 'text-center form-check'
                         ],
 
                         'contentOptions' => [
                             'class' => 'text-center'
                         ],
                         'cssClass' => 'form-check-input',
+
+                        'options' => [
+                            'class' => 'col-1'
+                        ],
 
                         'visible' => $dataProvider->totalCount
                     ],
@@ -113,7 +117,7 @@ use yii\grid\GridView;
                     ],
                 ],
             ]); ?>
-        </div>
-    <?php Html::endForm(); ?>
+        <?php Html::endForm(); ?>
+    </div>
 </div>
 

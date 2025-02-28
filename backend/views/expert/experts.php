@@ -9,7 +9,7 @@ use yii\widgets\Pjax;
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\ExpertsCompetencies $model */
-/** @var app\models\ExpertsCompetencies $dataProvider */
+/** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var array $options */
 
 $this->title = 'Эксперты';
