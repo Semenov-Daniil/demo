@@ -18,6 +18,8 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
 
+use function PHPUnit\Framework\isNull;
+
 class ExpertController extends Controller
 {
     public $defaultAction = 'experts';
@@ -166,12 +168,12 @@ class ExpertController extends Controller
      * 
      * @return void
      */
-    public function actionDeleteExperts(): string
+    public function actionDeleteExperts(?string $id = null): string
     {
         $dataProvider = ExpertsEvents::getDataProviderExperts(10);
         $experts = [];
 
-        $experts = ($this->request->get('id') ? [$this->request->get('id')] : ($this->request->post('selection') ? $this->request->post('selection') : []));
+        $experts = (!is_null($id) ? [$id] : ($this->request->post('experts') ? $this->request->post('experts') : []));
 
         if (count($experts) && ExpertsEvents::deleteExperts($experts)) {
             Yii::$app->session->addFlash('toast-alert', [
@@ -461,7 +463,7 @@ class ExpertController extends Controller
         if ($isChangeStatus) {
             Yii::$app->session->addFlash('toast-alert', [
                 'text' => "Модуль $model->number " . ($model->status ? 'включен' : 'выключен') . '.',
-                'type' => 'success'
+                'type' => 'info'
             ]);
         } else {
             Yii::$app->session->addFlash('toast-alert', [
@@ -490,21 +492,34 @@ class ExpertController extends Controller
      *
      * @return void
      */
-    public function actionDeleteModules(string|null $id = null): string
+    public function actionDeleteModules(?string $id = null): string
     {
-        if (Modules::deleteModule($id)) {
+        $dataProvider = Modules::getDataProviderModules(10);
+        $modules = [];
+
+        $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
+
+        if (count($modules) && Modules::deleteModules($modules)) {
             Yii::$app->session->addFlash('toast-alert', [
-                'text' => "Модуль удален успешно.",
+                'text' => count($modules) > 1 ? 'Модули успешно удалены.' : 'Модуль успешно удален.',
                 'type' => 'success'
             ]);
         } else {
             Yii::$app->session->addFlash('toast-alert', [
-                'text' => "Не удалось удалить модуль.",
+                'text' => count($modules) > 1 ? 'Не удалось удалить модули.' : 'Не удалось удалить модуль.',
                 'type' => 'error'
             ]);
         }
 
-        return $this->actionModules();
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_modules-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('modules', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
 
     /**

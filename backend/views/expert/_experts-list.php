@@ -9,47 +9,46 @@ use yii\grid\GridView;
 /** @var app\models\ExpertsEvents $dataProvider */
 ?>
 
-<div class="card experts-list">
+<?php if ($dataProvider->totalCount): ?> 
+<div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
+    <?= Html::button('
+        <span>
+            <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
+        </span>
+    ', ['class' => 'btn btn-primary btn-select-all-experts']) ?>
+    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-experts', 'disabled' => true]) ?>
+</div>
+<?php endif; ?>
+
+<div class="card">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
         <h4 class="card-title mb-0 flex-grow-1">Эксперты</h4>
     </div>
 
-    <?= Html::beginForm(['delete-experts'], 'delete', [
-        'class' => 'delete-experts-form',
-        'data' => [
-            'pjax' => true
-        ],
-    ])?>
-        <div class="card-body">
-            <?= GridView::widget([
-                'dataProvider' => $dataProvider,
-                'pager' => [
-                    'class' => \yii\bootstrap5\LinkPager::class,
-                    'listOptions' => [
-                        'class' => 'pagination pagination-separated m-0',
-                    ],
-                    'maxButtonCount' => 5,
-                    'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
-                    'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>'
+    <div class="card-body">
+        <?= GridView::widget([
+            'dataProvider' => $dataProvider,
+            'pager' => [
+                'class' => \yii\bootstrap5\LinkPager::class,
+                'listOptions' => [
+                    'class' => 'pagination pagination-separated m-0',
                 ],
-                'tableOptions' => [
-                    'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
-                ],
-                'layout' => "
-                    <div class=\"table-responsive table-card table-responsive\">
-                        <div>
-                            {items}
-                        </div>
-                        <div id=\"collapseAllActions\" class=\"collapse\">
-                            <div class=\"p-3 row gx-0 gy-0 gap-2\">
-                                <div class=\"col text-body-secondary\">
-                                    Действие с выбранными экспертами:
-                                </div>
-                                <div class=\"col-auto\">
-                                    ".Html::a('Удалить выбранные', ['delete-experts'], ['class' => 'btn btn-danger btn-delete-check', 'data' => ['method' => 'delete']])."
-                                </div>
-                            </div>
-                        </div>
+                'maxButtonCount' => 5,
+                'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
+                'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>'
+            ],
+            'emptyText' => 'Ничего не найдено. Добавьте эксперта.',
+            'tableOptions' => [
+                'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
+            ],
+            'layout' => "
+                <div class=\"table-responsive table-card table-responsive\">
+                    <div>
+                        {items}
+                    </div>
+                    ". ($dataProvider->totalCount 
+                    ? 
+                        "
                         <div class=\"d-flex gap-2 flex-wrap justify-content-between align-items-center p-3 gridjs-pagination\">
                             <div class=\"text-body-secondary\">
                                 {summary}
@@ -58,83 +57,92 @@ use yii\grid\GridView;
                                 {pager}
                             </div>
                         </div>
-                    </div>
-                ",
-                'columns' => [
-                    [
-                        'class' => 'yii\grid\CheckboxColumn',
+                        "
+                    : 
+                        ''
+                    )."
+                </div>
+            ",
+            'columns' => [
+                [
+                    'class' => 'yii\grid\CheckboxColumn',
+                    'name' => 'experts',
 
-                        'header' => Html::checkBox('selection_all', false, [
-                            'class' => 'select-on-check-all form-check-input',
-                        ]),
-                        'headerOptions' => [
-                            'class' => 'text-center'
-                        ],
+                    'header' => Html::checkBox('experts_all', false, [
+                        'class' => 'select-on-check-all form-check-input experts-check',
+                    ]),
+                    'headerOptions' => [
+                        'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
+                    ],
 
-                        'contentOptions' => [
-                            'class' => 'text-center'
-                        ],
-                        'cssClass' => 'form-check-input',
+                    'contentOptions' => [
+                        'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
+                    ],
 
-                        'checkboxOptions' => function ($model, $key, $index, $column) {
-                            if (Yii::$app->user->id == $model['id']) {
-                                return ['disabled' => true, 'class' => 'd-none'];
-                            }
-                        },
+                    'checkboxOptions' => function ($model, $key, $index, $column) {
+                        if (Yii::$app->user->id == $model['id']) {
+                            return ['disabled' => true, 'class' => 'd-none'];
+                        }
+                    },
 
-                        'visible' => ($dataProvider->totalCount > 1)
+                    'cssClass' => 'form-check-input modules-check',
+
+                    'options' => [
+                        'class' => 'col-1'
                     ],
-                    [
-                        'label' => 'Полное имя',
-                        'value' => function ($model) {
-                            return $model['fullName'];
-                        },
+
+                    'visible' => ($dataProvider->totalCount > 1),
+                ],
+                [
+                    'label' => 'Полное имя',
+                    'value' => function ($model) {
+                        return $model['fullName'];
+                    },
+                ],
+                [
+                    'label' => 'Логин/Пароль',
+                    'value' => function ($model) {
+                        return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
+                    },
+                ],
+                [
+                    'label' => 'Событие',
+                    'value' => function($model) {
+                        return $model['event'];
+                    },
+                ],
+                [
+                    'label' => 'Кол-во модулей',
+                    'value' => function($model) {
+                        return $model['countModules'];
+                    },
+                    'options' => [
+                        'class' => 'col-1'
                     ],
-                    [
-                        'label' => 'Логин/Пароль',
-                        'value' => function ($model) {
-                            return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
-                        },
-                    ],
-                    [
-                        'label' => 'Событие',
-                        'value' => function($model) {
-                            return $model['event'];
-                        },
-                    ],
-                    [
-                        'label' => 'Кол-во модулей',
-                        'value' => function($model) {
-                            return $model['countModules'];
-                        },
-                        'options' => [
-                            'class' => 'col-1'
-                        ],
-                        'contentOptions' => [
-                            'class' => 'text-center'
-                        ],
-                    ],
-                    [
-                        'class' => ActionColumn::class,
-                        'template' => '
-                            <div class="d-flex flex-wrap gap-2">
-                                {delete}
-                            </div>
-                        ',
-                        'buttons' => [
-                            'delete' => function ($url, $model, $key) {
-                                return Html::a('<i class="ri-delete-bin-2-line"></i>', ['delete-experts', 'id' => $model['id']], ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['method' => 'delete']]);
-                            }
-                        ],
-                        'visibleButtons' => [
-                            'delete' => function ($model, $key, $index) {
-                                return Yii::$app->user->id !== $model['id'];
-                            }
-                        ]
+                    'contentOptions' => [
+                        'class' => 'text-center'
                     ],
                 ],
-            ]); ?>
-        </div>
-    <?php Html::endForm(); ?>
+                [
+                    'class' => ActionColumn::class,
+                    'template' => '
+                        <div class="d-flex flex-wrap gap-2">
+                            {delete}
+                        </div>
+                    ',
+                    'buttons' => [
+                        'delete' => function ($url, $model, $key) {
+                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['id']]]);
+                        }
+                    ],
+                    'visibleButtons' => [
+                        'delete' => function ($model, $key, $index) {
+                            return Yii::$app->user->id !== $model['id'];
+                        }
+                    ]
+                ],
+            ],
+        ]); ?>
+    </div>
 </div>
 

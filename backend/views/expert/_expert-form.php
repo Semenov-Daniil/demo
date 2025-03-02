@@ -56,7 +56,7 @@ use yii\bootstrap5\Html;
 
                 <div class="col-12 text-end">
                     <?= Html::submitButton('
-                        <span class="cnt-text">Добавить эксперта</span>
+                        <span class="cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</span>
                         <span class="d-flex align-items-center d-none cnt-load">
                             <span class="spinner-border flex-shrink-0" role="status">
                             </span>

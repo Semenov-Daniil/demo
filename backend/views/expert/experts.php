@@ -1,5 +1,6 @@
 <?php
 
+use common\assets\AppAsset;
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
 use yii\web\View;
@@ -14,13 +15,13 @@ use yii\widgets\Pjax;
 
 $this->title = 'Эксперты';
 
-$this->registerJsFile('@web/js/experts.js', ['depends' => YiiAsset::class]);
 $this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => YiiAsset::class]);
+$this->registerJsFile('@web/js/experts.js', ['depends' => AppAsset::class]);
 ?>
 
 <div class="row">
     <?php Pjax::begin([
-        'id' => 'pjax-add-expert',
+        'id' => 'pjax-create-expert',
         'enablePushState' => false,
         'timeout' => 100000,
     ]); ?>
@@ -37,6 +38,11 @@ $this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => Yii
         'id' => 'pjax-experts',
         'enablePushState' => false,
         'timeout' => 100000,
+        'options' => [
+            'data' => [
+                'pjax-grid' => true
+            ]
+        ]
     ]); ?>
 
         <?= $this->render('_experts-list', [

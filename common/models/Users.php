@@ -281,14 +281,14 @@ class Users extends ActiveRecord implements IdentityInterface
     /**
      * Deletes an existing Users model.
      */
-    public static function deleteUser(int $id = null): bool
+    public static function deleteUser(?int $id = null): bool
     {
         $transaction = Yii::$app->db->beginTransaction();  
 
         try {
             $user = self::findOne(['id' => $id]);
 
-            if (!empty($user) && $user->delete()) {
+            if (!empty($user) && $user->id !== Yii::$app->user->id && $user->delete()) {
                 $transaction->commit();
                 return true;
             }
