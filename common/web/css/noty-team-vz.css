@@ -43,6 +43,10 @@
     color: var(--vz-danger);
 }
 
+.noty_type__info .toast-body {
+    color: var(--vz-secondary);
+}
+
 .noty_theme__vz .btn-close {
     background: 0 0 !important;
 }

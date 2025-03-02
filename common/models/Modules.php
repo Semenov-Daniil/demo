@@ -262,6 +262,17 @@ class Modules extends \yii\db\ActiveRecord
         return false;
     }
 
+    public static function deleteModules(array $modulesId): bool
+    {
+        foreach ($modulesId as $moduleId) {
+            if (!self::deleteModule($moduleId)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Deletes a module from students.
      * 

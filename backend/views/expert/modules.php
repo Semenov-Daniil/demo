@@ -27,6 +27,11 @@ $this->registerJsFile('@web/js/modules.js', ['depends' => AppAsset::class]);
         'id' => 'pjax-modules',
         'enablePushState' => false,
         'timeout' => 10000,
+        'options' => [
+            'data' => [
+                'pjax-grid' => true
+            ]
+        ]
     ]); ?>
 
         <?= $this->render('_modules-list', [

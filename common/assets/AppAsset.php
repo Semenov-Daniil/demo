@@ -42,6 +42,7 @@ class AppAsset extends AssetBundle
         'libs/swiper/swiper-bundle.min.js',
         // 'js/pages/dashboard-ecommerce.init.js',
         'js/alert-toastify.js',
+        'js/gridview.js',
         'js/app.js'
     ];
     public $depends = [

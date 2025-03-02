@@ -9,11 +9,34 @@ use yii\grid\GridView;
 /** @var app\models\Modules $dataProvider */
 ?>
 
+<div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
+    <?= Html::button('
+        <span class="cnt-text">
+            <i class="ri-add-line align-middle fs-16 me-2"></i> Добавить
+        </span>
+        <span class="d-flex align-items-center d-none cnt-load">
+            <span class="spinner-border flex-shrink-0" role="status">
+            </span>
+            <span class="flex-grow-1 ms-2">
+                Добавление...
+            </span>
+        </span>
+    ', ['class' => 'btn btn-success btn-load btn-add-module']) ?>
+    <?php if ($dataProvider->totalCount): ?> 
+    <?= Html::button('
+        <span>
+            <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
+        </span>
+    ', ['class' => 'btn btn-primary btn-select-all-modules']) ?>
+    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-modules', 'disabled' => true]) ?>
+    <?php endif; ?>
+</div>
+
 <div class="card">
-    <div class="card-header align-items-center d-flex position-relative">
+    <div class="card-header align-items-center d-flex position-relative border-bottom-0">
         <h4 class="card-title mb-0 flex-grow-1">Модули</h4>
     </div>
-        
+
     <div class="card-body">
         <?= GridView::widget([
             'dataProvider' => $dataProvider,
@@ -29,35 +52,9 @@ use yii\grid\GridView;
             'tableOptions' => [
                 'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
             ],
-            'emptyText' => false,
+            'emptyText' => 'Ничего не найдено. Добавьте модули.',
             'layout' => "
                 <div class=\"table-responsive table-card table-responsive\">
-                    <div class=\"p-3 d-flex flex-wrap gap-3 justify-content-end\">
-                        ".Html::button('
-                            <span class="cnt-text">
-                                <i class="ri-add-line align-middle fs-16 me-2"></i> Добавить
-                            </span>
-                            <span class="d-flex align-items-center d-none cnt-load">
-                                <span class="spinner-border flex-shrink-0" role="status">
-                                </span>
-                                <span class="flex-grow-1 ms-2">
-                                    Добавление...
-                                </span>
-                            </span>
-                        ', ['class' => 'btn btn-success btn-load btn-add-module'])."
-                        ". ($dataProvider->totalCount 
-                        ?
-                            Html::button('
-                                <span>
-                                    <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
-                                </span>
-                            ', ['class' => 'btn btn-primary btn-select-all-modules'])
-                            .
-                            Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-modules', 'disabled' => true])
-                        : 
-                            ''
-                        )."
-                    </div>
                     <div>
                         {items}
                     </div>
@@ -82,20 +79,14 @@ use yii\grid\GridView;
                         'class' => 'select-on-check-all form-check-input modules-check',
                     ]),
                     'headerOptions' => [
-                        'class' => 'text-center'
+                        'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
                     ],
 
                     'contentOptions' => [
-                        'class' => 'text-center'
+                        'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
                     ],
-                    
-                    'checkboxOptions' => function ($model, $key, $index, $column) {
-                        return [
-                            'class' => 'form-check-input'
-                        ];
-                    },
 
-                    'cssClass' => 'modules-check',
+                    'cssClass' => 'form-check-input modules-check',
 
                     'options' => [
                         'class' => 'col-1'
@@ -120,22 +111,22 @@ use yii\grid\GridView;
                     'header' => 'Статус',
 
                     'content' => function ($model, $key, $index, $column) {
-                        return "
-                            <div class=\"form-check form-switch form-switch-success d-flex flex-wrap align-items-center gap-2\">
-                                ".Html::checkbox("status", $model->status, [
-                                    'class' => 'form-check-input switch-status',
-                                    'data' => ['id' => $model->id],
-                                    'label' => "<span class=\"fs-6 user-select-none badge ".($model['status'] ? 'bg-success' : 'bg-dark-subtle text-body')."\">".($model['status'] ? 'Онлайн' : 'Офлайн')."</span>",
-                                    'labelOptions' => [
-                                        'class' => 'm-0'
-                                    ],
-                                ])."
-                            </div>
-                        ";
+                        return Html::checkbox("status", $model->status, [
+                            'class' => 'form-check-input switch-status me-2',
+                            'data' => ['id' => $model->id],
+                            'label' => "<span class=\"fs-6 user-select-none badge ".($model['status'] ? 'bg-success' : 'bg-dark-subtle text-body')."\">".($model['status'] ? 'Онлайн' : 'Офлайн')."</span>",
+                            'labelOptions' => [
+                                'class' => 'label-badge m-0'
+                            ],
+                        ]);
                     },
 
+                    'contentOptions' => [
+                        'class' => 'cell-checkbox form-check form-switch form-switch-success d-table-cell cursor-pointer ps-2'
+                    ],
+
                     'options' => [
-                        'class' => 'col-4'
+                        'class' => 'col-1'
                     ],
 
                     'visible' => $dataProvider->totalCount
@@ -149,7 +140,7 @@ use yii\grid\GridView;
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::a('<i class="ri-delete-bin-2-line"></i>', ['delete-modules', 'id' => $model['id']], ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['method' => 'delete']]);
+                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['id']]]);
                         }
                     ],
                     'visible' => $dataProvider->totalCount

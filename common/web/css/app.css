@@ -21269,4 +21269,8 @@ span.flatpickr-weekday {
     border-color: var(--vz-form-invalid-border-color);
 }
 
+.cursor-pointer {
+    cursor: pointer !important;
+}
+
 /*# sourceMappingURL=app.min.css.map */

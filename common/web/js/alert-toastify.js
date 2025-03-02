@@ -76,6 +76,14 @@ function renderFlashMessages() {
                             prbToast.classList.add('bg-danger');
 
                             break;
+                        case 'info':
+                            cntToast
+                            .insertBefore(Object.assign(document.createElement('div'), { className: 'flex-shrink-0 me-2' }), cntToast.firstChild)
+                            .appendChild(Object.assign(document.createElement('i'), { className: 'ri-information-line align-middle' }));
+
+                            prbToast.classList.add('bg-secondary');
+
+                            break;
                     }
                 }
             }
