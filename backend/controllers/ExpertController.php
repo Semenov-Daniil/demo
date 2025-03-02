@@ -266,12 +266,12 @@ class ExpertController extends Controller
      *
      * @return void
      */
-    public function actionDeleteStudents(): string
+    public function actionDeleteStudents(?string $id = null): string
     {
         $dataProvider = StudentsEvents::getDataProviderStudents(10);
         $students = [];
 
-        $students = ($this->request->get('id') ? [$this->request->get('id')] : ($this->request->post('selection') ? $this->request->post('selection') : []));
+        $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
 
         if (count($students) && StudentsEvents::deleteStudents($students)) {
             Yii::$app->session->addFlash('toast-alert', [

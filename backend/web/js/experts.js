@@ -34,7 +34,7 @@ $(() => {
         $('input[name="experts_all"]').prop('checked', true);
         $('input[name="experts[]"]').prop('checked', true);
 
-        $('.btn-delete-selected-experts').prop('disabled', false);
+        $('.btn-delete-selected-experts').prop('disabled', !allCheckboxSelected.length);
 
         localStorage.setItem(localName, JSON.stringify(checked));
     });
@@ -46,12 +46,12 @@ $(() => {
     });
 
     $('#pjax-experts').on('change', 'input[name="experts[]"]', function() {
-        let checkedModules = $('input[name="experts[]"]:checked:not(:disabled)'),
-            allModules = $('input[name="experts[]"]:not(:disabled)');
+        let checkedExperts = $('input[name="experts[]"]:checked:not(:disabled)'),
+            allExperts = $('input[name="experts[]"]:not(:disabled)');
 
-        $('input[name="experts_all"]').prop('checked', allModules.length === checkedModules.length);
+        $('input[name="experts_all"]').prop('checked', allExperts.length === checkedExperts.length);
 
-        $('.btn-delete-selected-experts').prop('disabled', ($(this).is(':checked') ? false : (checkedModules.length === 0)));
+        $('.btn-delete-selected-experts').prop('disabled', ($(this).is(':checked') ? false : (checkedExperts.length === 0)));
     });
 
     $('#pjax-experts').on('click', '.btn-delete', function (event) {

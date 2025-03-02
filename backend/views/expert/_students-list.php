@@ -5,8 +5,19 @@ use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
-/** @var app\models\StudentsEvents $dataProvider */
+/** @var yii\data\ActiveDataProvider $dataProvider */
 ?>
+
+<?php if ($dataProvider->totalCount): ?> 
+<div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
+    <?= Html::button('
+        <span>
+            <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
+        </span>
+    ', ['class' => 'btn btn-primary btn-select-all-students']) ?>
+    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-students', 'disabled' => true]) ?>
+</div>
+<?php endif; ?>
 
 <div class="card students-list">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
@@ -14,42 +25,29 @@ use yii\grid\GridView;
     </div>
 
     <div class="card-body">
-        <?= Html::beginForm(['delete-students'], 'delete', [
-            'class' => 'delete-students-form',
-            'data' => [
-                'pjax' => true
+        <?= GridView::widget([
+            'dataProvider' => $dataProvider,
+            'pager' => [
+                'class' => \yii\bootstrap5\LinkPager::class,
+                'listOptions' => [
+                    'class' => 'pagination pagination-separated m-0',
+                ],
+                'maxButtonCount' => 5,
+                'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
+                'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>',
             ],
-        ])?>
-            <?= GridView::widget([
-                'dataProvider' => $dataProvider,
-                'pager' => [
-                    'class' => \yii\bootstrap5\LinkPager::class,
-                    'listOptions' => [
-                        'class' => 'pagination pagination-separated m-0',
-                    ],
-                    'maxButtonCount' => 5,
-                    'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
-                    'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>',
-                ],
-                'tableOptions' => [
-                    'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
-                ],
-                'emptyText' => false,
-                'layout' => "
-                    <div class=\"table-responsive table-card table-responsive\">
-                        <div>
-                            {items}
-                        </div>
-                        <div id=\"collapseAllActions\" class=\"collapse\">
-                            <div class=\"p-3 row gx-0 gy-0 gap-2\">
-                                <div class=\"col text-body-secondary\">
-                                    Действие с выбранными студентами:
-                                </div>
-                                <div class=\"col-auto\">
-                                    ".Html::a('Удалить выбранные', ['delete-students'], ['class' => 'btn btn-danger btn-delete-check', 'data' => ['method' => 'delete']])."
-                                </div>
-                            </div>
-                        </div>
+            'emptyText' => 'Ничего не найдено. Добавьте студентов.',
+            'tableOptions' => [
+                'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
+            ],
+            'layout' => "
+                <div class=\"table-responsive table-card table-responsive\">
+                    <div>
+                        {items}
+                    </div>
+                    ". ($dataProvider->totalCount 
+                    ? 
+                        "
                         <div class=\"d-flex gap-2 flex-wrap justify-content-between align-items-center p-3 gridjs-pagination\">
                             <div class=\"text-body-secondary\">
                                 {summary}
@@ -58,66 +56,72 @@ use yii\grid\GridView;
                                 {pager}
                             </div>
                         </div>
-                    </div>
-                ",
-                'columns' => [
-                    [
-                        'class' => 'yii\grid\CheckboxColumn',
+                        "
+                    : 
+                        ''
+                    )."
+                </div>
+            ",
+            'columns' => [
+                [
+                    'class' => 'yii\grid\CheckboxColumn',
+                    'name' => 'students',
 
-                        'header' => Html::checkBox('selection_all', false, [
-                            'class' => 'select-on-check-all form-check-input',
-                        ]),
-                        'headerOptions' => [
-                            'class' => 'text-center form-check'
-                        ],
+                    'header' => Html::checkBox('students_all', false, [
+                        'class' => 'select-on-check-all form-check-input students-check',
+                    ]),
+                    'headerOptions' => [
+                        'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
+                    ],
 
-                        'contentOptions' => [
-                            'class' => 'text-center'
-                        ],
-                        'cssClass' => 'form-check-input',
+                    'contentOptions' => [
+                        'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
+                    ],
 
-                        'options' => [
-                            'class' => 'col-1'
-                        ],
+                    'cssClass' => 'form-check-input students-check',
 
-                        'visible' => $dataProvider->totalCount
+                    'options' => [
+                        'class' => 'col-1'
                     ],
-                    [
-                        'label' => 'Полное имя',
-                        'value' => function ($model) {
-                            return $model['fullName'];
-                        },
-                        'visible' => $dataProvider->totalCount
-                    ],
-                    [
-                        'label' => 'Логин/Пароль',
-                        'value' => function ($model) {
-                            return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
-                        },
-                        'visible' => $dataProvider->totalCount
-                    ],
-                    [
-                        'class' => ActionColumn::class,
-                        'template' => '
-                            <div class="d-flex flex-wrap gap-2">
-                                {delete}
-                            </div>
-                        ',
-                        'buttons' => [
-                            'delete' => function ($url, $model, $key) {
-                                return Html::a('<i class="ri-delete-bin-2-line"></i>', ['delete-students', 'id' => $model['students_id']], ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['method' => 'delete']]);
-                            }
-                        ],
-                        'visibleButtons' => [
-                            'delete' => function ($model, $key, $index) {
-                                return Yii::$app->user->can('expert');
-                            }
-                        ],
-                        'visible' => $dataProvider->totalCount
-                    ],
+
+                    'visible' => $dataProvider->totalCount
                 ],
-            ]); ?>
-        <?php Html::endForm(); ?>
+                [
+                    'label' => 'Полное имя',
+                    'value' => function ($model) {
+                        return $model['fullName'];
+                    },
+                    'options' => [
+                        'class' => 'col-4'
+                    ],
+                    'visible' => $dataProvider->totalCount
+                ],
+                [
+                    'label' => 'Логин/Пароль',
+                    'value' => function ($model) {
+                        return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
+                    },
+                    'options' => [
+                        'class' => 'col-4'
+                    ],
+                    'visible' => $dataProvider->totalCount
+                ],
+                [
+                    'class' => ActionColumn::class,
+                    'template' => '
+                        <div class="d-flex flex-wrap gap-2">
+                            {delete}
+                        </div>
+                    ',
+                    'buttons' => [
+                        'delete' => function ($url, $model, $key) {
+                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['students_id']]]);
+                        }
+                    ],
+                    'visible' => $dataProvider->totalCount
+                ],
+            ],
+        ]); ?>
     </div>
 </div>
 

@@ -6,7 +6,7 @@ use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
-/** @var app\models\ExpertsEvents $dataProvider */
+/** @var yii\data\ActiveDataProvider $dataProvider */
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
@@ -98,18 +98,21 @@ use yii\grid\GridView;
                     'value' => function ($model) {
                         return $model['fullName'];
                     },
+                    'visible' => $dataProvider->totalCount
                 ],
                 [
                     'label' => 'Логин/Пароль',
                     'value' => function ($model) {
                         return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
                     },
+                    'visible' => $dataProvider->totalCount
                 ],
                 [
                     'label' => 'Событие',
                     'value' => function($model) {
                         return $model['event'];
                     },
+                    'visible' => $dataProvider->totalCount
                 ],
                 [
                     'label' => 'Кол-во модулей',
@@ -122,6 +125,7 @@ use yii\grid\GridView;
                     'contentOptions' => [
                         'class' => 'text-center'
                     ],
+                    'visible' => $dataProvider->totalCount
                 ],
                 [
                     'class' => ActionColumn::class,
@@ -139,7 +143,8 @@ use yii\grid\GridView;
                         'delete' => function ($model, $key, $index) {
                             return Yii::$app->user->id !== $model['id'];
                         }
-                    ]
+                    ],
+                    'visible' => $dataProvider->totalCount
                 ],
             ],
         ]); ?>
