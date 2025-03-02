@@ -13,6 +13,7 @@ use yii\widgets\Pjax;
     <div class="card-body">
         <?php $form = ActiveForm::begin([
             'id' => 'upload-file-form',
+            'action' => ['/upload-files'],
             'options' => [
                 'data' => [
                     'pjax' => true
@@ -81,8 +82,8 @@ use yii\widgets\Pjax;
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex-shrink-0 ms-3">
-                                <button data-dz-remove class="btn btn-sm btn-danger">Удалить</button>
+                            <div class="flex-shrink-0 ms-3 d-flex align-items-center">
+                                <button data-dz-remove class="btn btn-icon btn-soft-danger btn-danger"><i class="ri-close-circle-line fs-18"></i></button>
                             </div>
                         </div>
                     </div>

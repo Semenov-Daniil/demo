@@ -5,24 +5,20 @@ $(() => {
         $('.btn-add-module').find('.cnt-load').removeClass('d-none');
         $('.btn-add-module').prop('disabled', true);
 
-        $.ajax({
-            url: 'create-module',
-            method: 'POST',
-            success (data) {
-                $('#pjax-modules').html(data);
-            },
-            error () {
-                location.reload();
-            },
-            complete () {
-                $('.btn-add-module').find('.cnt-load').addClass('d-none');
-                $('.btn-add-module').find('.cnt-text').removeClass('d-none');
-                $('.btn-add-module').prop('disabled', false);
-
-                $('#pjax-modules').trigger('pjax:complete');
-            }
+        $.pjax.reload({
+            url: '/expert/create-module',
+            container: '#pjax-modules',
+            pushState: false,
+            replace: false,
+            timeout: 10000
         });
     });
+
+    $('#pjax-modules').on('pjax:complete', function () {
+        $('.btn-add-module').find('.cnt-load').addClass('d-none');
+        $('.btn-add-module').find('.cnt-text').removeClass('d-none');
+        $('.btn-add-module').prop('disabled', false);
+    })
 
     $('#pjax-modules').on('click', '.btn-select-all-modules', function (event) {
         let checked = JSON.parse(localStorage.getItem($('#pjax-modules').attr('id')) || '{}');
@@ -142,8 +138,6 @@ $(() => {
     function changeActiveBtn() {
         let checkedModules = $('input[name="modules[]"]:checked'),
         allModules = $('input[name="modules[]"]');
-
-        console.log(allModules, checkedModules);
 
         $('input[name="modules_all"]').prop('checked', allModules.length === checkedModules.length);
 

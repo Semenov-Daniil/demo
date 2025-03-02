@@ -82,6 +82,7 @@ class ExpertsEvents extends Model
             'query' => $query,
             'pagination' => [
                 'pageSize' => $records,
+                'route' => 'experts',
             ],
         ]);
     }

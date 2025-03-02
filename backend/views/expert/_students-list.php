@@ -37,6 +37,9 @@ use yii\grid\GridView;
                 'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>',
             ],
             'emptyText' => 'Ничего не найдено. Добавьте студентов.',
+            'emptyTextOptions' => [
+                'class' => 'text-center',
+            ],
             'tableOptions' => [
                 'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
             ],

@@ -10,10 +10,10 @@ use yii\web\View;
  */
 class AppAsset extends AssetBundle
 {
-    public $sourcePath = '@common/web/';
+    public $sourcePath = '@common/assets';
     public $css = [
         // aos
-        'libs/aos/aos.css',
+        // 'libs/aos/aos.css',
 
         // 'libs/toastr/toastr.css',
         'libs/noty/lib/noty.css',
@@ -47,6 +47,5 @@ class AppAsset extends AssetBundle
     ];
     public $depends = [
         'yii\web\YiiAsset',
-        // 'yii\bootstrap5\BootstrapAsset'
     ];
 }

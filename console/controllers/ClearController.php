@@ -55,7 +55,7 @@ class ClearController extends Controller
         $emptyDir = array_diff(scandir(Yii::getAlias('@events')), [...$expertsDir, '.', '..']);
         
         foreach ($emptyDir as $dir) {
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$dir"));
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/$dir"));
         }
     }
 

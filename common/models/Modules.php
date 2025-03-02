@@ -134,6 +134,7 @@ class Modules extends \yii\db\ActiveRecord
             ,
             'pagination' => [
                 'pageSize' => $records,
+                'route' => 'modules',
             ],
         ]);
     }

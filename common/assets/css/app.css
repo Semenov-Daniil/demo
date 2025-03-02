@@ -2799,7 +2799,14 @@
     align-items: center;
     margin: 0 auto;
     height: 70px;
-    padding: 0 var(--vz-grid-gutter-width) 0 calc(var(--vz-grid-gutter-width) * 0.5);
+    padding: 0 1rem 0 1rem;
+}
+
+@media (max-width: 1440px) {
+    .navbar-header {
+        padding-right: var(--vz-grid-gutter-width);
+        padding-left: calc(var(--vz-grid-gutter-width) * 0.5);
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -21271,6 +21278,14 @@ span.flatpickr-weekday {
 
 .cursor-pointer {
     cursor: pointer !important;
+}
+
+li.dz-preview-item:first-child {
+    margin-top: 1rem !important;
+}
+
+.dz-preview-item {
+    overflow: auto;
 }
 
 /*# sourceMappingURL=app.min.css.map */

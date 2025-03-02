@@ -63,8 +63,6 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                '/download/<dir>/<filename>' => '/expert/download',
-                
                 '/flash' => '/flash', 
                 '/flash/<action>' => '/flash/base/<action>',
 

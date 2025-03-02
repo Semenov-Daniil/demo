@@ -48,7 +48,7 @@ class FilesEvents extends \yii\db\ActiveRecord
         }
 
         $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
-        $eventPath = Yii::getAlias('@events') . "/" . $event->dir_title;
+        $eventPath = Yii::getAlias("@events/$event->dir_title");
 
         return $this->deleteFilesStudents($event->id) && Yii::$app->fileComponent->deleteFile("$eventPath/$this->save_name.$this->extension");
     }
@@ -193,6 +193,8 @@ class FilesEvents extends \yii\db\ActiveRecord
             'errors' => []
         ];
 
+        $this->save_name = '';
+
         $fileValidate = $this->validateFile($file);
 
         if (!$fileValidate['isValid']) {
@@ -204,18 +206,21 @@ class FilesEvents extends \yii\db\ActiveRecord
         $filePath = "$this->expertPath/$this->save_name.$file->extension";
         if (!$file->saveAs($filePath)) {
             $fileInfo['errors'][] = "Не удалось сохранить файл $file->name.";
+            $this->save_name = '';
             return $fileInfo;
         }
 
         if (!$this->saveFileEventToDb($file)) {
             $fileInfo['errors'][] = "Не удалось сохранить запись файла $file->name в базе данных.";
             Yii::$app->fileComponent->deleteFile($filePath);
+            $this->save_name = '';
             return $fileInfo;
         }
 
         $copyErrors = $this->copyFileToStudents($filePath, $this->save_name);
         if (!empty($copyErrors)) {
             $fileInfo['errors'] = array_merge($fileInfo['errors'], $copyErrors);
+            $this->save_name = '';
             return $fileInfo;
         }
 
@@ -252,7 +257,7 @@ class FilesEvents extends \yii\db\ActiveRecord
 
             try {
                 $fileInfo = $this->processFile($file);
-                
+
                 if (!empty($fileInfo['errors'])) {
                     $result[] = $fileInfo;
                     $this->addError('files', ...$fileInfo['errors']);
@@ -289,26 +294,22 @@ class FilesEvents extends \yii\db\ActiveRecord
 
         $query = self::find()
             ->select([
-                self::tableName() . '.id as fileId',
-                'CONCAT(origin_name, \'.\', extension) AS originName',
-                self::tableName() . '.save_name as saveName',
-                'dir_title as dirTitle'
+                self::tableName() . '.id',
+                'origin_name',
+                'save_name',
+                'extension',
+                'dir_title'
             ])
             ->where(['events_id' => $eventId])
             ->joinWith('event', false)
-            ->orderBy([
-                'fileId' => SORT_DESC
-            ])
             ->asArray()
         ;
 
         return new ActiveDataProvider([
             'query' => $query,
-            'key' => function ($model) {
-                return $model['fileId'];
-            },
             'pagination' => [
                 'pageSize' => $records,
+                'route' => 'files',
             ],
         ]);
     }
@@ -322,14 +323,36 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public static function deleteFileEvent(string|null $id)
     {
-        if (!is_null($id)) {
-            if ($model = self::findOne(['id' => $id])) {
-                if ($model->delete()) {
+        $transaction = Yii::$app->db->beginTransaction();   
+        try {
+            if ($module = self::findOne(['id' => $id])) {
+                if ($module->delete()) {
+                    $transaction->commit();
                     return true;
                 }
+
+                $transaction->rollBack();
+            }
+            return false;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            var_dump($e);die;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+        }
+
+        return false;
+    }
+
+    public static function deleteFilesEvent(array $modulesId): bool
+    {
+        foreach ($modulesId as $moduleId) {
+            if (!self::deleteFileEvent($moduleId)) {
+                return false;
             }
         }
-        return false;
+
+        return true;
     }
 
     /**
@@ -342,7 +365,7 @@ class FilesEvents extends \yii\db\ActiveRecord
         $students = StudentsEvents::findAll(['events_id' => $eventId]);
 
         foreach ($students as $student) {
-            $studentFile = Yii::getAlias('@students') . "/" . $student->user->login . "/public/" . "$this->save_name.$this->extension";
+            $studentFile = Yii::getAlias('@students/' . $student->user->login . "/public/$this->save_name.$this->extension");
             if (!Yii::$app->fileComponent->deleteFile($studentFile)) {
                 return false; 
             }
@@ -359,7 +382,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @return array|null if the file is found, it returns the file data as an `array`, otherwise it returns `null`.
      */
-    public static function findFile(string $filename, string $event): array|null
+    public static function findFile(?string $filename = null, ?string $event = null): array|null
     {
         return self::find()
             ->select([

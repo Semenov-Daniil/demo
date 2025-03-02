@@ -53,6 +53,9 @@ use yii\grid\GridView;
                 'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
             ],
             'emptyText' => 'Ничего не найдено. Добавьте модули.',
+            'emptyTextOptions' => [
+                'class' => 'text-center',
+            ],
             'layout' => "
                 <div class=\"table-responsive table-card table-responsive\">
                     <div>

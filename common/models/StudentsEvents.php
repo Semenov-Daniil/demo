@@ -192,6 +192,7 @@ class StudentsEvents extends ActiveRecord
             ,
             'pagination' => [
                 'pageSize' => $records,
+                'route' => 'students',
             ],
         ]);
     }

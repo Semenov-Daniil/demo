@@ -31,8 +31,6 @@ return [
             'class' => 'common\components\FileComponent'
         ],
         'assetManager' => [
-            // 'appendTimestamp' => true,
-            // 'linkAssets' => true,
             'forceCopy' => true,
             'bundles' => [
                 'yii\bootstrap5\BootstrapAsset' => [
