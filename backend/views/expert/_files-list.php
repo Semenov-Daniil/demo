@@ -11,10 +11,11 @@ use yii\grid\GridView;
 <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
     <?= Html::button('
         <span>
-            <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
+            <i class="ri-check-double-line fs-16 me-2"></i> Выбрать все
         </span>
     ', ['class' => 'btn btn-primary btn-select-all-files']) ?>
-    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-files', 'disabled' => true]) ?>
+    <?= Html::button('<i class="ri-delete-bin-2-line fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-files', 'disabled' => true]) ?>
+    <?// Html::button('<i class="ri-download-2-line fs-16 me-2"></i> Скачать', ['class' => 'btn btn-secondary btn-download-selected-files', 'disabled' => true]) ?>
 </div>
 <?php endif; ?>
 

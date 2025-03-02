@@ -151,6 +151,8 @@ class ExpertController extends Controller
     {
         $dataProvider = ExpertsEvents::getDataProviderExperts(10);
 
+        session_write_close();
+
         if ($this->request->isAjax) {
             return $this->renderAjax('_experts-list', [
                 'dataProvider' => $dataProvider,
@@ -248,6 +250,8 @@ class ExpertController extends Controller
     public function actionAllStudents(): string
     {
         $dataProvider = StudentsEvents::getDataProviderStudents(10);
+
+        session_write_close();
 
         if ($this->request->isAjax) {
             return $this->renderAjax('_students-list', [
@@ -367,6 +371,8 @@ class ExpertController extends Controller
     public function actionAllFiles(): string
     {
         $dataProvider = FilesEvents::getDataProviderFiles(10);
+
+        session_write_close();
 
         if ($this->request->isAjax) {
             return $this->renderAjax('_files-list', [

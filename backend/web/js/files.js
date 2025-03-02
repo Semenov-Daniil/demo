@@ -13,6 +13,7 @@ $(() => {
         $('input[name="files[]"]').prop('checked', true);
 
         $('.btn-delete-selected-files').prop('disabled', !allCheckboxSelected.length);
+        $('.btn-delete-download-files').prop('disabled', !allCheckboxSelected.length);
 
         localStorage.setItem(localName, JSON.stringify(checked));
     });
@@ -21,6 +22,7 @@ $(() => {
         let isChecked = $(this).is(':checked');
         $('input[name="files[]"]').prop('checked', isChecked);
         $('.btn-delete-selected-files').prop('disabled', !isChecked);
+        $('.btn-delete-download-files').prop('disabled', !isChecked);
     });
 
     $('#pjax-files').on('change', 'input[name="files[]"]', function() {
@@ -30,6 +32,7 @@ $(() => {
         $('input[name="files_all"]').prop('checked', allFiles.length === checkedFiles.length);
 
         $('.btn-delete-selected-files').prop('disabled', ($(this).is(':checked') ? false : (checkedFiles.length === 0)));
+        $('.btn-delete-download-files').prop('disabled', ($(this).is(':checked') ? false : (checkedFiles.length === 0)));
     });
 
     $('#pjax-files').on('click', '.btn-delete', function (event) {
@@ -143,6 +146,7 @@ $(() => {
         $('input[name="files_all"]').prop('checked', allFiles.length === checkedFiles.length);
 
         $('.btn-delete-selected-files').prop('disabled', ($(this).is(':checked') ? false : (checkedFiles.length === 0)));
+        $('.btn-delete-download-files').prop('disabled', ($(this).is(':checked') ? false : (checkedFiles.length === 0)));
     }
 
     changeActiveBtn();
