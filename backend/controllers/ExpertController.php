@@ -12,6 +12,9 @@ use common\models\Passwords;
 use common\models\Roles;
 use common\models\StudentsEvents;
 use common\models\Users;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\TemplateProcessor;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -316,6 +319,17 @@ class ExpertController extends Controller
         return $this->render('_students-list', [
             'dataProvider' => $dataProvider,
         ]);
+    }
+
+    public function actionExportStudents()
+    {
+        // Получите данные, которые нужно экспортировать (например, из модели)
+        $data = StudentsEvents::find()->all();
+        $templatePath = Yii::getAlias('@templates/template.docx');
+
+        $templateProcessor = new TemplateProcessor($templatePath);
+
+        $templateProcessor->cloneRow('fio', 10);
     }
 
     /**

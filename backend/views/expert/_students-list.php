@@ -9,14 +9,11 @@ use yii\grid\GridView;
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
-<div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
-    <?= Html::button('
-        <span>
-            <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
-        </span>
-    ', ['class' => 'btn btn-primary btn-select-all-students']) ?>
-    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-students', 'disabled' => true]) ?>
-</div>
+    <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
+        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['/export-students'], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
+        <?= Html::button('<span class="d-flex align-items-center"><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-students']) ?>
+        <?= Html::button('<span class="d-flex align-items-center"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</span>', ['class' => 'btn btn-danger btn-delete-selected-students', 'disabled' => true]) ?>
+    </div>
 <?php endif; ?>
 
 <div class="card students-list">

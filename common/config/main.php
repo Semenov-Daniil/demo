@@ -5,6 +5,7 @@ return [
         '@npm'   => '@vendor/npm-asset',
         '@events' => '@common/events',
         '@students' => '@common/students',
+        '@templates' => '@common/templates',
     ],
     'language' => 'ru-RU',
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',

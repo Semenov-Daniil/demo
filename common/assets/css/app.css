@@ -21288,4 +21288,9 @@ li.dz-preview-item:first-child {
     overflow: auto;
 }
 
+.btn-load .cnt-load {
+    padding-top: 2.25px;
+    padding-bottom: 2.25px;
+}
+
 /*# sourceMappingURL=app.min.css.map */

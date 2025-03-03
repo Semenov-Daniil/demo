@@ -31,7 +31,6 @@ $this->registerJsFile('@web/js/students.js', ['depends' => AppAsset::class]);
 </div>
 
 <div class="row">
-
     <?php Pjax::begin([
         'id' => 'pjax-students',
         'enablePushState' => false,

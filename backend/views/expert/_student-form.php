@@ -38,15 +38,15 @@ use yii\bootstrap5\Html;
 
                 <div class="col-12 text-end">
                     <?= Html::submitButton('
-                        <span class="cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</span>
-                        <span class="d-flex align-items-center d-none cnt-load">
+                        <span class="d-flex align-items-center cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</span>
+                        <span class="d-flex align-items-center cnt-load d-none">
                             <span class="spinner-border flex-shrink-0" role="status">
                             </span>
                             <span class="flex-grow-1 ms-2">
                                 Добавление...
                             </span>
                         </span>
-                    ', ['class' => 'btn btn-success btn-load ms-auto btn-create-student', 'name' => 'add']) ?>
+                    ', ['class' => 'btn btn-success btn-load btn-create-student', 'name' => 'add']) ?>
                 </div>
             </div>
         <?php ActiveForm::end(); ?>

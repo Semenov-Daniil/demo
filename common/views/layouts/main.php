@@ -138,7 +138,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                                 ]
                             ],
                             [
-                                'label' => '<i class="ri-download-2-line"></i><span data-key="t-files">Файлы</span>', 
+                                'label' => '<i class="ri-upload-2-line"></i><span data-key="t-files">Файлы</span>', 
                                 'encode' => false, 
                                 'url' => ['/files'], 
                                 'linkOptions' => [
