@@ -6,6 +6,7 @@ use Yii;
 use yii\base\BootstrapInterface;
 use yii\base\Component;
 use yii\helpers\FileHelper;
+use yii\helpers\VarDumper;
 
 class FileComponent extends Component implements BootstrapInterface
 {
@@ -63,6 +64,26 @@ class FileComponent extends Component implements BootstrapInterface
         }
 
         return true;
+    }
+
+    public static function clearDirectory(string $path, bool $delete = true): bool
+    {
+        if (!empty($path) && is_dir($path)) {
+            $files = array_diff(scandir($path), array('.', '..'));
+
+            
+            foreach ($files as $file) {
+                if (!self::clearDirectory(realpath($path) . '/' . $file)) {
+                    return false;
+                }
+            }
+
+            return $delete ? rmdir($path) : true;
+        } else if (is_file($path) === true) {
+            return $delete ? unlink($path) : true;
+        }
+
+        return false;
     }
 
     /**

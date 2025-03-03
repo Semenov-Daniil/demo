@@ -46,10 +46,27 @@ class ExpertController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
+                    'experts' => ['GET'],
+                    'create-expert' => ['POST'],
+                    'all-experts' => ['GET'],
                     'delete-experts' => ['DELETE'],
+
+                    'students' => ['GET'],
+                    'create-student' => ['POST'],
+                    'all-students' => ['GET'],
                     'delete-students' => ['DELETE'],
+
+                    'modules' => ['GET'],
+                    'create-module' => ['POST'],
                     'change-status-module' => ['PATH'],
                     'delete-modules' => ['DELETE'],
+                    'clear-modules' => ['PATH'],
+
+                    'files' => ['GET'],
+                    'upload-files' => ['POST'],
+                    'all-files' => ['GET'],
+                    'delete-files' => ['DELETE'],
+                    'download' => ['GET'],
                 ],
             ],
         ];
@@ -502,7 +519,7 @@ class ExpertController extends Controller
         $id = Yii::$app->request->post('id');
         $status = Yii::$app->request->post('status');
         $isChangeStatus = false;
-        $model = $this->findModul($id);
+        $model = $this->findModule($id);
 
         try {
             $isChangeStatus = $model->changeStatus($status);
@@ -571,6 +588,36 @@ class ExpertController extends Controller
         ]);
     }
 
+    public function actionClearModules(?string $id = null): string
+    {
+        $dataProvider = Modules::getDataProviderModules(10);
+        $modules = [];
+
+        $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
+
+        if (count($modules) && Modules::clearModules($modules)) {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => count($modules) > 1 ? 'Модули успешно очищены.' : 'Модуль успешно очищен.',
+                'type' => 'success'
+            ]);
+        } else {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => count($modules) > 1 ? 'Не удалось очистить модули.' : 'Не удалось очистить модуль.',
+                'type' => 'error'
+            ]);
+        }
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_modules-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('modules', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
     /**
      * Displays competitors page.
      *
@@ -581,7 +628,7 @@ class ExpertController extends Controller
         return $this->render('competitors');
     }
 
-    protected function findModul($id)
+    protected function findModule($id)
     {
         if (($model = Modules::findOne(['id' => $id])) !== null) {
             return $model;

@@ -5,12 +5,24 @@ $(() => {
         $('.btn-add-module').find('.cnt-load').removeClass('d-none');
         $('.btn-add-module').prop('disabled', true);
 
-        $.pjax.reload({
-            url: '/expert/create-module',
-            container: '#pjax-modules',
-            pushState: false,
-            replace: false,
-            timeout: 10000
+        $.ajax({
+            url: 'create-module',
+            method: 'POST',
+            success (data) {
+                $('#pjax-modules').html(data);
+            },
+            error (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 500) {
+                    location.reload();
+                }
+            },
+            complete () {
+                $('.btn-add-module').find('.cnt-load').addClass('d-none');
+                $('.btn-add-module').find('.cnt-text').removeClass('d-none');
+                $('.btn-add-module').prop('disabled', false);
+
+                $('#pjax-modules').trigger('pjax:complete');
+            }
         });
     });
 
@@ -32,6 +44,7 @@ $(() => {
         $('input[name="modules[]"]').prop('checked', true);
 
         $('.btn-delete-selected-modules').prop('disabled', false);
+        $('.btn-clear-selected-modules').prop('disabled', false);
 
         localStorage.setItem($('#pjax-modules').attr('id'), JSON.stringify(checked));
     });
@@ -40,6 +53,7 @@ $(() => {
         let isChecked = $(this).is(':checked');
         $('input[name="modules[]"]').prop('checked', isChecked);
         $('.btn-delete-selected-modules').prop('disabled', !isChecked);
+        $('.btn-clear-selected-modules').prop('disabled', !isChecked);
     });
 
     $('#pjax-modules').on('change', 'input[name="modules[]"]', function() {
@@ -49,6 +63,7 @@ $(() => {
         $('input[name="modules_all"]').prop('checked', allModules.length === checkedModules.length);
 
         $('.btn-delete-selected-modules').prop('disabled', ($(this).is(':checked') ? false : (checkedModules.length === 0)));
+        $('.btn-clear-selected-modules').prop('disabled', ($(this).is(':checked') ? false : (checkedModules.length === 0)));
     });
 
     $('#pjax-modules').on('change', 'input[name="status"]', function(event) {
@@ -104,6 +119,24 @@ $(() => {
         });
     });
 
+    $('#pjax-modules').on('click', '.btn-clear', function (event) {
+        $.ajax({
+            url: `clear-modules?id=${$(this).data('id')}`,
+            method: 'PATH',
+            success (data) {
+                $('#pjax-modules').html(data);
+            },
+            error (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 500) {
+                    location.reload();
+                }
+            },
+            complete () {
+                $('#pjax-modules').trigger('pjax:complete');
+            }
+        });
+    });
+
     $('#pjax-modules').on('click', '.btn-delete-selected-modules', function (event) {
         let modules = [];
 
@@ -131,6 +164,35 @@ $(() => {
         });
     });
 
+    $('#pjax-modules').on('click', '.btn-clear-selected-modules', function (event) {
+        let modules = [];
+
+        $('input[name="modules[]"]').each((index, element) => {
+            if ($(element).is(':checked')) {
+                modules.push($(element).val());
+            }
+        });
+
+        $.ajax({
+            url: `clear-modules`,
+            method: 'PATH',
+            data: {
+                modules: modules
+            },
+            success (data) {
+                $('#pjax-modules').html(data);
+            },
+            error (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 500) {
+                    location.reload();
+                }
+            },
+            complete () {
+                $('#pjax-modules').trigger('pjax:complete');
+            }
+        });
+    });
+
     $('#pjax-modules').on('pjax:complete', function (event) {
         changeActiveBtn();
     });
@@ -142,6 +204,7 @@ $(() => {
         $('input[name="modules_all"]').prop('checked', allModules.length === checkedModules.length);
 
         $('.btn-delete-selected-modules').prop('disabled', ($(this).is(':checked') ? false : (checkedModules.length === 0)));
+        $('.btn-clear-selected-modules').prop('disabled', ($(this).is(':checked') ? false : (checkedModules.length === 0)));
     }
 
     changeActiveBtn();

@@ -333,6 +333,11 @@ class StudentsEvents extends ActiveRecord
         Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@students') . "/$login/" . $this->getDirectoryModuleTitle($this->dir_prefix, $numberModule));
     }
 
+    public function clearDirectoryModule(string $login, int $numberModule): void
+    {
+        Yii::$app->fileComponent->clearDirectory(Yii::getAlias('@students') . "/$login/" . $this->getDirectoryModuleTitle($this->dir_prefix, $numberModule), false);
+    }
+
     /**
      * Copies event files to the student.
      * 

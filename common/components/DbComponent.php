@@ -6,6 +6,7 @@ use Exception;
 use Yii;
 use yii\base\Component;
 use yii\db\Query;
+use yii\helpers\VarDumper;
 
 class DbComponent extends Component
 {
@@ -200,6 +201,37 @@ class DbComponent extends Component
         return false;
     }
 
+    public static function clearDatabaseByName(string $dbName): bool
+    {
+        $db = Yii::$app->db;
+
+        try {
+            if (self::hasDatabase($dbName)) {
+                $originalDbName = $db->createCommand('SELECT DATABASE()')->queryScalar();
+                $db->createCommand("USE {{".$dbName."}}")->execute();
+                $db->createCommand('SET FOREIGN_KEY_CHECKS = 0;')->execute();
+                $tables = $db->createCommand('SHOW TABLES')->queryColumn();
+    
+                foreach ($tables as $table) {
+                    $db->createCommand("DROP TABLE IF EXISTS {{".$table."}}")->execute();
+                }
+
+                $db->createCommand('SET FOREIGN_KEY_CHECKS = 1;')->execute();
+                if ($originalDbName) {
+                    $db->createCommand("USE {{".$originalDbName."}}")->execute();
+                }
+    
+                return true;
+            }
+        } catch(\Exception $e) {
+            throw $e;
+        } catch(\Throwable $e) {
+            throw $e;
+        }
+
+        return false;
+    }
+
     /**
      * Getting the hostname.
      */
@@ -224,8 +256,7 @@ class DbComponent extends Component
     public static function hasDatabase(string $dbName)
     {
         try {
-            $databases = Yii::$app->db->createCommand('SHOW DATABASES')->queryColumn();
-            return in_array($dbName, $databases);
+            return Yii::$app->db->createCommand('SHOW DATABASES LIKE :dbName', [':dbName' => $dbName])->execute();
         } catch (\Exception $e) {
             throw $e;
         }

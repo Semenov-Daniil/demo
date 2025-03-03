@@ -41,6 +41,7 @@ class UserController extends Controller
             ], '');
 
             if ($user->addExpert()) {
+                // var_dump('test');die;
                 $event = new Events();
                 $event->load([
                     'title' => $title,
@@ -68,6 +69,7 @@ class UserController extends Controller
         } catch(\Exception $e) {
             $this->stderr("Expert not created");
             $transaction->rollBack();
+            var_dump($e);die;
         } catch(\Throwable $e) {
             $this->stderr("Expert not created");
             $transaction->rollBack();

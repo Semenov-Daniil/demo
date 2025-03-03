@@ -9,6 +9,7 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use yii\helpers\VarDumper;
+use yii\web\YiiAsset;
 
 /**
  * This is the model class for table "dm_modules".
@@ -274,6 +275,40 @@ class Modules extends \yii\db\ActiveRecord
         return true;
     }
 
+    public static function clearModule(string $id): bool
+    {
+        $transaction = Yii::$app->db->beginTransaction();   
+        try {
+            if ($module = self::findOne(['id' => $id])) {
+                if ($module->clearModulesStudents()) {
+                    $transaction->commit();
+                    return true;
+                }
+
+                $transaction->rollBack();
+            }
+            return false;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            var_dump($e);die;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+        }
+
+        return false;
+    }
+
+    public static function clearModules(array $modulesId): bool
+    {
+        foreach ($modulesId as $moduleId) {
+            if (!self::clearModule($moduleId)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Deletes a module from students.
      * 
@@ -291,6 +326,25 @@ class Modules extends \yii\db\ActiveRecord
             $login = $student->user->login; 
             if (Yii::$app->dbComponent->deleteDb($student->getDbTitle($login, $this->number))) {
                 $student->deleteDirectoryModule($login, $this->number);
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function clearModulesStudents(): bool
+    {
+        $students = StudentsEvents::find()
+            ->where(['events_id' => $this->events_id])
+            ->joinWith('user')
+            ->all()
+        ;
+        
+        foreach ($students as $student) {
+            if (Yii::$app->dbComponent->clearDatabaseByName($student->getDbTitle($student->user->login, $this->number))) {
+                $student->clearDirectoryModule($student->user->login, $this->number);
             } else {
                 return false;
             }
