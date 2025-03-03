@@ -323,13 +323,37 @@ class ExpertController extends Controller
 
     public function actionExportStudents()
     {
-        // Получите данные, которые нужно экспортировать (например, из модели)
-        $data = StudentsEvents::find()->all();
+        $students = StudentsEvents::getExportStudents();
         $templatePath = Yii::getAlias('@templates/template.docx');
 
         $templateProcessor = new TemplateProcessor($templatePath);
 
-        $templateProcessor->cloneRow('fio', 10);
+        $templateProcessor->cloneBlock('block_student', count($students), true, true);
+
+        foreach ($students as $index => $student) {
+            $blockIndex = $index + 1;
+
+            $templateProcessor->setValue("fio#{$blockIndex}", $student['fullName']);
+            $templateProcessor->setValue("login#{$blockIndex}", $student['login']);
+            $templateProcessor->setValue("password#{$blockIndex}", EncryptedPasswords::decryptByPassword($student['encrypted_password']));
+
+            $templateProcessor->setValue("web#{$blockIndex}", $this->request->getHostInfo());
+        }
+
+        $filename = 'students_' . date('d-m-Y') . '.docx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        try {
+            $templateProcessor->saveAs('php://output');
+        } catch (\Exception $e) {
+            Yii::error('Ошибка при экспорте участников: ' . $e->getMessage());
+            throw new \yii\web\HttpException(500, 'Ошибка при генерации документа.');
+        }
+
+        exit;
     }
 
     /**
