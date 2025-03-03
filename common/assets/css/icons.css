@@ -54469,6 +54469,14 @@ readers do not read off random characters that represent icons */
   content: "\f320";
 }
 
+.ri-export-fill:before { 
+  content: "\f436"; 
+}
+
+.ri-export-line:before { 
+  content: "\f437"; 
+}
+
 .ri-expand-left-line:before {
   content: "\f321";
 }
