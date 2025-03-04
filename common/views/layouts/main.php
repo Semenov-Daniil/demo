@@ -153,6 +153,9 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
         <div class="sidebar-background"></div>
     </div>
+    <?php else: ?>
+        <div id="navbar-nav"></div>
+        <div id="scrollbar"></div>
     <?php endif; ?>
 
     <!-- <div class="app-menu navbar-menu pt-0">
@@ -203,7 +206,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         </footer>
     </main>
 
-    <button onclick="topFunction()" class="btn btn-danger btn-icon" id="back-to-top">
+    <button class="btn btn-danger btn-icon" id="back-to-top">
         <i class="ri-arrow-up-line"></i>
     </button>
 

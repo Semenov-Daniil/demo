@@ -20,8 +20,14 @@ class AppAsset extends AssetBundle
         'css/custom.min.css',
     ];
     public $js = [
+        [
+            'js/layout.js',
+            'position' => \yii\web\View::POS_HEAD
+        ],
         'libs/bootstrap/js/bootstrap.bundle.min.js',
         'libs/simplebar/simplebar.min.js',
+        'libs/node-waves/waves.min.js',
+        'libs/feather-icons/feather.min.js',
         'js/pages/plugins/lord-icon-2.1.0.js',
         'libs/noty/lib/noty.js',
         'js/alert-toastify.js',

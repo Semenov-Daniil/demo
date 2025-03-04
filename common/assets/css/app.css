@@ -2805,7 +2805,6 @@
 @media (max-width: 1440px) {
     .navbar-header {
         padding-right: var(--vz-grid-gutter-width);
-        padding-left: calc(var(--vz-grid-gutter-width) * 0.5);
     }
 }
 
