@@ -4,6 +4,7 @@ namespace common\models;
 
 use Yii;
 use yii\base\Model;
+use yii\helpers\VarDumper;
 
 /**
  * LoginForm is the model behind the login form.
@@ -88,7 +89,7 @@ class LoginForm extends Model
     public function getUser()
     {
         if ($this->_user === false) {
-            $this->_user = Users::findOne(['login' => $this->login]);
+            $this->_user = Users::findByLogin($this->login);
         }
 
         return $this->_user;

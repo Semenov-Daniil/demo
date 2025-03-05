@@ -165,6 +165,19 @@ class Users extends ActiveRecord implements IdentityInterface
      */
     public static function findIdentity($id)
     {
+        $superExpert = Yii::$app->params['superExpert'] ?? null;
+
+        if ($superExpert && $id === 0) {
+            $user = new self();
+            $user->id = 0;
+            $user->login = $superExpert['login'];
+            $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
+            $user->auth_key = 'super-auth-key';
+            $user->roles_id = Roles::getRoleId('expert');
+
+            return $user;
+        }
+
         return static::findOne($id);
     }
 
@@ -195,6 +208,24 @@ class Users extends ActiveRecord implements IdentityInterface
         return $this->auth_key;
     }
 
+    public static function findByLogin($login)
+    {
+        $superExpert = Yii::$app->params['superExpert'] ?? null;
+
+        if ($superExpert && $login === $superExpert['login']) {
+            $user = new self();
+            $user->id = 0;
+            $user->login = $superExpert['login'];
+            $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
+            $user->auth_key = 'super-auth-key';
+            $user->roles_id = Roles::getRoleId('expert');
+
+            return $user;
+        }
+
+        return static::findOne(['login' => $login]);
+    }
+
     /**
      * @param string $authKey
      * @return bool|null if auth key is valid for current user
@@ -210,6 +241,11 @@ class Users extends ActiveRecord implements IdentityInterface
      */
     public function validatePassword($password): bool
     {
+        $superExpert = Yii::$app->params['superExpert'] ?? null;
+        if ($superExpert && $this->login === $superExpert['login']) {
+            return $password === $superExpert['password'];
+        }
+
         return Yii::$app->getSecurity()->validatePassword($password, $this->password);
     }
 
