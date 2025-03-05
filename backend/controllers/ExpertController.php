@@ -4,13 +4,15 @@ namespace backend\controllers;
 
 use common\models\EncryptedPasswords;
 use common\models\Events;
+use common\models\Experts;
 use common\models\ExpertsEvents;
+use common\models\ExpertsForm;
 use common\models\FilesEvents;
 use common\models\LoginForm;
 use common\models\Modules;
 use common\models\Passwords;
 use common\models\Roles;
-use common\models\StudentsEvents;
+use common\models\Students;
 use common\models\Users;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
@@ -18,6 +20,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
@@ -40,7 +43,6 @@ class ExpertController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        //'actions' => ['logout', 'experts', 'delete-experts', 'students', 'delete-students', 'modules', 'change-status-modules', 'delete-modules'],
                         'allow' => true,
                         'roles' => ['expert'],
                     ],
@@ -127,7 +129,7 @@ class ExpertController extends Controller
      */
     public function actionExperts(): string
     {
-        $model = new ExpertsEvents();
+        $model = new Experts();
         $dataProvider = $model->getDataProviderExperts(10);
 
         return $this->render('experts', [
@@ -138,7 +140,7 @@ class ExpertController extends Controller
 
     public function actionCreateExpert(): string
     {
-        $model = new ExpertsEvents();
+        $model = new Experts();
 
         if ($this->request->isPost) {
             if ($model->load(Yii::$app->request->post()) && $model->createExpert()) {  
@@ -147,7 +149,7 @@ class ExpertController extends Controller
                     'type' => 'success'
                 ]);
 
-                $model = new ExpertsEvents();
+                $model = new Experts();
             } else {
                 Yii::$app->session->addFlash('toast-alert', [
                     'text' => 'Не удалось добавить эксперта.',
@@ -169,7 +171,7 @@ class ExpertController extends Controller
 
     public function actionAllExperts(): string
     {
-        $dataProvider = ExpertsEvents::getDataProviderExperts(10);
+        $dataProvider = Experts::getDataProviderExperts(10);
 
         session_write_close();
 
@@ -193,12 +195,12 @@ class ExpertController extends Controller
      */
     public function actionDeleteExperts(?string $id = null): string
     {
-        $dataProvider = ExpertsEvents::getDataProviderExperts(10);
+        $dataProvider = Experts::getDataProviderExperts(10);
         $experts = [];
 
         $experts = (!is_null($id) ? [$id] : ($this->request->post('experts') ? $this->request->post('experts') : []));
 
-        if (count($experts) && ExpertsEvents::deleteExperts($experts)) {
+        if (count($experts) && Experts::deleteExperts($experts)) {
             Yii::$app->session->addFlash('toast-alert', [
                 'text' => count($experts) > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.',
                 'type' => 'success'
@@ -228,7 +230,7 @@ class ExpertController extends Controller
      */
     public function actionStudents(): string
     {
-        $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_CREATE_STUDENT]);
+        $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT]);
         $dataProvider = $model->getDataProviderStudents(10);
 
         return $this->render('students', [
@@ -239,7 +241,7 @@ class ExpertController extends Controller
 
     public function actionCreateStudent(): string
     {
-        $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_CREATE_STUDENT]);
+        $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT]);
 
         if ($this->request->isPost) {
             if ($model->load(Yii::$app->request->post()) && $model->createStudent()) {
@@ -247,7 +249,7 @@ class ExpertController extends Controller
                     'text' => 'Студент успешно добавлен.',
                     'type' => 'success'
                 ]);
-                $model = new StudentsEvents(['scenario' => StudentsEvents::SCENARIO_CREATE_STUDENT]);
+                $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT]);
             } else {
                 Yii::$app->session->addFlash('toast-alert', [
                     'text' => 'Не удалось добавить студента.',
@@ -269,7 +271,7 @@ class ExpertController extends Controller
 
     public function actionAllStudents(): string
     {
-        $dataProvider = StudentsEvents::getDataProviderStudents(10);
+        $dataProvider = Students::getDataProviderStudents(10);
 
         session_write_close();
 
@@ -293,12 +295,12 @@ class ExpertController extends Controller
      */
     public function actionDeleteStudents(?string $id = null): string
     {
-        $dataProvider = StudentsEvents::getDataProviderStudents(10);
+        $dataProvider = Students::getDataProviderStudents(10);
         $students = [];
 
         $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
 
-        if (count($students) && StudentsEvents::deleteStudents($students)) {
+        if (count($students) && Students::deleteStudents($students)) {
             Yii::$app->session->addFlash('toast-alert', [
                 'text' => count($students) > 1 ? 'Студенты успешно удалены.' : 'Студент успешно удален.',
                 'type' => 'success'
@@ -323,7 +325,7 @@ class ExpertController extends Controller
 
     public function actionExportStudents()
     {
-        $students = StudentsEvents::getExportStudents();
+        $students = Students::getExportStudents();
         $templatePath = Yii::getAlias('@templates/template.docx');
 
         $templateProcessor = new TemplateProcessor($templatePath);

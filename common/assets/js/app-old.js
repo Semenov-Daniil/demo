@@ -1,19 +1,10 @@
-/*
-Template Name: Velzon - Admin & Dashboard Template
-Author: Themesbrand
-Version: 4.3.0
-Website: https://Themesbrand.com/
-Contact: Themesbrand@gmail.com
-File: Main Js File
-*/
-
 (function () {
 	("use strict");
 
 	/**
 	 *  global variables
 	 */
-	var navbarMenuHTML = document.querySelector(".navbar-menu").innerHTML;
+	var navbarMenuHTML =  document.querySelector(".navbar-menu") ? document.querySelector(".navbar-menu").innerHTML : '';
 	var horizontalMenuSplit = 7; // after this number all horizontal menus will be moved in More menu options
 	var default_lang = "en"; // set Default Language
 	var language = localStorage.getItem("language");
@@ -359,9 +350,9 @@ File: Main Js File
 		}
 	}
 
-	/**
-	 * Generate two column menu
-	 */
+	// /**
+	//  * Generate two column menu
+	//  */
 	function twoColumnMenuGenerate() {
 		var isTwoColumn = document.documentElement.getAttribute("data-layout");
 		var isValues = sessionStorage.getItem("defaultAttribute");
@@ -605,8 +596,7 @@ File: Main Js File
 		/**
 		 * Vertical layout menu scroll add
 		 */
-		if (document.documentElement.getAttribute("data-layout") == "vertical" || document.documentElement.getAttribute("data-layout") == "semibox") {
-			document.getElementById("two-column-menu").innerHTML = "";
+		if (document.getElementById("scrollbar") && (document.documentElement.getAttribute("data-layout") == "vertical" || document.documentElement.getAttribute("data-layout") == "semibox")) {
 			if (document.querySelector(".navbar-menu")) {
 				document.querySelector(".navbar-menu").innerHTML = navbarMenuHTML;
 			}
@@ -651,6 +641,7 @@ File: Main Js File
 		var windowSize = document.documentElement.clientWidth;
 		if (windowSize < 1025 && windowSize > 767) {
 			document.body.classList.remove("twocolumn-panel");
+			// document.documentElement.getAttribute("data-layout")
 			if (sessionStorage.getItem("data-layout") == "twocolumn") {
 				document.documentElement.setAttribute("data-layout", "twocolumn");
 				if (document.getElementById("customizer-layout03")) {
@@ -785,14 +776,11 @@ File: Main Js File
 		// semibox menu
 		if (document.documentElement.getAttribute("data-layout") === "semibox") {
 			if (windowSize > 767) {
-				// (document.querySelector(".hamburger-icon").classList.contains("open")) ? document.documentElement.setAttribute('data-sidebar-visibility', "show"): '';
+				(document.querySelector(".hamburger-icon").classList.contains("open")) ? document.documentElement.setAttribute('data-sidebar-visibility', "show"): '';
 				if (document.documentElement.getAttribute('data-sidebar-visibility') == "show") {
 					document.documentElement.getAttribute("data-sidebar-size") == "lg" ?
-						document.documentElement.setAttribute("data-sidebar-size", "sm") :
+						document.documentElement.setAttribute("data-sidebar-size", "sm-hover") :
 						document.documentElement.setAttribute("data-sidebar-size", "lg");
-				} else {
-					document.getElementById("sidebar-visibility-show").click();
-					document.documentElement.setAttribute("data-sidebar-size", document.documentElement.getAttribute("data-sidebar-size"));
 				}
 			} else if (windowSize <= 767) {
 				document.body.classList.add("vertical-sidebar-enable");
@@ -810,25 +798,25 @@ File: Main Js File
 
 	function windowLoadContent() {
 		// Demo show code
-		document.addEventListener("DOMContentLoaded", function () {
-			var checkbox = document.getElementsByClassName("code-switcher");
-			Array.from(checkbox).forEach(function (check) {
-				check.addEventListener("change", function () {
-					var card = check.closest(".card");
-					var preview = card.querySelector(".live-preview");
-					var code = card.querySelector(".code-view");
+		// document.addEventListener("DOMContentLoaded", function () {
+		// 	var checkbox = document.getElementsByClassName("code-switcher");
+		// 	Array.from(checkbox).forEach(function (check) {
+		// 		check.addEventListener("change", function () {
+		// 			var card = check.closest(".card");
+		// 			var preview = card.querySelector(".live-preview");
+		// 			var code = card.querySelector(".code-view");
 
-					if (check.checked) {
-						preview.classList.add("d-none");
-						code.classList.remove("d-none");
-					} else {
-						preview.classList.remove("d-none");
-						code.classList.add("d-none");
-					}
-				});
-			});
-			feather.replace();
-		});
+		// 			if (check.checked) {
+		// 				preview.classList.add("d-none");
+		// 				code.classList.remove("d-none");
+		// 			} else {
+		// 				preview.classList.remove("d-none");
+		// 				code.classList.add("d-none");
+		// 			}
+		// 		});
+		// 	});
+		// 	feather.replace();
+		// });
 
 		window.addEventListener("resize", windowResizeHover);
 		windowResizeHover();
@@ -852,17 +840,17 @@ File: Main Js File
 		if (document.getElementById("topnav-hamburger-icon")) {
 			document.getElementById("topnav-hamburger-icon").addEventListener("click", toggleHamburgerMenu);
 		}
-		var isValues = sessionStorage.getItem("defaultAttribute");
-		var defaultValues = JSON.parse(isValues);
-		var windowSize = document.documentElement.clientWidth;
+		// var isValues = sessionStorage.getItem("defaultAttribute");
+		// var defaultValues = JSON.parse(isValues);
+		// var windowSize = document.documentElement.clientWidth;
 
-		if (defaultValues["data-layout"] == "twocolumn" && windowSize < 767) {
-			Array.from(document.getElementById("two-column-menu").querySelectorAll("li")).forEach(function (item) {
-				item.addEventListener("click", function (e) {
-					document.body.classList.remove("twocolumn-panel");
-				});
-			});
-		}
+		// if (defaultValues["data-layout"] == "twocolumn" && windowSize < 767) {
+		// 	Array.from(document.getElementById("two-column-menu").querySelectorAll("li")).forEach(function (item) {
+		// 		item.addEventListener("click", function (e) {
+		// 			document.body.classList.remove("twocolumn-panel");
+		// 		});
+		// 	});
+		// }
 	}
 
 	// page topbar class added
@@ -916,37 +904,37 @@ File: Main Js File
 
 	// two-column sidebar active js
 	function initActiveMenu() {
-		var currentPath = location.pathname == "/" ? "index.html" : location.pathname.substring(1);
-		currentPath = currentPath.substring(currentPath.lastIndexOf("/") + 1);
-		if (currentPath) {
-			// navbar-nav
-			var a = document.getElementById("navbar-nav").querySelector('[href="' + currentPath + '"]');
-			if (a) {
-				a.classList.add("active");
-				var parentCollapseDiv = a.closest(".collapse.menu-dropdown");
-				if (parentCollapseDiv) {
-					parentCollapseDiv.classList.add("show");
-					parentCollapseDiv.parentElement.children[0].classList.add("active");
-					parentCollapseDiv.parentElement.children[0].setAttribute("aria-expanded", "true");
-					if (parentCollapseDiv.parentElement.closest(".collapse.menu-dropdown")) {
-						parentCollapseDiv.parentElement.closest(".collapse").classList.add("show");
-						if (parentCollapseDiv.parentElement.closest(".collapse").previousElementSibling)
-							parentCollapseDiv.parentElement.closest(".collapse").previousElementSibling.classList.add("active");
+		// var currentPath = location.pathname == "/expert" ? "/expert/experts" : location.pathname;
+		// if (currentPath && document.documentElement.getAttribute("data-sidebar-visibility") == "show") {
+		// 	// navbar-nav
+		// 	var a = document.getElementById("navbar-nav").querySelector('[href="' + currentPath + '"]');
 
-						if (parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse.menu-dropdown")) {
-							parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse").classList.add("show");
-							if (parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse").previousElementSibling) {
+		// 	if (a) {
+		// 		a.classList.add("active");
+		// 		var parentCollapseDiv = a.closest(".collapse.menu-dropdown");
+		// 		if (parentCollapseDiv) {
+		// 			parentCollapseDiv.classList.add("show");
+		// 			parentCollapseDiv.parentElement.children[0].classList.add("active");
+		// 			parentCollapseDiv.parentElement.children[0].setAttribute("aria-expanded", "true");
+		// 			if (parentCollapseDiv.parentElement.closest(".collapse.menu-dropdown")) {
+		// 				parentCollapseDiv.parentElement.closest(".collapse").classList.add("show");
+		// 				if (parentCollapseDiv.parentElement.closest(".collapse").previousElementSibling)
+		// 					parentCollapseDiv.parentElement.closest(".collapse").previousElementSibling.classList.add("active");
 
-								parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse").previousElementSibling.classList.add("active");
-								if ((document.documentElement.getAttribute("data-layout") == "horizontal") && parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.closest(".collapse")) {
-									parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.closest(".collapse").previousElementSibling.classList.add("active")
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		// 				if (parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse.menu-dropdown")) {
+		// 					parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse").classList.add("show");
+		// 					if (parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse").previousElementSibling) {
+
+		// 						parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.closest(".collapse").previousElementSibling.classList.add("active");
+		// 						if ((document.documentElement.getAttribute("data-layout") == "horizontal") && parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.closest(".collapse")) {
+		// 							parentCollapseDiv.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.closest(".collapse").previousElementSibling.classList.add("active")
+		// 						}
+		// 					}
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// }
 	}
 
 	function elementInViewport(el) {
@@ -1015,72 +1003,72 @@ File: Main Js File
 		}
 
 		// notification messages
-		if (document.getElementsByClassName("notification-check")) {
-			function emptyNotification() {
-				Array.from(document.querySelectorAll("#notificationItemsTabContent .tab-pane")).forEach(function (elem) {
-					if (elem.querySelectorAll(".notification-item").length > 0) {
-						if (elem.querySelector(".view-all")) {
-							elem.querySelector(".view-all").style.display = "block";
-						}
-					} else {
-						if (elem.querySelector(".view-all")) {
-							elem.querySelector(".view-all").style.display = "none";
-						}
-						var emptyNotificationElem = elem.querySelector(".empty-notification-elem")
-						if (!emptyNotificationElem) {
-							elem.innerHTML += '<div class="empty-notification-elem">\
-							<div class="w-25 w-sm-50 pt-3 mx-auto">\
-								<img src="assets/images/svg/bell.svg" class="img-fluid" alt="user-pic">\
-							</div>\
-							<div class="text-center pb-5 mt-2">\
-								<h6 class="fs-18 fw-semibold lh-base">Hey! You have no any notifications </h6>\
-							</div>\
-						</div>'
-						}
-					}
-				});
-			}
-			emptyNotification();
+		// if (document.getElementsByClassName("notification-check")) {
+		// 	function emptyNotification() {
+		// 		Array.from(document.querySelectorAll("#notificationItemsTabContent .tab-pane")).forEach(function (elem) {
+		// 			if (elem.querySelectorAll(".notification-item").length > 0) {
+		// 				if (elem.querySelector(".view-all")) {
+		// 					elem.querySelector(".view-all").style.display = "block";
+		// 				}
+		// 			} else {
+		// 				if (elem.querySelector(".view-all")) {
+		// 					elem.querySelector(".view-all").style.display = "none";
+		// 				}
+		// 				var emptyNotificationElem = elem.querySelector(".empty-notification-elem")
+		// 				if (!emptyNotificationElem) {
+		// 					elem.innerHTML += '<div class="empty-notification-elem">\
+		// 					<div class="w-25 w-sm-50 pt-3 mx-auto">\
+		// 						<img src="assets/images/svg/bell.svg" class="img-fluid" alt="user-pic">\
+		// 					</div>\
+		// 					<div class="text-center pb-5 mt-2">\
+		// 						<h6 class="fs-18 fw-semibold lh-base">Hey! You have no any notifications </h6>\
+		// 					</div>\
+		// 				</div>'
+		// 				}
+		// 			}
+		// 		});
+		// 	}
+		// 	emptyNotification();
 
 
-			Array.from(document.querySelectorAll(".notification-check input")).forEach(function (element) {
-				element.addEventListener("change", function (el) {
-					el.target.closest(".notification-item").classList.toggle("active");
+		// 	Array.from(document.querySelectorAll(".notification-check input")).forEach(function (element) {
+		// 		element.addEventListener("change", function (el) {
+		// 			el.target.closest(".notification-item").classList.toggle("active");
 
-					var checkedCount = document.querySelectorAll('.notification-check input:checked').length;
+		// 			var checkedCount = document.querySelectorAll('.notification-check input:checked').length;
 
-					if (el.target.closest(".notification-item").classList.contains("active")) {
-						(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
-					} else {
-						(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
-					}
-					document.getElementById("select-content").innerHTML = checkedCount
-				});
+		// 			if (el.target.closest(".notification-item").classList.contains("active")) {
+		// 				(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
+		// 			} else {
+		// 				(checkedCount > 0) ? document.getElementById("notification-actions").style.display = 'block' : document.getElementById("notification-actions").style.display = 'none';
+		// 			}
+		// 			document.getElementById("select-content").innerHTML = checkedCount
+		// 		});
 
-				var notificationDropdown = document.getElementById('notificationDropdown')
-				notificationDropdown.addEventListener('hide.bs.dropdown', function (event) {
-					element.checked = false;
-					document.querySelectorAll('.notification-item').forEach(function (item) {
-						item.classList.remove("active");
-					})
-					document.getElementById('notification-actions').style.display = '';
-				});
-			});
+		// 		var notificationDropdown = document.getElementById('notificationDropdown')
+		// 		notificationDropdown.addEventListener('hide.bs.dropdown', function (event) {
+		// 			element.checked = false;
+		// 			document.querySelectorAll('.notification-item').forEach(function (item) {
+		// 				item.classList.remove("active");
+		// 			})
+		// 			document.getElementById('notification-actions').style.display = '';
+		// 		});
+		// 	});
 
-			var removeItem = document.getElementById('removeNotificationModal');
-			removeItem.addEventListener('show.bs.modal', function (event) {
-				document.getElementById("delete-notification").addEventListener("click", function () {
-					Array.from(document.querySelectorAll(".notification-item")).forEach(function (element) {
-						if (element.classList.contains("active")) {
-							element.remove();
-						}
-					});
-					emptyNotification();
+		// 	var removeItem = document.getElementById('removeNotificationModal');
+		// 	removeItem.addEventListener('show.bs.modal', function (event) {
+		// 		document.getElementById("delete-notification").addEventListener("click", function () {
+		// 			Array.from(document.querySelectorAll(".notification-item")).forEach(function (element) {
+		// 				if (element.classList.contains("active")) {
+		// 					element.remove();
+		// 				}
+		// 			});
+		// 			emptyNotification();
 
-					document.getElementById("NotificationModalbtn-close").click();
-				})
-			})
-		}
+		// 			document.getElementById("NotificationModalbtn-close").click();
+		// 		})
+		// 	})
+		// }
 	}
 
 	function initComponents() {
@@ -1173,8 +1161,9 @@ File: Main Js File
 	}
 
 	function hideShowLayoutOptions(dataLayout) {
+		var twoColumnMenu = document.getElementById("two-column-menu");
 		if (dataLayout == "vertical") {
-			document.getElementById("two-column-menu").innerHTML = "";
+			twoColumnMenu?.innerHTML && (twoColumnMenu.innerHTML = "");
 			if (document.querySelector(".navbar-menu")) {
 				document.querySelector(".navbar-menu").innerHTML = navbarMenuHTML;
 			}
@@ -1222,7 +1211,7 @@ File: Main Js File
 				document.getElementById("sidebar-visibility").style.display = "none";
 			}
 		} else if (dataLayout == "semibox") {
-			document.getElementById("two-column-menu").innerHTML = "";
+			twoColumnMenu?.innerHTML && (twoColumnMenu.innerHTML = "");
 			if (document.querySelector(".navbar-menu")) {
 				document.querySelector(".navbar-menu").innerHTML = navbarMenuHTML;
 			}
@@ -1246,7 +1235,7 @@ File: Main Js File
 
 	// add listener Sidebar Hover icon on change layout from setting
 	function addEventListenerOnSmHoverMenu() {
-		document.getElementById("vertical-hover").addEventListener("click", function () {
+		document.getElementById("vertical-hover")?.addEventListener("click", function () {
 			if (document.documentElement.getAttribute("data-sidebar-size") === "sm-hover") {
 				document.documentElement.setAttribute("data-sidebar-size", "sm-hover-active");
 			} else if (document.documentElement.getAttribute("data-sidebar-size") === "sm-hover-active") {
@@ -1258,542 +1247,542 @@ File: Main Js File
 	}
 	// set full layout
 	function layoutSwitch(isLayoutAttributes) {
-		switch (isLayoutAttributes) {
-			case isLayoutAttributes:
-				switch (isLayoutAttributes["data-theme"]) {
-					case "default":
-						getElementUsingTagname("data-theme", "default");
-						sessionStorage.setItem("data-theme", "default");
-						document.documentElement.setAttribute("data-theme", "default");
-						break;
-					case "minimal":
-						getElementUsingTagname("data-theme", "minimal");
-						sessionStorage.setItem("data-theme", "minimal");
-						document.documentElement.setAttribute("data-theme", "minimal");
-						break;
-					case "saas":
-						getElementUsingTagname("data-theme", "saas");
-						sessionStorage.setItem("data-theme", "saas");
-						document.documentElement.setAttribute("data-theme", "saas");
-						break;
-					case "corporate":
-						getElementUsingTagname("data-theme", "corporate");
-						sessionStorage.setItem("data-theme", "corporate");
-						document.documentElement.setAttribute("data-theme", "corporate");
-						break;
-					case "galaxy":
-						getElementUsingTagname("data-theme", "galaxy");
-						sessionStorage.setItem("data-theme", "galaxy");
-						document.documentElement.setAttribute("data-theme", "galaxy");
-						document.getElementById("body-img").style.display = "block";
-						break;
-					case "material":
-						getElementUsingTagname("data-theme", "material");
-						sessionStorage.setItem("data-theme", "material");
-						document.documentElement.setAttribute("data-theme", "material");
-						break;
-					case "creative":
-						getElementUsingTagname("data-theme", "creative");
-						sessionStorage.setItem("data-theme", "creative");
-						document.documentElement.setAttribute("data-theme", "creative");
-						break;
-					case "minimal":
-						getElementUsingTagname("data-theme", "minimal");
-						sessionStorage.setItem("data-theme", "minimal");
-						document.documentElement.setAttribute("data-theme", "minimal");
-						break;
-					case "modern":
-						getElementUsingTagname("data-theme", "modern");
-						sessionStorage.setItem("data-theme", "modern");
-						document.documentElement.setAttribute("data-theme", "modern");
-						break;
-					case "interactive":
-						getElementUsingTagname("data-theme", "interactive");
-						sessionStorage.setItem("data-theme", "interactive");
-						document.documentElement.setAttribute("data-theme", "interactive");
-						break;
-					case "classic":
-						getElementUsingTagname("data-theme", "classic");
-						sessionStorage.setItem("data-theme", "classic");
-						document.documentElement.setAttribute("data-theme", "classic");
-						break;
-					case "vintage":
-						getElementUsingTagname("data-theme", "vintage");
-						sessionStorage.setItem("data-theme", "vintage");
-						document.documentElement.setAttribute("data-theme", "vintage");
-						break;
-					default:
-						getElementUsingTagname("data-theme", "default");
-						sessionStorage.setItem("data-theme", "default");
-						document.documentElement.setAttribute("data-theme", "default");
-						break;
-				}
+		// switch (isLayoutAttributes) {
+		// 	case isLayoutAttributes:
+		// 		switch (isLayoutAttributes["data-theme"]) {
+		// 			case "default":
+		// 				getElementUsingTagname("data-theme", "default");
+		// 				sessionStorage.setItem("data-theme", "default");
+		// 				document.documentElement.setAttribute("data-theme", "default");
+		// 				break;
+		// 			case "minimal":
+		// 				getElementUsingTagname("data-theme", "minimal");
+		// 				sessionStorage.setItem("data-theme", "minimal");
+		// 				document.documentElement.setAttribute("data-theme", "minimal");
+		// 				break;
+		// 			case "saas":
+		// 				getElementUsingTagname("data-theme", "saas");
+		// 				sessionStorage.setItem("data-theme", "saas");
+		// 				document.documentElement.setAttribute("data-theme", "saas");
+		// 				break;
+		// 			case "corporate":
+		// 				getElementUsingTagname("data-theme", "corporate");
+		// 				sessionStorage.setItem("data-theme", "corporate");
+		// 				document.documentElement.setAttribute("data-theme", "corporate");
+		// 				break;
+		// 			case "galaxy":
+		// 				getElementUsingTagname("data-theme", "galaxy");
+		// 				sessionStorage.setItem("data-theme", "galaxy");
+		// 				document.documentElement.setAttribute("data-theme", "galaxy");
+		// 				document.getElementById("body-img").style.display = "block";
+		// 				break;
+		// 			case "material":
+		// 				getElementUsingTagname("data-theme", "material");
+		// 				sessionStorage.setItem("data-theme", "material");
+		// 				document.documentElement.setAttribute("data-theme", "material");
+		// 				break;
+		// 			case "creative":
+		// 				getElementUsingTagname("data-theme", "creative");
+		// 				sessionStorage.setItem("data-theme", "creative");
+		// 				document.documentElement.setAttribute("data-theme", "creative");
+		// 				break;
+		// 			case "minimal":
+		// 				getElementUsingTagname("data-theme", "minimal");
+		// 				sessionStorage.setItem("data-theme", "minimal");
+		// 				document.documentElement.setAttribute("data-theme", "minimal");
+		// 				break;
+		// 			case "modern":
+		// 				getElementUsingTagname("data-theme", "modern");
+		// 				sessionStorage.setItem("data-theme", "modern");
+		// 				document.documentElement.setAttribute("data-theme", "modern");
+		// 				break;
+		// 			case "interactive":
+		// 				getElementUsingTagname("data-theme", "interactive");
+		// 				sessionStorage.setItem("data-theme", "interactive");
+		// 				document.documentElement.setAttribute("data-theme", "interactive");
+		// 				break;
+		// 			case "classic":
+		// 				getElementUsingTagname("data-theme", "classic");
+		// 				sessionStorage.setItem("data-theme", "classic");
+		// 				document.documentElement.setAttribute("data-theme", "classic");
+		// 				break;
+		// 			case "vintage":
+		// 				getElementUsingTagname("data-theme", "vintage");
+		// 				sessionStorage.setItem("data-theme", "vintage");
+		// 				document.documentElement.setAttribute("data-theme", "vintage");
+		// 				break;
+		// 			default:
+		// 				getElementUsingTagname("data-theme", "default");
+		// 				sessionStorage.setItem("data-theme", "default");
+		// 				document.documentElement.setAttribute("data-theme", "default");
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-layout"]) {
-					case "vertical":
-						getElementUsingTagname("data-layout", "vertical");
-						sessionStorage.setItem("data-layout", "vertical");
-						document.documentElement.setAttribute("data-layout", "vertical");
-						hideShowLayoutOptions("vertical");
-						isCollapseMenu();
-						break;
-					case "horizontal":
-						getElementUsingTagname("data-layout", "horizontal");
-						sessionStorage.setItem("data-layout", "horizontal");
-						document.documentElement.setAttribute("data-layout", "horizontal");
-						hideShowLayoutOptions("horizontal");
-						break;
-					case "twocolumn":
-						getElementUsingTagname("data-layout", "twocolumn");
-						sessionStorage.setItem("data-layout", "twocolumn");
-						document.documentElement.setAttribute("data-layout", "twocolumn");
-						hideShowLayoutOptions("twocolumn");
-						break;
-					case "semibox":
-						getElementUsingTagname("data-layout", "semibox");
-						sessionStorage.setItem("data-layout", "semibox");
-						document.documentElement.setAttribute("data-layout", "semibox");
-						hideShowLayoutOptions("semibox");
-						break;
-					default:
-						if (sessionStorage.getItem("data-layout") == "vertical" && sessionStorage.getItem("data-layout")) {
-							getElementUsingTagname("data-layout", "vertical");
-							sessionStorage.setItem("data-layout", "vertical");
-							document.documentElement.setAttribute("data-layout", "vertical");
-							hideShowLayoutOptions("vertical");
-							isCollapseMenu();
-						} else if (sessionStorage.getItem("data-layout") == "horizontal") {
-							getElementUsingTagname("data-layout", "horizontal");
-							sessionStorage.setItem("data-layout", "horizontal");
-							document.documentElement.setAttribute("data-layout", "horizontal");
-							hideShowLayoutOptions("horizontal");
-						} else if (sessionStorage.getItem("data-layout") == "twocolumn") {
-							getElementUsingTagname("data-layout", "twocolumn");
-							sessionStorage.setItem("data-layout", "twocolumn");
-							document.documentElement.setAttribute("data-layout", "twocolumn");
-							hideShowLayoutOptions("twocolumn");
-						} else if (sessionStorage.getItem("data-layout") == "semibox") {
-							getElementUsingTagname("data-layout", "semibox");
-							sessionStorage.setItem("data-layout", "semibox");
-							document.documentElement.setAttribute("data-layout", "semibox");
-							hideShowLayoutOptions("semibox");
-						}
-						break;
-				}
-				switch (isLayoutAttributes["data-topbar"]) {
-					case "light":
-						getElementUsingTagname("data-topbar", "light");
-						sessionStorage.setItem("data-topbar", "light");
-						document.documentElement.setAttribute("data-topbar", "light");
-						break;
-					case "dark":
-						getElementUsingTagname("data-topbar", "dark");
-						sessionStorage.setItem("data-topbar", "dark");
-						document.documentElement.setAttribute("data-topbar", "dark");
-						break;
-					default:
-						if (sessionStorage.getItem("data-topbar") == "dark") {
-							getElementUsingTagname("data-topbar", "dark");
-							sessionStorage.setItem("data-topbar", "dark");
-							document.documentElement.setAttribute("data-topbar", "dark");
-						} else {
-							getElementUsingTagname("data-topbar", "light");
-							sessionStorage.setItem("data-topbar", "light");
-							document.documentElement.setAttribute("data-topbar", "light");
-						}
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-layout"]) {
+		// 			case "vertical":
+		// 				getElementUsingTagname("data-layout", "vertical");
+		// 				sessionStorage.setItem("data-layout", "vertical");
+		// 				document.documentElement.setAttribute("data-layout", "vertical");
+		// 				hideShowLayoutOptions("vertical");
+		// 				isCollapseMenu();
+		// 				break;
+		// 			case "horizontal":
+		// 				getElementUsingTagname("data-layout", "horizontal");
+		// 				sessionStorage.setItem("data-layout", "horizontal");
+		// 				document.documentElement.setAttribute("data-layout", "horizontal");
+		// 				hideShowLayoutOptions("horizontal");
+		// 				break;
+		// 			case "twocolumn":
+		// 				getElementUsingTagname("data-layout", "twocolumn");
+		// 				sessionStorage.setItem("data-layout", "twocolumn");
+		// 				document.documentElement.setAttribute("data-layout", "twocolumn");
+		// 				hideShowLayoutOptions("twocolumn");
+		// 				break;
+		// 			case "semibox":
+		// 				getElementUsingTagname("data-layout", "semibox");
+		// 				sessionStorage.setItem("data-layout", "semibox");
+		// 				document.documentElement.setAttribute("data-layout", "semibox");
+		// 				hideShowLayoutOptions("semibox");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-layout") == "vertical" && sessionStorage.getItem("data-layout")) {
+		// 					getElementUsingTagname("data-layout", "vertical");
+		// 					sessionStorage.setItem("data-layout", "vertical");
+		// 					document.documentElement.setAttribute("data-layout", "vertical");
+		// 					hideShowLayoutOptions("vertical");
+		// 					isCollapseMenu();
+		// 				} else if (sessionStorage.getItem("data-layout") == "horizontal") {
+		// 					getElementUsingTagname("data-layout", "horizontal");
+		// 					sessionStorage.setItem("data-layout", "horizontal");
+		// 					document.documentElement.setAttribute("data-layout", "horizontal");
+		// 					hideShowLayoutOptions("horizontal");
+		// 				} else if (sessionStorage.getItem("data-layout") == "twocolumn") {
+		// 					getElementUsingTagname("data-layout", "twocolumn");
+		// 					sessionStorage.setItem("data-layout", "twocolumn");
+		// 					document.documentElement.setAttribute("data-layout", "twocolumn");
+		// 					hideShowLayoutOptions("twocolumn");
+		// 				} else if (sessionStorage.getItem("data-layout") == "semibox") {
+		// 					getElementUsingTagname("data-layout", "semibox");
+		// 					sessionStorage.setItem("data-layout", "semibox");
+		// 					document.documentElement.setAttribute("data-layout", "semibox");
+		// 					hideShowLayoutOptions("semibox");
+		// 				}
+		// 				break;
+		// 		}
+		// 		switch (isLayoutAttributes["data-topbar"]) {
+		// 			case "light":
+		// 				getElementUsingTagname("data-topbar", "light");
+		// 				sessionStorage.setItem("data-topbar", "light");
+		// 				document.documentElement.setAttribute("data-topbar", "light");
+		// 				break;
+		// 			case "dark":
+		// 				getElementUsingTagname("data-topbar", "dark");
+		// 				sessionStorage.setItem("data-topbar", "dark");
+		// 				document.documentElement.setAttribute("data-topbar", "dark");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-topbar") == "dark") {
+		// 					getElementUsingTagname("data-topbar", "dark");
+		// 					sessionStorage.setItem("data-topbar", "dark");
+		// 					document.documentElement.setAttribute("data-topbar", "dark");
+		// 				} else {
+		// 					getElementUsingTagname("data-topbar", "light");
+		// 					sessionStorage.setItem("data-topbar", "light");
+		// 					document.documentElement.setAttribute("data-topbar", "light");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-sidebar-visibility"]) {
-					case "hidden":
-						getElementUsingTagname("data-sidebar-visibility", "hidden");
-						sessionStorage.setItem("data-sidebar-visibility", "hidden");
-						document.documentElement.setAttribute("data-sidebar-visibility", "hidden");
-						break;
-					default:
-						getElementUsingTagname("data-sidebar-visibility", "show");
-						sessionStorage.setItem("data-sidebar-visibility", "show");
-						document.documentElement.setAttribute("data-sidebar-visibility", "show");
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-sidebar-visibility"]) {
+		// 			case "hidden":
+		// 				getElementUsingTagname("data-sidebar-visibility", "hidden");
+		// 				sessionStorage.setItem("data-sidebar-visibility", "hidden");
+		// 				document.documentElement.setAttribute("data-sidebar-visibility", "hidden");
+		// 				break;
+		// 			default:
+		// 				getElementUsingTagname("data-sidebar-visibility", "show");
+		// 				sessionStorage.setItem("data-sidebar-visibility", "show");
+		// 				document.documentElement.setAttribute("data-sidebar-visibility", "show");
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-layout-style"]) {
-					case "default":
-						getElementUsingTagname("data-layout-style", "default");
-						sessionStorage.setItem("data-layout-style", "default");
-						document.documentElement.setAttribute("data-layout-style", "default");
-						break;
-					case "detached":
-						getElementUsingTagname("data-layout-style", "detached");
-						sessionStorage.setItem("data-layout-style", "detached");
-						document.documentElement.setAttribute("data-layout-style", "detached");
-						break;
-					default:
-						if (sessionStorage.getItem("data-layout-style") == "detached") {
-							getElementUsingTagname("data-layout-style", "detached");
-							sessionStorage.setItem("data-layout-style", "detached");
-							document.documentElement.setAttribute("data-layout-style", "detached");
-						} else {
-							getElementUsingTagname("data-layout-style", "default");
-							sessionStorage.setItem("data-layout-style", "default");
-							document.documentElement.setAttribute("data-layout-style", "default");
-						}
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-layout-style"]) {
+		// 			case "default":
+		// 				getElementUsingTagname("data-layout-style", "default");
+		// 				sessionStorage.setItem("data-layout-style", "default");
+		// 				document.documentElement.setAttribute("data-layout-style", "default");
+		// 				break;
+		// 			case "detached":
+		// 				getElementUsingTagname("data-layout-style", "detached");
+		// 				sessionStorage.setItem("data-layout-style", "detached");
+		// 				document.documentElement.setAttribute("data-layout-style", "detached");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-layout-style") == "detached") {
+		// 					getElementUsingTagname("data-layout-style", "detached");
+		// 					sessionStorage.setItem("data-layout-style", "detached");
+		// 					document.documentElement.setAttribute("data-layout-style", "detached");
+		// 				} else {
+		// 					getElementUsingTagname("data-layout-style", "default");
+		// 					sessionStorage.setItem("data-layout-style", "default");
+		// 					document.documentElement.setAttribute("data-layout-style", "default");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-sidebar-size"]) {
-					case "lg":
-						getElementUsingTagname("data-sidebar-size", "lg");
-						document.documentElement.setAttribute("data-sidebar-size", "lg");
-						sessionStorage.setItem("data-sidebar-size", "lg");
-						break;
+		// 		switch (isLayoutAttributes["data-sidebar-size"]) {
+		// 			case "lg":
+		// 				getElementUsingTagname("data-sidebar-size", "lg");
+		// 				document.documentElement.setAttribute("data-sidebar-size", "lg");
+		// 				sessionStorage.setItem("data-sidebar-size", "lg");
+		// 				break;
 
-					case "sm":
-						getElementUsingTagname("data-sidebar-size", "sm");
-						document.documentElement.setAttribute("data-sidebar-size", "sm");
-						sessionStorage.setItem("data-sidebar-size", "sm");
-						break;
+		// 			case "sm":
+		// 				getElementUsingTagname("data-sidebar-size", "sm");
+		// 				document.documentElement.setAttribute("data-sidebar-size", "sm");
+		// 				sessionStorage.setItem("data-sidebar-size", "sm");
+		// 				break;
 
-					case "md":
-						getElementUsingTagname("data-sidebar-size", "md");
-						document.documentElement.setAttribute("data-sidebar-size", "md");
-						sessionStorage.setItem("data-sidebar-size", "md");
-						break;
+		// 			case "md":
+		// 				getElementUsingTagname("data-sidebar-size", "md");
+		// 				document.documentElement.setAttribute("data-sidebar-size", "md");
+		// 				sessionStorage.setItem("data-sidebar-size", "md");
+		// 				break;
 
-					case "sm-hover":
-						getElementUsingTagname("data-sidebar-size", "sm-hover");
-						document.documentElement.setAttribute("data-sidebar-size", "sm-hover");
-						sessionStorage.setItem("data-sidebar-size", "sm-hover");
-						break;
+		// 			case "sm-hover":
+		// 				getElementUsingTagname("data-sidebar-size", "sm-hover");
+		// 				document.documentElement.setAttribute("data-sidebar-size", "sm-hover");
+		// 				sessionStorage.setItem("data-sidebar-size", "sm-hover");
+		// 				break;
 
-					default:
-						if (sessionStorage.getItem("data-sidebar-size") == "sm") {
-							document.documentElement.setAttribute("data-sidebar-size", "sm");
-							getElementUsingTagname("data-sidebar-size", "sm");
-							sessionStorage.setItem("data-sidebar-size", "sm");
-						} else if (sessionStorage.getItem("data-sidebar-size") == "md") {
-							document.documentElement.setAttribute("data-sidebar-size", "md");
-							getElementUsingTagname("data-sidebar-size", "md");
-							sessionStorage.setItem("data-sidebar-size", "md");
-						} else if (sessionStorage.getItem("data-sidebar-size") == "sm-hover") {
-							document.documentElement.setAttribute("data-sidebar-size", "sm-hover");
-							getElementUsingTagname("data-sidebar-size", "sm-hover");
-							sessionStorage.setItem("data-sidebar-size", "sm-hover");
-						} else {
-							document.documentElement.setAttribute("data-sidebar-size", "lg");
-							getElementUsingTagname("data-sidebar-size", "lg");
-							sessionStorage.setItem("data-sidebar-size", "lg");
-						}
-						break;
-				}
+		// 			default:
+		// 				if (sessionStorage.getItem("data-sidebar-size") == "sm") {
+		// 					document.documentElement.setAttribute("data-sidebar-size", "sm");
+		// 					getElementUsingTagname("data-sidebar-size", "sm");
+		// 					sessionStorage.setItem("data-sidebar-size", "sm");
+		// 				} else if (sessionStorage.getItem("data-sidebar-size") == "md") {
+		// 					document.documentElement.setAttribute("data-sidebar-size", "md");
+		// 					getElementUsingTagname("data-sidebar-size", "md");
+		// 					sessionStorage.setItem("data-sidebar-size", "md");
+		// 				} else if (sessionStorage.getItem("data-sidebar-size") == "sm-hover") {
+		// 					document.documentElement.setAttribute("data-sidebar-size", "sm-hover");
+		// 					getElementUsingTagname("data-sidebar-size", "sm-hover");
+		// 					sessionStorage.setItem("data-sidebar-size", "sm-hover");
+		// 				} else {
+		// 					document.documentElement.setAttribute("data-sidebar-size", "lg");
+		// 					getElementUsingTagname("data-sidebar-size", "lg");
+		// 					sessionStorage.setItem("data-sidebar-size", "lg");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-bs-theme"]) {
-					case "light":
-						getElementUsingTagname("data-bs-theme", "light");
-						document.documentElement.setAttribute("data-bs-theme", "light");
-						sessionStorage.setItem("data-bs-theme", "light");
-						break;
-					case "dark":
-						getElementUsingTagname("data-bs-theme", "dark");
-						document.documentElement.setAttribute("data-bs-theme", "dark");
-						sessionStorage.setItem("data-bs-theme", "dark");
-						break;
-					default:
-						if (sessionStorage.getItem("data-bs-theme") && sessionStorage.getItem("data-bs-theme") == "dark") {
-							sessionStorage.setItem("data-bs-theme", "dark");
-							document.documentElement.setAttribute("data-bs-theme", "dark");
-							getElementUsingTagname("data-bs-theme", "dark");
-						} else {
-							sessionStorage.setItem("data-bs-theme", "light");
-							document.documentElement.setAttribute("data-bs-theme", "light");
-							getElementUsingTagname("data-bs-theme", "light");
-						}
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-bs-theme"]) {
+		// 			case "light":
+		// 				getElementUsingTagname("data-bs-theme", "light");
+		// 				document.documentElement.setAttribute("data-bs-theme", "light");
+		// 				sessionStorage.setItem("data-bs-theme", "light");
+		// 				break;
+		// 			case "dark":
+		// 				getElementUsingTagname("data-bs-theme", "dark");
+		// 				document.documentElement.setAttribute("data-bs-theme", "dark");
+		// 				sessionStorage.setItem("data-bs-theme", "dark");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-bs-theme") && sessionStorage.getItem("data-bs-theme") == "dark") {
+		// 					sessionStorage.setItem("data-bs-theme", "dark");
+		// 					document.documentElement.setAttribute("data-bs-theme", "dark");
+		// 					getElementUsingTagname("data-bs-theme", "dark");
+		// 				} else {
+		// 					sessionStorage.setItem("data-bs-theme", "light");
+		// 					document.documentElement.setAttribute("data-bs-theme", "light");
+		// 					getElementUsingTagname("data-bs-theme", "light");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-layout-width"]) {
-					case "fluid":
-						getElementUsingTagname("data-layout-width", "fluid");
-						document.documentElement.setAttribute("data-layout-width", "fluid");
-						sessionStorage.setItem("data-layout-width", "fluid");
-						break;
-					case "boxed":
-						getElementUsingTagname("data-layout-width", "boxed");
-						document.documentElement.setAttribute("data-layout-width", "boxed");
-						sessionStorage.setItem("data-layout-width", "boxed");
-						break;
-					default:
-						if (sessionStorage.getItem("data-layout-width") == "boxed") {
-							sessionStorage.setItem("data-layout-width", "boxed");
-							document.documentElement.setAttribute("data-layout-width", "boxed");
-							getElementUsingTagname("data-layout-width", "boxed");
-						} else {
-							sessionStorage.setItem("data-layout-width", "fluid");
-							document.documentElement.setAttribute("data-layout-width", "fluid");
-							getElementUsingTagname("data-layout-width", "fluid");
-						}
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-layout-width"]) {
+		// 			case "fluid":
+		// 				getElementUsingTagname("data-layout-width", "fluid");
+		// 				document.documentElement.setAttribute("data-layout-width", "fluid");
+		// 				sessionStorage.setItem("data-layout-width", "fluid");
+		// 				break;
+		// 			case "boxed":
+		// 				getElementUsingTagname("data-layout-width", "boxed");
+		// 				document.documentElement.setAttribute("data-layout-width", "boxed");
+		// 				sessionStorage.setItem("data-layout-width", "boxed");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-layout-width") == "boxed") {
+		// 					sessionStorage.setItem("data-layout-width", "boxed");
+		// 					document.documentElement.setAttribute("data-layout-width", "boxed");
+		// 					getElementUsingTagname("data-layout-width", "boxed");
+		// 				} else {
+		// 					sessionStorage.setItem("data-layout-width", "fluid");
+		// 					document.documentElement.setAttribute("data-layout-width", "fluid");
+		// 					getElementUsingTagname("data-layout-width", "fluid");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-sidebar"]) {
-					case "light":
-						getElementUsingTagname("data-sidebar", "light");
-						sessionStorage.setItem("data-sidebar", "light");
-						document.documentElement.setAttribute("data-sidebar", "light");
-						break;
-					case "dark":
-						getElementUsingTagname("data-sidebar", "dark");
-						sessionStorage.setItem("data-sidebar", "dark");
-						document.documentElement.setAttribute("data-sidebar", "dark");
-						break;
-					case "gradient":
-						getElementUsingTagname("data-sidebar", "gradient");
-						sessionStorage.setItem("data-sidebar", "gradient");
-						document.documentElement.setAttribute("data-sidebar", "gradient");
-						break;
-					case "gradient-2":
-						getElementUsingTagname("data-sidebar", "gradient-2");
-						sessionStorage.setItem("data-sidebar", "gradient-2");
-						document.documentElement.setAttribute("data-sidebar", "gradient-2");
-						break;
-					case "gradient-3":
-						getElementUsingTagname("data-sidebar", "gradient-3");
-						sessionStorage.setItem("data-sidebar", "gradient-3");
-						document.documentElement.setAttribute("data-sidebar", "gradient-3");
-						break;
-					case "gradient-4":
-						getElementUsingTagname("data-sidebar", "gradient-4");
-						sessionStorage.setItem("data-sidebar", "gradient-4");
-						document.documentElement.setAttribute("data-sidebar", "gradient-4");
-						break;
-					default:
-						if (sessionStorage.getItem("data-sidebar") && sessionStorage.getItem("data-sidebar") == "light") {
-							sessionStorage.setItem("data-sidebar", "light");
-							getElementUsingTagname("data-sidebar", "light");
-							document.documentElement.setAttribute("data-sidebar", "light");
-						} else if (sessionStorage.getItem("data-sidebar") == "dark") {
-							sessionStorage.setItem("data-sidebar", "dark");
-							getElementUsingTagname("data-sidebar", "dark");
-							document.documentElement.setAttribute("data-sidebar", "dark");
-						} else if (sessionStorage.getItem("data-sidebar") == "gradient") {
-							sessionStorage.setItem("data-sidebar", "gradient");
-							getElementUsingTagname("data-sidebar", "gradient");
-							document.documentElement.setAttribute("data-sidebar", "gradient");
-						} else if (sessionStorage.getItem("data-sidebar") == "gradient-2") {
-							sessionStorage.setItem("data-sidebar", "gradient-2");
-							getElementUsingTagname("data-sidebar", "gradient-2");
-							document.documentElement.setAttribute("data-sidebar", "gradient-2");
-						} else if (sessionStorage.getItem("data-sidebar") == "gradient-3") {
-							sessionStorage.setItem("data-sidebar", "gradient-3");
-							getElementUsingTagname("data-sidebar", "gradient-3");
-							document.documentElement.setAttribute("data-sidebar", "gradient-3");
-						} else if (sessionStorage.getItem("data-sidebar") == "gradient-4") {
-							sessionStorage.setItem("data-sidebar", "gradient-4");
-							getElementUsingTagname("data-sidebar", "gradient-4");
-							document.documentElement.setAttribute("data-sidebar", "gradient-4");
-						}
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-sidebar"]) {
+		// 			case "light":
+		// 				getElementUsingTagname("data-sidebar", "light");
+		// 				sessionStorage.setItem("data-sidebar", "light");
+		// 				document.documentElement.setAttribute("data-sidebar", "light");
+		// 				break;
+		// 			case "dark":
+		// 				getElementUsingTagname("data-sidebar", "dark");
+		// 				sessionStorage.setItem("data-sidebar", "dark");
+		// 				document.documentElement.setAttribute("data-sidebar", "dark");
+		// 				break;
+		// 			case "gradient":
+		// 				getElementUsingTagname("data-sidebar", "gradient");
+		// 				sessionStorage.setItem("data-sidebar", "gradient");
+		// 				document.documentElement.setAttribute("data-sidebar", "gradient");
+		// 				break;
+		// 			case "gradient-2":
+		// 				getElementUsingTagname("data-sidebar", "gradient-2");
+		// 				sessionStorage.setItem("data-sidebar", "gradient-2");
+		// 				document.documentElement.setAttribute("data-sidebar", "gradient-2");
+		// 				break;
+		// 			case "gradient-3":
+		// 				getElementUsingTagname("data-sidebar", "gradient-3");
+		// 				sessionStorage.setItem("data-sidebar", "gradient-3");
+		// 				document.documentElement.setAttribute("data-sidebar", "gradient-3");
+		// 				break;
+		// 			case "gradient-4":
+		// 				getElementUsingTagname("data-sidebar", "gradient-4");
+		// 				sessionStorage.setItem("data-sidebar", "gradient-4");
+		// 				document.documentElement.setAttribute("data-sidebar", "gradient-4");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-sidebar") && sessionStorage.getItem("data-sidebar") == "light") {
+		// 					sessionStorage.setItem("data-sidebar", "light");
+		// 					getElementUsingTagname("data-sidebar", "light");
+		// 					document.documentElement.setAttribute("data-sidebar", "light");
+		// 				} else if (sessionStorage.getItem("data-sidebar") == "dark") {
+		// 					sessionStorage.setItem("data-sidebar", "dark");
+		// 					getElementUsingTagname("data-sidebar", "dark");
+		// 					document.documentElement.setAttribute("data-sidebar", "dark");
+		// 				} else if (sessionStorage.getItem("data-sidebar") == "gradient") {
+		// 					sessionStorage.setItem("data-sidebar", "gradient");
+		// 					getElementUsingTagname("data-sidebar", "gradient");
+		// 					document.documentElement.setAttribute("data-sidebar", "gradient");
+		// 				} else if (sessionStorage.getItem("data-sidebar") == "gradient-2") {
+		// 					sessionStorage.setItem("data-sidebar", "gradient-2");
+		// 					getElementUsingTagname("data-sidebar", "gradient-2");
+		// 					document.documentElement.setAttribute("data-sidebar", "gradient-2");
+		// 				} else if (sessionStorage.getItem("data-sidebar") == "gradient-3") {
+		// 					sessionStorage.setItem("data-sidebar", "gradient-3");
+		// 					getElementUsingTagname("data-sidebar", "gradient-3");
+		// 					document.documentElement.setAttribute("data-sidebar", "gradient-3");
+		// 				} else if (sessionStorage.getItem("data-sidebar") == "gradient-4") {
+		// 					sessionStorage.setItem("data-sidebar", "gradient-4");
+		// 					getElementUsingTagname("data-sidebar", "gradient-4");
+		// 					document.documentElement.setAttribute("data-sidebar", "gradient-4");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-sidebar-image"]) {
-					case "none":
-						getElementUsingTagname("data-sidebar-image", "none");
-						sessionStorage.setItem("data-sidebar-image", "none");
-						document.documentElement.setAttribute("data-sidebar-image", "none");
-						break;
-					case "img-1":
-						getElementUsingTagname("data-sidebar-image", "img-1");
-						sessionStorage.setItem("data-sidebar-image", "img-1");
-						document.documentElement.setAttribute("data-sidebar-image", "img-1");
-						break;
-					case "img-2":
-						getElementUsingTagname("data-sidebar-image", "img-2");
-						sessionStorage.setItem("data-sidebar-image", "img-2");
-						document.documentElement.setAttribute("data-sidebar-image", "img-2");
-						break;
-					case "img-3":
-						getElementUsingTagname("data-sidebar-image", "img-3");
-						sessionStorage.setItem("data-sidebar-image", "img-3");
-						document.documentElement.setAttribute("data-sidebar-image", "img-3");
-						break;
-					case "img-4":
-						getElementUsingTagname("data-sidebar-image", "img-4");
-						sessionStorage.setItem("data-sidebar-image", "img-4");
-						document.documentElement.setAttribute("data-sidebar-image", "img-4");
-						break;
-					default:
-						if (sessionStorage.getItem("data-sidebar-image") && sessionStorage.getItem("data-sidebar-image") == "none") {
-							sessionStorage.setItem("data-sidebar-image", "none");
-							getElementUsingTagname("data-sidebar-image", "none");
-							document.documentElement.setAttribute("data-sidebar-image", "none");
-						} else if (sessionStorage.getItem("data-sidebar-image") == "img-1") {
-							sessionStorage.setItem("data-sidebar-image", "img-1");
-							getElementUsingTagname("data-sidebar-image", "img-1");
-							document.documentElement.setAttribute("data-sidebar-image", "img-2");
-						} else if (sessionStorage.getItem("data-sidebar-image") == "img-2") {
-							sessionStorage.setItem("data-sidebar-image", "img-2");
-							getElementUsingTagname("data-sidebar-image", "img-2");
-							document.documentElement.setAttribute("data-sidebar-image", "img-2");
-						} else if (sessionStorage.getItem("data-sidebar-image") == "img-3") {
-							sessionStorage.setItem("data-sidebar-image", "img-3");
-							getElementUsingTagname("data-sidebar-image", "img-3");
-							document.documentElement.setAttribute("data-sidebar-image", "img-3");
-						} else if (sessionStorage.getItem("data-sidebar-image") == "img-4") {
-							sessionStorage.setItem("data-sidebar-image", "img-4");
-							getElementUsingTagname("data-sidebar-image", "img-4");
-							document.documentElement.setAttribute("data-sidebar-image", "img-4");
-						}
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-sidebar-image"]) {
+		// 			case "none":
+		// 				getElementUsingTagname("data-sidebar-image", "none");
+		// 				sessionStorage.setItem("data-sidebar-image", "none");
+		// 				document.documentElement.setAttribute("data-sidebar-image", "none");
+		// 				break;
+		// 			case "img-1":
+		// 				getElementUsingTagname("data-sidebar-image", "img-1");
+		// 				sessionStorage.setItem("data-sidebar-image", "img-1");
+		// 				document.documentElement.setAttribute("data-sidebar-image", "img-1");
+		// 				break;
+		// 			case "img-2":
+		// 				getElementUsingTagname("data-sidebar-image", "img-2");
+		// 				sessionStorage.setItem("data-sidebar-image", "img-2");
+		// 				document.documentElement.setAttribute("data-sidebar-image", "img-2");
+		// 				break;
+		// 			case "img-3":
+		// 				getElementUsingTagname("data-sidebar-image", "img-3");
+		// 				sessionStorage.setItem("data-sidebar-image", "img-3");
+		// 				document.documentElement.setAttribute("data-sidebar-image", "img-3");
+		// 				break;
+		// 			case "img-4":
+		// 				getElementUsingTagname("data-sidebar-image", "img-4");
+		// 				sessionStorage.setItem("data-sidebar-image", "img-4");
+		// 				document.documentElement.setAttribute("data-sidebar-image", "img-4");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-sidebar-image") && sessionStorage.getItem("data-sidebar-image") == "none") {
+		// 					sessionStorage.setItem("data-sidebar-image", "none");
+		// 					getElementUsingTagname("data-sidebar-image", "none");
+		// 					document.documentElement.setAttribute("data-sidebar-image", "none");
+		// 				} else if (sessionStorage.getItem("data-sidebar-image") == "img-1") {
+		// 					sessionStorage.setItem("data-sidebar-image", "img-1");
+		// 					getElementUsingTagname("data-sidebar-image", "img-1");
+		// 					document.documentElement.setAttribute("data-sidebar-image", "img-2");
+		// 				} else if (sessionStorage.getItem("data-sidebar-image") == "img-2") {
+		// 					sessionStorage.setItem("data-sidebar-image", "img-2");
+		// 					getElementUsingTagname("data-sidebar-image", "img-2");
+		// 					document.documentElement.setAttribute("data-sidebar-image", "img-2");
+		// 				} else if (sessionStorage.getItem("data-sidebar-image") == "img-3") {
+		// 					sessionStorage.setItem("data-sidebar-image", "img-3");
+		// 					getElementUsingTagname("data-sidebar-image", "img-3");
+		// 					document.documentElement.setAttribute("data-sidebar-image", "img-3");
+		// 				} else if (sessionStorage.getItem("data-sidebar-image") == "img-4") {
+		// 					sessionStorage.setItem("data-sidebar-image", "img-4");
+		// 					getElementUsingTagname("data-sidebar-image", "img-4");
+		// 					document.documentElement.setAttribute("data-sidebar-image", "img-4");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-layout-position"]) {
-					case "fixed":
-						getElementUsingTagname("data-layout-position", "fixed");
-						sessionStorage.setItem("data-layout-position", "fixed");
-						document.documentElement.setAttribute("data-layout-position", "fixed");
-						break;
-					case "scrollable":
-						getElementUsingTagname("data-layout-position", "scrollable");
-						sessionStorage.setItem("data-layout-position", "scrollable");
-						document.documentElement.setAttribute("data-layout-position", "scrollable");
-						break;
-					default:
-						if (sessionStorage.getItem("data-layout-position") && sessionStorage.getItem("data-layout-position") == "scrollable") {
-							getElementUsingTagname("data-layout-position", "scrollable");
-							sessionStorage.setItem("data-layout-position", "scrollable");
-							document.documentElement.setAttribute("data-layout-position", "scrollable");
-						} else {
-							getElementUsingTagname("data-layout-position", "fixed");
-							sessionStorage.setItem("data-layout-position", "fixed");
-							document.documentElement.setAttribute("data-layout-position", "fixed");
-						}
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-layout-position"]) {
+		// 			case "fixed":
+		// 				getElementUsingTagname("data-layout-position", "fixed");
+		// 				sessionStorage.setItem("data-layout-position", "fixed");
+		// 				document.documentElement.setAttribute("data-layout-position", "fixed");
+		// 				break;
+		// 			case "scrollable":
+		// 				getElementUsingTagname("data-layout-position", "scrollable");
+		// 				sessionStorage.setItem("data-layout-position", "scrollable");
+		// 				document.documentElement.setAttribute("data-layout-position", "scrollable");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-layout-position") && sessionStorage.getItem("data-layout-position") == "scrollable") {
+		// 					getElementUsingTagname("data-layout-position", "scrollable");
+		// 					sessionStorage.setItem("data-layout-position", "scrollable");
+		// 					document.documentElement.setAttribute("data-layout-position", "scrollable");
+		// 				} else {
+		// 					getElementUsingTagname("data-layout-position", "fixed");
+		// 					sessionStorage.setItem("data-layout-position", "fixed");
+		// 					document.documentElement.setAttribute("data-layout-position", "fixed");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-preloader"]) {
-					case "disable":
-						getElementUsingTagname("data-preloader", "disable");
-						sessionStorage.setItem("data-preloader", "disable");
-						document.documentElement.setAttribute("data-preloader", "disable");
+		// 		switch (isLayoutAttributes["data-preloader"]) {
+		// 			case "disable":
+		// 				getElementUsingTagname("data-preloader", "disable");
+		// 				sessionStorage.setItem("data-preloader", "disable");
+		// 				document.documentElement.setAttribute("data-preloader", "disable");
 
-						break;
-					case "enable":
-						getElementUsingTagname("data-preloader", "enable");
-						sessionStorage.setItem("data-preloader", "enable");
-						document.documentElement.setAttribute("data-preloader", "enable");
-						var preloader = document.getElementById("preloader");
-						if (preloader) {
-							window.addEventListener("load", function () {
-								preloader.style.opacity = "0";
-								preloader.style.visibility = "hidden";
-							});
-						}
-						break;
-					default:
-						if (sessionStorage.getItem("data-preloader") && sessionStorage.getItem("data-preloader") == "disable") {
-							getElementUsingTagname("data-preloader", "disable");
-							sessionStorage.setItem("data-preloader", "disable");
-							document.documentElement.setAttribute("data-preloader", "disable");
+		// 				break;
+		// 			case "enable":
+		// 				getElementUsingTagname("data-preloader", "enable");
+		// 				sessionStorage.setItem("data-preloader", "enable");
+		// 				document.documentElement.setAttribute("data-preloader", "enable");
+		// 				var preloader = document.getElementById("preloader");
+		// 				if (preloader) {
+		// 					window.addEventListener("load", function () {
+		// 						preloader.style.opacity = "0";
+		// 						preloader.style.visibility = "hidden";
+		// 					});
+		// 				}
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-preloader") && sessionStorage.getItem("data-preloader") == "disable") {
+		// 					getElementUsingTagname("data-preloader", "disable");
+		// 					sessionStorage.setItem("data-preloader", "disable");
+		// 					document.documentElement.setAttribute("data-preloader", "disable");
 
-						} else if (sessionStorage.getItem("data-preloader") == "enable") {
-							getElementUsingTagname("data-preloader", "enable");
-							sessionStorage.setItem("data-preloader", "enable");
-							document.documentElement.setAttribute("data-preloader", "enable");
-							var preloader = document.getElementById("preloader");
-							if (preloader) {
-								window.addEventListener("load", function () {
-									preloader.style.opacity = "0";
-									preloader.style.visibility = "hidden";
-								});
-							}
-						} else {
-							document.documentElement.setAttribute("data-preloader", "disable");
-						}
-						break;
-				}
+		// 				} else if (sessionStorage.getItem("data-preloader") == "enable") {
+		// 					getElementUsingTagname("data-preloader", "enable");
+		// 					sessionStorage.setItem("data-preloader", "enable");
+		// 					document.documentElement.setAttribute("data-preloader", "enable");
+		// 					var preloader = document.getElementById("preloader");
+		// 					if (preloader) {
+		// 						window.addEventListener("load", function () {
+		// 							preloader.style.opacity = "0";
+		// 							preloader.style.visibility = "hidden";
+		// 						});
+		// 					}
+		// 				} else {
+		// 					document.documentElement.setAttribute("data-preloader", "disable");
+		// 				}
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-theme-colors"]) {
-					case "default":
-						getElementUsingTagname("data-theme-colors", "default");
-						sessionStorage.setItem("data-theme-colors", "default");
-						document.documentElement.setAttribute("data-theme-colors", "default");
-						break;
-					case "green":
-						getElementUsingTagname("data-theme-colors", "green");
-						sessionStorage.setItem("data-theme-colors", "green");
-						document.documentElement.setAttribute("data-theme-colors", "green");
-						break;
-					case "purple":
-						getElementUsingTagname("data-theme-colors", "purple");
-						sessionStorage.setItem("data-theme-colors", "purple");
-						document.documentElement.setAttribute("data-theme-colors", "purple");
-						break;
-					case "blue":
-						getElementUsingTagname("data-theme-colors", "blue");
-						sessionStorage.setItem("data-theme-colors", "blue");
-						document.documentElement.setAttribute("data-theme-colors", "blue");
-						break;
-					default:
-						getElementUsingTagname("data-theme-colors", "default");
-						sessionStorage.setItem("data-theme-colors", "default");
-						document.documentElement.setAttribute("data-theme-colors", "default");
-						break;
-				}
+		// 		switch (isLayoutAttributes["data-theme-colors"]) {
+		// 			case "default":
+		// 				getElementUsingTagname("data-theme-colors", "default");
+		// 				sessionStorage.setItem("data-theme-colors", "default");
+		// 				document.documentElement.setAttribute("data-theme-colors", "default");
+		// 				break;
+		// 			case "green":
+		// 				getElementUsingTagname("data-theme-colors", "green");
+		// 				sessionStorage.setItem("data-theme-colors", "green");
+		// 				document.documentElement.setAttribute("data-theme-colors", "green");
+		// 				break;
+		// 			case "purple":
+		// 				getElementUsingTagname("data-theme-colors", "purple");
+		// 				sessionStorage.setItem("data-theme-colors", "purple");
+		// 				document.documentElement.setAttribute("data-theme-colors", "purple");
+		// 				break;
+		// 			case "blue":
+		// 				getElementUsingTagname("data-theme-colors", "blue");
+		// 				sessionStorage.setItem("data-theme-colors", "blue");
+		// 				document.documentElement.setAttribute("data-theme-colors", "blue");
+		// 				break;
+		// 			default:
+		// 				getElementUsingTagname("data-theme-colors", "default");
+		// 				sessionStorage.setItem("data-theme-colors", "default");
+		// 				document.documentElement.setAttribute("data-theme-colors", "default");
+		// 				break;
+		// 		}
 
-				switch (isLayoutAttributes["data-body-image"]) {
-					case "img-1":
-						getElementUsingTagname("data-body-image", "img-1");
-						sessionStorage.setItem("data-body-image", "img-1");
-						document.documentElement.setAttribute("data-body-image", "img-1");
-						if (document.getElementById("theme-settings-offcanvas")) {
-							document.documentElement.removeAttribute("data-sidebar-image");
-						}
-						break;
-					case "img-2":
-						getElementUsingTagname("data-body-image", "img-2");
-						sessionStorage.setItem("data-body-image", "img-2");
-						document.documentElement.setAttribute("data-body-image", "img-2");
-						break;
-					case "img-3":
-						getElementUsingTagname("data-body-image", "img-3");
-						sessionStorage.setItem("data-body-image", "img-3");
-						document.documentElement.setAttribute("data-body-image", "img-3");
-						break;
-					case "none":
-						getElementUsingTagname("data-body-image", "none");
-						sessionStorage.setItem("data-body-image", "none");
-						document.documentElement.setAttribute("data-body-image", "none");
-						break;
-					default:
-						if (sessionStorage.getItem("data-body-image") && sessionStorage.getItem("data-body-image") == "img-1") {
-							sessionStorage.setItem("data-body-image", "img-1");
-							getElementUsingTagname("data-body-image", "img-1");
-							document.documentElement.setAttribute("data-body-image", "img-1");
+		// 		switch (isLayoutAttributes["data-body-image"]) {
+		// 			case "img-1":
+		// 				getElementUsingTagname("data-body-image", "img-1");
+		// 				sessionStorage.setItem("data-body-image", "img-1");
+		// 				document.documentElement.setAttribute("data-body-image", "img-1");
+		// 				if (document.getElementById("theme-settings-offcanvas")) {
+		// 					document.documentElement.removeAttribute("data-sidebar-image");
+		// 				}
+		// 				break;
+		// 			case "img-2":
+		// 				getElementUsingTagname("data-body-image", "img-2");
+		// 				sessionStorage.setItem("data-body-image", "img-2");
+		// 				document.documentElement.setAttribute("data-body-image", "img-2");
+		// 				break;
+		// 			case "img-3":
+		// 				getElementUsingTagname("data-body-image", "img-3");
+		// 				sessionStorage.setItem("data-body-image", "img-3");
+		// 				document.documentElement.setAttribute("data-body-image", "img-3");
+		// 				break;
+		// 			case "none":
+		// 				getElementUsingTagname("data-body-image", "none");
+		// 				sessionStorage.setItem("data-body-image", "none");
+		// 				document.documentElement.setAttribute("data-body-image", "none");
+		// 				break;
+		// 			default:
+		// 				if (sessionStorage.getItem("data-body-image") && sessionStorage.getItem("data-body-image") == "img-1") {
+		// 					sessionStorage.setItem("data-body-image", "img-1");
+		// 					getElementUsingTagname("data-body-image", "img-1");
+		// 					document.documentElement.setAttribute("data-body-image", "img-1");
 
-							if (document.getElementById("theme-settings-offcanvas")) {
-								if (document.getElementById("sidebar-img")) {
-									document.getElementById("sidebar-img").style.display = "none";
-									document.documentElement.removeAttribute("data-sidebar-image");
-								}
-							}
-						} else if (sessionStorage.getItem("data-body-image") == "img-2") {
-							sessionStorage.setItem("data-body-image", "img-2");
-							getElementUsingTagname("data-body-image", "img-2");
-							document.documentElement.setAttribute("data-body-image", "img-2");
-						} else if (sessionStorage.getItem("data-body-image") == "img-3") {
-							sessionStorage.setItem("data-body-image", "img-3");
-							getElementUsingTagname("data-body-image", "img-3");
-							document.documentElement.setAttribute("data-body-image", "img-3");
-						} else {
-							sessionStorage.setItem("data-body-image", "none");
-							getElementUsingTagname("data-body-image", "none");
-							document.documentElement.setAttribute("data-body-image", "none");
-						}
-						break;
-				}
-			default:
-				break;
-		}
+		// 					if (document.getElementById("theme-settings-offcanvas")) {
+		// 						if (document.getElementById("sidebar-img")) {
+		// 							document.getElementById("sidebar-img").style.display = "none";
+		// 							document.documentElement.removeAttribute("data-sidebar-image");
+		// 						}
+		// 					}
+		// 				} else if (sessionStorage.getItem("data-body-image") == "img-2") {
+		// 					sessionStorage.setItem("data-body-image", "img-2");
+		// 					getElementUsingTagname("data-body-image", "img-2");
+		// 					document.documentElement.setAttribute("data-body-image", "img-2");
+		// 				} else if (sessionStorage.getItem("data-body-image") == "img-3") {
+		// 					sessionStorage.setItem("data-body-image", "img-3");
+		// 					getElementUsingTagname("data-body-image", "img-3");
+		// 					document.documentElement.setAttribute("data-body-image", "img-3");
+		// 				} else {
+		// 					sessionStorage.setItem("data-body-image", "none");
+		// 					getElementUsingTagname("data-body-image", "none");
+		// 					document.documentElement.setAttribute("data-body-image", "none");
+		// 				}
+		// 				break;
+		// 		}
+		// 	default:
+		// 		break;
+		// }
 	}
 
 	function initMenuItemScroll() {
@@ -1819,203 +1808,202 @@ File: Main Js File
 	// add change event listener on right layout setting
 	var resizeEvent = new Event('resize');
 	function getElementUsingTagname(ele, val) {
-		Array.from(document.querySelectorAll("input[name=" + ele + "]")).forEach(function (x) {
-			val == x.value ? (x.checked = true) : (x.checked = false);
+		// Array.from(document.querySelectorAll("input[name=" + ele + "]")).forEach(function (x) {
+		// 	val == x.value ? (x.checked = true) : (x.checked = false);
 
-			x.addEventListener("change", function () {
-				document.documentElement.setAttribute(ele, x.value);
-				sessionStorage.setItem(ele, x.value);
-				initLanguage();
+		// 	x.addEventListener("change", function () {
+		// 		document.documentElement.setAttribute(ele, x.value);
+		// 		sessionStorage.setItem(ele, x.value);
+		// 		initLanguage();
 
-				if (ele == "data-layout-width" && x.value == "boxed") {
-					document.documentElement.setAttribute("data-sidebar-size", "sm-hover");
-					sessionStorage.setItem("data-sidebar-size", "sm-hover");
-					document.getElementById("sidebar-size-small-hover").checked = true;
-				} else if (ele == "data-layout-width" && x.value == "fluid") {
-					document.documentElement.setAttribute("data-sidebar-size", "lg");
-					sessionStorage.setItem("data-sidebar-size", "lg");
-					document.getElementById("sidebar-size-default").checked = true;
-				}
+		// 		if (ele == "data-layout-width" && x.value == "boxed") {
+		// 			document.documentElement.setAttribute("data-sidebar-size", "sm-hover");
+		// 			sessionStorage.setItem("data-sidebar-size", "sm-hover");
+		// 			document.getElementById("sidebar-size-small-hover").checked = true;
+		// 		} else if (ele == "data-layout-width" && x.value == "fluid") {
+		// 			document.documentElement.setAttribute("data-sidebar-size", "lg");
+		// 			sessionStorage.setItem("data-sidebar-size", "lg");
+		// 			document.getElementById("sidebar-size-default").checked = true;
+		// 		}
 
-				if (ele == "data-layout") {
-					if (x.value == "vertical") {
-						hideShowLayoutOptions("vertical");
-						isCollapseMenu();
-						feather.replace();
-					} else if (x.value == "horizontal") {
-						if (document.getElementById("sidebarimg-none")) {
-							document.getElementById("sidebarimg-none").click();
-						}
-						hideShowLayoutOptions("horizontal");
-						feather.replace();
-					} else if (x.value == "twocolumn") {
-						hideShowLayoutOptions("twocolumn");
-						document.documentElement.setAttribute("data-layout-width", "fluid");
-						document.getElementById("layout-width-fluid").click();
-						twoColumnMenuGenerate();
-						initTwoColumnActiveMenu();
-						isCollapseMenu();
-						feather.replace();
-					} else if (x.value == "semibox") {
-						hideShowLayoutOptions("semibox");
-						document.documentElement.setAttribute("data-layout-width", "fluid");
-						document.getElementById("layout-width-fluid").click();
-						document.documentElement.setAttribute("data-layout-style", "default");
-						document.getElementById("sidebar-view-default").click();
-						isCollapseMenu();
-						feather.replace();
-					}
-				}
+		// 		if (ele == "data-layout") {
+		// 			if (x.value == "vertical") {
+		// 				hideShowLayoutOptions("vertical");
+		// 				isCollapseMenu();
+		// 				feather.replace();
+		// 			} else if (x.value == "horizontal") {
+		// 				if (document.getElementById("sidebarimg-none")) {
+		// 					document.getElementById("sidebarimg-none").click();
+		// 				}
+		// 				hideShowLayoutOptions("horizontal");
+		// 				feather.replace();
+		// 			} else if (x.value == "twocolumn") {
+		// 				hideShowLayoutOptions("twocolumn");
+		// 				document.documentElement.setAttribute("data-layout-width", "fluid");
+		// 				document.getElementById("layout-width-fluid").click();
+		// 				twoColumnMenuGenerate();
+		// 				initTwoColumnActiveMenu();
+		// 				isCollapseMenu();
+		// 				feather.replace();
+		// 			} else if (x.value == "semibox") {
+		// 				hideShowLayoutOptions("semibox");
+		// 				document.documentElement.setAttribute("data-layout-width", "fluid");
+		// 				document.getElementById("layout-width-fluid").click();
+		// 				document.documentElement.setAttribute("data-layout-style", "default");
+		// 				document.getElementById("sidebar-view-default").click();
+		// 				isCollapseMenu();
+		// 				feather.replace();
+		// 			}
+		// 		}
 
-				var sidebarSections = "block";
-				if (document.documentElement.getAttribute("data-layout") == "semibox") {
-					if (document.documentElement.getAttribute("data-sidebar-visibility") == "hidden") {
-						document.documentElement.removeAttribute("data-sidebar");
-						document.documentElement.removeAttribute("data-sidebar-image");
-						document.documentElement.removeAttribute("data-sidebar-size");
-						sidebarSections = "none";
-					} else {
-						document.documentElement.setAttribute("data-sidebar", sessionStorage.getItem("data-sidebar"));
-						document.documentElement.setAttribute("data-sidebar-image", sessionStorage.getItem("data-sidebar-image"));
-						document.documentElement.setAttribute("data-sidebar-size", sessionStorage.getItem("data-sidebar-size"));
-					}
-				}
-				document.getElementById("sidebar-size").style.display = sidebarSections;
-				document.getElementById("sidebar-color").style.display = sidebarSections;
-				if (document.getElementById("sidebar-img")) {
-					document.getElementById("sidebar-img").style.display = sidebarSections;
-				}
+		// 		var sidebarSections = "block";
+		// 		if (document.documentElement.getAttribute("data-layout") == "semibox") {
+		// 			if (document.documentElement.getAttribute("data-sidebar-visibility") == "hidden") {
+		// 				document.documentElement.removeAttribute("data-sidebar");
+		// 				document.documentElement.removeAttribute("data-sidebar-image");
+		// 				document.documentElement.removeAttribute("data-sidebar-size");
+		// 				sidebarSections = "none";
+		// 			} else {
+		// 				document.documentElement.setAttribute("data-sidebar", sessionStorage.getItem("data-sidebar"));
+		// 				document.documentElement.setAttribute("data-sidebar-image", sessionStorage.getItem("data-sidebar-image"));
+		// 				document.documentElement.setAttribute("data-sidebar-size", sessionStorage.getItem("data-sidebar-size"));
+		// 			}
+		// 		}
+		// 		document.getElementById("sidebar-size").style.display = sidebarSections;
+		// 		document.getElementById("sidebar-color").style.display = sidebarSections;
+		// 		if (document.getElementById("sidebar-img")) {
+		// 			document.getElementById("sidebar-img").style.display = sidebarSections;
+		// 		}
 
-				if (ele == "data-preloader" && x.value == "enable") {
-					document.documentElement.setAttribute("data-preloader", "enable");
-					var preloader = document.getElementById("preloader");
-					if (preloader) {
-						setTimeout(function () {
-							preloader.style.opacity = "0";
-							preloader.style.visibility = "hidden";
-						}, 1000);
-					}
-					document.getElementById("customizerclose-btn").click();
-				} else if (ele == "data-preloader" && x.value == "disable") {
-					document.documentElement.setAttribute("data-preloader", "disable");
-					document.getElementById("customizerclose-btn").click();
-				}
+		// 		if (ele == "data-preloader" && x.value == "enable") {
+		// 			document.documentElement.setAttribute("data-preloader", "enable");
+		// 			var preloader = document.getElementById("preloader");
+		// 			if (preloader) {
+		// 				setTimeout(function () {
+		// 					preloader.style.opacity = "0";
+		// 					preloader.style.visibility = "hidden";
+		// 				}, 1000);
+		// 			}
+		// 			document.getElementById("customizerclose-btn").click();
+		// 		} else if (ele == "data-preloader" && x.value == "disable") {
+		// 			document.documentElement.setAttribute("data-preloader", "disable");
+		// 			document.getElementById("customizerclose-btn").click();
+		// 		}
 
-				if (ele == 'data-bs-theme' || ele == 'data-theme' || ele == 'data-theme-colors') {
-					// Dispatch the resize event on the window object
-					window.dispatchEvent(resizeEvent);
-				}
-				if (ele == 'data-theme') {
-					// Dispatch the resize event on the window object
-					document.documentElement.setAttribute("data-theme", x.value);
-					document.getElementById("body-img").style.display = (x.value === "galaxy") ? "block" : "none";
-					if (x.value === "galaxy"){
-						document.documentElement.setAttribute("data-sidebar", "dark");
-						document.documentElement.setAttribute("data-bs-theme", "dark");
-					} else {
-						document.documentElement.setAttribute("data-sidebar", sessionStorage.getItem("data-sidebar"))
-						document.documentElement.setAttribute("data-bs-theme", sessionStorage.getItem("data-bs-theme"))
-					}
-				}
-				if (ele == 'data-theme-colors' || ele == 'data-theme') {
-					setTimeout(() => {
-						window.dispatchEvent(resizeEvent);
-					}, 200);
-				}
-			});
-		});
+		// 		if (ele == 'data-bs-theme' || ele == 'data-theme' || ele == 'data-theme-colors') {
+		// 			// Dispatch the resize event on the window object
+		// 			window.dispatchEvent(resizeEvent);
+		// 		}
+		// 		if (ele == 'data-theme') {
+		// 			// Dispatch the resize event on the window object
+		// 			document.documentElement.setAttribute("data-theme", x.value);
+		// 			document.getElementById("body-img").style.display = (x.value === "galaxy") ? "block" : "none";
+		// 			if (x.value === "galaxy"){
+		// 				document.documentElement.setAttribute("data-sidebar", "dark");
+		// 				document.documentElement.setAttribute("data-bs-theme", "dark");
+		// 			} else {
+		// 				document.documentElement.setAttribute("data-sidebar", sessionStorage.getItem("data-sidebar"))
+		// 				document.documentElement.setAttribute("data-bs-theme", sessionStorage.getItem("data-bs-theme"))
+		// 			}
+		// 		}
+		// 		if (ele == 'data-theme-colors' || ele == 'data-theme') {
+		// 			setTimeout(() => {
+		// 				window.dispatchEvent(resizeEvent);
+		// 			}, 200);
+		// 		}
+		// 	});
+		// });
 
-		if (document.getElementById('collapseBgGradient')) {
-			Array.from(document.querySelectorAll("#collapseBgGradient .form-check input")).forEach(function (subElem) {
-				var myCollapse = document.getElementById('collapseBgGradient')
-				if ((subElem.checked == true)) {
-					var bsCollapse = new bootstrap.Collapse(myCollapse, {
-						toggle: false,
-					})
-					bsCollapse.show()
-				}
+		// if (document.getElementById('collapseBgGradient')) {
+		// 	Array.from(document.querySelectorAll("#collapseBgGradient .form-check input")).forEach(function (subElem) {
+		// 		var myCollapse = document.getElementById('collapseBgGradient')
+		// 		if ((subElem.checked == true)) {
+		// 			var bsCollapse = new bootstrap.Collapse(myCollapse, {
+		// 				toggle: false,
+		// 			})
+		// 			bsCollapse.show()
+		// 		}
 
-				if (document.querySelector("[data-bs-target='#collapseBgGradient']")) {
-					document.querySelector("[data-bs-target='#collapseBgGradient']").addEventListener('click', function (elem) {
-						document.getElementById("sidebar-color-gradient").click();
-					});
-				}
-			});
-		}
+		// 		if (document.querySelector("[data-bs-target='#collapseBgGradient']")) {
+		// 			document.querySelector("[data-bs-target='#collapseBgGradient']").addEventListener('click', function (elem) {
+		// 				document.getElementById("sidebar-color-gradient").click();
+		// 			});
+		// 		}
+		// 	});
+		// }
 
-		if (document.querySelectorAll("[data-bs-target='#collapseBgGradient.show']")) {
-			Array.from(document.querySelectorAll("[data-bs-target='#collapseBgGradient.show']")).forEach(function (subElem) {
-				subElem.addEventListener("click", function () {
-					var myCollapse = document.getElementById('collapseBgGradient')
-					var bsCollapse = new bootstrap.Collapse(myCollapse, {
-						toggle: false,
-					})
-					bsCollapse.hide()
-				})
-			});
-		}
+		// if (document.querySelectorAll("[data-bs-target='#collapseBgGradient.show']")) {
+		// 	Array.from(document.querySelectorAll("[data-bs-target='#collapseBgGradient.show']")).forEach(function (subElem) {
+		// 		subElem.addEventListener("click", function () {
+		// 			var myCollapse = document.getElementById('collapseBgGradient')
+		// 			var bsCollapse = new bootstrap.Collapse(myCollapse, {
+		// 				toggle: false,
+		// 			})
+		// 			bsCollapse.hide()
+		// 		})
+		// 	});
+		// }
 
-		Array.from(document.querySelectorAll("[name='data-sidebar']")).forEach(function (elem) {
-			if (document.querySelector("[data-bs-target='#collapseBgGradient']")) {
-				if (document.querySelector("#collapseBgGradient .form-check input:checked")) {
-					document.querySelector("[data-bs-target='#collapseBgGradient']").classList.add("active");
-				} else {
-					document.querySelector("[data-bs-target='#collapseBgGradient']").classList.remove("active");
-				}
+		// Array.from(document.querySelectorAll("[name='data-sidebar']")).forEach(function (elem) {
+		// 	if (document.querySelector("[data-bs-target='#collapseBgGradient']")) {
+		// 		if (document.querySelector("#collapseBgGradient .form-check input:checked")) {
+		// 			document.querySelector("[data-bs-target='#collapseBgGradient']").classList.add("active");
+		// 		} else {
+		// 			document.querySelector("[data-bs-target='#collapseBgGradient']").classList.remove("active");
+		// 		}
 
-				elem.addEventListener("change", function () {
-					if (document.querySelector("#collapseBgGradient .form-check input:checked")) {
-						document.querySelector("[data-bs-target='#collapseBgGradient']").classList.add("active");
-					} else {
-						document.querySelector("[data-bs-target='#collapseBgGradient']").classList.remove("active");
-					}
-				})
-			}
-		})
-
+		// 		elem.addEventListener("change", function () {
+		// 			if (document.querySelector("#collapseBgGradient .form-check input:checked")) {
+		// 				document.querySelector("[data-bs-target='#collapseBgGradient']").classList.add("active");
+		// 			} else {
+		// 				document.querySelector("[data-bs-target='#collapseBgGradient']").classList.remove("active");
+		// 			}
+		// 		})
+		// 	}
+		// })
 	}
 
 	function setDefaultAttribute() {
-		if (!sessionStorage.getItem("defaultAttribute")) {
-			var attributesValue = document.documentElement.attributes;
-			var isLayoutAttributes = {};
-			Array.from(attributesValue).forEach(function (x) {
-				if (x && x.nodeName && x.nodeName != "undefined") {
-					var nodeKey = x.nodeName;
-					isLayoutAttributes[nodeKey] = x.nodeValue;
-					sessionStorage.setItem(nodeKey, x.nodeValue);
-				}
-			});
-			sessionStorage.setItem("defaultAttribute", JSON.stringify(isLayoutAttributes));
-			layoutSwitch(isLayoutAttributes);
+		// if (!sessionStorage.getItem("defaultAttribute")) {
+		// 	var attributesValue = document.documentElement.attributes;
+		// 	var isLayoutAttributes = {};
+		// 	Array.from(attributesValue).forEach(function (x) {
+		// 		if (x && x.nodeName && x.nodeName != "undefined") {
+		// 			var nodeKey = x.nodeName;
+		// 			isLayoutAttributes[nodeKey] = x.nodeValue;
+		// 			sessionStorage.setItem(nodeKey, x.nodeValue);
+		// 		}
+		// 	});
+		// 	sessionStorage.setItem("defaultAttribute", JSON.stringify(isLayoutAttributes));
+		// 	layoutSwitch(isLayoutAttributes);
 
-			// open right sidebar on first time load
-			var offCanvas = document.querySelector('.btn[data-bs-target="#theme-settings-offcanvas"]');
-			offCanvas ? offCanvas.click() : "";
-		} else {
-			var isLayoutAttributes = {};
-			isLayoutAttributes["data-layout"] = sessionStorage.getItem("data-layout");
-			isLayoutAttributes["data-sidebar-size"] = sessionStorage.getItem("data-sidebar-size");
-			isLayoutAttributes["data-bs-theme"] = sessionStorage.getItem("data-bs-theme");
-			isLayoutAttributes["data-layout-width"] = sessionStorage.getItem("data-layout-width");
-			isLayoutAttributes["data-sidebar"] = sessionStorage.getItem("data-sidebar");
-			isLayoutAttributes['data-sidebar-image'] = sessionStorage.getItem('data-sidebar-image');
-			isLayoutAttributes["data-layout-position"] = sessionStorage.getItem("data-layout-position");
-			isLayoutAttributes["data-layout-style"] = sessionStorage.getItem("data-layout-style");
-			isLayoutAttributes["data-topbar"] = sessionStorage.getItem("data-topbar");
-			isLayoutAttributes["data-preloader"] = sessionStorage.getItem("data-preloader");
-			isLayoutAttributes["data-body-image"] = sessionStorage.getItem("data-body-image");
-			isLayoutAttributes["data-theme"] = sessionStorage.getItem("data-theme");
-			isLayoutAttributes["data-theme-colors"] = sessionStorage.getItem("data-theme-colors");
-			layoutSwitch(isLayoutAttributes);
-		}
+		// 	// open right sidebar on first time load
+		// 	var offCanvas = document.querySelector('.btn[data-bs-target="#theme-settings-offcanvas"]');
+		// 	offCanvas ? offCanvas.click() : "";
+		// } else {
+		// 	var isLayoutAttributes = {};
+		// 	isLayoutAttributes["data-layout"] = sessionStorage.getItem("data-layout");
+		// 	isLayoutAttributes["data-sidebar-size"] = sessionStorage.getItem("data-sidebar-size");
+		// 	isLayoutAttributes["data-bs-theme"] = sessionStorage.getItem("data-bs-theme");
+		// 	isLayoutAttributes["data-layout-width"] = sessionStorage.getItem("data-layout-width");
+		// 	isLayoutAttributes["data-sidebar"] = sessionStorage.getItem("data-sidebar");
+		// 	isLayoutAttributes['data-sidebar-image'] = sessionStorage.getItem('data-sidebar-image');
+		// 	isLayoutAttributes["data-layout-position"] = sessionStorage.getItem("data-layout-position");
+		// 	isLayoutAttributes["data-layout-style"] = sessionStorage.getItem("data-layout-style");
+		// 	isLayoutAttributes["data-topbar"] = sessionStorage.getItem("data-topbar");
+		// 	isLayoutAttributes["data-preloader"] = sessionStorage.getItem("data-preloader");
+		// 	isLayoutAttributes["data-body-image"] = sessionStorage.getItem("data-body-image");
+		// 	isLayoutAttributes["data-theme"] = sessionStorage.getItem("data-theme");
+		// 	isLayoutAttributes["data-theme-colors"] = sessionStorage.getItem("data-theme-colors");
+		// 	layoutSwitch(isLayoutAttributes);
+		// }
 
-		// sidebarUserProfile
-		document.getElementById("sidebarUserProfile")?.addEventListener("click", function (event) {
-			(event.target.checked) ?
-				document.documentElement.setAttribute("data-sidebar-user-show", ""):
-				document.documentElement.removeAttribute("data-sidebar-user-show");
-		});
+		// // sidebarUserProfile
+		// document.getElementById("sidebarUserProfile")?.addEventListener("click", function (event) {
+		// 	(event.target.checked) ?
+		// 		document.documentElement.setAttribute("data-sidebar-user-show", ""):
+		// 		document.documentElement.removeAttribute("data-sidebar-user-show");
+		// });
 	}
 
 	function initFullScreen() {
@@ -2093,7 +2081,7 @@ File: Main Js File
 	}
 
 	function init() {
-		setDefaultAttribute();
+		// setDefaultAttribute();
 		twoColumnMenuGenerate();
 		isCustomDropdown();
 		isCustomDropdownResponsive();
@@ -2106,7 +2094,7 @@ File: Main Js File
 		initComponents();
 		resetLayout();
 		pluginData();
-		initLanguage();
+		// initLanguage();
 		isCollapseMenu();
 		initMenuItemScroll();
 	}

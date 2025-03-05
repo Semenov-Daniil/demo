@@ -6,16 +6,14 @@ use yii\web\AssetBundle;
 use yii\web\View;
 
 /**
- * Dropzone asset bundle.
+ * Cleave js asset bundle.
  */
-class DropzoneAsset extends AssetBundle
+class CleaveAsset extends AssetBundle
 {
     public $sourcePath = '@common/assets';
-    public $css = [
-        'libs/dropzone/dropzone.css',
-    ];
     public $js = [
-        'libs/dropzone/dropzone-min.js',
+        'libs/cleave.js/cleave.min.js',
+        'js/pages/form-masks.init.js',
     ];
     public $depends = [
         'common\assets\AppAsset',

@@ -5,7 +5,7 @@ use yii\bootstrap5\Html;
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
-/** @var app\models\ExpertsEvents $model */
+/** @var app\models\Experts $model */
 ?>
 
 <div class="card">
@@ -36,23 +36,6 @@ use yii\bootstrap5\Html;
                 <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
 
                 <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
-
-                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3']])->textInput() ?>
-        
-                <?= $form->field($model, 'countModules', [
-                    'options' => [
-                        'class' => 'col-md-4 mb-3',
-                    ],
-                    'template' => '
-                        {label}
-                        <div class="input-step full-width">
-                            <button type="button" class="minus material-shadow">–</button>
-                            {input}
-                            <button type="button" class="plus material-shadow">+</button>
-                        </div>
-                        {error}
-                    ',
-                ])->textInput(['type' => 'number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1)]) ?>
 
                 <div class="col-12 text-end">
                     <?= Html::submitButton('

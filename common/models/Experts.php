@@ -8,16 +8,11 @@ use yii\data\ActiveDataProvider;
 use yii\db\Expression;
 use yii\helpers\VarDumper;
 
-/**
- * ExpertsEvents is the model underlying the communication between Experts and Events.
- */
-class ExpertsEvents extends Model 
+class Experts extends Model 
 {
     public string $surname = '';
     public string $name = '';
     public string $patronymic = '';
-    public string $title = '';
-    public int $countModules = 1;
 
     const TITLE_ROLE_EXPERT = "expert";
 
@@ -27,9 +22,8 @@ class ExpertsEvents extends Model
     public function rules(): array
     {
         return [
-            [['surname', 'name', 'title', 'countModules'], 'required'],
-            [['surname', 'name', 'patronymic', 'title'], 'string', 'max' => 255],
-            [['countModules'], 'integer', 'min' => 1],
+            [['surname', 'name'], 'required'],
+            [['surname', 'name', 'patronymic'], 'string', 'max' => 255],
         ];
     }
 
@@ -42,8 +36,6 @@ class ExpertsEvents extends Model
             'surname' => 'Фамилия',
             'name' => 'Имя',
             'patronymic' => 'Отчество',
-            'title' => 'Название события',
-            'countModules' => 'Кол-во модулей',
         ];
     }
 
@@ -65,13 +57,10 @@ class ExpertsEvents extends Model
                 Users::tableName() . '.id',
                 'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
                 'login',
-                EncryptedPasswords::tableName() . '.encrypted_password AS encryptedPassword',
-                'title as event',
-                'countModules' => $subQuery
+                EncryptedPasswords::tableName() . '.encrypted_password AS encryptedPassword'
             ])
             ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
             ->joinWith('encryptedPassword', false)
-            ->joinWith('event', false)
             ->orderBy([
                 new Expression('CASE WHEN ' . Users::tableName() . '.id = ' . Yii::$app->user->id . ' THEN 0 ELSE 1 END')
             ])
@@ -106,14 +95,8 @@ class ExpertsEvents extends Model
                 $user->attributes = $this->attributes;
 
                 if ($user->addExpert()) {
-                    $event = new Events();
-                    $event->attributes = $this->attributes;
-                    $event->experts_id = $user->id;
-                    
-                    if ($event->save()) {
-                        $transaction->commit();
-                        return true;
-                    }
+                    $transaction->commit();
+                    return true;
                 }
 
                 $transaction->rollBack();

@@ -111,26 +111,6 @@ use yii\grid\GridView;
                     'visible' => $dataProvider->totalCount
                 ],
                 [
-                    'label' => 'Событие',
-                    'value' => function($model) {
-                        return $model['event'];
-                    },
-                    'visible' => $dataProvider->totalCount
-                ],
-                [
-                    'label' => 'Кол-во модулей',
-                    'value' => function($model) {
-                        return $model['countModules'];
-                    },
-                    'options' => [
-                        'class' => 'col-1'
-                    ],
-                    'contentOptions' => [
-                        'class' => 'text-center'
-                    ],
-                    'visible' => $dataProvider->totalCount
-                ],
-                [
                     'class' => ActionColumn::class,
                     'template' => '
                         <div class="d-flex flex-wrap gap-2">

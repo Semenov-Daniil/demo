@@ -1,6 +1,7 @@
 <?php
 
 use common\assets\AppAsset;
+use common\assets\CleaveAsset;
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
 use yii\web\View;
@@ -15,7 +16,6 @@ use yii\widgets\Pjax;
 
 $this->title = 'Эксперты';
 
-$this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => YiiAsset::class]);
 $this->registerJsFile('@web/js/experts.js', ['depends' => AppAsset::class]);
 ?>
 

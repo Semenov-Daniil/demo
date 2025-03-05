@@ -3714,10 +3714,6 @@
     :is([data-layout="vertical"], [data-layout="semibox"])[data-sidebar-size="sm-hover"] .navbar-menu:hover .btn-vertical-sm-hover {
         display: inline-block;
     }
-
-    :is([data-layout="vertical"], [data-layout="semibox"])[data-sidebar-size="sm-hover"] .navbar-menu:hover .navbar-brand-box {
-        text-align: left;
-    }
 }
 
 :is([data-layout="vertical"], [data-layout="semibox"])[data-sidebar-size="sm-hover"] .navbar-menu:hover .navbar-nav .menu-dropdown.show {

@@ -13,7 +13,7 @@ use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
 /**
- * This is the model class for table "dm_students_events".
+ * This is the model class for table "dm_students".
  *
  * @property int $students_id
  * @property int $events_id
@@ -24,7 +24,7 @@ use yii\helpers\VarDumper;
  * @property Users $user
  * @property EncryptedPasswords $encryptedPassword
  */
-class StudentsEvents extends ActiveRecord
+class Students extends ActiveRecord
 {
     use RandomStringTrait;
 
@@ -83,7 +83,7 @@ class StudentsEvents extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%students_events}}';
+        return '{{%students}}';
     }
 
     /**
@@ -256,7 +256,7 @@ class StudentsEvents extends ActiveRecord
                 $user->attributes = $this->attributes;
 
                 if ($user->createStudent()) {
-                    $student_event = new StudentsEvents();
+                    $student_event = new static();
                     $student_event->students_id = $user->id;
                     $student_event->events_id = Events::getIdByExpert(Yii::$app->user->id);
                     
@@ -483,7 +483,7 @@ class StudentsEvents extends ActiveRecord
     public static function deleteStudent(string|null $id = null): bool
     {
         if (!is_null($id)) {
-            return StudentsEvents::findOne(['students_id' => $id])?->deleteDataStudent();
+            return self::findOne(['students_id' => $id])?->deleteDataStudent();
         }
         return false;
     }
