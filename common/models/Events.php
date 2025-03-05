@@ -7,6 +7,7 @@ use app\components\DbComponent;
 use app\components\FileComponent;
 use common\traits\RandomStringTrait;
 use Yii;
+use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
@@ -68,9 +69,7 @@ class Events extends ActiveRecord
             return false;
         }
 
-        Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@events') . '/' . $this->dir_title);
-
-        return true;
+        return Students::deleteStudentsEvent($this->id) && Events::removeDirectory($this->id);
     }
     
     /**
@@ -144,7 +143,7 @@ class Events extends ActiveRecord
      */
     public function getStudents()
     {
-        return $this->hasMany(StudentsEvents::class, ['events_id' => 'id']);
+        return $this->hasMany(Students::class, ['events_id' => 'id']);
     }
 
     /**
@@ -197,12 +196,86 @@ class Events extends ActiveRecord
         return $str;
     }
 
-    public static function removeDirectory($eventsId)
+    /**
+     * Get DataProvider events
+     * 
+     * @param int $records number of records.
+     * 
+     * @return ActiveDataProvider
+     */
+    public static function getDataProviderEvents(int $records): ActiveDataProvider
     {
-        $events = self::findAll(['id' => $eventsId]);
+        $subQuery = Modules::find()
+            ->select('COUNT(*)')
+            ->where(Modules::tableName() . '.events_id = ' . Events::tableName() . '.id');
+
+        $query = self::find()
+            ->select([
+                self::tableName() . '.id',
+                'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS expert',
+                'title',
+                'countModules' => $subQuery
+            ])
+            ->joinWith('expert', false)
+            ->asArray()
+        ;
+
+        return new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => [
+                'pageSize' => $records,
+                'route' => 'events',
+            ],
+        ]);
+    }
+
+    public static function removeDirectory(int|array|null $eventsID)
+    {
+        $events = self::findAll(['id' => $eventsID]);
 
         foreach ($events as $event) {
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias('@events/') . $event->dir_title);
+        }
+
+        return true;
+    }
+
+    /**
+     * Deletes the events.
+     * 
+     * @return bool Returns the value `true` if the event was successfully deleted.
+     */
+    public static function deleteEvent(string|int $id): bool
+    {
+        $transaction = Yii::$app->db->beginTransaction();  
+
+        try {
+            $event = self::findOne(['id' => $id]);
+
+            if (!empty($event) && $event->delete()) {
+                $transaction->commit();
+                return true;
+            }
+
+            $transaction->rollBack();
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/$event?->dir_title"));
+            VarDumper::dump($e, 10, true);die;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/$event?->dir_title"));
+        }
+
+        return false;
+    }
+
+    public static function deleteEvents(array $eventsID): bool
+    {
+        foreach ($eventsID as $id) {
+            if (!self::deleteEvent($id)) {
+                return false;
+            }
         }
 
         return true;

@@ -72,7 +72,8 @@ class Users extends ActiveRecord implements IdentityInterface
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
-            return StudentsEvents::deleteStudentsEvent($this->event->id) && Events::removeDirectory($this->event->id);
+            // var_dump();die;
+            return Students::deleteStudentsEvent($this->event?->id) && Events::removeDirectory($this->event?->id);
         }
 
         return true;
@@ -332,7 +333,7 @@ class Users extends ActiveRecord implements IdentityInterface
             $transaction->rollBack();
         } catch(\Exception $e) {
             $transaction->rollBack();
-            var_dump($e);die;
+            VarDumper::dump($e, 10, true);die;
         } catch(\Throwable $e) {
             $transaction->rollBack();
         }

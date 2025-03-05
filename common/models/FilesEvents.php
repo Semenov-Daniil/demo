@@ -242,7 +242,7 @@ class FilesEvents extends \yii\db\ActiveRecord
 
         $this->events_id = $event?->id;
         $this->expertPath = Yii::getAlias("@events/$event->dir_title");
-        $this->studentPaths = StudentsEvents::find()
+        $this->studentPaths = Students::find()
             ->select([
                 'CONCAT("@students/", login, "/public") as alias',
             ])
@@ -362,7 +362,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public function deleteFilesStudents(int $eventId): bool
     {
-        $students = StudentsEvents::findAll(['events_id' => $eventId]);
+        $students = Students::findAll(['events_id' => $eventId]);
 
         foreach ($students as $student) {
             $studentFile = Yii::getAlias('@students/' . $student->user->login . "/public/$this->save_name.$this->extension");

@@ -4,6 +4,7 @@ namespace backend\controllers;
 
 use common\models\EncryptedPasswords;
 use common\models\Events;
+use common\models\EventForm;
 use common\models\Experts;
 use common\models\ExpertsEvents;
 use common\models\ExpertsForm;
@@ -55,6 +56,11 @@ class ExpertController extends Controller
                     'create-expert' => ['POST'],
                     'all-experts' => ['GET'],
                     'delete-experts' => ['DELETE'],
+
+                    'events' => ['GET'],
+                    'create-events' => ['POST'],
+                    'all-events' => ['GET'],
+                    'delete-events' => ['DELETE'],
 
                     'students' => ['GET'],
                     'create-student' => ['POST'],
@@ -219,6 +225,110 @@ class ExpertController extends Controller
         }
 
         return $this->render('_experts-list', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
+     * Displays events page.
+     *
+     * @return string
+     */
+    public function actionEvents(): string
+    {
+        $model = new EventForm();
+        $dataProvider = Events::getDataProviderEvents(10);
+
+        return $this->render('events', [
+            'model' => $model,
+            'dataProvider' => $dataProvider,
+            'experts' => Experts::getExperts(),
+        ]);
+    }
+
+    public function actionCreateEvent(): string
+    {
+        $model = new EventForm();
+
+        if ($this->request->isPost) {
+            if ($model->load(Yii::$app->request->post()) && $model->createEvent()) {  
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Чемпионат успешно добавлен.',
+                    'type' => 'success'
+                ]);
+
+                $model = new EventForm();
+            } else {
+                Yii::$app->session->addFlash('toast-alert', [
+                    'text' => 'Не удалось добавить чемпионат.',
+                    'type' => 'error'
+                ]);
+            }
+        }
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_event-form', [
+                'model' => $model,
+                'experts' => Experts::getExperts(),
+            ]);
+        }
+
+        return $this->render('_event-form', [
+            'model' => $model,
+            'experts' => Experts::getExperts(),
+        ]);
+    }
+
+    public function actionAllEvents(): string
+    {
+        $dataProvider = Events::getDataProviderEvents(10);
+
+        session_write_close();
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_events-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('_events-list', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
+     * Action delete experts.
+     *
+     * @param string $id expert ID. 
+     * 
+     * @return void
+     */
+    public function actionDeleteEvents(?string $id = null): string
+    {
+        $dataProvider = Events::getDataProviderEvents(10);
+        $events = [];
+
+        $events = (!is_null($id) ? [$id] : ($this->request->post('events') ? $this->request->post('events') : []));
+
+        if (count($events) && Events::deleteEvents($events)) {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => count($events) > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.',
+                'type' => 'success'
+            ]);
+        } else {
+            Yii::$app->session->addFlash('toast-alert', [
+                'text' => count($events) > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.',
+                'type' => 'error'
+            ]);
+        }
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_events-list', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('_events-list', [
             'dataProvider' => $dataProvider,
         ]);
     }

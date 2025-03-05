@@ -149,7 +149,7 @@ class Modules extends \yii\db\ActiveRecord
             $module->events_id = Events::getEventByExpert(Yii::$app->user->id)?->id;
             
             if ($module->save()) {
-                $students = StudentsEvents::findAll(['events_id' => $module->events_id]);
+                $students = Students::findAll(['events_id' => $module->events_id]);
                 
                 foreach ($students as $student) {
                     if (!$student->createDbModule($module) || !$student->createDirectoriesModule($module)) {
@@ -222,7 +222,7 @@ class Modules extends \yii\db\ActiveRecord
      */
     public function changePrivilegesDbStudents(): bool
     {
-        $students = StudentsEvents::findAll(['events_id' => $this->events_id]);
+        $students = Students::findAll(['events_id' => $this->events_id]);
 
         foreach ($students as $student) {
             $login  = $student->user->login; 
@@ -316,7 +316,7 @@ class Modules extends \yii\db\ActiveRecord
      */
     public function deleteModulesStudents(): bool
     {
-        $students = StudentsEvents::find()
+        $students = Students::find()
             ->where(['events_id' => $this->events_id])
             ->joinWith('user')
             ->all()
@@ -336,7 +336,7 @@ class Modules extends \yii\db\ActiveRecord
 
     public function clearModulesStudents(): bool
     {
-        $students = StudentsEvents::find()
+        $students = Students::find()
             ->where(['events_id' => $this->events_id])
             ->joinWith('user')
             ->all()

@@ -15,14 +15,14 @@ use yii\grid\GridView;
         <span>
             <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
         </span>
-    ', ['class' => 'btn btn-primary btn-select-all-experts']) ?>
-    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-experts', 'disabled' => true]) ?>
+    ', ['class' => 'btn btn-primary btn-select-all-events']) ?>
+    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-events', 'disabled' => true]) ?>
 </div>
 <?php endif; ?>
 
 <div class="card">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
-        <h4 class="card-title mb-0 flex-grow-1">Эксперты</h4>
+        <h4 class="card-title mb-0 flex-grow-1">Чемпионаты</h4>
     </div>
 
     <div class="card-body">
@@ -37,7 +37,7 @@ use yii\grid\GridView;
                 'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
                 'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>'
             ],
-            'emptyText' => 'Ничего не найдено. Добавьте эксперта.',
+            'emptyText' => 'Ничего не найдено. Добавьте чемпионат.',
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],
@@ -69,10 +69,10 @@ use yii\grid\GridView;
             'columns' => [
                 [
                     'class' => 'yii\grid\CheckboxColumn',
-                    'name' => 'experts',
+                    'name' => 'events',
 
-                    'header' => Html::checkBox('experts_all', false, [
-                        'class' => 'select-on-check-all form-check-input experts-check',
+                    'header' => Html::checkBox('events_all', false, [
+                        'class' => 'select-on-check-all form-check-input events-check',
                     ]),
                     'headerOptions' => [
                         'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
@@ -82,13 +82,7 @@ use yii\grid\GridView;
                         'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
                     ],
 
-                    'checkboxOptions' => function ($model, $key, $index, $column) {
-                        if (Yii::$app->user->id == $model['id']) {
-                            return ['disabled' => true, 'class' => 'd-none'];
-                        }
-                    },
-
-                    'cssClass' => 'form-check-input experts-check',
+                    'cssClass' => 'form-check-input events-check',
 
                     'options' => [
                         'class' => 'col-1'
@@ -97,16 +91,23 @@ use yii\grid\GridView;
                     'visible' => $dataProvider->totalCount,
                 ],
                 [
-                    'label' => 'Полное имя',
+                    'label' => 'Эксперт',
                     'value' => function ($model) {
-                        return $model['fullName'];
+                        return $model['expert'];
                     },
                     'visible' => $dataProvider->totalCount
                 ],
                 [
-                    'label' => 'Логин/Пароль',
+                    'label' => 'Название',
                     'value' => function ($model) {
-                        return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
+                        return $model['title'];
+                    },
+                    'visible' => $dataProvider->totalCount
+                ],
+                [
+                    'label' => 'Кол-во модулей',
+                    'value' => function ($model) {
+                        return $model['countModules'];
                     },
                     'visible' => $dataProvider->totalCount
                 ],
@@ -120,11 +121,6 @@ use yii\grid\GridView;
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
                             return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['id']]]);
-                        }
-                    ],
-                    'visibleButtons' => [
-                        'delete' => function ($model, $key, $index) {
-                            return Yii::$app->user->id !== $model['id'];
                         }
                     ],
                     'visible' => $dataProvider->totalCount

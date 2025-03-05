@@ -1,6 +1,6 @@
 $(() => {
     
-    $('#pjax-create-expert, #pjax-create-module').on('click', '.input-step .plus', function (event) {
+    $('#pjax-create-event').on('click', '.input-step .plus', function (event) {
         let input = $(this).prevAll('input'),
             max = input.prop('max');
 
@@ -14,7 +14,7 @@ $(() => {
         $('.input-step').removeClass('is-valid is-invalid');
     });
 
-    $('#pjax-create-expert, #pjax-create-module').on('click', '.input-step .minus', function (event) {
+    $('#pjax-create-event').on('click', '.input-step .minus', function (event) {
         let input = $(this).nextAll('input'),
             min = input.prop('min');
 
@@ -59,7 +59,7 @@ $(() => {
         observer.observe(inputCountModules, config);
     }
 
-    $('#pjax-create-expert, #pjax-create-module').on('pjax:complete', function (event) {
+    $('#pjax-create-event').on('pjax:complete', function (event) {
         watchCountModules();
     });
 

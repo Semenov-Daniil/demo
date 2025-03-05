@@ -39,6 +39,16 @@ class Experts extends Model
         ];
     }
 
+    public static function getExperts()
+    {
+        return Users::find()
+            ->select(['CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName'])
+            ->where(['roles_id' => Roles::getRoleId(Users::TITLE_ROLE_EXPERT)])
+            ->indexBy('id')
+            ->column()
+        ;
+    }
+
     /**
      * Get DataProvider experts
      * 

@@ -122,6 +122,14 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                                 'active' => (Yii::$app->request->getPathInfo() == '' || Yii::$app->request->getPathInfo() == 'experts')
                             ],
                             [
+                                'label' => '<i class="ri-function-add-line"></i><span data-key="t-events">Чемпионаты</span>', 
+                                'encode' => false, 
+                                'url' => ['/events'], 
+                                'linkOptions' => [
+                                    'class' => 'nav-link menu-link', 'data-key' => 't-events'
+                                ]
+                            ],
+                            [
                                 'label' => '<i class="ri-user-add-line"></i><span data-key="t-students">Студенты</span>', 
                                 'encode' => false, 
                                 'url' => ['/students'], 

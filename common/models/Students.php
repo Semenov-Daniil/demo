@@ -499,7 +499,7 @@ class Students extends ActiveRecord
         return true;
     }
 
-    public static function deleteStudentsEvent(int|array $eventsID)
+    public static function deleteStudentsEvent(int|array|null $eventsID)
     {
         $students = self::find()
             ->where(['events_id' => $eventsID])
