@@ -94,7 +94,7 @@ use yii\grid\GridView;
                         'class' => 'col-1'
                     ],
 
-                    'visible' => $dataProvider->totalCount,
+                    'visible' => (Yii::$app->user->can('sExpert') ? $dataProvider->totalCount : $dataProvider->totalCount > 1),
                 ],
                 [
                     'label' => 'Полное имя',

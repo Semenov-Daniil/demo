@@ -71,7 +71,7 @@ use yii\grid\GridView;
                     'class' => 'yii\grid\CheckboxColumn',
                     'name' => 'events',
 
-                    'header' => Html::checkBox('events_all', false, [
+                    'header' => Html::checkbox('events_all', false, [
                         'class' => 'select-on-check-all form-check-input events-check',
                     ]),
                     'headerOptions' => [
@@ -88,7 +88,7 @@ use yii\grid\GridView;
                         'class' => 'col-1'
                     ],
 
-                    'visible' => $dataProvider->totalCount,
+                    'visible' => ($dataProvider->totalCount),
                 ],
                 [
                     'label' => 'Эксперт',

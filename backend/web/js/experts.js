@@ -40,9 +40,12 @@ $(() => {
     });
 
     $('#pjax-experts').on('change', 'input[name="experts_all"]', function() {
-        let isChecked = $(this).is(':checked');
-        $('input[name="experts[]"]').prop('checked', isChecked);
-        $('.btn-delete-selected-experts').prop('disabled', !isChecked);
+        let isChecked = $(this).is(':checked'),
+            checkbox = $('input[name="experts[]"]:not(:disabled)');
+
+        checkbox.prop('checked', isChecked);
+
+        $('.btn-delete-selected-experts').prop('disabled', !(isChecked && checkbox.length));
     });
 
     $('#pjax-experts').on('change', 'input[name="experts[]"]', function() {
@@ -105,9 +108,10 @@ $(() => {
         let checkedExperts = $('input[name="experts[]"]:checked:not(:disabled)'),
         allExperts = $('input[name="experts[]"]:not(:disabled)');
 
-        $('input[name="experts_all"]').prop('checked', allExperts.length === checkedExperts.length);
+        $('input[name="experts_all"]').prop('checked', (allExperts.length === checkedExperts.length && checkedExperts.length !== 0));
 
-        $('.btn-delete-selected-experts').prop('disabled', ($(this).is(':checked') ? false : (checkedExperts.length === 0)));
+        $('.btn-delete-selected-experts').prop('disabled', !checkedExperts.length);
+        // $('.btn-delete-selected-experts').prop('disabled', !(allExperts.length === checkedExperts.length && checkedExperts.length !== 0));
     }
 
     changeActiveBtn();

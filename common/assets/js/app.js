@@ -380,3 +380,7 @@ if (mybutton) {
 		document.documentElement.scrollTop = 0;
 	});
 }
+
+// window.onbeforeunload = function() {
+//     navigator.sendBeacon('/expert/logout');
+// };

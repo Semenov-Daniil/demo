@@ -21,6 +21,12 @@ return [
                 ],
             ],
         ],
+        'session' => [
+            'class' => 'yii\web\Session',
+            'cookieParams' => [
+                'lifetime' => 0,
+            ],
+        ],
         'authManager' => [
             'class' => 'yii\rbac\DbManager',
             'defaultRoles' => ['student', 'expert'],

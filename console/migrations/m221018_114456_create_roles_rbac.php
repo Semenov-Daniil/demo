@@ -28,6 +28,11 @@ class m221018_114456_create_roles_rbac extends Migration
         $expert->description = 'Эксперт';
         $expert->ruleName = $rule->name;
         $auth->add($expert);
+        
+        $superExpert = $auth->createRole('sExpert');
+        $superExpert->description = 'Супер эксперт';
+        $auth->add($superExpert);
+        $auth->addChild($superExpert, $expert);
     }
 
     /**

@@ -169,14 +169,7 @@ class Users extends ActiveRecord implements IdentityInterface
         $superExpert = Yii::$app->params['superExpert'] ?? null;
 
         if ($superExpert && $id === 0) {
-            $user = new self();
-            $user->id = 0;
-            $user->login = $superExpert['login'];
-            $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
-            $user->auth_key = 'super-auth-key';
-            $user->roles_id = Roles::getRoleId('expert');
-
-            return $user;
+            return self::getSuperExpert();
         }
 
         return static::findOne($id);
@@ -214,14 +207,7 @@ class Users extends ActiveRecord implements IdentityInterface
         $superExpert = Yii::$app->params['superExpert'] ?? null;
 
         if ($superExpert && $login === $superExpert['login']) {
-            $user = new self();
-            $user->id = 0;
-            $user->login = $superExpert['login'];
-            $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
-            $user->auth_key = 'super-auth-key';
-            $user->roles_id = Roles::getRoleId('expert');
-
-            return $user;
+            return self::getSuperExpert();
         }
 
         return static::findOne(['login' => $login]);
@@ -275,6 +261,30 @@ class Users extends ActiveRecord implements IdentityInterface
         while(!$this->isUnique($attr)) {
             $this->$attr = $charSets ? $this->generateRandomString($length, $charSets) : Yii::$app->security->generateRandomString($length);
         }
+    }
+
+    private static function getSuperExpert()
+    {
+        $superExpert = Yii::$app->params['superExpert'] ?? null;
+        $user = null;
+
+        if ($superExpert) {
+            $user = new self();
+            $user->id = 0;
+            $user->login = $superExpert['login'];
+            $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
+            $user->auth_key = 'super-auth-key';
+            $user->roles_id = Roles::getRoleId('expert');
+
+            $auth = Yii::$app->authManager;
+            $role = $auth->getRole('sExpert');
+
+            if ($role && !$auth->checkAccess($user->id, $role->name)) {
+                $auth->assign($role, $user->id);
+            }
+        }
+
+        return $user;
     }
 
     /**
