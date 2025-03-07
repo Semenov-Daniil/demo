@@ -88,20 +88,26 @@ use yii\grid\GridView;
                         'class' => 'col-1'
                     ],
 
-                    'visible' => ($dataProvider->totalCount),
+                    'visible' => $dataProvider->totalCount,
                 ],
                 [
                     'label' => 'Эксперт',
                     'value' => function ($model) {
                         return $model['expert'];
                     },
-                    'visible' => $dataProvider->totalCount
+                    'options' => [
+                        'class' => (Yii::$app->user->can('sExpert') ? 'col-3' : 'col-4')
+                    ],
+                    'visible' => (Yii::$app->user->can('sExpert') && $dataProvider->totalCount)
                 ],
                 [
                     'label' => 'Название',
                     'value' => function ($model) {
                         return $model['title'];
                     },
+                    'options' => [
+                        'class' => (Yii::$app->user->can('sExpert') ? 'col-3' : 'col-4')
+                    ],
                     'visible' => $dataProvider->totalCount
                 ],
                 [
@@ -109,6 +115,9 @@ use yii\grid\GridView;
                     'value' => function ($model) {
                         return $model['countModules'];
                     },
+                    'options' => [
+                        'class' => (Yii::$app->user->can('sExpert') ? 'col-3' : 'col-4')
+                    ],
                     'visible' => $dataProvider->totalCount
                 ],
                 [

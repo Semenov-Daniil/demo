@@ -25,13 +25,16 @@ class EventForm extends Model
     public function rules()
     {
         return [
-            [['expert', 'title', 'countModules'], 'required'],
+            [['title', 'countModules'], 'required'],
             [['countModules'], 'integer', 'min' => 1],
             [['expert'], 'integer'],
             [['title'], 'string', 'max' => 255],
             ['countModules', 'default', 'value' => 1],
             [['title'], 'trim'],
             [['expert'], 'exist', 'targetClass' => Users::class, 'targetAttribute' => ['expert' => 'id']],
+            ['expert', 'required', 'when' => function($model) {
+                return Yii::$app->user->can('sExpert');
+            }]
         ];
     }
 
@@ -57,7 +60,7 @@ class EventForm extends Model
             try {
                 $event = new Events();
                 $event->attributes = $this->attributes;
-                $event->experts_id = $this->expert;
+                $event->experts_id = $this->expert ? $this->expert : Yii::$app->user->id;
 
                 if ($event->save()) {
                     $transaction->commit();

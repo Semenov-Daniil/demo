@@ -217,11 +217,14 @@ class Events extends ActiveRecord
                 'countModules' => $subQuery
             ])
             ->joinWith('expert', false)
-            ->asArray()
         ;
 
+        if (!Yii::$app->user->can('sExpert')) {
+            $query->andWhere(['experts_id' => Yii::$app->user->id]);
+        }
+
         return new ActiveDataProvider([
-            'query' => $query,
+            'query' => $query->asArray(),
             'pagination' => [
                 'pageSize' => $records,
                 'route' => 'events',

@@ -253,14 +253,14 @@ class ExpertController extends Controller
         if ($this->request->isPost) {
             if ($model->load(Yii::$app->request->post()) && $model->createEvent()) {  
                 Yii::$app->session->addFlash('toast-alert', [
-                    'text' => 'Чемпионат успешно добавлен.',
+                    'text' => 'Чемпионат успешно создан.',
                     'type' => 'success'
                 ]);
 
                 $model = new EventForm();
             } else {
                 Yii::$app->session->addFlash('toast-alert', [
-                    'text' => 'Не удалось добавить чемпионат.',
+                    'text' => 'Не удалось создать чемпионат.',
                     'type' => 'error'
                 ]);
             }

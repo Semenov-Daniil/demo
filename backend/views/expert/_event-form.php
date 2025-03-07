@@ -33,13 +33,15 @@ use yii\bootstrap5\Html;
         ]); ?>
 
             <div class="row">
-                <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3']])->dropDownList($experts, ['prompt' => 'Выберите эксперта'])?>
+                <?php if (Yii::$app->user->can('sExpert')): ?>
+                    <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3']])->dropDownList($experts, ['prompt' => 'Выберите эксперта'])?>
+                <?php endif;?>
 
-                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 col-xl-5 mb-3']])->textInput() ?>
+                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-5' : '')]])->textInput() ?>
             
                 <?= $form->field($model, 'countModules', [
                     'options' => [
-                        'class' => 'col-md-4 col-xl-2 mb-3',
+                        'class' => 'col-md-4 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-2' : ''),
                     ],
                     'template' => '
                         {label}
