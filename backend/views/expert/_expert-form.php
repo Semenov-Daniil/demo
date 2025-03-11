@@ -31,6 +31,7 @@ use yii\bootstrap5\Html;
         ]); ?>
 
             <div class="row">
+
                 <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
         
                 <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>

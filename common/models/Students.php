@@ -109,7 +109,7 @@ class Students extends ActiveRecord
     {
         return [
             'students_id' => 'Студент',
-            'events_id' => 'Компетенция',
+            'events_id' => 'Чемпионат',
             'dir_prefix' => 'Директория',
             'surname' => 'Фамилия',
             'name' => 'Имя',
@@ -173,10 +173,8 @@ class Students extends ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderStudents(int $records): ActiveDataProvider
+    public static function getDataProviderStudents(string|int|null $eventID = null, int $records = 10): ActiveDataProvider
     {
-        $event_id = Events::getIdByExpert(Yii::$app->user->id);
-
         return new ActiveDataProvider([
             'query' => self::find()
                 ->select([
@@ -185,7 +183,7 @@ class Students extends ActiveRecord
                     'login',
                     EncryptedPasswords::tableName() . '.encrypted_password AS encryptedPassword',
                 ])
-                ->where(['events_id' => $event_id])
+                ->where(['events_id' => $eventID])
                 ->joinWith('encryptedPassword', false)
                 ->joinWith('user', false)
                 ->asArray()
@@ -221,6 +219,16 @@ class Students extends ActiveRecord
         return "{$login}_m{$numberModule}";
     }
 
+    public static function encryptById(int $id): string
+    {
+        return base64_encode(Yii::$app->security->encryptByKey($id, Yii::$app->params['studentKey']));
+    }
+
+    public static function decryptById(string $id): string
+    {
+        return Yii::$app->security->decryptByKey(base64_decode($id), Yii::$app->params['studentKey']);
+    }
+
     public function deleteDataStudent(): bool
     {
         try {
@@ -244,7 +252,7 @@ class Students extends ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when adding a student.
      */
-    public function createStudent(): bool
+    public function createStudent(int|string|null $eventID = null): bool
     {
         $this->validate();
         
@@ -258,14 +266,15 @@ class Students extends ActiveRecord
                 if ($user->createStudent()) {
                     $student_event = new static();
                     $student_event->students_id = $user->id;
-                    $student_event->events_id = Events::getIdByExpert(Yii::$app->user->id);
+                    $student_event->events_id = $eventID;
                     
                     if ($student_event->save()) {
                         $transaction->commit();
                         return true;
                     }
-                }
 
+                }
+                
                 $this->deleteDataStudent();
                 $transaction->rollBack();
             } catch(\Exception $e) {

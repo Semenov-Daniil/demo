@@ -340,10 +340,30 @@ class ExpertController extends Controller
      */
     public function actionStudents(): string
     {
-        $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT]);
-        $dataProvider = $model->getDataProviderStudents(10);
-
         return $this->render('students', [
+            'events' => Events::getEvents(),
+        ]);
+    }
+
+    public function actionStudentsEvent(?string $event = null): string
+    {
+        if (!$event) {
+            return $this->request->isAjax ? $this->renderAjax('_students-not-view') : $this->render('_students-not-view');
+        }
+
+        $eventID = Events::decryptById($event);
+
+        $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT, 'events_id' => $eventID]);
+        $dataProvider = $model->getDataProviderStudents($eventID);
+
+        if ($this->request->isAjax) {
+            return $this->renderAjax('_students-view', [
+                'model' => $model,
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        return $this->render('_students-view', [
             'model' => $model,
             'dataProvider' => $dataProvider,
         ]);
@@ -354,7 +374,10 @@ class ExpertController extends Controller
         $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT]);
 
         if ($this->request->isPost) {
-            if ($model->load(Yii::$app->request->post()) && $model->createStudent()) {
+            $data = Yii::$app->request->post();
+            $event = Events::decryptById($data['event']);
+
+            if ($model->load($data) && $model->createStudent($event)) {
                 Yii::$app->session->addFlash('toast-alert', [
                     'text' => 'Студент успешно добавлен.',
                     'type' => 'success'
@@ -379,9 +402,11 @@ class ExpertController extends Controller
         ]);
     }
 
-    public function actionAllStudents(): string
+    public function actionAllStudents(?string $event = null): string
     {
-        $dataProvider = Students::getDataProviderStudents(10);
+        $eventID = Events::decryptById($event);
+
+        $dataProvider = Students::getDataProviderStudents($eventID);
 
         session_write_close();
 
@@ -409,6 +434,10 @@ class ExpertController extends Controller
         $students = [];
 
         $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
+
+        $students = array_map('Students::decryptById', $students);
+
+        var_dump($students);die;
 
         if (count($students) && Students::deleteStudents($students)) {
             Yii::$app->session->addFlash('toast-alert', [

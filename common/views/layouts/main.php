@@ -153,6 +153,30 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                                     'class' => 'nav-link menu-link', 'data-key' => 't-files'
                                 ]
                             ],
+                            '<li class="nav-item">
+                                <a class="nav-link menu-link" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
+                                    <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Студенты</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarDashboards">
+                                    <ul class="nav nav-sm flex-column">
+                                        <li class="nav-item">
+                                            <a href="dashboard-analytics.html" class="nav-link" data-key="t-analytics"> Event 1 </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="dashboard-crm.html" class="nav-link" data-key="t-crm"> Event 2 </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="index.html" class="nav-link" data-key="t-ecommerce"> Event 3 </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="dashboard-crypto.html" class="nav-link" data-key="t-crypto"> Event 4 </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="dashboard-projects.html" class="nav-link" data-key="t-projects"> Event 5 </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>'
                         ],
                     ]);
                 ?>

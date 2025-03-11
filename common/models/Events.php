@@ -167,6 +167,16 @@ class Events extends ActiveRecord
         return self::findOne(['experts_id' => $expertID])?->id;
     }
 
+    public static function encryptById(int $id): string
+    {
+        return base64_encode(Yii::$app->security->encryptByKey($id, Yii::$app->params['eventKey']));
+    }
+
+    public static function decryptById(string $id): string
+    {
+        return Yii::$app->security->decryptByKey(base64_decode($id), Yii::$app->params['eventKey']);
+    }
+
     /**
      * Find event by expert.
      *
@@ -230,6 +240,38 @@ class Events extends ActiveRecord
                 'route' => 'events',
             ],
         ]);
+    }
+
+    public static function getEvents(): array
+    {
+        $events = self::find()
+            ->select([
+                self::tableName() . '.id AS event_id',
+                self::tableName() . '.title AS event_title',
+                'CONCAT('.Users::tableName().'.surname, \' \', '.Users::tableName().'.name, COALESCE(CONCAT(\' \', '.Users::tableName().'.patronymic), \'\')) AS expert_name'
+            ])
+            ->joinWith('expert')
+            ->orderBy([
+                'expert_name' => SORT_ASC,
+                'event_title' => SORT_ASC
+            ])
+            ->asArray()
+            ->all()
+        ;
+        
+        $result = [];
+        foreach ($events as $event) {
+            $expertName = $event['expert_name'];
+            $eventId = self::encryptById($event['event_id']);
+            $eventTitle = $event['event_title'];
+            
+            if (!isset($result[$expertName])) {
+                $result[$expertName] = [];
+            }
+            $result[$expertName][$eventId] = $eventTitle;
+        }
+
+        return $result;
     }
 
     public static function removeDirectory(int|array|null $eventsID)

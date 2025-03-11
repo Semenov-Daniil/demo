@@ -6,6 +6,7 @@ use yii\bootstrap5\Html;
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\StudentsEvents $model */
+
 ?>
 
 <div class="card">
@@ -19,7 +20,7 @@ use yii\bootstrap5\Html;
             'action' => ['/create-student'],
             'options' => [
                 'data' => [
-                    'pjax' => true
+                    // 'pjax' => true
                 ]
             ],
             'fieldConfig' => [

@@ -1,9 +1,11 @@
 <?php
 
 use common\assets\AppAsset;
+use common\assets\ChoicesAsset;
 use common\assets\CleaveAsset;
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
+use yii\web\JqueryAsset;
 use yii\web\View;
 use yii\web\YiiAsset;
 use yii\widgets\Pjax;

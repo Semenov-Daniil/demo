@@ -1,5 +1,6 @@
-$(() => {
-
+function initGridView() {
+    console.log('initGridView');
+    
     let localName = $('div[data-pjax-grid]').attr('id');
 
     $('div[data-pjax-grid]').on('click', '.grid-view .cell-checkbox', function (event) {
@@ -34,6 +35,15 @@ $(() => {
         localStorage.setItem(localName, JSON.stringify(checked));
     });
 
+    $('div[data-pjax-grid]').on('pjax:complete', function () {
+        updateCheckedGrid();
+    });
+}
+
+$(() => {
+
+    let localName = $('div[data-pjax-grid]').attr('id');
+
     function updateCheckedGrid() {
         let checkboxSelector = 'div[data-pjax-grid] .grid-view .cell-selected input[type="checkbox"]:not(.select-on-check-all, :disabled)';
             checked = JSON.parse(localStorage.getItem(localName) || '{}');
@@ -51,9 +61,6 @@ $(() => {
         localStorage.setItem(localName, JSON.stringify(checked));
     }
 
-    $('div[data-pjax-grid]').on('pjax:complete', function () {
-        updateCheckedGrid();
-    });
-
+    initGridView();
     updateCheckedGrid();
 });

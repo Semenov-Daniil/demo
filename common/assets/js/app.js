@@ -4,6 +4,63 @@
 	var navbarMenuHTML = document.querySelector(".navbar-menu") ? document.querySelector(".navbar-menu").innerHTML : "";
 	var hasNavbarMenu = !!document.querySelector(".navbar-menu");
 
+	// Предполагаем, что Fuse.js подключен
+	function customSearch(term, choices, groups) {
+		// Если запрос пустой или короче минимальной длины (по умолчанию 1), возвращаем все элементы
+		if (!term || term.length < 1) {
+			return buildInitialStructure(choices, groups);
+		}
+	
+		// Настраиваем Fuse.js с параметрами, аналогичными Choices.js
+		const fuse = new Fuse(choices, {
+		includeScore: true, // Включаем оценку совпадения
+		threshold: 0.3,     // Порог совпадения (0.0 - точное, 1.0 - слабое)
+		distance: 100,      // Максимальное расстояние между символами
+		keys: ['label'] // Поля для поиска
+		});
+	
+		// Выполняем поиск
+		const searchResults = fuse.search(term).map(result => result.item);
+	
+		// Возвращаем отфильтрованные элементы в формате Choices.js
+		return buildInitialStructure(searchResults, groups);
+	}
+
+	function buildInitialStructure(choices, groups) {
+		const result = [];
+		const seenGroups = new Map(); // Используем Map для отслеживания групп
+
+		choices.forEach(choice => {
+			if (choice.group) { // Если у элемента есть группа
+				const groupId = choice.group.id;
+				if (!seenGroups.has(groupId)) {
+					// Добавляем новую группу
+					const groupChoices = choices
+						.filter(c => c.group && c.group.id === groupId)
+						.map(c => ({
+							value: c.value,
+							label: c.label
+						}))
+					;
+
+					result.push({
+						label: choice.group.label,
+						id: groupId,
+						choices: groupChoices
+					});
+					seenGroups.set(groupId, true);
+				}
+			} else {
+				result.push({
+					value: choice.value,
+					label: choice.label
+				});
+			}
+		});
+
+		return result;
+	}
+
 	/**
 	 * Управление плагинами
 	 */
@@ -20,7 +77,37 @@
 			if (isChoicesVal["data-choices-limit"]) choiceData.maxItemCount = isChoicesVal["data-choices-limit"].value.toString();
 			if (isChoicesVal["data-choices-text-unique-true"]) choiceData.duplicateItemsAllowed = false;
 			if (isChoicesVal["data-choices-text-disabled-true"]) choiceData.addItems = false;
-			isChoicesVal["data-choices-text-disabled-true"] ? new Choices(item, choiceData).disable() : new Choices(item, choiceData);
+			choiceData.searchChoices = true;
+			choiceData.noChoicesText = 'Не удалось найти чемпионат';
+
+			let choices = isChoicesVal["data-choices-text-disabled-true"] ? new Choices(item, choiceData).disable() : new Choices(item, choiceData);
+			const availableChoices = choices._store._state.choices;
+			const allGroups = choices._store._state.groups;
+			let lastSearchValue = '';
+
+			item.addEventListener('search', function(event) {
+				const searchValue = event.detail.value;
+
+				const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
+
+				if (searchValue !== lastSearchValue || !searchValue) {
+					choices.clearChoices();
+					choices.setChoices(filteredChoices, 'value', 'label', true);
+					lastSearchValue = searchValue;
+				}
+			});
+
+			const searchInput = item.parentElement.parentElement.querySelector('input.choices__input[type="search"]');
+
+			searchInput.addEventListener('input', function(event) {
+				const searchValue = event.target.value;
+				if (searchValue !== lastSearchValue) {
+					const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
+					choices.clearChoices();
+					choices.setChoices(filteredChoices, 'value', 'label', true);
+					lastSearchValue = searchValue;
+				}
+			});
 		});
 
 		var flatpickrExamples = document.querySelectorAll("[data-provider]");

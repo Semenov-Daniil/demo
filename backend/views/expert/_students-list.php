@@ -1,6 +1,8 @@
 <?php
 
 use common\models\EncryptedPasswords;
+use common\models\Events;
+use common\models\Students;
 use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
@@ -17,7 +19,7 @@ use yii\grid\GridView;
 <?php endif; ?>
 
 <div class="card students-list">
-    <div class="card-header align-items-center d-flex position-relative border-bottom-0">
+    <div class="card-header align-items-center d-flex position-relative <?= ($dataProvider->totalCount ? 'border-bottom-0' : '') ?>">
         <h4 class="card-title mb-0 flex-grow-1">Студенты</h4>
     </div>
 
@@ -115,7 +117,7 @@ use yii\grid\GridView;
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['students_id']]]);
+                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => Students::encryptById($model['students_id']), 'pjax' => 0]]);
                         }
                     ],
                     'visible' => $dataProvider->totalCount

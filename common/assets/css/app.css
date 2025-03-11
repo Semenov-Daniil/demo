@@ -3703,7 +3703,7 @@
 }
 
 :is([data-layout="vertical"], [data-layout="semibox"])[data-sidebar-size="sm-hover"] .navbar-menu .navbar-nav .menu-dropdown {
-    display: none;
+    /* display: none; */
 }
 
 :is([data-layout="vertical"], [data-layout="semibox"])[data-sidebar-size="sm-hover"] .navbar-menu:hover {
