@@ -4,11 +4,10 @@
 
 /** @var app\models\StudentsEvents $model */
 /** @var app\models\StudentsEvents $dataProvider */
+/** @var string $event */
 
 use common\assets\AppAsset;
 use yii\widgets\Pjax;
-
-$this->registerJsFile('@web/js/students-event.js', ['depends' => AppAsset::class]);
 
 ?>
 
@@ -40,7 +39,8 @@ $this->registerJsFile('@web/js/students-event.js', ['depends' => AppAsset::class
         ]
     ]); ?>
         <?= $this->render('_students-list', [
-            'dataProvider' => $dataProvider
+            'dataProvider' => $dataProvider,
+            'event' => $event
         ]) ?>
     <?php Pjax::end(); ?>
 </div>

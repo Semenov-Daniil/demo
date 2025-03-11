@@ -360,12 +360,14 @@ class ExpertController extends Controller
             return $this->renderAjax('_students-view', [
                 'model' => $model,
                 'dataProvider' => $dataProvider,
+                'event' => $event,
             ]);
         }
 
         return $this->render('_students-view', [
             'model' => $model,
             'dataProvider' => $dataProvider,
+            'event' => $event,
         ]);
     }
 
@@ -435,9 +437,9 @@ class ExpertController extends Controller
 
         $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
 
-        $students = array_map('Students::decryptById', $students);
-
-        var_dump($students);die;
+        $students = array_map(function($item) {
+            return Students::decryptById($item);
+        }, $students);
 
         if (count($students) && Students::deleteStudents($students)) {
             Yii::$app->session->addFlash('toast-alert', [
@@ -462,9 +464,9 @@ class ExpertController extends Controller
         ]);
     }
 
-    public function actionExportStudents()
+    public function actionExportStudents(?string $event = null)
     {
-        $students = Students::getExportStudents();
+        $students = Students::getExportStudents(Events::decryptById($event));
         $templatePath = Yii::getAlias('@templates/template.docx');
 
         $templateProcessor = new TemplateProcessor($templatePath);

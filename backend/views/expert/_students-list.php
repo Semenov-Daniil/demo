@@ -8,11 +8,12 @@ use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var string $event */
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
     <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
-        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['/export-students'], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
+        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['/export-students', 'event' => $event], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-students']) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</span>', ['class' => 'btn btn-danger btn-delete-selected-students', 'disabled' => true]) ?>
     </div>
@@ -75,6 +76,10 @@ use yii\grid\GridView;
                     'headerOptions' => [
                         'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'
                     ],
+
+                    'checkboxOptions' => function ($model, $key, $index, $column) {
+                        return ['value' => Students::encryptById($model['students_id'])];
+                    },
 
                     'contentOptions' => [
                         'class' => 'cell-selected cell-checkbox text-center form-check d-table-cell cursor-pointer'

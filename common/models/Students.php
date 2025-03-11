@@ -524,10 +524,8 @@ class Students extends ActiveRecord
         return true;
     }
 
-    public static function getExportStudents(): array
+    public static function getExportStudents(int|string $eventID): array
     {
-        $event_id = Events::getIdByExpert(Yii::$app->user->id);
-
         return self::find()
             ->select([
                 'students_id',
@@ -535,7 +533,7 @@ class Students extends ActiveRecord
                 'login',
                 EncryptedPasswords::tableName() . '.encrypted_password',
             ])
-            ->where(['events_id' => $event_id])
+            ->where(['events_id' => $eventID])
             ->joinWith('encryptedPassword', false)
             ->joinWith('user', false)
             ->asArray()
