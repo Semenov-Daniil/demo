@@ -444,7 +444,7 @@ Pass an array of objects:
 
 **Type:** `Boolean` **Default:** `true`
 
-**Input types affected:** `text`, `select-multiple`, `select-one`
+**Input types affected:** `text`
 
 **Usage:** Whether duplicate inputted/chosen items are allowed
 
@@ -917,7 +917,7 @@ example.passedElement.element.addEventListener(
 
 ### addItem
 
-**Payload:** `id, highlighted, labelClass, labelDescription, customProperties, disabled, active, label, placeholder, value, groupValue, element, keyCode`
+**Payload:** `id, value, label, customProperties, groupValue, keyCode`
 
 **Input types affected:** `text`, `select-one`, `select-multiple`
 
@@ -925,7 +925,7 @@ example.passedElement.element.addEventListener(
 
 ### removeItem
 
-**Payload:** `id, highlighted, labelClass, labelDescription, customProperties, disabled, active, label, placeholder, value, groupValue, element, keyCode`
+**Payload:** `id, value, label, customProperties, groupValue`
 
 **Input types affected:** `text`, `select-one`, `select-multiple`
 
@@ -933,7 +933,7 @@ example.passedElement.element.addEventListener(
 
 ### highlightItem
 
-**Payload:** `id, highlighted, labelClass, labelDescription, customProperties, disabled, active, label, placeholder, value, groupValue, element, keyCode`
+**Payload:** `id, value, label, groupValue`
 
 **Input types affected:** `text`, `select-multiple`
 
@@ -941,7 +941,7 @@ example.passedElement.element.addEventListener(
 
 ### unhighlightItem
 
-**Payload:** `id, highlighted, labelClass, labelDescription, customProperties, disabled, active, label, placeholder, value, groupValue, element, keyCode`
+**Payload:** `id, value, label, groupValue`
 
 **Input types affected:** `text`, `select-multiple`
 
@@ -949,7 +949,7 @@ example.passedElement.element.addEventListener(
 
 ### choice
 
-**Payload:** `id, highlighted, labelClass, labelDescription, customProperties, disabled, active, label, placeholder, value, groupValue, element, keyCode`
+**Payload:** `choice`
 
 **Input types affected:** `select-one`, `select-multiple`
 
@@ -1088,13 +1088,13 @@ choices.disable();
 
 **Usage:** Hide choices list dropdown.
 
-### setChoices(choicesArrayOrFetcher?: (InputChoice | InputGroup)[] | ((instance: Choices) => (InputChoice | InputGroup)[] | Promise<(InputChoice | InputGroup)[]>), value?: string | null, label?: string, replaceChoices?: boolean = false, clearSearchFlag?: boolean = false, replaceItems?: boolean = false): this | Promise<this>;
+### setChoices(choicesArrayOrFetcher?: (InputChoice | InputGroup)[] | ((instance: Choices) => (InputChoice | InputGroup)[] | Promise<(InputChoice | InputGroup)[]>), value?: string | null, label?: string, replaceChoices?: boolean): this | Promise<this>;
 
 **Input types affected:** `select-one`, `select-multiple`
 
 **Usage:** Set choices of select input via an array of objects (or function that returns array of object or promise of it), a value field name and a label field name.
 
-This behaves the similar as passing items via the `choices` option but can be called after initialising Choices. This can also be used to add groups of choices (see example 3); Optionally pass a true `replaceChoices` value to remove any existing choices. Optionally pass a true `replaceItems` value to remove any items, if false choices for selected items are preserved. Optionally pass a `customProperties` object to add additional data to your choices (useful when searching/filtering etc). Passing an empty array as the first parameter, and a true `replaceChoices` is the same as calling `clearChoices` (see below).
+This behaves the similar as passing items via the `choices` option but can be called after initialising Choices. This can also be used to add groups of choices (see example 3); Optionally pass a true `replaceChoices` value to remove any existing choices. Optionally pass a `customProperties` object to add additional data to your choices (useful when searching/filtering etc). Passing an empty array as the first parameter, and a true `replaceChoices` is the same as calling `clearChoices` (see below).
 
 **Example 1:**
 
@@ -1168,13 +1168,11 @@ example.setChoices(
 );
 ```
 
-### clearChoices(clearOptions: boolean = true, clearItems: boolean = false);
+### clearChoices();
 
 **Input types affected:** `select-one`, `select-multiple`
 
-**Usage:** Clear all choices from select including any selected items. Does **not** reset the search state.
-- `clearOptions` If true, clears the backing options from the `<select>` element
-- `clearItems` If false, preserves selected items instead of clearing them
+**Usage:** Clear all choices from select. Does **not** reset the search state.
 
 ### getValue(valueOnly?: boolean): string[] | EventChoice[] | EventChoice | string;
 
@@ -1300,8 +1298,6 @@ e2e (End-to-end) tests are implemented using playwright, which requires installi
 `npx playwright install-deps `
 
 For JetBrain IDE's the `Test automation` plugin is recommended:
-https://plugins.jetbrains.com/plugin/20175-test-automation
-For usage see:
 https://www.jetbrains.com/help/phpstorm/playwright.html
 
 ### NPM tasks

@@ -288,10 +288,8 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderFiles(int $records): ActiveDataProvider
+    public static function getDataProviderFiles(int $eventID, int $records = 10): ActiveDataProvider
     {
-        $eventId = Yii::$app->user->identity->event?->id;
-
         $query = self::find()
             ->select([
                 self::tableName() . '.id',
@@ -300,7 +298,7 @@ class FilesEvents extends \yii\db\ActiveRecord
                 'extension',
                 'dir_title'
             ])
-            ->where(['events_id' => $eventId])
+            ->where(['events_id' => $eventID])
             ->joinWith('event', false)
             ->asArray()
         ;

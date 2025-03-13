@@ -111,4 +111,45 @@ $(() => {
     }
 
     changeActiveBtn();
+
+    function watchSelectExpert () {
+        const select = $('#eventform-expert')[0];
+        const config = { attributes: true, attributeFilter: ['class'] };
+
+        $(select).closest('.choices__inner').addClass('form-select');
+    
+        const watchChangeClass = function(mutationsList, observer) {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'attributes') {
+                    if (mutation.attributeName === 'class') {
+                        if ($(mutation.target).hasClass('is-invalid')) {
+                            $(mutation.target).closest('.choices__inner').removeClass('is-valid');
+                            $(mutation.target).closest('.choices').removeClass('is-valid');
+
+                            $(mutation.target).closest('.choices__inner').addClass('is-invalid');
+                            $(mutation.target).closest('.choices').addClass('is-invalid');
+                        }
+                
+                        if ($(mutation.target).hasClass('is-valid')) {
+                            $(mutation.target).closest('.choices__inner').removeClass('is-invalid');
+                            $(mutation.target).closest('.choices').removeClass('is-invalid');
+
+                            $(mutation.target).closest('.choices__inner').addClass('is-valid');
+                            $(mutation.target).closest('.choices').addClass('is-valid');
+                        }
+                    }
+                }
+            }
+        };
+    
+        const observer = new MutationObserver(watchChangeClass);
+    
+        observer.observe(select, config);
+    }
+
+    $('#pjax-create-event').on('pjax:complete', function (event) {
+        watchSelectExpert();
+    });
+
+    watchSelectExpert();
 })

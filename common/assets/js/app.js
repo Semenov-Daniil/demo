@@ -81,33 +81,55 @@
 			choiceData.noChoicesText = 'Не удалось найти чемпионат';
 
 			let choices = isChoicesVal["data-choices-text-disabled-true"] ? new Choices(item, choiceData).disable() : new Choices(item, choiceData);
-			const availableChoices = choices._store._state.choices;
-			const allGroups = choices._store._state.groups;
-			let lastSearchValue = '';
+			
+			if (isChoicesVal["data-choices-group"]) {
+				const availableChoices = choices._store._state.choices;
+				const allGroups = choices._store._state.groups;
+				let lastSearchValue = '';
 
-			item.addEventListener('search', function(event) {
-				const searchValue = event.detail.value;
-
-				const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
-
-				if (searchValue !== lastSearchValue || !searchValue) {
-					choices.clearChoices();
-					choices.setChoices(filteredChoices, 'value', 'label', true);
-					lastSearchValue = searchValue;
-				}
-			});
-
-			const searchInput = item.parentElement.parentElement.querySelector('input.choices__input[type="search"]');
-
-			searchInput.addEventListener('input', function(event) {
-				const searchValue = event.target.value;
-				if (searchValue !== lastSearchValue) {
+				item.addEventListener('search', function(event) {
+					const searchValue = event.detail.value;
+	
 					const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
-					choices.clearChoices();
-					choices.setChoices(filteredChoices, 'value', 'label', true);
-					lastSearchValue = searchValue;
-				}
-			});
+	
+					if (searchValue !== lastSearchValue || !searchValue) {
+						choices.clearChoices();
+						choices.setChoices(filteredChoices, 'value', 'label', true);
+						lastSearchValue = searchValue;
+					}
+				});
+	
+				const searchInput = item.parentElement.parentElement.querySelector('input.choices__input[type="search"]');
+	
+				searchInput.addEventListener('input', function(event) {
+					const searchValue = event.target.value;
+					if (searchValue !== lastSearchValue) {
+						const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
+						choices.clearChoices();
+						choices.setChoices(filteredChoices, 'value', 'label', true);
+						lastSearchValue = searchValue;
+					}
+				});
+			}
+
+			// item.addEventListener('ckick', function (event) {
+			// 	console.log('test');
+			// 	if (this.classList.contains('is-invalid')) {
+			// 		let choicesInner = this.closest('.choices__inner');
+			// 		if (choicesInner) choicesInner.classList.add('form-select', 'is-invalid');
+
+			// 		let choices = this.closest('.choices');
+			// 		if (choices) choices.classList.add('is-invalid');
+			// 	}
+
+			// 	if (this.classList.contains('is-valid')) {
+			// 		let choicesInner = this.closest('.choices__inner');
+			// 		if (choicesInner) choicesInner.classList.add('form-select', 'is-valid');
+
+			// 		let choices = this.closest('.choices');
+			// 		if (choices) choices.classList.add('is-valid');
+			// 	}
+			// });
 		});
 
 		var flatpickrExamples = document.querySelectorAll("[data-provider]");

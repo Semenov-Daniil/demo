@@ -17,6 +17,7 @@ use yii\widgets\Pjax;
 
 $this->title = 'Чемпионаты';
 
+ChoicesAsset::register($this);
 CleaveAsset::register($this);
 
 $this->registerJsFile('@web/js/events.js', ['depends' => AppAsset::class]);

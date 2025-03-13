@@ -415,11 +415,13 @@ class ExpertController extends Controller
         if ($this->request->isAjax) {
             return $this->renderAjax('_students-list', [
                 'dataProvider' => $dataProvider,
+                'event' => $event
             ]);
         }
 
         return $this->render('_students-list', [
             'dataProvider' => $dataProvider,
+            'event' => $event
         ]);
     }
 

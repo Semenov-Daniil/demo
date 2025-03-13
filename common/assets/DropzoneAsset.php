@@ -18,6 +18,6 @@ class DropzoneAsset extends AssetBundle
         'libs/dropzone/dropzone-min.js',
     ];
     public $depends = [
-        'common\assets\AppAsset',
+        'yii\web\YiiAsset',
     ];
 }

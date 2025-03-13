@@ -19,9 +19,9 @@ import {
   removeClassesFromElement,
   resolveNoticeFunction,
   resolveStringFunction,
+  sanitise,
   sortByRank,
   strToEl,
-  unwrapStringForEscaped,
 } from './lib/utils';
 import Store from './store/store';
 import { coerceBool, mapInputToChoice } from './lib/choice-input';
@@ -503,17 +503,12 @@ class Choices {
       return this;
     }
 
-    if (preventInputFocus === undefined) {
-      // eslint-disable-next-line no-param-reassign
-      preventInputFocus = !this._canSearch;
-    }
-
     requestAnimationFrame(() => {
       this.dropdown.show();
       const rect = this.dropdown.element.getBoundingClientRect();
       this.containerOuter.open(rect.bottom, rect.height);
 
-      if (!preventInputFocus) {
+      if (!preventInputFocus && this._canSearch) {
         this.input.focus();
       }
 
@@ -667,7 +662,6 @@ class Choices {
     label: string = 'label',
     replaceChoices: boolean = false,
     clearSearchFlag: boolean = true,
-    replaceItems: boolean = false,
   ): this | Promise<this> {
     if (!this.initialisedOK) {
       this._warnChoicesInitFailed('setChoices');
@@ -682,6 +676,11 @@ class Choices {
       throw new TypeError(`value parameter must be a name of 'value' field in passed objects`);
     }
 
+    // Clear choices if needed
+    if (replaceChoices) {
+      this.clearChoices();
+    }
+
     if (typeof choicesArrayOrFetcher === 'function') {
       // it's a choices fetcher function
       const fetcher = choicesArrayOrFetcher(this);
@@ -692,9 +691,7 @@ class Choices {
         return new Promise((resolve) => requestAnimationFrame(resolve))
           .then(() => this._handleLoadingState(true))
           .then(() => fetcher)
-          .then((data: InputChoice[]) =>
-            this.setChoices(data, value, label, replaceChoices, clearSearchFlag, replaceItems),
-          )
+          .then((data: InputChoice[]) => this.setChoices(data, value, label, replaceChoices))
           .catch((err) => {
             if (!this.config.silent) {
               console.error(err);
@@ -727,10 +724,6 @@ class Choices {
       if (clearSearchFlag) {
         this._isSearching = false;
       }
-      // Clear choices if needed
-      if (replaceChoices) {
-        this.clearChoices(true, replaceItems);
-      }
       const isDefaultValue = value === 'value';
       const isDefaultLabel = label === 'label';
 
@@ -744,7 +737,7 @@ class Choices {
             } as InputGroup;
           }
 
-          this._addGroup(mapInputToChoice<InputGroup>(group, true));
+          this._addGroup(mapInputToChoice(group, true));
         } else {
           let choice = groupOrChoice;
           if (!isDefaultLabel || !isDefaultValue) {
@@ -754,11 +747,7 @@ class Choices {
               label: choice[label],
             } as InputChoice;
           }
-          const choiceFull = mapInputToChoice<InputChoice>(choice, false);
-          this._addChoice(choiceFull);
-          if (choiceFull.placeholder && !this._hasNonChoicePlaceholder) {
-            this._placeholderValue = unwrapStringForEscaped(choiceFull.label);
-          }
+          this._addChoice(mapInputToChoice(choice, false));
         }
       });
 
@@ -787,7 +776,7 @@ class Choices {
       const existingItems = {};
       if (!deselectAll) {
         this._store.items.forEach((choice) => {
-          if (choice.id && choice.active && choice.selected) {
+          if (choice.id && choice.active && choice.selected && !choice.disabled) {
             existingItems[choice.value] = true;
           }
         });
@@ -854,27 +843,15 @@ class Choices {
     return this;
   }
 
-  clearChoices(clearOptions: boolean = true, clearItems: boolean = false): this {
-    if (clearOptions) {
-      if (clearItems) {
-        this.passedElement.element.replaceChildren('');
-      } else {
-        this.passedElement.element.querySelectorAll(':not([selected])').forEach((el): void => {
-          el.remove();
-        });
-      }
-    }
-    this.itemList.element.replaceChildren('');
-    this.choiceList.element.replaceChildren('');
-    this._clearNotice();
+  clearChoices(): this {
     this._store.withTxn(() => {
-      const items = clearItems ? [] : this._store.items;
-      this._store.reset();
-      items.forEach((item: ChoiceFull): void => {
-        this._store.dispatch(addChoice(item));
-        this._store.dispatch(addItem(item));
+      this._store.choices.forEach((choice) => {
+        if (!choice.selected) {
+          this._store.dispatch(removeChoice(choice));
+        }
       });
     });
+
     // @todo integrate with Store
     this._searcher.reset();
 
@@ -882,10 +859,18 @@ class Choices {
   }
 
   clearStore(clearOptions: boolean = true): this {
-    this.clearChoices(clearOptions, true);
     this._stopSearch();
+
+    if (clearOptions) {
+      this.passedElement.element.replaceChildren('');
+    }
+    this.itemList.element.replaceChildren('');
+    this.choiceList.element.replaceChildren('');
+    this._store.reset();
     this._lastAddedChoiceId = 0;
     this._lastAddedGroupId = 0;
+    // @todo integrate with Store
+    this._searcher.reset();
 
     return this;
   }
@@ -984,7 +969,7 @@ class Choices {
           choice.choiceEl || this._templates.choice(config, choice, config.itemSelectText, groupLabel);
         choice.choiceEl = dropdownItem;
         fragment.appendChild(dropdownItem);
-        if (isSearching || !choice.selected) {
+        if (!choice.disabled && (isSearching || !choice.selected)) {
           selectableChoices = true;
         }
 
@@ -1036,7 +1021,7 @@ class Choices {
       }
     }
 
-    if (!selectableChoices && (isSearching || !fragment.children.length || !config.renderSelectedChoices)) {
+    if (!selectableChoices) {
       if (!this._notice) {
         this._notice = {
           text: resolveStringFunction(isSearching ? config.noResultsText : config.noChoicesText),
@@ -1076,22 +1061,22 @@ class Choices {
     // new items
     items.forEach(addItemToFragment);
 
-    let addedItems = !!fragment.childNodes.length;
-    if (this._isSelectOneElement) {
+    let addItems = !!fragment.childNodes.length;
+    if (this._isSelectOneElement && this._hasNonChoicePlaceholder) {
       const existingItems = itemList.children.length;
-      if (addedItems || existingItems > 1) {
+      if (addItems || existingItems > 1) {
         const placeholder = itemList.querySelector<HTMLElement>(getClassNamesSelector(config.classNames.placeholder));
         if (placeholder) {
           placeholder.remove();
         }
-      } else if (!addedItems && !existingItems && this._placeholderValue) {
-        addedItems = true;
+      } else if (!existingItems) {
+        addItems = true;
         addItemToFragment(
           mapInputToChoice<InputChoice>(
             {
               selected: true,
               value: '',
-              label: this._placeholderValue,
+              label: config.placeholderValue || '',
               placeholder: true,
             },
             false,
@@ -1100,7 +1085,7 @@ class Choices {
       }
     }
 
-    if (addedItems) {
+    if (addItems) {
       itemList.append(fragment);
 
       if (config.shouldSortItems && !this._isSelectOneElement) {
@@ -1230,9 +1215,9 @@ class Choices {
       this._triggerChange(itemToRemove.value);
 
       if (this._isSelectOneElement && !this._hasNonChoicePlaceholder) {
-        const placeholderChoice = (this.config.shouldSort ? this._store.choices.reverse() : this._store.choices).find(
-          (choice) => choice.placeholder,
-        );
+        const placeholderChoice = this._store.choices
+          .reverse()
+          .find((choice) => !choice.disabled && choice.placeholder);
         if (placeholderChoice) {
           this._addItem(placeholderChoice);
           this.unhighlightAll();
@@ -1339,7 +1324,7 @@ class Choices {
       if (this.passedElement.value) {
         const elementItems: ChoiceFull[] = this.passedElement.value
           .split(config.delimiter)
-          .map((e: string) => mapInputToChoice<string>(e, false, this.config.allowHtmlUserInput));
+          .map((e: InputChoice | string) => mapInputToChoice(e, false));
         this._presetChoices = this._presetChoices.concat(elementItems);
       }
       this._presetChoices.forEach((choice: ChoiceFull) => {
@@ -1405,17 +1390,12 @@ class Choices {
 
     if (!config.singleModeForMultiSelect && maxItemCount > 0 && maxItemCount <= this._store.items.length) {
       this.choiceList.element.replaceChildren('');
-      this._notice = undefined;
       this._displayNotice(
         typeof maxItemText === 'function' ? maxItemText(maxItemCount) : maxItemText,
         NoticeTypes.addChoice,
       );
 
       return false;
-    }
-
-    if (this._notice && this._notice.type === NoticeTypes.addChoice) {
-      this._clearNotice();
     }
 
     return true;
@@ -1433,14 +1413,15 @@ class Choices {
 
     if (canAddItem) {
       const foundChoice = this._store.choices.find((choice) => config.valueComparer(choice.value, value));
-      if (foundChoice) {
-        if (this._isSelectElement) {
-          // for exact matches, do not prompt to add it as a custom choice
+      if (this._isSelectElement) {
+        // for exact matches, do not prompt to add it as a custom choice
+        if (foundChoice) {
           this._displayNotice('', NoticeTypes.addChoice);
 
           return false;
         }
-        if (!config.duplicateItemsAllowed) {
+      } else if (this._isTextElement && !config.duplicateItemsAllowed) {
+        if (foundChoice) {
           canAddItem = false;
           notice = resolveNoticeFunction(config.uniqueItemText, value);
         }
@@ -1623,17 +1604,7 @@ class Choices {
       (event.key.length === 2 && event.key.charCodeAt(0) >= 0xd800) ||
       event.key === 'Unidentified';
 
-    /*
-      We do not show the dropdown if focusing out with esc or navigating through input fields.
-      An activated search can still be opened with any other key.
-     */
-    if (
-      !this._isTextElement &&
-      !hasActiveDropdown &&
-      keyCode !== KeyCodeMap.ESC_KEY &&
-      keyCode !== KeyCodeMap.TAB_KEY &&
-      keyCode !== KeyCodeMap.SHIFT_KEY
-    ) {
+    if (!this._isTextElement && !hasActiveDropdown) {
       this.showDropdown();
 
       if (!this.input.isFocussed && wasPrintableChar) {
@@ -1769,7 +1740,21 @@ class Choices {
           return;
         }
 
-        this._addChoice(mapInputToChoice<string>(value, false, this.config.allowHtmlUserInput), true, true);
+        const sanitisedValue = sanitise(value);
+        const userValue =
+          this.config.allowHtmlUserInput || sanitisedValue === value ? value : { escaped: sanitisedValue, raw: value };
+        this._addChoice(
+          mapInputToChoice(
+            {
+              value: userValue,
+              label: userValue,
+              selected: true,
+            } as InputChoice,
+            false,
+          ),
+          true,
+          true,
+        );
         addedItem = true;
       }
 
@@ -1792,7 +1777,6 @@ class Choices {
     if (hasActiveDropdown) {
       event.stopPropagation();
       this.hideDropdown(true);
-      this._stopSearch();
       this.containerOuter.element.focus();
     }
   }
@@ -1983,18 +1967,17 @@ class Choices {
     const blurWasWithinContainer = target && containerOuter.element.contains(target as Node);
 
     if (blurWasWithinContainer && !this._isScrollingOnIe) {
-      if (target === this.input.element) {
-        containerOuter.removeFocusState();
-        this.hideDropdown(true);
-        if (this._isTextElement || this._isSelectMultipleElement) {
+      const targetIsInput = target === this.input.element;
+
+      if (this._isTextElement || this._isSelectMultipleElement) {
+        if (targetIsInput) {
+          containerOuter.removeFocusState();
+          this.hideDropdown(true);
           this.unhighlightAll();
         }
-      } else if (target === this.containerOuter.element) {
-        // Remove the focus state when the past outerContainer was the target
+      } else {
         containerOuter.removeFocusState();
-
-        // Also close the dropdown if search is disabled
-        if (!this._canSearch) {
+        if (targetIsInput || (target === containerOuter.element && !this._canSearch)) {
           this.hideDropdown(true);
         }
       }
@@ -2094,10 +2077,6 @@ class Choices {
     }
 
     this._store.dispatch(removeItem(item));
-    const notice = this._notice;
-    if (notice && notice.type === NoticeTypes.noChoices) {
-      this._clearNotice();
-    }
 
     this.passedElement.triggerEvent(EventType.removeItem, this._getChoiceForOutput(item));
   }
@@ -2108,7 +2087,10 @@ class Choices {
     }
 
     const { config } = this;
-    if (!config.duplicateItemsAllowed && this._store.choices.find((c) => config.valueComparer(c.value, choice.value))) {
+    if (
+      (this._isSelectElement || !config.duplicateItemsAllowed) &&
+      this._store.choices.find((c) => config.valueComparer(c.value, choice.value))
+    ) {
       return;
     }
 

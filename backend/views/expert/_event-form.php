@@ -33,8 +33,9 @@ use yii\bootstrap5\Html;
         ]); ?>
 
             <div class="row">
+
                 <?php if (Yii::$app->user->can('sExpert')): ?>
-                    <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3']])->dropDownList($experts, ['prompt' => 'Выберите эксперта'])?>
+                    <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3 field-choices']])->dropDownList($experts, ['prompt' => 'Выберите эксперта',  'data' => ['choices' => true, 'choices-removeItem' => true]])?>
                 <?php endif;?>
 
                 <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-5' : '')]])->textInput() ?>
@@ -46,9 +47,9 @@ use yii\bootstrap5\Html;
                     'template' => '
                         {label}
                         <div class="input-step full-width">
-                            <button type="button" class="minus material-shadow">–</button>
+                            <button type="button" class="btn btn-light minus material-shadow">–</button>
                             {input}
-                            <button type="button" class="plus material-shadow">+</button>
+                            <button type="button" class="btn btn-light material-shadow plus">+</button>
                         </div>
                         {error}
                     ',

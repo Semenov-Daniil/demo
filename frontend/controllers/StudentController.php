@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use common\models\EncryptedPasswords;
+use common\models\FilesEvents;
 use Yii;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -10,6 +11,7 @@ use yii\filters\AccessControl;
 use common\models\LoginForm;
 use common\models\Passwords;
 use common\models\Roles;
+use common\models\Students;
 use common\models\Users;
 
 /**
@@ -69,7 +71,12 @@ class StudentController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $student = Students::findOne(['students_id' => Yii::$app->user->id]);
+        $files = FilesEvents::getDataProviderFiles($student->event->id);
+
+        return $this->render('index', [
+            'files' => $files
+        ]);
     }
 
     /**

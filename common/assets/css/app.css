@@ -21288,4 +21288,20 @@ li.dz-preview-item:first-child {
     padding-bottom: 2.25px;
 }
 
+.choices__inner.form-select {
+    --vz-form-select-bg-img: none;
+}
+
+.field-choices .choices {
+    margin: 0;
+}
+
+.is-focused .choices__inner.is-invalid, .is-open .choices__inner.is-invalid {
+    border-color: var(--vz-danger-border-subtle);
+}
+
+.is-focused .choices__inner.is-valid, .is-open .choices__inner.is-valid {
+    border-color: var(--vz-success-border-subtle);
+}
+
 /*# sourceMappingURL=app.min.css.map */

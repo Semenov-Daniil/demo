@@ -142,10 +142,10 @@ declare class Choices {
      * }], 'value', 'label', false);
      * ```
      */
-    setChoices(choicesArrayOrFetcher?: (InputChoice | InputGroup)[] | ((instance: Choices) => (InputChoice | InputGroup)[] | Promise<(InputChoice | InputGroup)[]>), value?: string | null, label?: string, replaceChoices?: boolean, clearSearchFlag?: boolean, replaceItems?: boolean): this | Promise<this>;
+    setChoices(choicesArrayOrFetcher?: (InputChoice | InputGroup)[] | ((instance: Choices) => (InputChoice | InputGroup)[] | Promise<(InputChoice | InputGroup)[]>), value?: string | null, label?: string, replaceChoices?: boolean, clearSearchFlag?: boolean): this | Promise<this>;
     refresh(withEvents?: boolean, selectFirstOption?: boolean, deselectAll?: boolean): this;
     removeChoice(value: string): this;
-    clearChoices(clearOptions?: boolean, clearItems?: boolean): this;
+    clearChoices(): this;
     clearStore(clearOptions?: boolean): this;
     clearInput(): this;
     _validateConfig(): void;
