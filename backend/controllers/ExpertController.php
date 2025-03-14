@@ -341,7 +341,7 @@ class ExpertController extends Controller
     public function actionStudents(): string
     {
         return $this->render('students', [
-            'events' => Events::getEvents(),
+            'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
         ]);
     }
 
@@ -351,10 +351,8 @@ class ExpertController extends Controller
             return $this->request->isAjax ? $this->renderAjax('_students-not-view') : $this->render('_students-not-view');
         }
 
-        $eventID = Events::decryptById($event);
-
-        $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT, 'events_id' => $eventID]);
-        $dataProvider = $model->getDataProviderStudents($eventID);
+        $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT, 'events_id' => $event]);
+        $dataProvider = $model->getDataProviderStudents($event);
 
         if ($this->request->isAjax) {
             return $this->renderAjax('_students-view', [
@@ -377,7 +375,7 @@ class ExpertController extends Controller
 
         if ($this->request->isPost) {
             $data = Yii::$app->request->post();
-            $event = Events::decryptById($data['event']);
+            $event = $data['event'];
 
             if ($model->load($data) && $model->createStudent($event)) {
                 Yii::$app->session->addFlash('toast-alert', [
@@ -406,9 +404,7 @@ class ExpertController extends Controller
 
     public function actionAllStudents(?string $event = null): string
     {
-        $eventID = Events::decryptById($event);
-
-        $dataProvider = Students::getDataProviderStudents($eventID);
+        $dataProvider = Students::getDataProviderStudents($event);
 
         session_write_close();
 
@@ -439,10 +435,6 @@ class ExpertController extends Controller
 
         $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
 
-        $students = array_map(function($item) {
-            return Students::decryptById($item);
-        }, $students);
-
         if (count($students) && Students::deleteStudents($students)) {
             Yii::$app->session->addFlash('toast-alert', [
                 'text' => count($students) > 1 ? 'Студенты успешно удалены.' : 'Студент успешно удален.',
@@ -468,7 +460,7 @@ class ExpertController extends Controller
 
     public function actionExportStudents(?string $event = null)
     {
-        $students = Students::getExportStudents(Events::decryptById($event));
+        $students = Students::getExportStudents($event);
         $templatePath = Yii::getAlias('@templates/template.docx');
 
         $templateProcessor = new TemplateProcessor($templatePath);
@@ -509,11 +501,12 @@ class ExpertController extends Controller
     public function actionFiles()
     {
         $model = new FilesEvents(['scenario' => FilesEvents::SCENARIO_UPLOAD_FILE]);
-        $dataProvider = $model->getDataProviderFiles(10);
+        $dataProvider = $model->getDataProviderFiles(Yii::$app->user->identity->event->id);
 
         return $this->render('files', [
             'model' => $model,
             'dataProvider' => $dataProvider,
+            'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
         ]);
     }
 
@@ -528,7 +521,7 @@ class ExpertController extends Controller
 
             try {
                 $model->files = UploadedFile::getInstancesByName('files');
-                $result = $model->processFiles(); 
+                $result = $model->processFiles(Yii::$app->user->identity->event->id); 
             } catch (\Exception $e) {
                 Yii::$app->response->statusCode = 400;
                 $error = $e->getMessage();
@@ -570,7 +563,7 @@ class ExpertController extends Controller
 
     public function actionAllFiles(): string
     {
-        $dataProvider = FilesEvents::getDataProviderFiles(10);
+        $dataProvider = FilesEvents::getDataProviderFiles(Yii::$app->user->identity->event->id);
 
         session_write_close();
 
@@ -594,7 +587,7 @@ class ExpertController extends Controller
      */
     public function actionDeleteFiles(?string $id = null): string
     {
-        $dataProvider = FilesEvents::getDataProviderFiles(10);
+        $dataProvider = FilesEvents::getDataProviderFiles(Yii::$app->user->identity->event->id);
         $files = [];
 
         $files = (!is_null($id) ? [$id] : ($this->request->post('files') ? $this->request->post('files') : []));
@@ -666,6 +659,7 @@ class ExpertController extends Controller
         return $this->render('modules', [
             'model' => $model,
             'dataProvider' => $dataProvider,
+            'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
         ]);
     }
 

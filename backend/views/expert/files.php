@@ -5,6 +5,7 @@
 /** @var app\models\FilesEvents $dataProvider */
 
 use common\assets\AppAsset;
+use common\assets\ChoicesAsset;
 use common\assets\DropzoneAsset;
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
@@ -12,6 +13,7 @@ use yii\web\View;
 use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
+ChoicesAsset::register($this);
 DropzoneAsset::register($this);
 
 $this->title = 'Файлы';
@@ -30,6 +32,22 @@ $this->registerJsFile('@web/js/files.js', ['depends' => AppAsset::class]);
 $this->registerJsFile('@web/js/pages/form-file-upload.init.js', ['depends' => DropzoneAsset::class]);
 
 ?>
+
+<div class="row mb-3">
+    <div>
+        <label for="events-select" class="form-label text-muted col-12">Чемпионаты</label>
+        <?= Html::dropDownList('events', false, $events, [
+            'id' => 'events-select',
+            'prompt' => 'Выберите чемпионат',
+            'data' => [
+                'choices' => true,
+                'choices-group' => true,
+                'choices-removeItem' => true,
+            ],
+            'class' => 'form-select'
+        ]); ?>
+    </div>
+</div>
 
 <div class="row">
     <?php Pjax::begin([

@@ -78,7 +78,7 @@ use yii\grid\GridView;
                     ],
 
                     'checkboxOptions' => function ($model, $key, $index, $column) {
-                        return ['value' => Students::encryptById($model['students_id'])];
+                        return ['value' => $model['students_id']];
                     },
 
                     'contentOptions' => [
@@ -122,7 +122,7 @@ use yii\grid\GridView;
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => Students::encryptById($model['students_id']), 'pjax' => 0]]);
+                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['students_id'], 'pjax' => 0]]);
                         }
                     ],
                     'visible' => $dataProvider->totalCount

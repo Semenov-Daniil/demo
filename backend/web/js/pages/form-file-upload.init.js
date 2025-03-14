@@ -19,7 +19,7 @@ $(() => {
         previewsContainer: "#dropzone-preview",
         autoProcessQueue: false,
         uploadMultiple: true,
-        parallelUploads: 20,
+        parallelUploads: 1,
         maxFiles: 20,
         paramName: "files",
         maxFilesize: (options?.maxFileSize ? options.maxFileSize : '50'),

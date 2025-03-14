@@ -47,7 +47,7 @@ function initStudentsEvent() {
 
     $('#pjax-create-student').on('pjax:complete', function (event) {
         $.pjax.reload({
-            url: `/expert/all-students?event=${encodeURIComponent($('#events-select').find('option:selected').val())}`,
+            url: `/expert/all-students?event=${$('#events-select').find('option:selected').val()}`,
             container: '#pjax-students',
             pushState: false,
             replace: false,
@@ -89,7 +89,7 @@ function initStudentsEvent() {
 
     $('#pjax-students').on('click', '.btn-delete', function (event) {
         $.ajax({
-            url: `/expert/delete-students?id=${encodeURIComponent($(this).data('id'))}`,
+            url: `/expert/delete-students?id=${$(this).data('id')}`,
             method: 'DELETE',
             success (data) {
                 $('#pjax-students').html(data);
@@ -139,7 +139,7 @@ $(() => {
 
     $('#events-select').on('change', function (event) {
         $.ajax({
-            url: `expert/students-event${($(this).val() ? `?event=${encodeURIComponent($(this).val())}` : '')}`,
+            url: `expert/students-event${($(this).val() ? `?event=${$(this).val()}` : '')}`,
             type: 'GET',
             success: function(data) {
                 $('#students-wrap').html(data);

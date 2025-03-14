@@ -217,7 +217,7 @@ class FilesEvents extends \yii\db\ActiveRecord
             return $fileInfo;
         }
 
-        $copyErrors = $this->copyFileToStudents($filePath, $this->save_name);
+        $copyErrors = $this->copyFileToStudents($filePath, "$this->save_name.$file->extension");
         if (!empty($copyErrors)) {
             $fileInfo['errors'] = array_merge($fileInfo['errors'], $copyErrors);
             $this->save_name = '';
@@ -234,7 +234,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
      */
-    public function processFiles(): array
+    public function processFiles(int $eventID): array
     {
         $result = [];
 
@@ -246,7 +246,7 @@ class FilesEvents extends \yii\db\ActiveRecord
             ->select([
                 'CONCAT("@students/", login, "/public") as alias',
             ])
-            ->where(['events_id' => $this->eventId])
+            ->where(['events_id' => $eventID])
             ->joinWith('user', false)
             ->asArray()
             ->all()

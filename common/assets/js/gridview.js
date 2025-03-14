@@ -1,5 +1,4 @@
 function initGridView() {
-    console.log('initGridView');
     
     let localName = $('div[data-pjax-grid]').attr('id');
 

@@ -7,6 +7,7 @@
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
 use common\assets\AppAsset;
+use common\assets\ChoicesAsset;
 use common\widgets\Alert;
 use yii\bootstrap5\Modal;
 use yii\grid\ActionColumn;
@@ -18,9 +19,27 @@ use yii\widgets\Pjax;
 
 $this->title = 'Модули';
 
+ChoicesAsset::register($this);
+
 $this->registerJsFile('@web/js/modules.js', ['depends' => AppAsset::class]);
 
 ?>
+
+<div class="row mb-3">
+    <div>
+        <label for="events-select" class="form-label text-muted col-12">Чемпионаты</label>
+        <?= Html::dropDownList('events', false, $events, [
+            'id' => 'events-select',
+            'prompt' => 'Выберите чемпионат',
+            'data' => [
+                'choices' => true,
+                'choices-group' => true,
+                'choices-removeItem' => true,
+            ],
+            'class' => 'form-select'
+        ]); ?>
+    </div>
+</div>
 
 <div class="row">
     <?php Pjax::begin([

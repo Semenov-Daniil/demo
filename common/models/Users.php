@@ -289,7 +289,7 @@ class Users extends ActiveRecord implements IdentityInterface
 
     public function getFullName()
     {
-        return "$this->surname $this->name" . ($this->patronymic ? $this->patronymic : '');
+        return "$this->surname $this->name" . ($this->patronymic ? " $this->patronymic" : '');
     }
 
     /**

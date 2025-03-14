@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use common\models\EncryptedPasswords;
+use common\models\Events;
 use common\models\FilesEvents;
 use Yii;
 use yii\web\Controller;
@@ -73,9 +74,12 @@ class StudentController extends Controller
     {
         $student = Students::findOne(['students_id' => Yii::$app->user->id]);
         $files = FilesEvents::getDataProviderFiles($student->event->id);
+        $modules = Events::findOne(['id' => $student->event->id])->modules;
 
         return $this->render('index', [
-            'files' => $files
+            'student' => $student,
+            'files' => $files,
+            'modules' => $modules,
         ]);
     }
 

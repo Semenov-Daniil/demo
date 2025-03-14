@@ -167,15 +167,15 @@ class Events extends ActiveRecord
         return self::findOne(['experts_id' => $expertID])?->id;
     }
 
-    public static function encryptById(int $id): string
-    {
-        return base64_encode(Yii::$app->security->encryptByKey($id, Yii::$app->params['eventKey']));
-    }
+    // public static function encryptById(int $id): string
+    // {
+    //     return base64_encode(Yii::$app->security->encryptByKey($id, Yii::$app->params['eventKey']));
+    // }
 
-    public static function decryptById(string $id): string
-    {
-        return Yii::$app->security->decryptByKey(base64_decode($id), Yii::$app->params['eventKey']);
-    }
+    // public static function decryptById(string $id): string
+    // {
+    //     return Yii::$app->security->decryptByKey(base64_decode($id), Yii::$app->params['eventKey']);
+    // }
 
     /**
      * Find event by expert.
@@ -242,7 +242,20 @@ class Events extends ActiveRecord
         ]);
     }
 
-    public static function getEvents(): array
+    public static function getEvents(int $expertID): array
+    {
+        return self::find()
+            ->select('title')
+            ->where(['experts_id' => $expertID])
+            ->orderBy([
+                'id' => SORT_ASC
+            ])
+            ->indexBy('id')
+            ->column()
+        ;
+    }
+
+    public static function getExpertEvents(): array
     {
         $events = self::find()
             ->select([
@@ -262,7 +275,7 @@ class Events extends ActiveRecord
         $result = [];
         foreach ($events as $event) {
             $expertName = $event['expert_name'];
-            $eventId = self::encryptById($event['event_id']);
+            $eventId = $event['event_id'];
             $eventTitle = $event['event_title'];
             
             if (!isset($result[$expertName])) {

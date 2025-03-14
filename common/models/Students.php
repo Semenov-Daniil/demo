@@ -219,15 +219,15 @@ class Students extends ActiveRecord
         return "{$login}_m{$numberModule}";
     }
 
-    public static function encryptById(int $id): string
-    {
-        return base64_encode(Yii::$app->security->encryptByKey($id, Yii::$app->params['studentKey']));
-    }
+    // public static function encryptById(int $id): string
+    // {
+    //     return base64_encode(Yii::$app->security->encryptByKey($id, Yii::$app->params['studentKey']));
+    // }
 
-    public static function decryptById(string $id): string
-    {
-        return Yii::$app->security->decryptByKey(base64_decode($id), Yii::$app->params['studentKey']);
-    }
+    // public static function decryptById(string $id): string
+    // {
+    //     return Yii::$app->security->decryptByKey(base64_decode($id), Yii::$app->params['studentKey']);
+    // }
 
     public function deleteDataStudent(): bool
     {
