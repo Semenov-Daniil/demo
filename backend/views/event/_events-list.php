@@ -116,21 +116,28 @@ use yii\grid\GridView;
                         return $model['countModules'];
                     },
                     'options' => [
-                        'class' => (Yii::$app->user->can('sExpert') ? 'col-3' : 'col-4')
+                        'class' => 'col-1'
+                    ],
+                    'contentOptions' => [
+                        'class' => 'text-center'
                     ],
                     'visible' => $dataProvider->totalCount
                 ],
                 [
                     'class' => ActionColumn::class,
                     'template' => '
-                        <div class="d-flex flex-wrap gap-2">
+                        <div class="d-flex flex-wrap gap-2 ms-auto">
+                            {update}
                             {delete}
                         </div>
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['id']]]);
-                        }
+                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']]]);
+                        },
+                        'update' => function ($url, $model, $key) {
+                            return Html::button('<i class="ri-pencil-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-info btn-update', 'data' => ['id' => $model['id']]]);
+                        },
                     ],
                     'visible' => $dataProvider->totalCount
                 ],

@@ -54,6 +54,54 @@ $(() => {
         $('.btn-delete-selected-events').prop('disabled', ($(this).is(':checked') ? false : (checkedevents.length === 0)));
     });
 
+    $('#pjax-events').on('click', '.btn-update', function (event) {
+        $('#modal-update-event').find('.modal-body').load(`/expert/update-event?id=${$(this).data('id')}`, function (event) {
+            $('#modal-update-event').modal('show');
+            choicesInit();
+        });
+    });
+
+    $('#modal-update-event').on('beforeSubmit', '#form-update-event', function (event) {
+        event.preventDefault();
+
+        const form = $(this);
+
+        $.ajax({
+            url: form.attr('action'),
+            method: 'PATCH',
+            data: form.serialize(),
+            beforeSend () {
+                $('.btn-update-event').find('.cnt-text').addClass('d-none');
+                $('.btn-update-event').find('.cnt-load').removeClass('d-none');
+                $('.btn-update-event').prop('disabled', true);
+            },
+            success (data) {
+                if (data.success) {
+                    $('#modal-update-event').modal('hide');
+                    $.pjax.reload({
+                        url: '/expert/all-events',
+                        container: '#pjax-events',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
+                }
+
+                $('#pjax-update-event').html(data);
+            },
+            error () {
+                // location.reload();
+            },
+            complete () {
+                $('.btn-create-event').find('.cnt-text').removeClass('d-none');
+                $('.btn-create-event').find('.cnt-load').addClass('d-none');
+                $('.btn-create-event').prop('disabled', false);
+            }
+        });
+
+        return false;
+    });
+
     $('#pjax-events').on('click', '.btn-delete', function (event) {
         $.ajax({
             url: `/expert/delete-events?id=${$(this).data('id')}`,
@@ -112,44 +160,7 @@ $(() => {
 
     changeActiveBtn();
 
-    function watchSelectExpert () {
-        const select = $('#eventform-expert')[0];
-        const config = { attributes: true, attributeFilter: ['class'] };
-
-        $(select).closest('.choices__inner').addClass('form-select');
-    
-        const watchChangeClass = function(mutationsList, observer) {
-            for (let mutation of mutationsList) {
-                if (mutation.type === 'attributes') {
-                    if (mutation.attributeName === 'class') {
-                        if ($(mutation.target).hasClass('is-invalid')) {
-                            $(mutation.target).closest('.choices__inner').removeClass('is-valid');
-                            $(mutation.target).closest('.choices').removeClass('is-valid');
-
-                            $(mutation.target).closest('.choices__inner').addClass('is-invalid');
-                            $(mutation.target).closest('.choices').addClass('is-invalid');
-                        }
-                
-                        if ($(mutation.target).hasClass('is-valid')) {
-                            $(mutation.target).closest('.choices__inner').removeClass('is-invalid');
-                            $(mutation.target).closest('.choices').removeClass('is-invalid');
-
-                            $(mutation.target).closest('.choices__inner').addClass('is-valid');
-                            $(mutation.target).closest('.choices').addClass('is-valid');
-                        }
-                    }
-                }
-            }
-        };
-    
-        const observer = new MutationObserver(watchChangeClass);
-    
-        observer.observe(select, config);
-    }
-
     $('#pjax-create-event').on('pjax:complete', function (event) {
-        watchSelectExpert();
+        choicesInit();
     });
-
-    watchSelectExpert();
 })

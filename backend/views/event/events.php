@@ -5,6 +5,7 @@ use common\assets\ChoicesAsset;
 use common\assets\CleaveAsset;
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
+use yii\bootstrap5\Modal;
 use yii\web\JqueryAsset;
 use yii\web\View;
 use yii\web\YiiAsset;
@@ -21,7 +22,7 @@ ChoicesAsset::register($this);
 CleaveAsset::register($this);
 
 $this->registerJsFile('@web/js/events.js', ['depends' => AppAsset::class]);
-$this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => AppAsset::class]);
+$this->registerJsFile('@web/js/pages/input-step.init.js', ['depends' => AppAsset::class]);
 ?>
 
 <div class="row">
@@ -31,7 +32,7 @@ $this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => App
         'timeout' => 100000,
     ]); ?>
     
-        <?= $this->render('_event-form', [
+        <?= $this->render('_event-create', [
             'model' => $model,
             'experts' => $experts 
         ]); ?>
@@ -57,4 +58,31 @@ $this->registerJsFile('@web/js/pages/form-input-spin.init.js', ['depends' => App
 
     <?php Pjax::end(); ?>
 </div>
+
+<?php Modal::begin([
+    'id' => 'modal-update-event',
+    'size' => Modal::SIZE_DEFAULT,
+    'title' => 'Редактирование чемпионата',
+    'centerVertical' => true,
+    'headerOptions' => [
+        'class' => 'bg-light p-3',
+    ]
+]); ?>
+
+<div class="row">
+    <div class="d-flex flex-column justify-content-end mb-3 placeholder-glow">
+        <div class="mr-lg-3 placeholder col-4 mb-2 rounded-1"></div>
+        <div class="form-control placeholder p-3"></div>
+    </div>
+    <div class="d-flex flex-column justify-content-end mb-3 placeholder-glow">
+        <div class="mr-lg-3 placeholder col-2 mb-2 rounded-1"></div>
+        <div class="form-control placeholder p-3"></div>
+    </div>
+    <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
+        <button type="button" class="btn btn-info disabled placeholder col-2" data-bs-dismiss="modal"></button>
+        <button type="submit" class="btn btn-success disabled placeholder col-3"></button>
+    </div>
+</div>
+
+<?php Modal::end(); ?>
 

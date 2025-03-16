@@ -17,7 +17,7 @@ use yii\bootstrap5\Html;
 
     <div class="card-body">
         <?php $form = ActiveForm::begin([
-            'id' => 'create-event-form',
+            'id' => 'form-event-create',
             'action' => ['create-event'],
             'options' => [
                 'data' => [
@@ -38,33 +38,20 @@ use yii\bootstrap5\Html;
                     <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3 field-choices']])->dropDownList($experts, ['prompt' => 'Выберите эксперта',  'data' => ['choices' => true, 'choices-removeItem' => true]])?>
                 <?php endif;?>
 
-                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-5' : '')]])->textInput() ?>
+                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-4' : '')]])->textInput(['placeholder' => 'Введите название чемпионата']) ?>
             
-                <?= $form->field($model, 'countModules', [
-                    'options' => [
-                        'class' => 'col-md-4 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-2' : ''),
-                    ],
-                    'template' => '
-                        {label}
-                        <div class="input-step full-width">
-                            <button type="button" class="btn btn-light minus material-shadow">–</button>
-                            {input}
-                            <button type="button" class="btn btn-light material-shadow plus">+</button>
-                        </div>
-                        {error}
-                    ',
-                ])->textInput(['type' => 'number', 'class' => 'form-control cleave-number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1)]) ?>
+                <?= $form->field($model, 'countModules', ['options' => ['class' => 'col-md-4 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-3' : '')]])->textInput(['type' => 'number', 'class' => 'form-control cleave-number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1), 'placeholder' => 'Введите кол-во модулей', 'data' => ['step' => true]]) ?>
 
                 <div class="col-12 text-end">
                     <?= Html::submitButton('
-                        <span class="cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</span>
-                        <span class="d-flex align-items-center d-none cnt-load">
+                        <div class="d-flex align-items-center cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</div>
+                        <div class="d-flex align-items-center d-none cnt-load">
                             <span class="spinner-border flex-shrink-0" role="status">
                             </span>
                             <span class="flex-grow-1 ms-2">
                                 Добавление...
                             </span>
-                        </span>
+                        </div>
                     ', ['class' => 'btn btn-success btn-load ms-auto btn-create-event', 'name' => 'create']) ?>
                 </div>
             </div>
