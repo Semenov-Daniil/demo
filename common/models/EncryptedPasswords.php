@@ -79,6 +79,21 @@ class EncryptedPasswords extends \yii\db\ActiveRecord
         throw new Exception('Failed to save password');
     }
 
+    public static function updateEncryptedPassword(int $userId, string $password): bool
+    {
+        $model = EncryptedPasswords::findOne(['users_id' => $userId]);
+
+        if (!empty($model)) {
+            $model->encrypted_password = base64_encode(Yii::$app->security->encryptByPassword($password, Yii::$app->params['encryptionKey']));
+            
+            if ($model->save()) {
+                return true;
+            }
+        }
+        
+        throw new Exception('Failed to update password');
+    }
+
     /**
      * Encrypts a password using Yii2's security component and encodes it in base64.
      *
@@ -90,7 +105,7 @@ class EncryptedPasswords extends \yii\db\ActiveRecord
      */
     public static function encryptByPassword(string $password): string
     {
-        return base64_encode(Yii::$app->security->encryptByPassword($password, Yii::$app->params['encryptionKey']));
+        return base64_encode(Yii::$app->security->encryptByPassword($password, isset(Yii::$app->params['encryptionKey']) ? Yii::$app->params['encryptionKey'] : ''));
     }
 
     /**
@@ -104,6 +119,6 @@ class EncryptedPasswords extends \yii\db\ActiveRecord
      */
     public static function decryptByPassword(string $password): string
     {
-        return Yii::$app->security->decryptByPassword((base64_decode($password)), Yii::$app->params['encryptionKey']);
+        return Yii::$app->security->decryptByPassword((base64_decode($password)), isset(Yii::$app->params['encryptionKey']) ? Yii::$app->params['encryptionKey'] : '');
     }
 }

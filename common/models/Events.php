@@ -28,11 +28,14 @@ class Events extends ActiveRecord
 {
     use RandomStringTrait;
 
+    const SCENARIO_UPDATE = 'update';
+
     public int $countModules = 1;
 
     public function scenarios()
     {
         $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_UPDATE] = ['title', 'experts_id'];
         $scenarios[self::SCENARIO_DEFAULT] = ['title', 'countModules', '!experts_id', '!dir_title'];
         return $scenarios;
     }
@@ -92,6 +95,9 @@ class Events extends ActiveRecord
             [['title', 'dir_title'], 'string', 'max' => 255],
             [['experts_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['experts_id' => 'id']],
             [['title', 'dir_title'], 'trim'],
+            ['experts_id', 'required', 'when' => function($model) {
+                return Yii::$app->user->can('sExpert');
+            }, 'message' => 'Необходимо выбрать эксперта.']
         ];
     }
 
@@ -213,7 +219,7 @@ class Events extends ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderEvents(int $records): ActiveDataProvider
+    public static function getDataProviderEvents(int $expertID, int $records = 10): ActiveDataProvider
     {
         $subQuery = Modules::find()
             ->select('COUNT(*)')
@@ -230,7 +236,7 @@ class Events extends ActiveRecord
         ;
 
         if (!Yii::$app->user->can('sExpert')) {
-            $query->andWhere(['experts_id' => Yii::$app->user->id]);
+            $query->andWhere(['experts_id' => $expertID]);
         }
 
         return new ActiveDataProvider([

@@ -6,6 +6,7 @@ use common\models\EncryptedPasswords;
 use common\models\Events;
 use common\models\ExpertsEvents;
 use common\models\Users;
+use common\traits\RandomStringTrait;
 use Yii;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -13,6 +14,8 @@ use yii\helpers\Console;
 
 class UserController extends Controller
 {
+    use RandomStringTrait;
+
     /**
      * This command creates user expert.
      * 
@@ -41,7 +44,6 @@ class UserController extends Controller
             ], '');
 
             if ($user->addExpert()) {
-                // var_dump('test');die;
                 $event = new Events();
                 $event->load([
                     'title' => $title,
@@ -76,5 +78,36 @@ class UserController extends Controller
         }
 
         return ExitCode::UNSPECIFIED_ERROR;
+    }
+
+    public function actionUpdatePasswords()
+    {
+        $users = Users::find()->all();
+
+        foreach ($users as $user) {
+            $transaction = Yii::$app->db->beginTransaction();
+
+            try {
+                $temp_password = $this->generateRandomString(6, ['lowercase','uppercase','digits']);
+                $user->password = Yii::$app->security->generatePasswordHash($temp_password);
+
+                if ($user->save()) {
+                    if (EncryptedPasswords::updateEncryptedPassword($user->id, $temp_password)) {
+                        $transaction->commit();
+                    }
+                }
+
+                $transaction->rollBack();
+            } catch(\Exception $e) {
+                $this->stderr("Passwords not updated");
+                $transaction->rollBack();
+                var_dump($e);die;
+            } catch(\Throwable $e) {
+                $this->stderr("Passwords not updated");
+                $transaction->rollBack();
+            }
+        }
+
+        $this->stderr("Updated password end.\n");
     }
 }
