@@ -18,24 +18,26 @@ use yii\bootstrap5\Html;
         <?php $form = ActiveForm::begin([
             'id' => 'add-student-form',
             'action' => ['/create-student'],
-            'options' => [
-                'data' => [
-                    // 'pjax' => true
-                ]
-            ],
             'fieldConfig' => [
                 'template' => "{label}\n{input}\n{error}",
-                'labelOptions' => ['class' => 'col-12 col-form-label mr-lg-3'],
+                'labelOptions' => ['class' => 'col-12 col-form-label mr-lg-3 pt-0'],
                 'inputOptions' => ['class' => 'form-control'],
                 'errorOptions' => ['class' => 'col-12 invalid-feedback'],
             ],
+            'options' => [
+                'data' => [
+                    'pjax' => true
+                ]
+            ]
         ]); ?>
             <div class="row">
-                <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+                <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 mb-3 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите чемпионат', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
+                
+                <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput(['placeholder' => 'Введите фамилию']) ?>
 
-                <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+                <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput(['placeholder' => 'Введите имя']) ?>
 
-                <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+                <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput(['placeholder' => 'Введите отчество']) ?>
 
                 <div class="col-12 text-end">
                     <?= Html::submitButton('

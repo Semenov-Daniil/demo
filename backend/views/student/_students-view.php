@@ -21,7 +21,7 @@ use yii\widgets\Pjax;
         'enablePushState' => false,
         'timeout' => 10000,
     ]); ?>
-        <?= $this->render('_student-form', [
+        <?= $this->render('_student-create', [
             'model' => $model,
         ]) ?>
     <?php Pjax::end(); ?>

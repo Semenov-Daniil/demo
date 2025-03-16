@@ -13,9 +13,7 @@ $(() => {
 
         inputStepInit();
         fetchFlashMessages();
-    });
 
-    $('#pjax-create-event').on('pjax:complete', function (event) {
         $.pjax.reload({
             url: '/expert/all-events',
             container: '#pjax-events',

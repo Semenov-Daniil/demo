@@ -32,14 +32,15 @@ class Students extends ActiveRecord
     public string $name = '';
     public string|null $patronymic = '';
 
-    const SCENARIO_CREATE_STUDENT = "create-student";
+    const SCENARIO_CREATE = "create";
+    const SCENARIO_UPDATE = "update";
     const TITLE_ROLE_STUDENT = "student";
 
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
             if ($this->isNewRecord) {
-                $login = $this->user->login;
+                $login = $this->user?->login;
                 $password = EncryptedPasswords::decryptByPassword($this->encryptedPassword->encrypted_password);
                 $this->dir_prefix = $this->generateRandomString(8, ['lowercase']);
 
@@ -73,8 +74,9 @@ class Students extends ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['!students_id', '!events_id', '!dir_prefix'];
-        $scenarios[self::SCENARIO_CREATE_STUDENT] = ['surname', 'name', 'patronymic'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['surname', 'name', 'patronymic', '!students_id', '!events_id', '!dir_prefix'];
+        $scenarios[self::SCENARIO_CREATE] = ['surname', 'name', 'patronymic', 'events_id'];
+        $scenarios[self::SCENARIO_UPDATE] = ['surname', 'name', 'patronymic'];
         return $scenarios;
     }
 
@@ -92,7 +94,8 @@ class Students extends ActiveRecord
     public function rules()
     {
         return [
-            [['surname', 'name', 'students_id', 'events_id'], 'required'],
+            [['surname', 'name', 'students_id'], 'required'],
+            ['events_id', 'required', 'message' => 'Необходимо выбрать чемпионат.'],
             [['surname', 'name', 'patronymic', 'dir_prefix'], 'string', 'max' => 255],
             [['surname', 'name', 'patronymic', 'dir_prefix'], 'trim'],
             [['students_id', 'events_id'], 'integer'],
@@ -252,7 +255,7 @@ class Students extends ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when adding a student.
      */
-    public function createStudent(int|string|null $eventID = null): bool
+    public function createStudent(): bool
     {
         $this->validate();
         
@@ -264,15 +267,12 @@ class Students extends ActiveRecord
                 $user->attributes = $this->attributes;
 
                 if ($user->createStudent()) {
-                    $student_event = new static();
-                    $student_event->students_id = $user->id;
-                    $student_event->events_id = $eventID;
-                    
-                    if ($student_event->save()) {
+                    $this->students_id = $user->id;
+
+                    if ($this->save()) {
                         $transaction->commit();
                         return true;
                     }
-
                 }
                 
                 $this->deleteDataStudent();
@@ -539,5 +539,33 @@ class Students extends ActiveRecord
             ->asArray()
             ->all()
         ;
+    }
+
+    public static function findStudent(?int $id = null): static|null
+    {
+        $model = null;
+
+        if ($user = Users::findOne(['id' => $id])) {
+            $model = new self();
+            $model->attributes = $user->attributes;
+        }
+
+        return $model;
+    }
+
+    public function updateStudent(?int $id = null): bool
+    {
+        $this->validate();
+
+        if (!$this->hasErrors()) {
+            $user = Users::findOne(['id' => $id]);
+            
+            if (!empty($user)) {
+                $user->attributes = $this->attributes;
+                return $user->save();
+            }
+        }
+
+        return false;
     }
 }

@@ -72,7 +72,6 @@ class Users extends ActiveRecord implements IdentityInterface
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
-            // var_dump();die;
             return Students::deleteStudentsEvent($this->event?->id) && Events::removeDirectory($this->event?->id);
         }
 

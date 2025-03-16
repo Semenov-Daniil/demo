@@ -8,20 +8,20 @@ use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
-/** @var string $event */
+/** @var common\models\Events|null $event */
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
     <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
-        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['/export-students', 'event' => $event], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
+        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['/export-students', 'event' => $event->id], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-students']) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</span>', ['class' => 'btn btn-danger btn-delete-selected-students', 'disabled' => true]) ?>
     </div>
 <?php endif; ?>
 
 <div class="card students-list">
-    <div class="card-header align-items-center d-flex position-relative <?= ($dataProvider->totalCount ? 'border-bottom-0' : '') ?>">
-        <h4 class="card-title mb-0 flex-grow-1">Студенты</h4>
+    <div class="card-header align-items-center d-flex position-relative border-bottom-0">
+        <h4 class="card-title mb-0 flex-grow-1">Студенты<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
     </div>
 
     <div class="card-body">
@@ -36,7 +36,7 @@ use yii\grid\GridView;
                 'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
                 'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>',
             ],
-            'emptyText' => 'Ничего не найдено. Добавьте студентов.',
+            'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. Добавьте студентов.'),
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],
@@ -116,14 +116,18 @@ use yii\grid\GridView;
                 [
                     'class' => ActionColumn::class,
                     'template' => '
-                        <div class="d-flex flex-wrap gap-2">
+                        <div class="d-flex flex-wrap gap-2 justify-content-end">
+                            {update}
                             {delete}
                         </div>
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['students_id'], 'pjax' => 0]]);
-                        }
+                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['students_id']], 'title' => 'Удалить']);
+                        },
+                        'update' => function ($url, $model, $key) {
+                            return Html::button('<i class="ri-pencil-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-info btn-update', 'data' => ['id' => $model['students_id']], 'title' => 'Редактировать']);
+                        },
                     ],
                     'visible' => $dataProvider->totalCount
                 ],
