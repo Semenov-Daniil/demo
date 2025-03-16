@@ -18,7 +18,7 @@ use yii\bootstrap5\Html;
     <div class="card-body">
         <?php $form = ActiveForm::begin([
             'id' => 'form-event-create',
-            'action' => ['create-event'],
+            'action' => ['/create-event'],
             'options' => [
                 'data' => [
                     'pjax' => true

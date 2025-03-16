@@ -126,7 +126,7 @@ use yii\grid\GridView;
                 [
                     'class' => ActionColumn::class,
                     'template' => '
-                        <div class="d-flex flex-wrap gap-2 ms-auto">
+                        <div class="d-flex flex-wrap gap-2 justify-content-end">
                             {update}
                             {delete}
                         </div>

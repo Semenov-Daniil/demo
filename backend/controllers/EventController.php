@@ -38,11 +38,6 @@ class EventController extends Controller
                 'class' => AccessControl::class,
                 'rules' => [
                     [
-                        'actions' => ['error'],
-                        'allow' => true,
-                        'roles' => ['?'],
-                    ],
-                    [
                         'allow' => true,
                         'roles' => ['expert'],
                     ],
@@ -54,7 +49,7 @@ class EventController extends Controller
                     'events' => ['GET'],
                     'create-event' => ['POST'],
                     'all-events' => ['GET'],
-                    'update-event' => ['PATCH'],
+                    'update-event' => ['GET', 'PATCH'],
                     'delete-events' => ['DELETE'],
                 ],
             ],
@@ -84,14 +79,14 @@ class EventController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load(Yii::$app->request->post()) && $model->createEvent()) {  
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Чемпионат успешно создан.',
                     'type' => 'success'
                 ]);
 
                 $model = new EventForm();
             } else {
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Не удалось создать чемпионат.',
                     'type' => 'error'
                 ]);
@@ -135,7 +130,7 @@ class EventController extends Controller
 
         if ($this->request->isPatch) {
             if ($model->load($this->request->post()) && $model->save()) {
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Чемпионат успешно обновлен.',
                     'type' => 'success'
                 ]);
@@ -144,7 +139,7 @@ class EventController extends Controller
                     'success' => true
                 ]);
             } else {
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Не удалось обновить чемпионат.',
                     'type' => 'error'
                 ]);
@@ -179,12 +174,12 @@ class EventController extends Controller
         $events = (!is_null($id) ? [$id] : ($this->request->post('events') ? $this->request->post('events') : []));
 
         if (count($events) && Events::deleteEvents($events)) {
-            Yii::$app->session->addFlash('toast-alert', [
+            Yii::$app->session->addFlash('toastify', [
                 'text' => count($events) > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.',
                 'type' => 'success'
             ]);
         } else {
-            Yii::$app->session->addFlash('toast-alert', [
+            Yii::$app->session->addFlash('toastify', [
                 'text' => count($events) > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.',
                 'type' => 'error'
             ]);
@@ -246,13 +241,13 @@ class EventController extends Controller
     //         $event = $data['event'];
 
     //         if ($model->load($data) && $model->createStudent($event)) {
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Студент успешно добавлен.',
     //                 'type' => 'success'
     //             ]);
     //             $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT]);
     //         } else {
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Не удалось добавить студента.',
     //                 'type' => 'error'
     //             ]);
@@ -304,12 +299,12 @@ class EventController extends Controller
     //     $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
 
     //     if (count($students) && Students::deleteStudents($students)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($students) > 1 ? 'Студенты успешно удалены.' : 'Студент успешно удален.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($students) > 1 ? 'Не удалось удалить студентов.' : 'Не удалось удалить студента.',
     //             'type' => 'error'
     //         ]);
@@ -397,12 +392,12 @@ class EventController extends Controller
     //     }
 
     //     if (empty($result) && empty($error) && !$model->hasErrors()) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($model->files) > 1 ? 'Файлы успешно загружены.' : 'Файл успешно загружен.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($model->files) > 1 ? 'Не удалось загрузить файлы.' : 'Не удалось загрузить файл.',
     //             'type' => 'error'
     //         ]);
@@ -461,12 +456,12 @@ class EventController extends Controller
     //     $files = (!is_null($id) ? [$id] : ($this->request->post('files') ? $this->request->post('files') : []));
 
     //     if (count($files) && FilesEvents::deleteFilesEvent($files)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($files) > 1 ? 'Файлы успешно удалены.' : 'Файл успешно удален.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($files) > 1 ? 'Не удалось удалить файлы.' : 'Не удалось удалить файл.',
     //             'type' => 'error'
     //         ]);
@@ -506,7 +501,7 @@ class EventController extends Controller
     //         }
     //     }
 
-    //     Yii::$app->session->addFlash('toast-alert', [
+    //     Yii::$app->session->addFlash('toastify', [
     //         'text' => 'Файл не найден.',
     //         'type' => 'error'
     //     ]);
@@ -534,12 +529,12 @@ class EventController extends Controller
     // public function actionCreateModule()
     // {
     //     if (Modules::createModule()) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => 'Модуль успешно создан.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => 'Не удалось создать модуль.',
     //             'type' => 'error'
     //         ]);
@@ -572,12 +567,12 @@ class EventController extends Controller
     //     }
 
     //     if ($isChangeStatus) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => "Модуль $model->number " . ($model->status ? 'включен' : 'выключен') . '.',
     //             'type' => 'info'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => "Не удалось " . (!$status ? 'включить' : 'выключить') . " модуль $model?->number.",
     //             'type' => 'error'
     //         ]);
@@ -611,12 +606,12 @@ class EventController extends Controller
     //     $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
 
     //     if (count($modules) && Modules::deleteModules($modules)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Модули успешно удалены.' : 'Модуль успешно удален.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Не удалось удалить модули.' : 'Не удалось удалить модуль.',
     //             'type' => 'error'
     //         ]);
@@ -641,12 +636,12 @@ class EventController extends Controller
     //     $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
 
     //     if (count($modules) && Modules::clearModules($modules)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Модули успешно очищены.' : 'Модуль успешно очищен.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Не удалось очистить модули.' : 'Не удалось очистить модуль.',
     //             'type' => 'error'
     //         ]);
@@ -679,7 +674,7 @@ class EventController extends Controller
             return $model;
         }
 
-        Yii::$app->session->addFlash('toast-alert', [
+        Yii::$app->session->addFlash('toastify', [
             'text' => 'Эксперт не найден.',
             'type' => 'error'
         ]);
@@ -693,7 +688,7 @@ class EventController extends Controller
             return $model;
         }
 
-        Yii::$app->session->addFlash('toast-alert', [
+        Yii::$app->session->addFlash('toastify', [
             'text' => 'Чемпионат не найден.',
             'type' => 'error'
         ]);
@@ -707,7 +702,7 @@ class EventController extends Controller
             return $model;
         }
 
-        Yii::$app->session->addFlash('toast-alert', [
+        Yii::$app->session->addFlash('toastify', [
             'text' => "Модуль не найден.",
             'type' => 'error'
         ]);

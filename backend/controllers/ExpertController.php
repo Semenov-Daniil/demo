@@ -85,51 +85,6 @@ class ExpertController extends Controller
     }
 
     /**
-     * Logs in a user.
-     *
-     * @return mixed
-     */
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $this->layout = 'login';
-
-        $model = new LoginForm();
-        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post()) && $model->login('expert')) {
-            return $this->redirect(['/']);
-        }
-
-        $model->password = '';
-
-        return $this->render('login', [
-            'model' => $model,
-            'expert' => Users::find()
-                ->select([
-                    'login', EncryptedPasswords::tableName() . '.encrypted_password'
-                ])
-                ->where(['roles_id' => Roles::getRoleId('expert')])
-                ->joinWith('encryptedPassword', false)
-                ->asArray()
-                ->one(),
-        ]);
-    }
-
-    /**
-     * Logs out the current user.
-     *
-     * @return mixed
-     */
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
-    }
-
-    /**
      * Displays experts page.
      *
      * @return string
@@ -151,14 +106,14 @@ class ExpertController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load(Yii::$app->request->post()) && $model->createExpert()) {  
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Эксперт успешно добавлен.',
                     'type' => 'success'
                 ]);
 
                 $model = new Experts();
             } else {
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Не удалось добавить эксперта.',
                     'type' => 'error'
                 ]);
@@ -199,7 +154,7 @@ class ExpertController extends Controller
 
         if ($this->request->isPatch) {
             if ($model->load($this->request->post()) && $model->updateExpert($id)) {
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Эксперт успешно обновлен.',
                     'type' => 'success'
                 ]);
@@ -208,7 +163,7 @@ class ExpertController extends Controller
                     'success' => true
                 ]);
             } else {
-                Yii::$app->session->addFlash('toast-alert', [
+                Yii::$app->session->addFlash('toastify', [
                     'text' => 'Не удалось обновить эксперта.',
                     'type' => 'error'
                 ]);
@@ -241,12 +196,12 @@ class ExpertController extends Controller
         $experts = (!is_null($id) ? [$id] : ($this->request->post('experts') ? $this->request->post('experts') : []));
 
         if (count($experts) && Experts::deleteExperts($experts)) {
-            Yii::$app->session->addFlash('toast-alert', [
+            Yii::$app->session->addFlash('toastify', [
                 'text' => count($experts) > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.',
                 'type' => 'success'
             ]);
         } else {
-            Yii::$app->session->addFlash('toast-alert', [
+            Yii::$app->session->addFlash('toastify', [
                 'text' => count($experts) > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.',
                 'type' => 'error'
             ]);
@@ -286,14 +241,14 @@ class ExpertController extends Controller
 
     //     if ($this->request->isPost) {
     //         if ($model->load(Yii::$app->request->post()) && $model->createEvent()) {  
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Чемпионат успешно создан.',
     //                 'type' => 'success'
     //             ]);
 
     //             $model = new EventForm();
     //         } else {
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Не удалось создать чемпионат.',
     //                 'type' => 'error'
     //             ]);
@@ -337,7 +292,7 @@ class ExpertController extends Controller
 
     //     if ($this->request->isPatch) {
     //         if ($model->load($this->request->post()) && $model->save()) {
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Чемпионат успешно обновлен.',
     //                 'type' => 'success'
     //             ]);
@@ -346,7 +301,7 @@ class ExpertController extends Controller
     //                 'success' => true
     //             ]);
     //         } else {
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Не удалось обновить чемпионат.',
     //                 'type' => 'error'
     //             ]);
@@ -381,12 +336,12 @@ class ExpertController extends Controller
     //     $events = (!is_null($id) ? [$id] : ($this->request->post('events') ? $this->request->post('events') : []));
 
     //     if (count($events) && Events::deleteEvents($events)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($events) > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($events) > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.',
     //             'type' => 'error'
     //         ]);
@@ -448,13 +403,13 @@ class ExpertController extends Controller
     //         $event = $data['event'];
 
     //         if ($model->load($data) && $model->createStudent($event)) {
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Студент успешно добавлен.',
     //                 'type' => 'success'
     //             ]);
     //             $model = new Students(['scenario' => Students::SCENARIO_CREATE_STUDENT]);
     //         } else {
-    //             Yii::$app->session->addFlash('toast-alert', [
+    //             Yii::$app->session->addFlash('toastify', [
     //                 'text' => 'Не удалось добавить студента.',
     //                 'type' => 'error'
     //             ]);
@@ -506,12 +461,12 @@ class ExpertController extends Controller
     //     $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
 
     //     if (count($students) && Students::deleteStudents($students)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($students) > 1 ? 'Студенты успешно удалены.' : 'Студент успешно удален.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($students) > 1 ? 'Не удалось удалить студентов.' : 'Не удалось удалить студента.',
     //             'type' => 'error'
     //         ]);
@@ -599,12 +554,12 @@ class ExpertController extends Controller
     //     }
 
     //     if (empty($result) && empty($error) && !$model->hasErrors()) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($model->files) > 1 ? 'Файлы успешно загружены.' : 'Файл успешно загружен.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($model->files) > 1 ? 'Не удалось загрузить файлы.' : 'Не удалось загрузить файл.',
     //             'type' => 'error'
     //         ]);
@@ -663,12 +618,12 @@ class ExpertController extends Controller
     //     $files = (!is_null($id) ? [$id] : ($this->request->post('files') ? $this->request->post('files') : []));
 
     //     if (count($files) && FilesEvents::deleteFilesEvent($files)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($files) > 1 ? 'Файлы успешно удалены.' : 'Файл успешно удален.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($files) > 1 ? 'Не удалось удалить файлы.' : 'Не удалось удалить файл.',
     //             'type' => 'error'
     //         ]);
@@ -708,7 +663,7 @@ class ExpertController extends Controller
     //         }
     //     }
 
-    //     Yii::$app->session->addFlash('toast-alert', [
+    //     Yii::$app->session->addFlash('toastify', [
     //         'text' => 'Файл не найден.',
     //         'type' => 'error'
     //     ]);
@@ -736,12 +691,12 @@ class ExpertController extends Controller
     // public function actionCreateModule()
     // {
     //     if (Modules::createModule()) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => 'Модуль успешно создан.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => 'Не удалось создать модуль.',
     //             'type' => 'error'
     //         ]);
@@ -774,12 +729,12 @@ class ExpertController extends Controller
     //     }
 
     //     if ($isChangeStatus) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => "Модуль $model->number " . ($model->status ? 'включен' : 'выключен') . '.',
     //             'type' => 'info'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => "Не удалось " . (!$status ? 'включить' : 'выключить') . " модуль $model?->number.",
     //             'type' => 'error'
     //         ]);
@@ -813,12 +768,12 @@ class ExpertController extends Controller
     //     $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
 
     //     if (count($modules) && Modules::deleteModules($modules)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Модули успешно удалены.' : 'Модуль успешно удален.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Не удалось удалить модули.' : 'Не удалось удалить модуль.',
     //             'type' => 'error'
     //         ]);
@@ -843,12 +798,12 @@ class ExpertController extends Controller
     //     $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
 
     //     if (count($modules) && Modules::clearModules($modules)) {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Модули успешно очищены.' : 'Модуль успешно очищен.',
     //             'type' => 'success'
     //         ]);
     //     } else {
-    //         Yii::$app->session->addFlash('toast-alert', [
+    //         Yii::$app->session->addFlash('toastify', [
     //             'text' => count($modules) > 1 ? 'Не удалось очистить модули.' : 'Не удалось очистить модуль.',
     //             'type' => 'error'
     //         ]);
@@ -881,7 +836,7 @@ class ExpertController extends Controller
             return $model;
         }
 
-        Yii::$app->session->addFlash('toast-alert', [
+        Yii::$app->session->addFlash('toastify', [
             'text' => 'Эксперт не найден.',
             'type' => 'error'
         ]);
@@ -895,7 +850,7 @@ class ExpertController extends Controller
             return $model;
         }
 
-        Yii::$app->session->addFlash('toast-alert', [
+        Yii::$app->session->addFlash('toastify', [
             'text' => 'Чемпионат не найден.',
             'type' => 'error'
         ]);
@@ -909,7 +864,7 @@ class ExpertController extends Controller
             return $model;
         }
 
-        Yii::$app->session->addFlash('toast-alert', [
+        Yii::$app->session->addFlash('toastify', [
             'text' => "Модуль не найден.",
             'type' => 'error'
         ]);

@@ -10,6 +10,8 @@ $(() => {
         $('.btn-create-expert').find('.cnt-text').removeClass('d-none');
         $('.btn-create-expert').find('.cnt-load').addClass('d-none');
         $('.btn-create-expert').prop('disabled', false);
+
+        fetchFlashMessages();
     });
 
     $('#pjax-create-expert').on('pjax:complete', function (event) {
@@ -98,6 +100,8 @@ $(() => {
                 $('.btn-create-expert').find('.cnt-text').removeClass('d-none');
                 $('.btn-create-expert').find('.cnt-load').addClass('d-none');
                 $('.btn-create-expert').prop('disabled', false);
+
+                fetchFlashMessages();
             }
         });
 
@@ -116,6 +120,8 @@ $(() => {
             },
             complete () {
                 $('#pjax-experts').trigger('pjax:complete');
+
+                fetchFlashMessages();
             }
         });
     });
@@ -143,6 +149,8 @@ $(() => {
             },
             complete () {
                 $('#pjax-experts').trigger('pjax:complete');
+
+                fetchFlashMessages();
             }
         });
     });

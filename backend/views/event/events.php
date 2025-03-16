@@ -21,8 +21,8 @@ $this->title = 'Чемпионаты';
 ChoicesAsset::register($this);
 CleaveAsset::register($this);
 
-$this->registerJsFile('@web/js/events.js', ['depends' => AppAsset::class]);
 $this->registerJsFile('@web/js/pages/input-step.init.js', ['depends' => AppAsset::class]);
+$this->registerJsFile('@web/js/events.js', ['depends' => AppAsset::class]);
 ?>
 
 <div class="row">

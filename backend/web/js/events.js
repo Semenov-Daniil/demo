@@ -10,6 +10,9 @@ $(() => {
         $('.btn-create-event').find('.cnt-text').removeClass('d-none');
         $('.btn-create-event').find('.cnt-load').addClass('d-none');
         $('.btn-create-event').prop('disabled', false);
+
+        inputStepInit();
+        fetchFlashMessages();
     });
 
     $('#pjax-create-event').on('pjax:complete', function (event) {
@@ -96,6 +99,8 @@ $(() => {
                 $('.btn-create-event').find('.cnt-text').removeClass('d-none');
                 $('.btn-create-event').find('.cnt-load').addClass('d-none');
                 $('.btn-create-event').prop('disabled', false);
+
+                fetchFlashMessages();
             }
         });
 
@@ -114,6 +119,8 @@ $(() => {
             },
             complete () {
                 $('#pjax-events').trigger('pjax:complete');
+
+                fetchFlashMessages();
             }
         });
     });
@@ -141,6 +148,8 @@ $(() => {
             },
             complete () {
                 $('#pjax-events').trigger('pjax:complete');
+
+                fetchFlashMessages();
             }
         });
     });

@@ -34,7 +34,7 @@ class EventForm extends Model
             [['expert'], 'exist', 'targetClass' => Users::class, 'targetAttribute' => ['expert' => 'id']],
             ['expert', 'required', 'when' => function($model) {
                 return Yii::$app->user->can('sExpert');
-            }]
+            }, 'message' => 'Необходимо выбрать эксперта.']
         ];
     }
 

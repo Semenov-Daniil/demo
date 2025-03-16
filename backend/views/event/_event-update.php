@@ -40,7 +40,6 @@ use yii\widgets\Pjax;
             <?= $form->field($model, 'title')->textInput(['placeholder' => 'Введите название чемпионата']) ?>
 
             <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
-                <?= Html::button('Назад', ['class' => 'btn btn-info', 'data' => ['bs-dismiss' => 'modal']])?>
                 <?= Html::submitButton('
                     <span class="cnt-text d-flex align-items-center">Обновить</span>
                     <span class="d-flex align-items-center d-none cnt-load">

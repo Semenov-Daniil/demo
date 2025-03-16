@@ -98,8 +98,4 @@ function renderFlashMessages() {
     }
 }
 
-$(document).on('pjax:complete', function () {
-    fetchFlashMessages();
-});
-
 fetchFlashMessages();
