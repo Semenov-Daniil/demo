@@ -59,17 +59,20 @@ return [
             ],
         ],
         'errorHandler' => [
-            'errorAction' => 'site/error',
+            'errorAction' => 'main/error',
         ],
         
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
+            'enableStrictParsing' => false,
             'rules' => [
+                '<action:(login|logout)>' => '/main/<action>',
+
                 '/flash' => '/flash', 
                 '/flash/<action>' => '/flash/base/<action>',
 
-                '/<action>' => '/expert/<action>',
+                '/<action>' => '/main/dispatch',    
             ],
         ],
         
