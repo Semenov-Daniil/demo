@@ -15,8 +15,8 @@ use yii\bootstrap5\Html;
 
     <div class="card-body">
         <?php $form = ActiveForm::begin([
-            'id' => 'add-expert-form',
-            'action' => ['create-expert'],
+            'id' => 'form-create-expert',
+            'action' => ['/expert/create-expert'],
             'options' => [
                 'data' => [
                     'pjax' => true
@@ -32,23 +32,23 @@ use yii\bootstrap5\Html;
 
             <div class="row">
 
-                <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+                <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput(['placeholder' => 'Введите фамилию']) ?>
         
-                <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+                <?= $form->field($model, 'name', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput(['placeholder' => 'Введите имя']) ?>
 
-                <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput() ?>
+                <?= $form->field($model, 'patronymic', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput(['placeholder' => 'Введите отчество']) ?>
 
-                <div class="col-12 text-end">
+                <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
                     <?= Html::submitButton('
-                        <span class="cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</span>
-                        <span class="d-flex align-items-center d-none cnt-load">
+                        <div class="d-flex align-items-center cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</div>
+                        <div class="d-flex align-items-center d-none cnt-load">
                             <span class="spinner-border flex-shrink-0" role="status">
                             </span>
                             <span class="flex-grow-1 ms-2">
                                 Добавление...
                             </span>
-                        </span>
-                    ', ['class' => 'btn btn-success btn-load ms-auto btn-add-expert', 'name' => 'add']) ?>
+                        </div>
+                    ', ['class' => 'btn btn-success btn-load btn-create-expert', 'name' => 'add']) ?>
                 </div>
             </div>
         <?php ActiveForm::end(); ?>

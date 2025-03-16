@@ -1,6 +1,24 @@
+"use strict";
+
+function updateCheckedGrid(localName) {
+    let checkboxSelector = 'div[data-pjax-grid] .grid-view .cell-selected input[type="checkbox"]:not(.select-on-check-all, :disabled)',
+        checked = JSON.parse(localStorage.getItem(localName) || '{}');
+
+    $(checkboxSelector).each(function() {
+        if (checked[$(this).val()]) {
+            $(this).prop('checked', true);
+        }
+    });
+
+    checked = Object.fromEntries(
+        Object.entries(checked).filter(([key]) => $(checkboxSelector + `[value="${key}"]`).length)
+    );
+
+    localStorage.setItem(localName, JSON.stringify(checked));
+}
+
 function initGridView() {
-    
-    let localName = $('div[data-pjax-grid]').attr('id');
+    const localName = $('div[data-pjax-grid]').attr('id');
 
     $('div[data-pjax-grid]').on('click', '.grid-view .cell-checkbox', function (event) {
         if (!$(event.target).is('input[type="checkbox"]') && !$(event.target).closest('label').length) {
@@ -35,31 +53,10 @@ function initGridView() {
     });
 
     $('div[data-pjax-grid]').on('pjax:complete', function () {
-        updateCheckedGrid();
+        updateCheckedGrid(localName);
     });
+
+    updateCheckedGrid(localName);
 }
 
-$(() => {
-
-    let localName = $('div[data-pjax-grid]').attr('id');
-
-    function updateCheckedGrid() {
-        let checkboxSelector = 'div[data-pjax-grid] .grid-view .cell-selected input[type="checkbox"]:not(.select-on-check-all, :disabled)';
-            checked = JSON.parse(localStorage.getItem(localName) || '{}');
-    
-        $(checkboxSelector).each(function() {
-            if (checked[$(this).val()]) {
-                $(this).prop('checked', true);
-            }
-        });
-
-        checked = Object.fromEntries(
-            Object.entries(checked).filter(([key]) => $(checkboxSelector + `[value="${key}"]`).length)
-        );
-
-        localStorage.setItem(localName, JSON.stringify(checked));
-    }
-
-    initGridView();
-    updateCheckedGrid();
-});
+initGridView();

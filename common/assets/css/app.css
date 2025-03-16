@@ -21283,6 +21283,10 @@ li.dz-preview-item:first-child {
     overflow: auto;
 }
 
+.btn-load .cnt-text {
+    min-height: 1.5rem;
+}
+
 .btn-load .cnt-load {
     padding-top: 2.25px;
     padding-bottom: 2.25px;
@@ -21297,11 +21301,11 @@ li.dz-preview-item:first-child {
 }
 
 .is-focused .choices__inner.is-invalid, .is-open .choices__inner.is-invalid {
-    border-color: var(--vz-danger-border-subtle);
+    border-color: var(--vz-form-invalid-border-color);
 }
 
 .is-focused .choices__inner.is-valid, .is-open .choices__inner.is-valid {
-    border-color: var(--vz-success-border-subtle);
+    border-color: var(--vz-form-valid-border-color);
 }
 
 /*# sourceMappingURL=app.min.css.map */

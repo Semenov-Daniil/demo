@@ -86,6 +86,18 @@ class Experts extends Model
         ]);
     }
 
+    public static function findExpert(?int $id = null): static|null
+    {
+        $model = null;
+
+        if ($user = Users::findOne(['id' => $id])) {
+            $model = new self();
+            $model->attributes = $user->attributes;
+        }
+
+        return $model;
+    }
+
     /**
      * Adds a new user with the `expert` role
      * 
@@ -114,6 +126,22 @@ class Experts extends Model
                 $transaction->rollBack();
             } catch(\Throwable $e) {
                 $transaction->rollBack();
+            }
+        }
+
+        return false;
+    }
+
+    public function updateExpert(?int $id = null): bool
+    {
+        $this->validate();
+
+        if (!$this->hasErrors()) {
+            $user = Users::findOne(['id' => $id]);
+
+            if (!empty($user)) {
+                $user->attributes = $this->attributes;
+                return $user->save();
             }
         }
 

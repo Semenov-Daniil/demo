@@ -1,15 +1,15 @@
 $(() => {
 
     $('#pjax-create-expert').on('beforeSubmit', function (event) {
-        $('.btn-add-expert').find('.cnt-text').addClass('d-none');
-        $('.btn-add-expert').find('.cnt-load').removeClass('d-none');
-        $('.btn-add-expert').prop('disabled', true);
+        $('.btn-create-expert').find('.cnt-text').addClass('d-none');
+        $('.btn-create-expert').find('.cnt-load').removeClass('d-none');
+        $('.btn-create-expert').prop('disabled', true);
     });
 
     $('#pjax-create-expert').on('pjax:complete', function (event) {
-        $('.btn-add-expert').find('.cnt-text').removeClass('d-none');
-        $('.btn-add-expert').find('.cnt-load').addClass('d-none');
-        $('.btn-add-expert').prop('disabled', false);
+        $('.btn-create-expert').find('.cnt-text').removeClass('d-none');
+        $('.btn-create-expert').find('.cnt-load').addClass('d-none');
+        $('.btn-create-expert').prop('disabled', false);
     });
 
     $('#pjax-create-expert').on('pjax:complete', function (event) {
@@ -55,6 +55,53 @@ $(() => {
         $('input[name="experts_all"]').prop('checked', allExperts.length === checkedExperts.length);
 
         $('.btn-delete-selected-experts').prop('disabled', ($(this).is(':checked') ? false : (checkedExperts.length === 0)));
+    });
+
+    $('#pjax-experts').on('click', '.btn-update', function (event) {
+        $('#modal-update-expert').find('.modal-body').load(`/expert/update-expert?id=${$(this).data('id')}`, function (event) {
+            $('#modal-update-expert').modal('show');
+        });
+    });
+
+    $('#modal-update-expert').on('beforeSubmit', '#form-update-expert', function (event) {
+        event.preventDefault();
+
+        const form = $(this);
+
+        $.ajax({
+            url: form.attr('action'),
+            method: 'PATCH',
+            data: form.serialize(),
+            beforeSend () {
+                $('.btn-update-expert').find('.cnt-text').addClass('d-none');
+                $('.btn-update-expert').find('.cnt-load').removeClass('d-none');
+                $('.btn-update-expert').prop('disabled', true);
+            },
+            success (data) {
+                if (data.success) {
+                    $('#modal-update-expert').modal('hide');
+                    $.pjax.reload({
+                        url: '/expert/all-experts',
+                        container: '#pjax-experts',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
+                }
+
+                $('#pjax-update-expert').html(data);
+            },
+            error () {
+                // location.reload();
+            },
+            complete () {
+                $('.btn-create-expert').find('.cnt-text').removeClass('d-none');
+                $('.btn-create-expert').find('.cnt-load').addClass('d-none');
+                $('.btn-create-expert').prop('disabled', false);
+            }
+        });
+
+        return false;
     });
 
     $('#pjax-experts').on('click', '.btn-delete', function (event) {

@@ -101,6 +101,9 @@ use yii\grid\GridView;
                     'value' => function ($model) {
                         return $model['fullName'];
                     },
+                    'options' => [
+                        'class' => 'col-4'
+                    ],
                     'visible' => $dataProvider->totalCount
                 ],
                 [
@@ -108,19 +111,25 @@ use yii\grid\GridView;
                     'value' => function ($model) {
                         return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
                     },
+                    'options' => [
+                        'class' => 'col-4'
+                    ],
                     'visible' => $dataProvider->totalCount
                 ],
                 [
                     'class' => ActionColumn::class,
                     'template' => '
-                        <div class="d-flex flex-wrap gap-2">
-                            {delete}
+                        <div class="d-flex flex-wrap gap-2 justify-content-end">
+                            {update}{delete}
                         </div>
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger ms-auto btn-delete', 'data' => ['id' => $model['id']]]);
-                        }
+                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']], 'title' => 'Удалить']);
+                        },
+                        'update' => function ($url, $model, $key) {
+                            return Html::button('<i class="ri-pencil-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-info btn-update', 'data' => ['id' => $model['id']], 'title' => 'Редактировать']);
+                        },
                     ],
                     'visibleButtons' => [
                         'delete' => function ($model, $key, $index) {
