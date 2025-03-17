@@ -22,6 +22,8 @@ class MainController extends Controller
         'expert' => 'backend\controllers\ExpertController',
         'event' => 'backend\controllers\EventController',
         'student' => 'backend\controllers\StudentController',
+        'module' => 'backend\controllers\ModuleController',
+        'file' => 'backend\controllers\FileController',
     ];
     
     /**
@@ -33,6 +35,11 @@ class MainController extends Controller
             'access' => [
                 'class' => AccessControl::class,
                 'rules' => [
+                    [
+                        'actions' => ['login', 'error'],
+                        'allow' => true,
+                        'roles' => ['?'],
+                    ],
                     [
                         'allow' => true,
                         'roles' => ['expert'],

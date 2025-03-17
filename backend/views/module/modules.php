@@ -5,10 +5,13 @@
 
 /** @var app\models\Modules $model */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var array $events */
+/** @var common\models\Events $event */
 
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
 use common\widgets\Alert;
+use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Modal;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
@@ -25,20 +28,19 @@ $this->registerJsFile('@web/js/modules.js', ['depends' => AppAsset::class]);
 
 ?>
 
-<div class="row mb-3">
-    <div>
-        <label for="events-select" class="form-label text-muted col-12">Чемпионаты</label>
-        <?= Html::dropDownList('events', false, $events, [
-            'id' => 'events-select',
-            'prompt' => 'Выберите чемпионат',
-            'data' => [
-                'choices' => true,
-                'choices-group' => true,
-                'choices-removeItem' => true,
-            ],
-            'class' => 'form-select'
+<div class="row">
+    <?php Pjax::begin([
+        'id' => 'pjax-create-module',
+        'enablePushState' => false,
+        'timeout' => 10000,
+    ]); ?>
+
+        <?= $this->render('_module-create', [
+            'model' => $model,
+            'events' => $events
         ]); ?>
-    </div>
+    
+    <?php Pjax::end(); ?>
 </div>
 
 <div class="row">
@@ -54,7 +56,8 @@ $this->registerJsFile('@web/js/modules.js', ['depends' => AppAsset::class]);
     ]); ?>
 
         <?= $this->render('_modules-list', [
-            'dataProvider' => $dataProvider
+            'dataProvider' => $dataProvider,
+            'event' => $event
         ])?>
     
     <?php Pjax::end(); ?>

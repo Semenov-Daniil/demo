@@ -8,7 +8,6 @@ $(() => {
             type: 'GET',
             success: function(data) {
                 $('#pjax-students').html(data);
-                initGridView();
                 changeActiveBtn();
             },
             error: function() {
@@ -162,7 +161,15 @@ $(() => {
             url: `/expert/delete-students?id=${$(this).data('id')}`,
             method: 'DELETE',
             success (data) {
-                $('#pjax-students').html(data);
+                if (data.data.success) {
+                    $.pjax.reload({
+                        url: `/expert/all-students?event=${$('#events-select').val()}`,
+                        container: '#pjax-students',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
+                }
             },
             error () {
                 // location.reload();
@@ -189,13 +196,21 @@ $(() => {
                 students: students
             },
             success (data) {
-                $('#pjax-students').html(data);
+                if (data.data.success) {
+                    $.pjax.reload({
+                        url: `/expert/all-students?event=${$('#events-select').val()}`,
+                        container: '#pjax-students',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
+                }
             },
             error () {
                 location.reload();
             },
             complete () {
-                $('#pjax-students').trigger('pjax:complete');
+                fetchFlashMessages();
             }
         });
     });

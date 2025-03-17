@@ -9,6 +9,12 @@ return [
     ],
     'language' => 'ru-RU',
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
+    'modules' => [
+        'debug' => [
+            'class' => 'yii\debug\Module',
+            'allowedIPs' => ['*'],
+        ],
+    ],
     'components' => [
         'cache' => [
             'class' => \yii\caching\FileCache::class,

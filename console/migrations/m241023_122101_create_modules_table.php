@@ -24,6 +24,8 @@ class m241023_122101_create_modules_table extends Migration
 
         $this->createIndex('idx-modules-events_id', self::TABLE_NAME, 'events_id');
         $this->addForeignKey('fk-modules-events_id', self::TABLE_NAME, 'events_id', self::EVENTS_TABLE_NAME, 'id', 'CASCADE', 'CASCADE');
+
+        $this->createIndex('idx-modules-events_id_number', self::TABLE_NAME, ['events_id', 'number'], true);
     }
 
     /**
@@ -33,6 +35,8 @@ class m241023_122101_create_modules_table extends Migration
     {
         $this->dropForeignKey('fk-modules-events_id', self::TABLE_NAME);
         $this->dropIndex('idx-modules-events_id', self::TABLE_NAME);
+
+        $this->dropIndex('idx-modules-events_id_number', self::TABLE_NAME);
 
         $this->dropTable(self::TABLE_NAME);
     }

@@ -70,10 +70,10 @@ class Modules extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['events_id'], 'required'],
+            [['events_id'], 'required', 'message' => 'Необходимо выбрать чемпионат.'],
             [['id', 'events_id', 'status', 'number'], 'integer'],
             ['status', 'default', 'value' => 1],
-            ['number', 'default', 'value' => ($this->nextNumModule())],
+            ['number', 'default', 'value' => ($this->nextNumModule($this?->events_id))],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
             ['countModules', 'number', 'min' => 1],
 
@@ -88,7 +88,7 @@ class Modules extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'events_id' => 'Компетенция',
+            'events_id' => 'Чемпионаты',
             'status' => 'Статус',
             'number' => 'Номер модуля',
             'countModules' => 'Кол-во модулей',
@@ -105,10 +105,10 @@ class Modules extends \yii\db\ActiveRecord
         return $this->hasOne(Events::class, ['id' => 'events_id']);
     }
 
-    public function nextNumModule()
+    public function nextNumModule(?int $eventID = null): int
     {
         $lastModule = self::find()
-            ->where(['events_id' => $this->events_id])
+            ->where(['events_id' => $eventID])
             ->orderBy([
                 'id' => SORT_DESC
             ])
@@ -124,14 +124,12 @@ class Modules extends \yii\db\ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderModules(int $records): ActiveDataProvider
+    public static function getDataProviderModules(?int $eventID = null, int $records = 10): ActiveDataProvider
     {
-        $event_id = Events::getIdByExpert(Yii::$app->user->id);
-
         return new ActiveDataProvider([
             'query' => Modules::find()
                 ->select(['id', 'status', 'number'])
-                ->where(['events_id' => $event_id])
+                ->where(['events_id' => $eventID])
             ,
             'pagination' => [
                 'pageSize' => $records,
@@ -140,39 +138,42 @@ class Modules extends \yii\db\ActiveRecord
         ]);
     }
 
-    public static function createModule()
+    public function createModule()
     {
-        $transaction = Yii::$app->db->beginTransaction();
+        $this->validate();
 
-        try {
-            $module = new Modules();
-            $module->events_id = Events::getEventByExpert(Yii::$app->user->id)?->id;
-            
-            if ($module->save()) {
-                $students = Students::findAll(['events_id' => $module->events_id]);
-                
-                foreach ($students as $student) {
-                    if (!$student->createDbModule($module) || !$student->createDirectoriesModule($module)) {
-                        $transaction->rollBack();
-                        self::deleteModule($module?->id);
-                        return false;
+        if (!$this->hasErrors()) {
+            $transaction = Yii::$app->db->beginTransaction();
+    
+            try {
+                $this->number = $this->nextNumModule($this->events_id);
+
+                if ($this->save()) {
+                    $students = Students::findAll(['events_id' => $this->events_id]);
+                    
+                    foreach ($students as $student) {
+                        if (!$student->createDbModule($this) || !$student->createDirectoriesModule($this)) {
+                            $transaction->rollBack();
+                            self::deleteModule($this->id);
+                            return false;
+                        }
                     }
+    
+                    $transaction->commit();
+                    return true;
                 }
-
-                $transaction->commit();
-                return true;
+    
+                $transaction->rollBack();
+                self::deleteModule($this?->id);
+            } catch(\Exception $e) {
+                $transaction->rollBack();
+                self::deleteModule($this?->id);
+            } catch(\Throwable $e) {
+                $transaction->rollBack();
+                self::deleteModule($this?->id);
             }
-
-            $transaction->rollBack();
-            self::deleteModule($module?->id);
-        } catch(\Exception $e) {
-            $transaction->rollBack();
-            self::deleteModule($module?->id);
-        } catch(\Throwable $e) {
-            $transaction->rollBack();
-            self::deleteModule($module?->id);
         }
-
+        
         return false;
     }
 
@@ -225,7 +226,7 @@ class Modules extends \yii\db\ActiveRecord
         $students = Students::findAll(['events_id' => $this->events_id]);
 
         foreach ($students as $student) {
-            $login  = $student->user->login; 
+            $login = $student->user->login;
             if (!($this->status ? $student->grantPrivilegesDbStudent($login, $this->number) : $student->revokePrivilegesDbStudent($login, $this->number))) {
                 return false;
             }

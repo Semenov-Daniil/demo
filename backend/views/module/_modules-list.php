@@ -7,35 +7,34 @@ use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
 /** @var app\models\Modules $dataProvider */
+/** @var common\models\Events|null $event */
 ?>
 
+<?php if (!is_null($event)): ?> 
 <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
-    <?= Html::button('
-        <span class="cnt-text">
-            <i class="ri-add-line align-middle fs-16 me-2"></i> Добавить
+    <?= Html::submitButton('
+        <span class="d-flex align-items-center cnt-text">
+        <i class="ri-add-line align-middle fs-16 me-2"></i> Добавить
         </span>
         <span class="d-flex align-items-center d-none cnt-load">
-            <span class="spinner-border flex-shrink-0" role="status">
-            </span>
-            <span class="flex-grow-1 ms-2">
-                Добавление...
-            </span>
+        <span class="spinner-border flex-shrink-0" role="status">
         </span>
-    ', ['class' => 'btn btn-success btn-load btn-add-module']) ?>
+        <span class="flex-grow-1 ms-2">
+        Добавление...
+        </span>
+        </span>
+        ', ['class' => 'btn btn-success btn-load btn-add-module', 'form' => 'form-create-module']) ?>
     <?php if ($dataProvider->totalCount): ?> 
-    <?= Html::button('
-        <span>
-            <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
-        </span>
-    ', ['class' => 'btn btn-primary btn-select-all-modules']) ?>
-    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-modules', 'disabled' => true]) ?>
-    <?= Html::button('<i class="ri-brush-2-line align-middle fs-16 me-2"></i> Очистить', ['class' => 'btn btn-secondary btn-clear-selected-modules', 'disabled' => true]) ?>
+        <?= Html::button('<span><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-modules']) ?>
+        <?= Html::button('<i class="ri-brush-2-line align-middle fs-16 me-2"></i> Очистить', ['class' => 'btn btn-secondary btn-clear-selected-modules', 'disabled' => true]) ?>
+        <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-modules', 'disabled' => true]) ?>
     <?php endif; ?>
 </div>
+<?php endif; ?>
 
 <div class="card">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
-        <h4 class="card-title mb-0 flex-grow-1">Модули</h4>
+        <h4 class="card-title mb-0 flex-grow-1">Модули<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
     </div>
 
     <div class="card-body">
@@ -53,7 +52,7 @@ use yii\grid\GridView;
             'tableOptions' => [
                 'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
             ],
-            'emptyText' => 'Ничего не найдено. Добавьте модули.',
+            'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. Добавьте модуль.'),
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],
@@ -139,8 +138,8 @@ use yii\grid\GridView;
                     'class' => ActionColumn::class,
                     'template' => '
                         <div class="d-flex flex-wrap gap-2 justify-content-end">
-                            {delete}
                             {clear}
+                            {delete}
                         </div>
                     ',
                     'buttons' => [

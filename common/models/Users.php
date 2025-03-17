@@ -24,6 +24,7 @@ use yii\web\IdentityInterface;
  * @property int $roles_id
  *
  * @property Events $event
+ * @property array $events
  * @property EncryptedPasswords $encryptedPassword
  * @property Roles $role
  */
@@ -72,7 +73,8 @@ class Users extends ActiveRecord implements IdentityInterface
         }
 
         if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
-            return Students::deleteStudentsEvent($this->event?->id) && Events::removeDirectory($this->event?->id);
+            $eventsID = array_column($this->events, 'id');
+            return Students::deleteStudentsEvent($eventsID) && Events::removeDirectory($eventsID);
         }
 
         return true;
@@ -155,6 +157,16 @@ class Users extends ActiveRecord implements IdentityInterface
     public function getEvent(): object
     {
         return $this->hasOne(Events::class, ['experts_id' => 'id'])->inverseOf('expert');
+    }
+
+    /**
+     * Gets query for [[Events]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getEvents(): object
+    {
+        return $this->hasMany(Events::class, ['experts_id' => 'id'])->inverseOf('expert');
     }
 
     /**

@@ -40,7 +40,7 @@ return [
             'identityClass' => 'common\models\Users',
             'enableAutoLogin' => false,
             'identityCookie' => ['name' => '_identity-backend', 'httpOnly' => true],
-            'loginUrl' => ['expert/login'],
+            'loginUrl' => ['login'],
         ],
         'session' => [
             // this is the name of the session cookie used for login on the backend
@@ -67,7 +67,7 @@ return [
             'showScriptName' => false,
             'enableStrictParsing' => false,
             'rules' => [
-                '<action:(login|logout)>' => '/main/<action>',
+                '/<action:(login|logout)>' => '/main/<action>',
 
                 '/flash' => '/flash', 
                 '/flash/<action>' => '/flash/base/<action>',

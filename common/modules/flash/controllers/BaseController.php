@@ -12,6 +12,6 @@ class BaseController extends Controller
 {
     public function actionGetMessages()
     {
-        return $this->asJson(Yii::$app->session->getFlash('toast-alert', []));
+        return $this->asJson(Yii::$app->session->getFlash('toastify', []));
     }
 }

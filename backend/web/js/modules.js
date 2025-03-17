@@ -1,35 +1,75 @@
 $(() => {
 
-    $('#pjax-modules').on('click', '.btn-add-module', function (event) {
-        $('.btn-add-module').find('.cnt-text').addClass('d-none');
-        $('.btn-add-module').find('.cnt-load').removeClass('d-none');
-        $('.btn-add-module').prop('disabled', true);
-
+    $('#events-select').on('change', function (event) {
         $.ajax({
-            url: 'create-module',
-            method: 'POST',
-            success (data) {
+            url: `/expert/all-modules${($(this).val() ? `?event=${$(this).val()}` : '')}`,
+            type: 'GET',
+            success: function(data) {
                 $('#pjax-modules').html(data);
+                changeActiveBtn();
             },
-            error (jqXHR, textStatus, errorThrown) {
-                if (jqXHR.status == 500) {
-                    location.reload();
-                }
+            error: function() {
             },
-            complete () {
-                $('.btn-add-module').find('.cnt-load').addClass('d-none');
-                $('.btn-add-module').find('.cnt-text').removeClass('d-none');
-                $('.btn-add-module').prop('disabled', false);
-
-                $('#pjax-modules').trigger('pjax:complete');
-            }
+            beforeSend: function() {
+                $('#pjax-modules').html(`
+                    <div class="row">
+                        <div>
+                            <div class="card students-list">
+                                <div class="card-header align-items-center d-flex position-relative ">
+                                    <h4 class="card-title mb-0 flex-grow-1">Модули</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div id="w0" class="grid-view">
+                                        <div class="table-responsive table-card table-responsive placeholder-glow">
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                `);
+            },
         });
     });
 
-    $('#pjax-modules').on('pjax:complete', function () {
+    $('#pjax-create-module').on('beforeSubmit', '#form-create-module', function (event) {
+        $('.btn-add-module').find('.cnt-text').addClass('d-none');
+        $('.btn-add-module').find('.cnt-load').removeClass('d-none');
+        $('.btn-add-module').prop('disabled', true);
+    });
+
+    $('#pjax-create-module').on('pjax:complete', function () {
         $('.btn-add-module').find('.cnt-load').addClass('d-none');
         $('.btn-add-module').find('.cnt-text').removeClass('d-none');
         $('.btn-add-module').prop('disabled', false);
+
+        fetchFlashMessages();
+
+        $.pjax.reload({
+            url: `/expert/all-modules?event=${$('#events-select').find('option:selected').val()}`,
+            container: '#pjax-modules',
+            pushState: false,
+            replace: false,
+            timeout: 10000
+        });
     })
 
     $('#pjax-modules').on('click', '.btn-select-all-modules', function (event) {
@@ -74,19 +114,19 @@ $(() => {
         checkbox.prop('checked', !checkbox.prop('checked'));
         
         $.ajax({
-            url: 'change-status-module',
+            url: '/expert/change-status-module',
             method: 'PATH',
             dataType: 'json',
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify({
                 id: checkbox.data('id'),
-                status: checkbox.prop('checked') ? 0 : 1,
+                newStatus: checkbox.prop('checked') ? 0 : 1,
             }),
             success(data) {
-                if (data.success) {
-                    checkbox.prop('checked', data.module.status);
+                if (data.data.success) {
+                    checkbox.prop('checked', data.data.module.status);
 
-                    if (data.module.status) {
+                    if (data.data.module.status) {
                         checkbox.next('.label-badge').find('.badge').removeClass('bg-dark-subtle text-body');
                         checkbox.next('.label-badge').find('.badge').addClass('bg-success');
                         checkbox.next('.label-badge').find('.badge').html('Онлайн');
@@ -98,41 +138,31 @@ $(() => {
                 }
             },
             complete() {
-                $('#pjax-modules').trigger('pjax:complete');
+                fetchFlashMessages();
             }
         });
     });
 
     $('#pjax-modules').on('click', '.btn-delete', function (event) {
         $.ajax({
-            url: `delete-modules?id=${$(this).data('id')}`,
+            url: `/expert/delete-modules?id=${$(this).data('id')}`,
             method: 'DELETE',
             success (data) {
-                $('#pjax-modules').html(data);
-            },
-            error () {
-                location.reload();
-            },
-            complete () {
-                $('#pjax-modules').trigger('pjax:complete');
-            }
-        });
-    });
-
-    $('#pjax-modules').on('click', '.btn-clear', function (event) {
-        $.ajax({
-            url: `clear-modules?id=${$(this).data('id')}`,
-            method: 'PATH',
-            success (data) {
-                $('#pjax-modules').html(data);
-            },
-            error (jqXHR, textStatus, errorThrown) {
-                if (jqXHR.status == 500) {
-                    location.reload();
+                if (data.data.success) {
+                    $.pjax.reload({
+                        url: `/expert/all-modules?event=${$('#events-select').val()}`,
+                        container: '#pjax-modules',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
                 }
             },
+            error () {
+                // location.reload();
+            },
             complete () {
-                $('#pjax-modules').trigger('pjax:complete');
+                fetchFlashMessages();
             }
         });
     });
@@ -147,19 +177,42 @@ $(() => {
         });
 
         $.ajax({
-            url: `delete-modules`,
+            url: `/expert/delete-modules`,
             method: 'DELETE',
             data: {
                 modules: modules
             },
             success (data) {
-                $('#pjax-modules').html(data);
+                if (data.data.success) {
+                    $.pjax.reload({
+                        url: `/expert/all-modules?event=${$('#events-select').val()}`,
+                        container: '#pjax-modules',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
+                }
             },
             error () {
-                location.reload();
+                // location.reload();
             },
             complete () {
-                $('#pjax-modules').trigger('pjax:complete');
+                fetchFlashMessages();
+            }
+        });
+    });
+
+    $('#pjax-modules').on('click', '.btn-clear', function (event) {
+        $.ajax({
+            url: `/expert/clear-modules?id=${$(this).data('id')}`,
+            method: 'PATH',
+            error (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 500) {
+                    location.reload();
+                }
+            },
+            complete () {
+                fetchFlashMessages();
             }
         });
     });
@@ -174,13 +227,10 @@ $(() => {
         });
 
         $.ajax({
-            url: `clear-modules`,
+            url: `/expert/clear-modules`,
             method: 'PATH',
             data: {
                 modules: modules
-            },
-            success (data) {
-                $('#pjax-modules').html(data);
             },
             error (jqXHR, textStatus, errorThrown) {
                 if (jqXHR.status == 500) {
@@ -188,7 +238,7 @@ $(() => {
                 }
             },
             complete () {
-                $('#pjax-modules').trigger('pjax:complete');
+                fetchFlashMessages();
             }
         });
     });
