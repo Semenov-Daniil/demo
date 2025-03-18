@@ -109,7 +109,7 @@ use yii\grid\GridView;
                 [
                     'label' => 'Логин/Пароль',
                     'value' => function ($model) {
-                        return $model['login'] . '/' . EncryptedPasswords::decryptByPassword($model['encryptedPassword']);
+                        return $model['login'] . '/' . $model['password'];
                     },
                     'options' => [
                         'class' => 'col-4'

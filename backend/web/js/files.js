@@ -1,5 +1,155 @@
 $(() => {
 
+    const options = (typeof yiiOptions === 'undefined' ? {} : yiiOptions);
+
+    function dropzoneFormInit() {
+        dropzone = dropzoneInit('#form-upload-files', options);
+
+        $('#pjax-upload-files').on('beforeSubmit', '#form-upload-files', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+    
+            for (let file of dropzone.files) {
+                if (file.accepted) {
+                    const previewElement = $(file.previewElement);
+    
+                    file.upload = {};
+                    previewElement.find('[data-dz-uploadprogress]').addClass('d-none');
+                    setProgress(file, 0);
+     
+                    previewElement.removeClass('dz-processing dz-error dz-complete');
+                    previewElement.find("[data-dz-errormessage]")?.html('');
+                    previewElement.find('[data-dz-uploadprogress]').removeClass('bg-danger').addClass('bg-success');
+    
+                    setTimeout(() => {
+                        previewElement.find('[data-dz-uploadprogress]').removeClass('d-none');
+                    }, 300);
+                }
+            }
+    
+            setTimeout(() => {
+                dropzone.processQueue();
+            }, 300);
+            
+            return false;
+        });
+
+        dropzone.on('complete', function (file) {
+            fetchFlashMessages();
+            if (file.accepted) {
+                $.pjax.reload({
+                    url: `/expert/all-files?event=${$('#events-select').find('option:selected').val()}`,
+                    container: '#pjax-files',
+                    pushState: false,
+                    replace: false,
+                    timeout: 10000
+                });
+                dropzone.processQueue();
+            }
+        });
+    }
+
+    dropzoneFormInit();
+
+    $('#pjax-upload-files').on('change', '#events-select', function (event) {
+        $.ajax({
+            url: `/expert/upload-form${($(this).val() ? `?event=${$(this).val()}` : '')}`,
+            type: 'GET',
+            success: function(data) {
+                $('#pjax-upload-files').html(data);
+                // dropzoneFormInit();
+                choicesInit();
+            },
+            error: function() {
+            },
+            beforeSend: function() {
+                $('#pjax-files').html(`
+                    <div class="row">
+                        <div>
+                            <div class="card students-list">
+                                <div class="card-header align-items-center d-flex position-relative ">
+                                    <h4 class="card-title mb-0 flex-grow-1">Файлы</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div id="w0" class="grid-view">
+                                        <div class="table-responsive table-card table-responsive placeholder-glow">
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                `);
+            },
+        });
+
+        $.ajax({
+            url: `/expert/all-files${($(this).val() ? `?event=${$(this).val()}` : '')}`,
+            type: 'GET',
+            success: function(data) {
+                $('#pjax-files').html(data);
+                changeActiveBtn();
+            },
+            error: function() {
+            },
+            beforeSend: function() {
+                $('#pjax-files').html(`
+                    <div class="row">
+                        <div>
+                            <div class="card students-list">
+                                <div class="card-header align-items-center d-flex position-relative ">
+                                    <h4 class="card-title mb-0 flex-grow-1">Файлы</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div id="w0" class="grid-view">
+                                        <div class="table-responsive table-card table-responsive placeholder-glow">
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                            <div class="row gx-0 gap-2">
+                                                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                                                <div class="placeholder col m-2 p-3 rounded-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                `);
+            },
+        });
+    });
+
     $('#pjax-files').on('click', '.btn-select-all-files', function (event) {
         let localName = $('#pjax-files').attr('id'),
             checked = JSON.parse(localStorage.getItem(localName) || '{}');

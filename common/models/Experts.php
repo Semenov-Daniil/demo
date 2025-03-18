@@ -67,7 +67,7 @@ class Experts extends Model
                 Users::tableName() . '.id',
                 'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
                 'login',
-                EncryptedPasswords::tableName() . '.encrypted_password AS encryptedPassword'
+                EncryptedPasswords::tableName() . '.encrypted_password AS password'
             ])
             ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
             ->joinWith('encryptedPassword', false)
@@ -77,13 +77,22 @@ class Experts extends Model
             ->asArray()
         ;
 
-        return new ActiveDataProvider([
+        $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
                 'pageSize' => $records,
                 'route' => 'experts',
             ],
         ]);
+
+        $models = $dataProvider->getModels();
+        foreach ($models as &$model) {
+            $model['password'] = EncryptedPasswords::decryptByPassword($model['password']);
+        }
+        unset($model);
+        $dataProvider->setModels($models);
+
+        return $dataProvider;
     }
 
     public static function findExpert(?int $id = null): static|null

@@ -1,6 +1,6 @@
 $(() => {
 
-    $('#events-select').on('change', function (event) {
+    $('#pjax-create-module').on('change', '#events-select', function (event) {
         $.ajax({
             url: `/expert/all-modules${($(this).val() ? `?event=${$(this).val()}` : '')}`,
             type: 'GET',
@@ -60,6 +60,8 @@ $(() => {
         $('.btn-add-module').find('.cnt-load').addClass('d-none');
         $('.btn-add-module').find('.cnt-text').removeClass('d-none');
         $('.btn-add-module').prop('disabled', false);
+
+        choicesInit();
 
         fetchFlashMessages();
 

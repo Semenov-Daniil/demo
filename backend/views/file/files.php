@@ -1,8 +1,11 @@
 <?php
 
 /** @var yii\web\View $this */
-/** @var app\models\FilesEvents $model */
-/** @var app\models\FilesEvents $dataProvider */
+/** @var common\models\Files $model */
+/** @var common\models\Files $dataProvider */
+/** @var common\models\Events|null $event */
+/** @var array $events */
+/** @var array $directories */
 
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
@@ -28,37 +31,17 @@ $this->registerJs(
     'yiiOptions'
 );
 
+$this->registerJsFile('@web/js/pages/dropzone.init.js', ['depends' => DropzoneAsset::class]);
 $this->registerJsFile('@web/js/files.js', ['depends' => AppAsset::class]);
-$this->registerJsFile('@web/js/pages/form-file-upload.init.js', ['depends' => DropzoneAsset::class]);
 
 ?>
 
-<div class="row mb-3">
-    <div>
-        <label for="events-select" class="form-label text-muted col-12">Чемпионаты</label>
-        <?= Html::dropDownList('events', false, $events, [
-            'id' => 'events-select',
-            'prompt' => 'Выберите чемпионат',
-            'data' => [
-                'choices' => true,
-                'choices-group' => true,
-                'choices-removeItem' => true,
-            ],
-            'class' => 'form-select'
-        ]); ?>
-    </div>
-</div>
-
 <div class="row">
-    <?php Pjax::begin([
-        'id' => 'pjax-upload-files',
-        'enablePushState' => false,
-        'timeout' => 10000,
-    ])?>
-        <?= $this->render('_files-form', [
-            'model' => $model
-        ]); ?>
-    <?php Pjax::end(); ?>
+    <?= $this->render('_files-upload', [
+        'model' => $model,
+        'events' => $events,
+        'directories' => $directories,
+    ]); ?>
 </div>
 
 <div class="row">
@@ -73,7 +56,8 @@ $this->registerJsFile('@web/js/pages/form-file-upload.init.js', ['depends' => Dr
         ]
     ]); ?>
         <?= $this->render('_files-list', [
-            'dataProvider' => $dataProvider
+            'dataProvider' => $dataProvider,
+            'event' => $event,
         ]); ?>
     <?php Pjax::end(); ?>
 </div>

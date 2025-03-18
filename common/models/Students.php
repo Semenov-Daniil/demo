@@ -210,6 +210,11 @@ class Students extends ActiveRecord
         return "{$prefix}-m{$numberModule}";
     }
 
+    public function getDirectoryModuleFileTitle(int $numberModule): string
+    {
+        return "module-{$numberModule}";
+    }
+
     /**
      * Returns the full name of the student module database.
      * 
@@ -300,12 +305,14 @@ class Students extends ActiveRecord
      */
     public function createDirectoryStudent(string $login): bool
     {
-        return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login") && Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login/public");
+        return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login") 
+                && Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students') . "/$login/public");
     }
 
     public function createDirectoriesModule($module)
     {
-        return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students/' . $this->user->login . '/' . $this->getDirectoryModuleTitle($this->dir_prefix, $module->number)));
+        return Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students/' . $this->user->login . '/' . $this->getDirectoryModuleTitle($this->dir_prefix, $module->number)))
+                && Yii::$app->fileComponent->createDirectory(Yii::getAlias('@students/' . $this->user->login . '/public/' . $this->getDirectoryModuleFileTitle($module->number)));
     }
 
     /**
@@ -321,7 +328,7 @@ class Students extends ActiveRecord
         $modules = $this->event->modules;
 
         foreach ($modules as $module) {
-            if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/") . $this->getDirectoryModuleTitle($prefix, $module->number))) {
+            if (!$this->createDirectoriesModule($module)) {
                 return false;
             }
         }

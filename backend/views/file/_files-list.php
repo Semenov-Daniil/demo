@@ -5,15 +5,13 @@ use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var common\models\Events|null $event */
+
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
 <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
-    <?= Html::button('
-        <span>
-            <i class="ri-check-double-line fs-16 me-2"></i> Выбрать все
-        </span>
-    ', ['class' => 'btn btn-primary btn-select-all-files']) ?>
+    <?= Html::button('<span><i class="ri-check-double-line fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-files']) ?>
     <?= Html::button('<i class="ri-delete-bin-2-line fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-files', 'disabled' => true]) ?>
     <?// Html::button('<i class="ri-download-2-line fs-16 me-2"></i> Скачать', ['class' => 'btn btn-secondary btn-download-selected-files', 'disabled' => true]) ?>
 </div>
@@ -21,7 +19,7 @@ use yii\grid\GridView;
 
 <div class="card">
     <div class="card-header align-items-center d-flex position-relative <?= ($dataProvider->totalCount ? 'border-bottom-0' : '') ?>">
-        <h4 class="card-title mb-0 flex-grow-1">Файлы</h4>
+        <h4 class="card-title mb-0 flex-grow-1">Файлы<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
     </div>
 
     <div class="card-body">
@@ -36,7 +34,7 @@ use yii\grid\GridView;
                 'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
                 'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>'
             ],
-            'emptyText' => 'Ничего не найдено. Добавьте файлы.',
+            'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. Добавьте файлы.'),
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],

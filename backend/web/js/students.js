@@ -2,7 +2,7 @@
 
 $(() => {
 
-    $('#events-select').on('change', function (event) {
+    $('#pjax-create-student').on('change', '#events-select', function (event) {
         $.ajax({
             url: `/expert/all-students${($(this).val() ? `?event=${$(this).val()}` : '')}`,
             type: 'GET',
@@ -62,6 +62,8 @@ $(() => {
         $('.btn-create-student').find('.cnt-text').removeClass('d-none');
         $('.btn-create-student').find('.cnt-load').addClass('d-none');
         $('.btn-create-student').prop('disabled', false);
+
+        choicesInit();
         
         fetchFlashMessages();
 

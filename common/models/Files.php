@@ -11,18 +11,19 @@ use yii\helpers\VarDumper;
 use yii\validators\FileValidator;
 
 /**
- * This is the model class for table "dm_files_events".
+ * This is the model class for table "{{%files}}".
  *
  * @property int $id
  * @property int $events_id
+ * @property int|null $modules_id
  * @property string $save_name
  * @property string $origin_name
  * @property string $extension
- * @property string $type
  *
  * @property Events $event
+ * @property Modules $module
  */
-class FilesEvents extends \yii\db\ActiveRecord
+class Files extends \yii\db\ActiveRecord
 {
     public array $files = [];
     public object $file;
@@ -36,7 +37,7 @@ class FilesEvents extends \yii\db\ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_UPLOAD_FILE] = ['files'];
+        $scenarios[self::SCENARIO_UPLOAD_FILE] = ['events_id', 'modules_id', 'files'];
         $scenarios[self::SCENARIO_VALIDATE_FILE] = ['file'];
         return $scenarios;
     }
@@ -58,7 +59,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%files_events}}';
+        return '{{%files}}';
     }
 
     /**
@@ -67,13 +68,18 @@ class FilesEvents extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['events_id', 'save_name', 'origin_name', 'extension', 'type'], 'required'],
-            [['events_id'], 'integer'],
-            [['save_name', 'origin_name', 'extension', 'type'], 'string', 'max' => 255],
+            [['save_name', 'origin_name', 'extension'], 'required'],
+            [['events_id'], 'required', 'message' => 'Необхожимо выбрать чемпионат.'],
+            [['events_id', 'modules_id'], 'integer'],
+            [['save_name', 'origin_name', 'extension'], 'string', 'max' => 255],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
+            [['modules_id'], 'exist', 'skipOnError' => true, 'targetClass' => Modules::class, 'targetAttribute' => ['modules_id' => 'id'], 'when' => function ($model) {
+                return $model->modules_id != '0';
+            }],
 
             [['file'], 'file', 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'skipOnError' => false, 'on' => self::SCENARIO_VALIDATE_FILE],
 
+            [['modules_id'], 'required', 'message' => 'Необхожимо выбрать расположение фалов.', /* 'on' => self::SCENARIO_UPLOAD_FILE */],
             [['files'], 'required', 'on' => self::SCENARIO_UPLOAD_FILE],
             [['files'], 'file', 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE],
         ];
@@ -86,7 +92,8 @@ class FilesEvents extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'events_id' => 'Competencies ID',
+            'events_id' => 'Чемпионат',
+            'modules_id' => 'Расположение',
             'save_name' => 'Сохраненное имя',
             'origin_name' => 'Оригинальное имя',
             'extension' => 'Расширение',
@@ -104,6 +111,16 @@ class FilesEvents extends \yii\db\ActiveRecord
         return $this->hasOne(Events::class, ['id' => 'events_id']);
     }
 
+    /**
+     * Gets query for [[Modules]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getModule()
+    {
+        return $this->hasOne(Modules::class, ['id' => 'modules_id']);
+    }
+
     public function deleteFailedFile($file)
     {
         if ($this->save_name) {
@@ -115,6 +132,30 @@ class FilesEvents extends \yii\db\ActiveRecord
                 Yii::$app->fileComponent->deleteFile("$studentPath/$this->save_name.$file->extension");
             }
         }
+    }
+
+    public static function getDirectories(?int $eventID = null): array
+    {
+        $directories = [
+            0 => 'Public',
+        ];
+
+        if ($eventID === null) {
+            return $directories;
+        }
+
+        $modules = Modules::find()
+            ->select(['id', 'number'])
+            ->where(['events_id' => $eventID])
+            ->asArray()
+            ->all()
+        ;
+
+        foreach ($modules as $module) {
+            $directories[$module['id']] = sprintf('Модуль %s', $module['number']);
+        }
+
+        return $directories;
     }
 
     /**
@@ -152,15 +193,15 @@ class FilesEvents extends \yii\db\ActiveRecord
      * @param string $extension the extension of the downloaded file.
      * @param string $type the type of the downloaded file.
      * 
-     * @return FilesEvents
+     * @return Files
      */
     public function saveFileEventToDb(yii\web\UploadedFile $file): bool
     {
-        $model = new FilesEvents();
+        $model = new Files();
         $model->events_id = $this->events_id;
+        $model->modules_id = $this->modules_id;
         $model->origin_name = $file->baseName;
         $model->extension = $file->extension;
-        $model->type = $file->type;
         $model->save_name = $this->save_name;
 
         return $model->save();
@@ -168,7 +209,7 @@ class FilesEvents extends \yii\db\ActiveRecord
 
     public function validateFile($file)
     {
-        $validator = new FilesEvents(['scenario' => self::SCENARIO_VALIDATE_FILE, 'file' => $file]);
+        $validator = new Files(['scenario' => self::SCENARIO_VALIDATE_FILE, 'file' => $file]);
 
         return [
             'isValid' => $validator->validate(),
@@ -234,51 +275,54 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @throws Exception|Throwable throws an exception if an error occurs when uploading files.
      */
-    public function processFiles(int $eventID): array
+    public function processFiles(): array|bool
     {
-        $result = [];
+        $this->validate();
 
-        $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
-
-        $this->events_id = $event?->id;
-        $this->expertPath = Yii::getAlias("@events/$event->dir_title");
-        $this->studentPaths = Students::find()
-            ->select([
-                'CONCAT("@students/", login, "/public") as alias',
-            ])
-            ->where(['events_id' => $eventID])
-            ->joinWith('user', false)
-            ->asArray()
-            ->all()
-        ;
-
-        foreach ($this->files as $file) {
-            $transaction = Yii::$app->db->beginTransaction();
-
-            try {
-                $fileInfo = $this->processFile($file);
-
-                if (!empty($fileInfo['errors'])) {
-                    $result[] = $fileInfo;
-                    $this->addError('files', ...$fileInfo['errors']);
+        if (!$this->hasErrors()) {
+            $this->modules_id = ($this->modules_id == '0' ? null : $this->modules_id);
+            $this->expertPath = Yii::getAlias("@events/" . $this->event->dir_title);
+            $this->studentPaths = Students::find()
+                ->select([
+                    'CONCAT("@students/", login, "/public") as alias',
+                ])
+                ->where(['events_id' => $this->events_id])
+                ->joinWith('user', false)
+                ->asArray()
+                ->all()
+            ;
+    
+            foreach ($this->files as $file) {
+                $transaction = Yii::$app->db->beginTransaction();
+    
+                try {
+                    $fileInfo = $this->processFile($file);
+    
+                    if (!empty($fileInfo['errors'])) {
+                        $this->addError('files', ['filename' => $file->name, 'errors' => $fileInfo['errors']]);
+                        $transaction->rollBack();
+                        $this->deleteFailedFile($file);
+                        continue;
+                    }
+    
+                    $transaction->commit();
+                } catch (\Exception $e) {
                     $transaction->rollBack();
+                    $this->addError('files', $e->getMessage());
+                    // $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
                     $this->deleteFailedFile($file);
-                    continue;
+                } catch (\Throwable $e) {
+                    $transaction->rollBack();
+                    $this->addError('files', $e->getMessage());
+                    // $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
+                    $this->deleteFailedFile($file);
                 }
-
-                $transaction->commit();
-            } catch (\Exception $e) {
-                $transaction->rollBack();
-                $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
-                $this->deleteFailedFile($file);
-            } catch (\Throwable $e) {
-                $transaction->rollBack();
-                $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
-                $this->deleteFailedFile($file);
             }
+    
+            return true;
         }
 
-        return $result;
+        return false;
     }
 
     /**
@@ -288,7 +332,7 @@ class FilesEvents extends \yii\db\ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderFiles(int $eventID, int $records = 10): ActiveDataProvider
+    public static function getDataProviderFiles(?int $eventID = null, int $records = 10): ActiveDataProvider
     {
         $query = self::find()
             ->select([

@@ -14,6 +14,10 @@ return [
             'class' => 'yii\debug\Module',
             'allowedIPs' => ['*'],
         ],
+        'gii' => [
+            'class' => 'yii\gii\Module',
+            'allowedIPs' => ['*'],
+        ],
     ],
     'components' => [
         'cache' => [
