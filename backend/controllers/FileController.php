@@ -144,26 +144,8 @@ class FileController extends Controller
                             'type' => 'error'
                         ]);
                     }
-
-                    // $model->files = UploadedFile::getInstancesByName('files');
-                    // if ($result['success'] = $model->processFiles() && !$model->hasErrors()) {
-                    //     Yii::$app->session->addFlash('toastify', [
-                    //         'text' => count($model->files) > 1 ? 'Файлы успешно загружены.' : 'Файл успешно загружен.',
-                    //         'type' => 'success'
-                    //     ]);
-                    // } else {
-                    //     Yii::$app->session->addFlash('toastify', [
-                    //         'text' => count($model->files) > 1 ? 'Не удалось загрузить файлы.' : 'Не удалось загрузить файл.',
-                    //         'type' => 'error'
-                    //     ]);
-
-                    //     $result['errors']['files'] = $model->errors['files'];
-                    // }
                 }
             } catch (\Exception $e) {
-                // Yii::$app->response->statusCode = 400;
-                // $result['errors']['message'] = $e->getMessage();
-
                 Yii::$app->response->statusCode = 400;
                 $result['success'] = false;
                 $result['files']['global'] = ['status' => 'error', 'errors' => [$e->getMessage()]];

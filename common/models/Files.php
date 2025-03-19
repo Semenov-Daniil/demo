@@ -168,19 +168,6 @@ class Files extends \yii\db\ActiveRecord
      */
     public function copyFileToStudents(string $filePath, string $filename): array
     {
-        // $errors = [];
-
-        // foreach ($this->studentPaths as $studentPath) {
-        //     $studentPath = Yii::getAlias($studentPath['alias'] . (is_null($this->modules_id) ? '' : '/' . Students::getDirectoryModuleFileTitle($this->module?->number)));
-
-        //     if (!copy($filePath, "$studentPath/$filename")) {
-        //         $errors[] = 'Не удалось скопировать файл.';
-        //         break;
-        //     }
-        // }
-
-        // return $errors;
-
         $errors = [];
         $destinations = [];
 
@@ -224,12 +211,6 @@ class Files extends \yii\db\ActiveRecord
 
     public function validateFile($file)
     {
-        // $validator = new Files(['scenario' => self::SCENARIO_VALIDATE_FILE, 'file' => $file]);
-
-        // return [
-        //     'isValid' => $validator->validate(),
-        //     'errors' => $validator->getErrors('file')
-        // ];
         $validator = new FileValidator([
             'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(),
             'skipOnEmpty' => false,
@@ -338,49 +319,6 @@ class Files extends \yii\db\ActiveRecord
         }
     
         return $allSuccess;
-
-        // if (!$this->hasErrors()) {
-        //     $this->modules_id = ($this->modules_id == '0' ? null : $this->modules_id);
-        //     $this->expertPath = Yii::getAlias("@events/" . $this->event->dir_title);
-        //     $this->studentPaths = Students::find()
-        //         ->select([
-        //             'CONCAT("@students/", login, "/'.self::PUBLIC_DIR.'") as alias',
-        //         ])
-        //         ->where(['events_id' => $this->events_id])
-        //         ->joinWith('user', false)
-        //         ->asArray()
-        //         ->all()
-        //     ;
-    
-        //     foreach ($this->files as $file) {
-        //         $transaction = Yii::$app->db->beginTransaction();
-    
-        //         try {
-        //             $fileInfo = $this->processFile($file);
-    
-        //             if (!empty($fileInfo['errors'])) {
-        //                 $this->addError('files', ['filename' => $file->name, 'errors' => $fileInfo['errors']]);
-        //                 $transaction->rollBack();
-        //                 $this->deleteFailedFile($file);
-        //                 continue;
-        //             }
-    
-        //             $transaction->commit();
-        //         } catch (\Exception $e) {
-        //             $transaction->rollBack();
-        //             $this->addError('files', ['filename' => $file->name, 'errors' => ['Не удалось сохранить файл.']]);
-        //             $this->deleteFailedFile($file);
-        //         } catch (\Throwable $e) {
-        //             $transaction->rollBack();
-        //             $this->addError('files', ['filename' => $file->name, 'errors' => ['Не удалось сохранить файл.']]);
-        //             $this->deleteFailedFile($file);
-        //         }
-        //     }
-    
-        //     return true;
-        // }
-
-        // return false;
     }
 
     /**

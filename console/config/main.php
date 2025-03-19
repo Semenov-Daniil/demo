@@ -10,7 +10,11 @@ $params = array_merge(
 return [
     'id' => 'app-console',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+        'log',
+        'queue',
+        'redis',
+    ],
     'controllerNamespace' => 'console\controllers',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
@@ -39,6 +43,17 @@ return [
                     'levels' => ['error', 'warning'],
                 ],
             ],
+        ],
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 0,
+        ],
+        'queue' => [
+            'class' => 'yii\queue\redis\Queue',
+            'redis' => 'redis', // Ссылка на компонент redis
+            'channel' => 'queue',
         ],
     ],
     'params' => $params,

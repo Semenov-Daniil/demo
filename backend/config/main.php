@@ -18,7 +18,9 @@ return [
                 '@common/students',
                 '@common/events'
             ],
-        ]
+        ],
+        'queue',
+        'redis'
     ],
     'modules' => [
         'flash' => [
@@ -74,6 +76,18 @@ return [
 
                 '/<action>' => '/main/dispatch',    
             ],
+        ],
+
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 0,
+        ],
+        'queue' => [
+            'class' => 'yii\queue\redis\Queue',
+            'redis' => 'redis', // ID компонента Redis
+            'channel' => 'queue', // Название канала
         ],
         
     ],
