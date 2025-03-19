@@ -113,31 +113,60 @@ class FileController extends Controller
     public function actionUploadFiles()
     {
         $model = new Files(['scenario' => Files::SCENARIO_UPLOAD_FILE]);
-        $error = '';
-        $result = [];
+        $result = ['success' => true, 'files' => []];
 
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post();
             try {
                 if ($model->load($data)) {
                     $model->files = UploadedFile::getInstancesByName('files');
-                    if ($result['success'] = $model->processFiles() && !$model->hasErrors()) {
+                    if ($model->processFiles()) {
+                        foreach ($model->files as $file) {
+                            $result['files'][$file->name] = ['status' => 'success'];
+                        }
+
                         Yii::$app->session->addFlash('toastify', [
                             'text' => count($model->files) > 1 ? 'Файлы успешно загружены.' : 'Файл успешно загружен.',
                             'type' => 'success'
                         ]);
-                    } else {
+                    }
+                    if ($model->hasErrors()) {
+                        $result['success'] = false;
+                        foreach ($model->errors['files'] as $error) {
+                            $result['files'][$error['filename']] = [
+                                'status' => 'error',
+                                'errors' => $error['errors']
+                            ];
+                        }
+
                         Yii::$app->session->addFlash('toastify', [
                             'text' => count($model->files) > 1 ? 'Не удалось загрузить файлы.' : 'Не удалось загрузить файл.',
                             'type' => 'error'
                         ]);
-
-                        $result['errors']['files'] = $model->errors['files'];
                     }
+
+                    // $model->files = UploadedFile::getInstancesByName('files');
+                    // if ($result['success'] = $model->processFiles() && !$model->hasErrors()) {
+                    //     Yii::$app->session->addFlash('toastify', [
+                    //         'text' => count($model->files) > 1 ? 'Файлы успешно загружены.' : 'Файл успешно загружен.',
+                    //         'type' => 'success'
+                    //     ]);
+                    // } else {
+                    //     Yii::$app->session->addFlash('toastify', [
+                    //         'text' => count($model->files) > 1 ? 'Не удалось загрузить файлы.' : 'Не удалось загрузить файл.',
+                    //         'type' => 'error'
+                    //     ]);
+
+                    //     $result['errors']['files'] = $model->errors['files'];
+                    // }
                 }
             } catch (\Exception $e) {
+                // Yii::$app->response->statusCode = 400;
+                // $result['errors']['message'] = $e->getMessage();
+
                 Yii::$app->response->statusCode = 400;
-                $result['errors']['message'] = $e->getMessage();
+                $result['success'] = false;
+                $result['files']['global'] = ['status' => 'error', 'errors' => [$e->getMessage()]];
             }
         }
 
