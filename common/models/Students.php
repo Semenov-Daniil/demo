@@ -178,13 +178,13 @@ class Students extends ActiveRecord
      */
     public static function getDataProviderStudents(string|int|null $eventID = null, int $records = 10): ActiveDataProvider
     {
-        return new ActiveDataProvider([
+        $dataProvider = new ActiveDataProvider([
             'query' => self::find()
                 ->select([
                     'students_id',
                     'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
                     'login',
-                    EncryptedPasswords::tableName() . '.encrypted_password AS encryptedPassword',
+                    EncryptedPasswords::tableName() . '.encrypted_password AS password',
                 ])
                 ->where(['events_id' => $eventID])
                 ->joinWith('encryptedPassword', false)
@@ -196,6 +196,15 @@ class Students extends ActiveRecord
                 'route' => 'students',
             ],
         ]);
+
+        $models = $dataProvider->getModels();
+        foreach ($models as &$model) {
+            $model['password'] = EncryptedPasswords::decryptByPassword($model['password']);
+        }
+        unset($model);
+        $dataProvider->setModels($models);
+
+        return $dataProvider;
     }
 
     /**
@@ -210,7 +219,7 @@ class Students extends ActiveRecord
         return "{$prefix}-m{$numberModule}";
     }
 
-    public function getDirectoryModuleFileTitle(int $numberModule): string
+    public static function getDirectoryModuleFileTitle(int $numberModule): string
     {
         return "module-{$numberModule}";
     }

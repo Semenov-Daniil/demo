@@ -25,14 +25,15 @@ use yii\validators\FileValidator;
  */
 class Files extends \yii\db\ActiveRecord
 {
+    const SCENARIO_UPLOAD_FILE = "upload-file";
+    const SCENARIO_VALIDATE_FILE = "validate-file";
+    const PUBLIC_DIR = 'public';
+
     public array $files = [];
     public object $file;
     public int|null $eventId = null;
     public string $expertPath = '';
     public array $studentPaths = [];
-
-    const SCENARIO_UPLOAD_FILE = "upload-file";
-    const SCENARIO_VALIDATE_FILE = "validate-file";
 
     public function scenarios()
     {
@@ -79,7 +80,7 @@ class Files extends \yii\db\ActiveRecord
 
             [['file'], 'file', 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'skipOnError' => false, 'on' => self::SCENARIO_VALIDATE_FILE],
 
-            [['modules_id'], 'required', 'message' => 'Необхожимо выбрать расположение фалов.', /* 'on' => self::SCENARIO_UPLOAD_FILE */],
+            [['modules_id'], 'required', 'message' => 'Необхожимо выбрать расположение фалов.', 'on' => self::SCENARIO_UPLOAD_FILE],
             [['files'], 'required', 'on' => self::SCENARIO_UPLOAD_FILE],
             [['files'], 'file', 'maxFiles' => 0, 'maxSize' => Yii::$app->fileComponent->getMaxSizeFiles(), 'on' => self::SCENARIO_UPLOAD_FILE],
         ];
@@ -134,10 +135,10 @@ class Files extends \yii\db\ActiveRecord
         }
     }
 
-    public static function getDirectories(?int $eventID = null): array
+    public static function getDirectories(int|string|null $eventID = null): array
     {
         $directories = [
-            0 => 'Public',
+            0 => ucfirst(self::PUBLIC_DIR),
         ];
 
         if ($eventID === null) {
@@ -170,11 +171,7 @@ class Files extends \yii\db\ActiveRecord
         $errors = [];
 
         foreach ($this->studentPaths as $studentPath) {
-            $studentPath = Yii::getAlias($studentPath['alias']);
-
-            if (!is_dir($studentPath)) {
-                Yii::$app->fileComponent->createDirectory($studentPath);
-            }
+            $studentPath = Yii::getAlias($studentPath['alias'] . (is_null($this->modules_id) ? '' : '/' . Students::getDirectoryModuleFileTitle($this->module?->number)));
 
             if (!copy($filePath, "$studentPath/$filename")) {
                 $errors[] = 'Не удалось скопировать файл.';
@@ -284,7 +281,7 @@ class Files extends \yii\db\ActiveRecord
             $this->expertPath = Yii::getAlias("@events/" . $this->event->dir_title);
             $this->studentPaths = Students::find()
                 ->select([
-                    'CONCAT("@students/", login, "/public") as alias',
+                    'CONCAT("@students/", login, "/'.self::PUBLIC_DIR.'") as alias',
                 ])
                 ->where(['events_id' => $this->events_id])
                 ->joinWith('user', false)
@@ -308,13 +305,11 @@ class Files extends \yii\db\ActiveRecord
                     $transaction->commit();
                 } catch (\Exception $e) {
                     $transaction->rollBack();
-                    $this->addError('files', $e->getMessage());
-                    // $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
+                    $this->addError('files', ['filename' => $file->name, 'errors' => ['Не удалось сохранить файл.']]);
                     $this->deleteFailedFile($file);
                 } catch (\Throwable $e) {
                     $transaction->rollBack();
-                    $this->addError('files', $e->getMessage());
-                    // $result[] = ['filename' => $file->name, 'errors' => [$e->getMessage()]];
+                    $this->addError('files', ['filename' => $file->name, 'errors' => ['Не удалось сохранить файл.']]);
                     $this->deleteFailedFile($file);
                 }
             }
@@ -337,23 +332,33 @@ class Files extends \yii\db\ActiveRecord
         $query = self::find()
             ->select([
                 self::tableName() . '.id',
+                'modules_id as directory',
                 'origin_name',
                 'save_name',
                 'extension',
-                'dir_title'
+                'dir_title',
             ])
             ->where(['events_id' => $eventID])
             ->joinWith('event', false)
             ->asArray()
         ;
 
-        return new ActiveDataProvider([
+        $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
                 'pageSize' => $records,
                 'route' => 'files',
             ],
         ]);
+
+        $models = $dataProvider->getModels();
+        foreach ($models as &$model) {
+            $model['directory'] = (is_null($model['directory']) ? ucfirst(self::PUBLIC_DIR) : 'Модуль ' . $model['directory']);
+        }
+        unset($model);
+        $dataProvider->setModels($models);
+
+        return $dataProvider;
     }
 
     /**
@@ -424,16 +429,14 @@ class Files extends \yii\db\ActiveRecord
      * 
      * @return array|null if the file is found, it returns the file data as an `array`, otherwise it returns `null`.
      */
-    public static function findFile(?string $filename = null, ?string $event = null): array|null
+    public static function findFile(string $event, string $filename): array|null
     {
         return self::find()
             ->select([
                 "CONCAT(origin_name, '.', extension) AS originName",
-                "type",
                 "extension",
             ])
-            ->where(['save_name' => $filename, 'dir_title' => $event])
-            ->joinWith('event', false)
+            ->where(['events_id' => $event, 'save_name' => $filename])
             ->asArray()
             ->one()
             ;

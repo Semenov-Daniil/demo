@@ -66,15 +66,15 @@ class FileController extends Controller
     {
         $model = new Files(['scenario' => Files::SCENARIO_UPLOAD_FILE, 'events_id' => $event]);
         $dataProvider = $model->getDataProviderFiles($event);
-        $event = Events::findOne(['id' => $event]);
+        $directories = Files::getDirectories($event);
         $events = Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id);
-        $directories = Files::getDirectories();
+        $modelEvent = Events::findOne(['id' => $event]);
 
         if ($this->request->isAjax) {
             return $this->renderAjax('files', [
                 'model' => $model,
                 'dataProvider' => $dataProvider,
-                'event' => $event,
+                'event' => $modelEvent,
                 'events' => $events,
                 'directories' => $directories,
             ]);
@@ -83,7 +83,7 @@ class FileController extends Controller
         return $this->render('files', [
             'model' => $model,
             'dataProvider' => $dataProvider,
-            'event' => $event,
+            'event' => $modelEvent,
             'events' => $events,
             'directories' => $directories,
         ]);
@@ -140,8 +140,6 @@ class FileController extends Controller
                 $result['errors']['message'] = $e->getMessage();
             }
         }
-
-        VarDumper::dump($result, 10, true);die;
 
         return $this->asJson([
             'data' => $result
@@ -207,10 +205,10 @@ class FileController extends Controller
      * @param string $filename file name.
      * @param string $event the name of the event directory.
      */
-    public function actionDownload(?string $filename = null)
+    public function actionDownload(string $event, string $filename)
     {
-        $dir = Events::getEventByExpert(Yii::$app->user->id)?->dir_title;
-        if ($file = Files::findFile($filename, $dir)) {
+        $dir = Events::findOne(['id' => $event])?->dir_title;
+        if ($file = Files::findFile($event, $filename)) {
             $filePath = Yii::getAlias("@events/$dir/$filename." . $file['extension']);
     
             if (file_exists($filePath)) {

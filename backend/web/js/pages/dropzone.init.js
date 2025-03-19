@@ -89,27 +89,37 @@ function dropzoneInit(form, options) {
     });
 
     dropzone.on("success", function(file, response) {
-        if (response?.status == 207 && response.files) {
-            const fileErrors = response.files.find(el => el.filename === file.name)?.errors;
-            if (fileErrors) {
-                addErrors(file, fileErrors);
-                $(file.previewElement).find('[data-dz-uploadprogress]').removeClass('bg-success').addClass('bg-danger');
+        if (typeof response == "object") {
+            if (!response.data.success) {
+                if (!(response.data.errors === undefined || response.data.errors.length == 0)) {
+                    const fileErrors = response.data.errors.files.find(el => el.filename === file.name)?.errors;
+                    if (fileErrors) {
+                        addErrors(file, fileErrors);
+                        $(file.previewElement).find('[data-dz-uploadprogress]').removeClass('bg-success').addClass('bg-danger');
+                    } else {
+                        this.removeFile(file);
+                    }
+                }
             } else {
                 this.removeFile(file);
             }
-        } else {
-            this.removeFile(file);
         }
     });
     
     dropzone.on('error', function (file, response) {
-        if (typeof response == "object" && response.files) {
-            const fileErrors = response.files.find(el => el.filename === file.name)?.errors;
-            if (fileErrors) {
-                addErrors(file, fileErrors);
-            }
+        if (typeof response == "object") {
+            if (response.data.errors) {
+                if (response.data.errors.message && typeof response.data.errors.message == 'string') {
+                    addError(file, response.data.errors.message);
+                } else {
+                    const fileErrors = response.data.errors.files.find(el => el.filename === file.name)?.errors;
+                    if (fileErrors) {
+                        addErrors(file, fileErrors);
+                    }
+                }
+            } 
         } else {
-            addError(file, (typeof response == "string" ? response : 'Не удалось загрузить файл.'));
+            addError(file, (typeof response == "string" ? response : 'Не удалось сохранить файл.'));
         }
 
         $(file.previewElement).find('[data-dz-uploadprogress]').removeClass('bg-success').addClass('bg-danger');
