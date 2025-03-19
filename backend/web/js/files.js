@@ -35,8 +35,8 @@ $(() => {
         });
 
         dropzone.on('complete', function (file) {
-            fetchFlashMessages();
             if (file.accepted) {
+                fetchFlashMessages();
                 $.pjax.reload({
                     url: `/expert/all-files?event=${$('#events-select').find('option:selected').val()}`,
                     container: '#pjax-files',

@@ -174,13 +174,16 @@ class Files extends \yii\db\ActiveRecord
         foreach ($this->studentPaths as $studentPath) {
             $destPath = Yii::getAlias($studentPath['alias'] . (is_null($this->modules_id) ? '' : '/' . Students::getDirectoryModuleFileTitle($this->module?->number)));
             $destinations[] = "$destPath/$filename";
+            // if (!copy($filePath, "$destPath/$filename")) {
+            //     $errors[] = "Не удалось скопировать файл.";
+            //     break;
+            // }
         }
 
-        // Пакетное копирование (можно заменить на асинхронный подход с использованием очереди)
         foreach ($destinations as $dest) {
             if (!copy($filePath, $dest)) {
                 $errors[] = "Не удалось скопировать файл в $dest.";
-                break; // Прерываем при первой ошибке, можно убрать break для копирования остальных
+                break;
             }
         }
 
