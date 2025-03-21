@@ -52,12 +52,16 @@ $(() => {
     dropzoneFormInit();
 
     $('#pjax-upload-files').on('change', '#events-select', function (event) {
+        const select = $(this);
         $.ajax({
-            url: `/expert/upload-form${($(this).val() ? `?event=${$(this).val()}` : '')}`,
+            url: `/expert/upload-form${(select.val() ? `?event=${select.val()}` : '')}`,
             type: 'GET',
             success: function(data) {
+                window.history.pushState({},
+                    '',
+                    `files${(select.val() ? `?event=${select.val()}` : '')}`
+                );
                 $('#pjax-upload-files').html(data);
-                // dropzoneFormInit();
                 choicesInit();
             },
             error: function() {
@@ -190,13 +194,21 @@ $(() => {
             url: `/expert/delete-files?id=${$(this).data('id')}`,
             method: 'DELETE',
             success (data) {
-                $('#pjax-files').html(data);
+                if (data.data.success) {
+                    $.pjax.reload({
+                        url: `/expert/all-files?event=${$('#events-select').val()}`,
+                        container: '#pjax-files',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
+                }
             },
             error () {
                 location.reload();
             },
             complete () {
-                $('#pjax-files').trigger('pjax:complete');
+                fetchFlashMessages();
             }
         });
     });
@@ -274,13 +286,21 @@ $(() => {
                 files: files
             },
             success (data) {
-                $('#pjax-files').html(data);
+                if (data.data.success) {
+                    $.pjax.reload({
+                        url: `/expert/all-files?event=${$('#events-select').val()}`,
+                        container: '#pjax-files',
+                        pushState: false,
+                        replace: false,
+                        timeout: 10000
+                    });
+                }
             },
             error () {
                 location.reload();
             },
             complete () {
-                $('#pjax-files').trigger('pjax:complete');
+                fetchFlashMessages();
             }
         });
     });

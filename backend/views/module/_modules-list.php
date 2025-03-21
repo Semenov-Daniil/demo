@@ -144,10 +144,10 @@ use yii\grid\GridView;
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']], 'title' => 'Удалить']);
+                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']], 'title' => 'Удалить']);
                         },
                         'clear' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-brush-2-line"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-clear', 'data' => ['id' => $model['id']], 'title' => 'Очистить']);
+                            return Html::button('<i class="ri-brush-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-clear', 'data' => ['id' => $model['id']], 'title' => 'Очистить']);
                         },
                     ],
                     'visible' => $dataProvider->totalCount

@@ -3,10 +3,15 @@
 $(() => {
 
     $('#pjax-create-student').on('change', '#events-select', function (event) {
+        const select = $(this);
         $.ajax({
             url: `/expert/all-students${($(this).val() ? `?event=${$(this).val()}` : '')}`,
             type: 'GET',
             success: function(data) {
+                window.history.pushState({},
+                    '',
+                    `students${(select.val() ? `?event=${select.val()}` : '')}`
+                );
                 $('#pjax-students').html(data);
                 changeActiveBtn();
             },

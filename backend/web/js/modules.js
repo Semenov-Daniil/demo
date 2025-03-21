@@ -1,10 +1,15 @@
 $(() => {
 
     $('#pjax-create-module').on('change', '#events-select', function (event) {
+        const select = $(this);
         $.ajax({
-            url: `/expert/all-modules${($(this).val() ? `?event=${$(this).val()}` : '')}`,
+            url: `/expert/all-modules${(select.val() ? `?event=${select.val()}` : '')}`,
             type: 'GET',
             success: function(data) {
+                window.history.pushState({},
+                    '',
+                    `modules${(select.val() ? `?event=${select.val()}` : '')}`
+                );
                 $('#pjax-modules').html(data);
                 changeActiveBtn();
             },

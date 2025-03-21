@@ -111,18 +111,18 @@ use yii\grid\GridView;
                 [
                     'class' => ActionColumn::class,
                     'template' => '<div class="d-flex flex-wrap gap-2 justify-content-end">
-                        {delete}
                         {download}
+                        {delete}
                     </div>',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']]]);
+                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']]]);
                         },
                         'download' => function ($url, $model, $key) use ($event) {
-                            return Html::a('<i class="ri-download-2-line"></i>', ['/download', 'event' => $event->id, 'filename' => $model['save_name']], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['id' => $model['save_name'], 'pjax' => 0]]);
+                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ['/download', 'event' => $event->id, 'filename' => $model['save_name']], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['id' => $model['save_name'], 'pjax' => 0]]);
                         },
                         'download-btn' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-download-2-line"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-download', 'data' => ['filename' => $model['save_name']]]);
+                            return Html::button('<i class="ri-download-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-download', 'data' => ['filename' => $model['save_name']]]);
                         },
                     ],
                     'visible' => $dataProvider->totalCount,

@@ -63,7 +63,7 @@ class ModuleController extends Controller
      */
     public function actionModules(?int $event = null): string
     {
-        $model = new Modules();
+        $model = new Modules(['events_id' => $event]);
         $dataProvider = Modules::getDataProviderModules($event);
 
         return $this->render('modules', [

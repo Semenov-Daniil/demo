@@ -21,6 +21,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\Url;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -64,8 +65,8 @@ class StudentController extends Controller
      */
     public function actionStudents(?int $event = null): string
     {
-        $model = new Students(['scenario' => Students::SCENARIO_CREATE]);
-        $dataProvider = $model->getDataProviderStudents();
+        $model = new Students(['scenario' => Students::SCENARIO_CREATE, 'events_id' => $event]);
+        $dataProvider = $model->getDataProviderStudents($event);
 
         return $this->render('students', [
             'model' => $model,
@@ -112,20 +113,20 @@ class StudentController extends Controller
     public function actionAllStudents(?string $event = null): string
     {
         $dataProvider = Students::getDataProviderStudents($event);
-        $event = Events::findOne(['id' => $event]);
+        $modelEvent = Events::findOne(['id' => $event]);
 
         session_write_close();
 
         if ($this->request->isAjax) {
             return $this->renderAjax('_students-list', [
                 'dataProvider' => $dataProvider,
-                'event' => $event
+                'event' => $modelEvent
             ]);
         }
 
         return $this->render('_students-list', [
             'dataProvider' => $dataProvider,
-            'event' => $event
+            'event' => $modelEvent
         ]);
     }
 

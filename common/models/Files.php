@@ -49,10 +49,9 @@ class Files extends \yii\db\ActiveRecord
             return false;
         }
 
-        $event = Events::findOne(['experts_id' => Yii::$app->user->id]);
-        $eventPath = Yii::getAlias("@events/$event->dir_title");
+        $eventPath = Yii::getAlias("@events/" . $this->event->dir_title);
 
-        return $this->deleteFilesStudents($event->id) && Yii::$app->fileComponent->deleteFile("$eventPath/$this->save_name.$this->extension");
+        return $this->deleteFilesStudents($this->event->id) && Yii::$app->fileComponent->deleteFile("$eventPath/$this->save_name.$this->extension");
     }
 
     /**
@@ -376,8 +375,8 @@ class Files extends \yii\db\ActiveRecord
     {
         $transaction = Yii::$app->db->beginTransaction();   
         try {
-            if ($module = self::findOne(['id' => $id])) {
-                if ($module->delete()) {
+            if ($model = self::findOne(['id' => $id])) {
+                if ($model->delete()) {
                     $transaction->commit();
                     return true;
                 }
@@ -416,7 +415,7 @@ class Files extends \yii\db\ActiveRecord
         $students = Students::findAll(['events_id' => $eventId]);
 
         foreach ($students as $student) {
-            $studentFile = Yii::getAlias('@students/' . $student->user->login . "/public/$this->save_name.$this->extension");
+            $studentFile = Yii::getAlias('@students/' . $student->user->login . '/public/' . (is_null($this->modules_id) ? '' : Students::getDirectoryModuleFileTitle($this->module?->number) . '/') . "$this->save_name.$this->extension");
             if (!Yii::$app->fileComponent->deleteFile($studentFile)) {
                 return false; 
             }
