@@ -236,6 +236,21 @@ class Students extends ActiveRecord
         return "{$login}_m{$numberModule}";
     }
 
+    public function getFolders(string $dirTitle): array
+    {
+        $folders = [];
+
+        if ($dirTitle == 'all') {
+            foreach ($this->modules as $module) {
+                $folders[] = Yii::getAlias('@students/' . $this->user->login . '/' . $this->getDirectoryModuleTitle($this->dir_prefix, $module->number));
+            }
+        } else {
+            $folders[] = Yii::getAlias('@students/' . $this->user->login . '/' . $dirTitle);
+        }
+
+        return $folders;
+    }
+
     // public static function encryptById(int $id): string
     // {
     //     return base64_encode(Yii::$app->security->encryptByKey($id, Yii::$app->params['studentKey']));

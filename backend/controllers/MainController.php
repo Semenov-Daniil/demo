@@ -7,11 +7,9 @@ use common\models\LoginForm;
 use common\models\Roles;
 use common\models\Users;
 use Yii;
-use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\web\Response;
 
 /**
  * Main controller
@@ -24,6 +22,7 @@ class MainController extends Controller
         'student' => 'backend\controllers\StudentController',
         'module' => 'backend\controllers\ModuleController',
         'file' => 'backend\controllers\FileController',
+        'participant' => 'backend\controllers\ParticipantController',
     ];
     
     /**
