@@ -138,6 +138,14 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                                 ]
                             ],
                             [
+                                'label' => '<i class="ri-folder-user-line"></i><span data-key="t-participants">Данные участников</span>', 
+                                'encode' => false, 
+                                'url' => ['/participants'], 
+                                'linkOptions' => [
+                                    'class' => 'nav-link menu-link', 'data-key' => 't-participants'
+                                ]
+                            ],
+                            [
                                 'label' => '<i class="ri-equalizer-line"></i><span data-key="t-modules">Модули</span>', 
                                 'encode' => false, 
                                 'url' => ['/modules'], 
@@ -153,14 +161,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                                     'class' => 'nav-link menu-link', 'data-key' => 't-files'
                                 ]
                             ],
-                            [
-                                'label' => '<i class="ri-folder-user-line"></i><span data-key="t-participants">Данные участников</span>', 
-                                'encode' => false, 
-                                'url' => ['/participants'], 
-                                'linkOptions' => [
-                                    'class' => 'nav-link menu-link', 'data-key' => 't-participants'
-                                ]
-                            ],
+                            
                             // '<li class="nav-item">
                             //     <a class="nav-link menu-link" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
                             //         <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Студенты</span>

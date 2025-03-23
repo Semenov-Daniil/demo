@@ -149,6 +149,14 @@ class Students extends ActiveRecord
         return $this->hasMany(Modules::class, ['events_id' => 'events_id']);
     }
 
+    public function getDirectories()
+    {
+        return $this->getModules()->select([
+            'number',
+            'events_id',
+        ]);
+    }
+
     /**
      * Gets query for [[Users]].
      *
@@ -176,34 +184,46 @@ class Students extends ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderStudents(string|int|null $eventID = null, int $records = 10): ActiveDataProvider
+    public static function getDataProviderStudents(string|int|null $eventID = null, int $records = 10, bool $withDirectories = false): ActiveDataProvider
     {
+        $query = self::find()
+            ->select([
+                'students_id',
+                'events_id',
+                'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
+                'login',
+                EncryptedPasswords::tableName() . '.encrypted_password AS password',
+                'dir_prefix'
+            ])
+            ->where(['events_id' => $eventID])
+            ->joinWith('encryptedPassword', false)
+            ->joinWith('user', false);
+
+        if ($withDirectories) {
+            $query->with('directories');
+        }
+
         $dataProvider = new ActiveDataProvider([
-            'query' => self::find()
-                ->select([
-                    'students_id',
-                    'CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName',
-                    'login',
-                    EncryptedPasswords::tableName() . '.encrypted_password AS password',
-                ])
-                ->where(['events_id' => $eventID])
-                ->joinWith('encryptedPassword', false)
-                ->joinWith('user', false)
-                ->asArray()
-            ,
+            'query' => $query->asArray(),
             'pagination' => [
                 'pageSize' => $records,
                 'route' => 'students',
             ],
         ]);
-
+    
         $models = $dataProvider->getModels();
         foreach ($models as &$model) {
             $model['password'] = EncryptedPasswords::decryptByPassword($model['password']);
+            if ($withDirectories && !empty($model['directories'])) {
+                $model['directories'] = array_map(function ($directory) use ($model) {
+                    $directory['title'] = self::getDirectoryModuleTitle($model['dir_prefix'], $directory['number']);
+                    return $directory;
+                }, $model['directories']);
+            }
         }
         unset($model);
         $dataProvider->setModels($models);
-
+    
         return $dataProvider;
     }
 
@@ -214,7 +234,7 @@ class Students extends ActiveRecord
      * @param int $numberModule module number.
      * @return string full name directory.
      */
-    public function getDirectoryModuleTitle(string $prefix, int $numberModule): string
+    public static function getDirectoryModuleTitle(string $prefix, int $numberModule): string
     {
         return "{$prefix}-m{$numberModule}";
     }

@@ -48,7 +48,7 @@ class ParticipantController extends Controller
     public function actionParticipants(?int $event = null): string
     {
         return $this->render('participants', [
-            'dataProvider' => Students::getDataProviderStudents($event),
+            'dataProvider' => Students::getDataProviderStudents($event, 10, true),
             'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
             'event' => Events::findOne(['id' => $event]),
         ]);
@@ -56,7 +56,7 @@ class ParticipantController extends Controller
 
     public function actionAllParticipants(?string $event = null): string
     {
-        $dataProvider = Students::getDataProviderStudents($event);
+        $dataProvider = Students::getDataProviderStudents($event, 10, true);
         $modelEvent = Events::findOne(['id' => $event]);
 
         session_write_close();
