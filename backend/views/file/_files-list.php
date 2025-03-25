@@ -4,8 +4,10 @@ use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
+/** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var common\models\Events|null $event */
+/** @var array $directories */
 
 ?>
 

@@ -26,7 +26,7 @@ use yii\bootstrap5\Html;
     ],
 ]); ?>
     <div class="row">
-        <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 mb-3 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите чемпионат', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
+        <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите чемпионат', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
     </div>
 <?php ActiveForm::end(); ?>
 

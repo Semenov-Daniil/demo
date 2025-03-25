@@ -11,8 +11,8 @@ use yii\widgets\ListView;
 
 ?>
 
-<div class="mb-3">
-    <h4 class="card-title">Данные участников<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
+<div class="">
+    <h4 class="card-title m-0">Данные участников<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
 </div>
 
 <?= ListView::widget([
@@ -26,7 +26,7 @@ use yii\widgets\ListView;
             ". ($dataProvider->totalCount 
             ? 
                 "
-                <div class=\"d-flex gap-2 flex-wrap justify-content-between align-items-center p-3 gridjs-pagination\">
+                <div class=\"d-flex gap-2 flex-wrap justify-content-between align-items-center p-3 ps-0 gridjs-pagination\">
                     <div class=\"text-body-secondary\">
                         {summary}
                     </div>

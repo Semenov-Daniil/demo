@@ -28,7 +28,7 @@ $this->registerJsFile('@web/js/modules.js', ['depends' => AppAsset::class]);
 
 ?>
 
-<div class="row">
+<div class="row mb-4">
     <?php Pjax::begin([
         'id' => 'pjax-create-module',
         'enablePushState' => false,

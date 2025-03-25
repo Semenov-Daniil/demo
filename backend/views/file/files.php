@@ -2,7 +2,8 @@
 
 /** @var yii\web\View $this */
 /** @var common\models\Files $model */
-/** @var common\models\Files $dataProvider */
+/** @var common\models\FilesSearch $searchModel */
+/** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var common\models\Events|null $event */
 /** @var array $events */
 /** @var array $directories */

@@ -184,7 +184,7 @@ class Students extends ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderStudents(string|int|null $eventID = null, int $records = 10, bool $withDirectories = false): ActiveDataProvider
+    public static function getDataProviderStudents(string|int|null $eventID = null, bool $withDirectories = false, int $records = 10): ActiveDataProvider
     {
         $query = self::find()
             ->select([

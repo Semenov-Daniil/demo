@@ -20,8 +20,8 @@ $this->registerJsFile('@web/js/participants.js', ['depends' => AppAsset::class])
 
 ?>
 
-<div class="row">
-    <div class="col-12 mb-3 field-choices">
+<div class="row mb-4">
+    <div class="col-12 field-choices">
         <?= Html::label('Чемпионат', 'events-select'); ?>
         <?= Html::dropDownList('events-select', $event?->id, $events, [
             'id' => 'events-select',

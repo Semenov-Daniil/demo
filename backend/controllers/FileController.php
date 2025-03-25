@@ -152,13 +152,13 @@ class FileController extends Controller
         if ($this->request->isAjax) {
             return $this->renderAjax('_files-list', [
                 'dataProvider' => $dataProvider,
-                'event' => $event
+                'event' => $event,
             ]);
         }
 
         return $this->render('_files-list', [
             'dataProvider' => $dataProvider,
-            'event' => $event
+            'event' => $event,
         ]);
     }
 

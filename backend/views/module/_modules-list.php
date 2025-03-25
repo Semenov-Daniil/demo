@@ -11,7 +11,7 @@ use yii\grid\GridView;
 ?>
 
 <?php if (!is_null($event)): ?> 
-<div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
+<div class="p-3 pt-0 d-flex flex-wrap gap-3 justify-content-end">
     <?= Html::submitButton('
         <span class="d-flex align-items-center cnt-text">
         <i class="ri-add-line align-middle fs-16 me-2"></i> Добавить
