@@ -149,18 +149,11 @@ class Modules extends \yii\db\ActiveRecord
                 $this->number = $this->nextNumModule($this->events_id);
 
                 if ($this->save()) {
-                    $students = Students::findAll(['events_id' => $this->events_id]);
-                    
-                    foreach ($students as $student) {
-                        if (!$student->createDbModule($this) || !$student->createDirectoriesModule($this)) {
-                            $transaction->rollBack();
-                            self::deleteModule($this->id);
-                            return false;
-                        }
+                    if ($this->createEventDirecroty() && $this->createStudentsDirecroties()) {
+                        $transaction->commit();
+                        return true;
                     }
     
-                    $transaction->commit();
-                    return true;
                 }
     
                 $transaction->rollBack();
@@ -175,6 +168,24 @@ class Modules extends \yii\db\ActiveRecord
         }
         
         return false;
+    }
+
+    public function createEventDirecroty()
+    {
+        return $this->event->createDirectoriesModule($this);
+    }
+
+    public function createStudentsDirecroties()
+    {
+        $students = Students::findAll(['events_id' => $this->events_id]);
+             
+        foreach ($students as $student) {
+            if (!$student->createDbModule($this) || !$student->createDirectoriesModule($this)) {
+                return false;
+            }
+        }
+    
+        return true;
     }
 
     /**

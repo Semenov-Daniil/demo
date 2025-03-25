@@ -62,6 +62,7 @@ class Events extends ActiveRecord
             for ($i = 0; $i < $this->countModules; $i++) {
                 $module = new Modules(['events_id' => $this->id]);
                 $module->save();
+                $this->createDirectoriesModule($module);
             }
         }
     }
@@ -159,7 +160,7 @@ class Events extends ActiveRecord
      */
     public function getFiles()
     {
-        return $this->hasMany(FilesEvents::class, ['events_id' => 'id']);
+        return $this->hasMany(Files::class, ['events_id' => 'id']);
     }
 
     /**
@@ -291,6 +292,16 @@ class Events extends ActiveRecord
         }
 
         return $result;
+    }
+
+    public static function getDirectoryModuleFileTitle(int|string $numberModule): string
+    {
+        return "module-{$numberModule}";
+    }
+
+    public function createDirectoriesModule($module)
+    {
+        return Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/$this->dir_title/" . $this->getDirectoryModuleFileTitle($module->number)));
     }
 
     public static function removeDirectory(int|array|null $eventsID)

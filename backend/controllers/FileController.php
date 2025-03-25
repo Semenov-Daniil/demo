@@ -205,12 +205,12 @@ class FileController extends Controller
     {
         $dir = Events::findOne(['id' => $event])?->dir_title;
         if ($file = Files::findFile($event, $filename)) {
-            $filePath = Yii::getAlias("@events/$dir/$filename." . $file['extension']);
+            $filePath = Yii::getAlias("@events/{$dir}/" . (is_null($file['modules_id']) ? '' : Events::getDirectoryModuleFileTitle($file['number']) . '/') . "{$file['filename']}");
     
             if (file_exists($filePath)) {
                 session_write_close();
                 return Yii::$app->response
-                    ->sendStreamAsFile(fopen($filePath, 'r'), $file['originName'], [
+                    ->sendStreamAsFile(fopen($filePath, 'r'), $file['filename'], [
                         'mimeType' => mime_content_type($filePath),
                         'inline' => false,
                     ])

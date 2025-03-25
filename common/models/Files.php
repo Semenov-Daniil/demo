@@ -16,8 +16,7 @@ use yii\validators\FileValidator;
  * @property int $id
  * @property int $events_id
  * @property int|null $modules_id
- * @property string $save_name
- * @property string $origin_name
+ * @property string $name
  * @property string $extension
  *
  * @property Events $event
@@ -51,7 +50,7 @@ class Files extends \yii\db\ActiveRecord
 
         $eventPath = Yii::getAlias("@events/" . $this->event->dir_title);
 
-        return $this->deleteFilesStudents($this->event->id) && Yii::$app->fileComponent->deleteFile("$eventPath/$this->save_name.$this->extension");
+        return $this->deleteFilesStudents($this->event->id) && Yii::$app->fileComponent->deleteFile($eventPath . (is_null($this->modules_id) ? '' : '/' . Events::getDirectoryModuleFileTitle($this->module?->number)) .  "/{$this->name}.{$this->extension}");
     }
 
     /**
@@ -68,10 +67,10 @@ class Files extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['save_name', 'origin_name', 'extension'], 'required'],
+            [['name', 'extension'], 'required'],
             [['events_id'], 'required', 'message' => 'Необхожимо выбрать чемпионат.'],
             [['events_id', 'modules_id'], 'integer'],
-            [['save_name', 'origin_name', 'extension'], 'string', 'max' => 255],
+            [['name', 'extension'], 'string', 'max' => 255],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
             [['modules_id'], 'exist', 'skipOnError' => true, 'targetClass' => Modules::class, 'targetAttribute' => ['modules_id' => 'id'], 'when' => function ($model) {
                 return $model->modules_id != '0';
@@ -94,8 +93,7 @@ class Files extends \yii\db\ActiveRecord
             'id' => 'ID',
             'events_id' => 'Чемпионат',
             'modules_id' => 'Расположение',
-            'save_name' => 'Сохраненное имя',
-            'origin_name' => 'Оригинальное имя',
+            'name' => 'Название',
             'extension' => 'Расширение',
             'files' => 'Файлы',
         ];
@@ -123,13 +121,13 @@ class Files extends \yii\db\ActiveRecord
 
     public function deleteFailedFile($file)
     {
-        if ($this->save_name) {
-            $filePath = "$this->expertPath/$this->save_name.$file->extension";
+        if ($this->name) {
+            $filePath = "$this->expertPath/$this->name.$file->extension";
             Yii::$app->fileComponent->deleteFile($filePath);
 
             foreach ($this->studentPaths as $studentPath) {
                 $studentPath = Yii::getAlias($studentPath['alias']);
-                Yii::$app->fileComponent->deleteFile("$studentPath/$this->save_name.$file->extension");
+                Yii::$app->fileComponent->deleteFile("$studentPath/$this->name.$file->extension");
             }
         }
     }
@@ -156,6 +154,19 @@ class Files extends \yii\db\ActiveRecord
         }
 
         return $directories;
+    }
+
+    public function getFilename(string $filename, string $extension): string
+    {
+        $filePath = Yii::getAlias("@events/{$this->event->dir_title}" . (is_null($this->modules_id) ? '' : '/' . Events::getDirectoryModuleFileTitle($this->module?->number)) .  "/{$filename}.{$extension}");
+        $counter = 1;
+
+        while (file_exists($filePath)) {
+            $counter += 1;
+            $filePath = Yii::getAlias('@events/' . $this->event->dir_title . (is_null($this->modules_id) ? '' : '/' . Events::getDirectoryModuleFileTitle($this->module?->number)) . "/{$filename} ({$counter}).{$extension}");
+        }
+
+        return $filename . ($counter > 1 ? " ({$counter})" : '');
     }
 
     /**
@@ -204,9 +215,8 @@ class Files extends \yii\db\ActiveRecord
         $model = new Files();
         $model->events_id = $this->events_id;
         $model->modules_id = $this->modules_id;
-        $model->origin_name = $file->baseName;
         $model->extension = $file->extension;
-        $model->save_name = $this->save_name;
+        $model->name = $this->name;
 
         return $model->save();
     }
@@ -242,7 +252,7 @@ class Files extends \yii\db\ActiveRecord
             'errors' => []
         ];
 
-        $this->save_name = '';
+        $this->name = '';
 
         $fileValidate = $this->validateFile($file);
 
@@ -251,25 +261,25 @@ class Files extends \yii\db\ActiveRecord
             return $fileInfo;
         }
 
-        $this->save_name = Yii::$app->security->generateRandomString() . '_' . time();
-        $filePath = "$this->expertPath/$this->save_name.$file->extension";
+        $this->name = $this->getFilename($file->baseName, $file->extension);
+        $filePath = Yii::getAlias("@events/{$this->event->dir_title}" . (is_null($this->modules_id) ? '' : '/' . Events::getDirectoryModuleFileTitle($this->module?->number)) . "/{$this->name}.{$file->extension}");
         if (!$file->saveAs($filePath)) {
             $fileInfo['errors'][] = "Не удалось сохранить файл $file->name.";
-            $this->save_name = '';
+            $this->name = '';
             return $fileInfo;
         }
 
         if (!$this->saveFileEventToDb($file)) {
             $fileInfo['errors'][] = "Не удалось сохранить запись файла $file->name в базе данных.";
             Yii::$app->fileComponent->deleteFile($filePath);
-            $this->save_name = '';
+            $this->name = '';
             return $fileInfo;
         }
 
-        $copyErrors = $this->copyFileToStudents($filePath, "$this->save_name.$file->extension");
+        $copyErrors = $this->copyFileToStudents($filePath, "{$this->name}.{$file->extension}");
         if (!empty($copyErrors)) {
             $fileInfo['errors'] = array_merge($fileInfo['errors'], $copyErrors);
-            $this->save_name = '';
+            $this->name = '';
             return $fileInfo;
         }
 
@@ -335,14 +345,14 @@ class Files extends \yii\db\ActiveRecord
         $query = self::find()
             ->select([
                 self::tableName() . '.id',
-                'modules_id as directory',
-                'origin_name',
-                'save_name',
+                'number as module',
+                'name',
                 'extension',
                 'dir_title',
             ])
-            ->where(['events_id' => $eventID])
+            ->where([self::tableName() . '.events_id' => $eventID])
             ->joinWith('event', false)
+            ->joinWith('module', false)
             ->asArray()
         ;
 
@@ -356,7 +366,8 @@ class Files extends \yii\db\ActiveRecord
 
         $models = $dataProvider->getModels();
         foreach ($models as &$model) {
-            $model['directory'] = (is_null($model['directory']) ? ucfirst(self::PUBLIC_DIR) : 'Модуль ' . $model['directory']);
+            $model['path'] = (is_null($model['module']) ? '' : Events::getDirectoryModuleFileTitle($model['module']) . '/') . "{$model['name']}.{$model['extension']}";
+            $model['module'] = (is_null($model['module']) ? ucfirst(self::PUBLIC_DIR) : 'Модуль ' . $model['module']);
         }
         unset($model);
         $dataProvider->setModels($models);
@@ -415,7 +426,7 @@ class Files extends \yii\db\ActiveRecord
         $students = Students::findAll(['events_id' => $eventId]);
 
         foreach ($students as $student) {
-            $studentFile = Yii::getAlias('@students/' . $student->user->login . '/public/' . (is_null($this->modules_id) ? '' : Students::getDirectoryModuleFileTitle($this->module?->number) . '/') . "$this->save_name.$this->extension");
+            $studentFile = Yii::getAlias('@students/' . $student->user->login . '/public/' . (is_null($this->modules_id) ? '' : Students::getDirectoryModuleFileTitle($this->module?->number) . '/') . "$this->name.$this->extension");
             if (!Yii::$app->fileComponent->deleteFile($studentFile)) {
                 return false; 
             }
@@ -436,10 +447,13 @@ class Files extends \yii\db\ActiveRecord
     {
         return self::find()
             ->select([
-                "CONCAT(origin_name, '.', extension) AS originName",
-                "extension",
+                "CONCAT(name, '.', extension) AS filename",
+                'extension',
+                'modules_id',
+                'number',
             ])
-            ->where(['events_id' => $event, 'save_name' => $filename])
+            ->where([self::tableName() . '.events_id' => $event, 'name' => $filename])
+            ->joinWith('module', false)
             ->asArray()
             ->one()
             ;

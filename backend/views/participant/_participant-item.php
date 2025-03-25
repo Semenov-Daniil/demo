@@ -19,13 +19,19 @@ use yii\widgets\ListView;
             <?= Html::ul([
                 Html::tag('span', 'Скачать архив:', ['class' => 'dropdown-header']),
                 Html::a('Все модули', ['/download-archive', 'student' => $model['students_id']], ['class' => 'dropdown-item', 'data' => ['pjax' => 0]]),
-                ...array_map(fn($directory) => Html::a('Модуль ' . $directory['number'], ['/download-archive', 'student' => $model['students_id'], 'folderTitle' => $directory['title']], ['class' => 'dropdown-item', 'data' => ['pjax' => 0]]), $model['directories'])
+                ...array_map(
+                    fn($directory) => 
+                        Html::a(
+                                'Модуль ' . $directory['number'], 
+                                ['/download-archive', 'student' => $model['students_id'], 'folderTitle' => $directory['title']], 
+                                ['class' => 'dropdown-item', 'data' => ['pjax' => 0]]), 
+                    $model['directories']
+                )
             ], ['class' => 'dropdown-menu', 'encode' => false]); ?>
         </div>
         <ul class="list-group list-group-flush">
             <li class="list-group-item"><b>Логин:</b> <?= Html::encode($model['login']); ?></li>
             <li class="list-group-item"><b>Пароль:</b> <?= Html::encode($model['password']); ?></li>
         </ul>
-        <?= Html::a('Скачать архив', ['/download-archive', 'student' => $model['students_id']], ['class' => 'btn btn-info', 'data' => ['pjax' => 0]])?>
     </div>
 </div>

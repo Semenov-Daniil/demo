@@ -20,8 +20,7 @@ class m241030_122531_create_files_table extends Migration
             'id' => $this->primaryKey(),
             'events_id' => $this->integer()->notNull(),
             'modules_id' => $this->integer()->null()->defaultValue(null),
-            'save_name' => $this->string(255)->notNull(),
-            'origin_name' => $this->string(255)->notNull(),
+            'name' => $this->string(255)->notNull(),
             'extension' => $this->string(255)->notNull(),
         ]);
 

@@ -91,9 +91,9 @@ use yii\grid\GridView;
                     'label' => 'Файл',
                     'format' => 'raw',
                     'content' => function ($model) {
-                        $file = Yii::getAlias('@events/' . $model['dir_title'] . '/' . $model['save_name'] . '.' . $model['extension']);
+                        $file = Yii::getAlias("@events/{$model['dir_title']}/{$model['path']}");
                         $fileSize = file_exists($file) ? filesize($file) : null;
-                        return '<h5 class="fs-14 mb-1">'. $model['origin_name'] . '.' . $model['extension'] .'</h5>' 
+                        return '<span class="fs-14 mb-1 h5">'. $model['name'] . '.' . $model['extension'] .'</span>' 
                                 . (is_null($fileSize) ? '' : '<p class="fs-13 text-muted mb-0">' . Yii::$app->fileComponent->formatSizeUnits($fileSize)) . '</p>';
                     },
                     'options' => [
@@ -104,7 +104,7 @@ use yii\grid\GridView;
                 [
                     'label' => 'Расположение',
                     'value' => function ($model) {
-                        return $model['directory'];
+                        return $model['module'];
                     },
                     'visible' => $dataProvider->totalCount,
                 ],
@@ -119,10 +119,10 @@ use yii\grid\GridView;
                             return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']]]);
                         },
                         'download' => function ($url, $model, $key) use ($event) {
-                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ['/download', 'event' => $event->id, 'filename' => $model['save_name']], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['id' => $model['save_name'], 'pjax' => 0]]);
+                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ['/download', 'event' => $event->id, 'filename' => $model['name']], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0]]);
                         },
                         'download-btn' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-download-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-download', 'data' => ['filename' => $model['save_name']]]);
+                            return Html::button('<i class="ri-download-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-download', 'data' => ['filename' => $model['name']]]);
                         },
                     ],
                     'visible' => $dataProvider->totalCount,
