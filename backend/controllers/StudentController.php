@@ -4,7 +4,10 @@ namespace backend\controllers;
 
 use common\models\EncryptedPasswords;
 use common\models\Events;
+use common\models\StudentForm;
 use common\models\Students;
+use common\models\Users;
+use common\services\StudentService;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Yii;
 use yii\filters\AccessControl;
@@ -51,8 +54,8 @@ class StudentController extends Controller
      */
     public function actionStudents(?int $event = null): string
     {
-        $model = new Students(['scenario' => Students::SCENARIO_CREATE, 'events_id' => $event]);
-        $dataProvider = $model->getDataProviderStudents($event);
+        $model = new StudentForm(['scenario' => StudentForm::SCENARIO_CREATE, 'events_id' => $event]);
+        $dataProvider = Students::getDataProviderStudents($event);
 
         return $this->render('students', [
             'model' => $model,
@@ -64,90 +67,72 @@ class StudentController extends Controller
 
     public function actionCreateStudent(): string
     {
-        $model = new Students(['scenario' => Students::SCENARIO_CREATE]);
+        $form = new StudentForm(['scenario' => StudentForm::SCENARIO_CREATE]);
+        $service = new StudentService();
 
-        if ($this->request->isPost) {
-            $data = Yii::$app->request->post();
-
-            if ($model->load($data) && $model->createStudent()) {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Студент успешно добавлен.',
-                    'type' => 'success'
-                ]);
-                $model = new Students(['scenario' => Students::SCENARIO_CREATE, 'events_id' => $model->events_id]);
-            } else {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Не удалось добавить студента.',
-                    'type' => 'error'
-                ]);
-            }
-        }
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_student-create', [
-                'model' => $model,
-                'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
+        if ($this->request->isPost && $form->load(Yii::$app->request->post()) && $service->createStudent($form)) {
+            Yii::$app->session->addFlash('toastify', [
+                'text' => 'Студент успешно добавлен.',
+                'type' => 'success'
+            ]);
+            $form = new StudentForm(['scenario' => StudentForm::SCENARIO_CREATE, 'events_id' => $form->events_id]);
+        } else {
+            Yii::$app->session->addFlash('toastify', [
+                'text' => 'Не удалось добавить студента.',
+                'type' => 'error'
             ]);
         }
 
-        return $this->render('_student-create', [
-            'model' => $model,
-            'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
-        ]);
+        Yii::$app->session->close();
+
+        return $this->request->isAjax 
+            ? $this->renderAjax('_student-create', [
+                'model' => $form,
+                'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
+            ])
+            : $this->render('_student-create', [
+                'model' => $form,
+                'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
+            ]);
     }
 
-    public function actionAllStudents(?string $event = null): string
+    public function actionAllStudents(?int $event = null): string
     {
         $dataProvider = Students::getDataProviderStudents($event);
         $modelEvent = Events::findOne(['id' => $event]);
 
         session_write_close();
 
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_students-list', [
-                'dataProvider' => $dataProvider,
-                'event' => $modelEvent
-            ]);
-        }
-
-        return $this->render('_students-list', [
-            'dataProvider' => $dataProvider,
-            'event' => $modelEvent
-        ]);
+        return $this->request->isAjax 
+            ? $this->renderAjax('_students-list', ['dataProvider' => $dataProvider, 'event' => $modelEvent])
+            : $this->render('_students-list', ['dataProvider' => $dataProvider, 'event' => $modelEvent]);
     }
 
-    public function actionUpdateStudent(?string $id = null): Response|string
+    public function actionUpdateStudent(?int $id = null): Response|string
     {
-        $model = $this->findStudent($id);
-        $model->scenario = Students::SCENARIO_UPDATE;
+        $form = $this->findStudentForm($id);
+        $form->scenario = StudentForm::SCENARIO_UPDATE;
+        $service = new StudentService();
 
-        if ($this->request->isPatch) {
-            if ($model->load($this->request->post()) && $model->updateStudent($id)) {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Студент успешно обновлен.',
-                    'type' => 'success'
-                ]);
-
-                return $this->asJson([
-                    'success' => true
-                ]);
-            } else {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Не удалось обновить студента.',
-                    'type' => 'error'
-                ]);
-            }
-        }
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_student-update', [
-                'model' => $model,
+        if ($this->request->isPatch && $form->load($this->request->post()) && $service->updateStudent($id, $form)) {
+            Yii::$app->session->addFlash('toastify', [
+                'text' => 'Студент успешно обновлен.',
+                'type' => 'success'
+            ]);
+            Yii::$app->session->close();
+            return $this->asJson(['success' => true]);
+        } else {
+            Yii::$app->session->addFlash('toastify', [
+                'text' => 'Не удалось обновить студента.',
+                'type' => 'error'
             ]);
         }
 
-        return $this->render('_student-update', [
-            'model' => $model,
-        ]);
+        Yii::$app->session->close();
+
+        return $this->request->isAjax 
+            ? $this->renderAjax('_student-update', ['model' => $form])
+            : $this->render('_student-update', ['model' => $form]);
     }
 
     /**
@@ -157,56 +142,49 @@ class StudentController extends Controller
      *
      * @return void
      */
-    public function actionDeleteStudents(?string $id = null): Response|string
+    public function actionDeleteStudents(?int $id = null): Response|string
     {
-        $dataProvider = Students::getDataProviderStudents(10);
-        $students = [];
+        $service = new StudentService();
+        $students = $id ? [$id] : ($this->request->post('students') ?: []);
         $result = [];
 
-        $students = (!is_null($id) ? [$id] : ($this->request->post('students') ? $this->request->post('students') : []));
-
-        if (count($students) && $result['success'] = Students::deleteStudents($students)) {
-            $result['message'] = 'Students delete.';
+        if ($students && $result['success'] = $service->deleteStudents($students)) {
+            $result['message'] = 'Students deleted.';
             Yii::$app->session->addFlash('toastify', [
                 'text' => count($students) > 1 ? 'Студенты успешно удалены.' : 'Студент успешно удален.',
                 'type' => 'success'
             ]);
+            Yii::$app->session->close();
         } else {
-            $result['message'] = 'Students not delete.';
+            $result['message'] = 'Students not deleted.';
             Yii::$app->session->addFlash('toastify', [
                 'text' => count($students) > 1 ? 'Не удалось удалить студентов.' : 'Не удалось удалить студента.',
                 'type' => 'error'
             ]);
+            Yii::$app->session->close();
         }
 
         $result['code'] = Yii::$app->response->statusCode;
-
-        return $this->asJson([
-            'data' => $result
-        ]);
+        return $this->asJson(['data' => $result]);
     }
 
     public function actionExportStudents(?string $event = null)
     {
         $students = Students::getExportStudents($event);
         $templatePath = Yii::getAlias('@templates/template.docx');
-
         $templateProcessor = new TemplateProcessor($templatePath);
 
         $templateProcessor->cloneBlock('block_student', count($students), true, true);
 
         foreach ($students as $index => $student) {
             $blockIndex = $index + 1;
-
             $templateProcessor->setValue("fio#{$blockIndex}", $student['fullName']);
             $templateProcessor->setValue("login#{$blockIndex}", $student['login']);
             $templateProcessor->setValue("password#{$blockIndex}", EncryptedPasswords::decryptByPassword($student['encrypted_password']));
-
             $templateProcessor->setValue("web#{$blockIndex}", $this->request->getHostInfo());
         }
 
         $filename = 'students_' . date('d-m-Y') . '.docx';
-
         header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
@@ -221,17 +199,20 @@ class StudentController extends Controller
         exit;
     }
 
-    protected function findStudent($id)
+    protected function findStudentForm(?string $id): StudentForm
     {
-        if (($model = Students::findStudent($id)) !== null) {
-            return $model;
+        if ($user = Users::findOne($id)) {
+            $form = new StudentForm();
+            $form->surname = $user->surname;
+            $form->name = $user->name;
+            $form->patronymic = $user->patronymic;
+            return $form;
         }
 
         Yii::$app->session->addFlash('toastify', [
             'text' => "Студент не найден.",
             'type' => 'error'
         ]);
-
         throw new NotFoundHttpException('Студент не найден.');
     }
 }
