@@ -68,6 +68,11 @@ class FileComponent extends Component implements BootstrapInterface
 
     public static function clearDirectory(string $path, bool $delete = true): bool
     {
+        $realPath = realpath($path);
+        if (!$realPath || strpos($realPath, Yii::getAlias('@common')) !== 0) {
+            return false;
+        }
+
         if (!empty($path) && is_dir($path)) {
             $files = array_diff(scandir($path), array('.', '..'));
 

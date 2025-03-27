@@ -207,20 +207,29 @@ class DbComponent extends Component
 
         try {
             if (self::hasDatabase($dbName)) {
-                $originalDbName = $db->createCommand('SELECT DATABASE()')->queryScalar();
-                $db->createCommand("USE {{".$dbName."}}")->execute();
-                $db->createCommand('SET FOREIGN_KEY_CHECKS = 0;')->execute();
-                $tables = $db->createCommand('SHOW TABLES')->queryColumn();
+                // $originalDbName = $db->createCommand('SELECT DATABASE()')->queryScalar();
+                // $db->createCommand("USE {{".$dbName."}}")->execute();
+                // $db->createCommand('SET FOREIGN_KEY_CHECKS = 0;')->execute();
+                // $tables = $db->createCommand('SHOW TABLES')->queryColumn();
     
-                foreach ($tables as $table) {
-                    $db->createCommand("DROP TABLE IF EXISTS {{".$table."}}")->execute();
-                }
+                // foreach ($tables as $table) {
+                //     $db->createCommand("DROP TABLE IF EXISTS {{".$table."}}")->execute();
+                // }
 
-                $db->createCommand('SET FOREIGN_KEY_CHECKS = 1;')->execute();
-                if ($originalDbName) {
-                    $db->createCommand("USE {{".$originalDbName."}}")->execute();
-                }
+                // $db->createCommand('SET FOREIGN_KEY_CHECKS = 1;')->execute();
+                // if ($originalDbName) {
+                //     $db->createCommand("USE {{".$originalDbName."}}")->execute();
+                // }
     
+                // return true;
+                $db = Yii::$app->db;
+                $db->createCommand('SET FOREIGN_KEY_CHECKS = 0')->execute();
+                $tables = $db->createCommand("SHOW TABLES FROM " . $db->quoteTableName($dbName))->queryColumn();
+
+                foreach ($tables as $table) {
+                    $db->createCommand("DROP TABLE " . $db->quoteTableName($dbName) . "." . $db->quoteTableName($table))->execute();
+                }
+                $db->createCommand('SET FOREIGN_KEY_CHECKS = 1')->execute();
                 return true;
             }
         } catch(\Exception $e) {

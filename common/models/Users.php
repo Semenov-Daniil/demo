@@ -30,12 +30,7 @@ use yii\web\IdentityInterface;
  */
 class Users extends ActiveRecord implements IdentityInterface
 {
-    use RandomStringTrait;
-    
     public string $temp_password = '';
-
-    const TITLE_ROLE_EXPERT = "expert";
-    const TITLE_ROLE_STUDENT = "student";
 
     public function fields()
     {
@@ -51,41 +46,12 @@ class Users extends ActiveRecord implements IdentityInterface
         return $scenarios;
     }
 
-    public function beforeSave($insert)
-    {
-        if (parent::beforeSave($insert)) {
-            if ($this->isNewRecord) {
-                $this->temp_password = $this->generateRandomString(6, ['lowercase','uppercase','digits']);
-                $this->password = Yii::$app->security->generatePasswordHash($this->temp_password);
-                $this->setUniqueStr('login', 8, ['lowercase']);
-                $this->setUniqueStr('auth_key');
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public function beforeDelete()
-    {
-        if (!parent::beforeDelete()) {
-            return false;
-        }
-
-        if ($this->roles_id == Roles::getRoleId(self::TITLE_ROLE_EXPERT)) {
-            $eventsID = array_column($this->events, 'id');
-            return Students::deleteStudentsEvent($eventsID) && Events::removeDirectory($eventsID);
-        }
-
-        return true;
-    }
-
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
 
         if ($insert) {
-            EncryptedPasswords::addEncryptedPassword($this->id, $this->temp_password);
+            EncryptedPasswords::storeEncryptedPassword($this->id, $this->temp_password);
         }
     }
 
@@ -126,6 +92,7 @@ class Users extends ActiveRecord implements IdentityInterface
             'name' => 'Имя',
             'patronymic' => 'Отчество',
             'auth_key' => 'Auth Key',
+            'roles_id' => 'Роль',
         ];
     }
 
@@ -170,6 +137,22 @@ class Users extends ActiveRecord implements IdentityInterface
     }
 
     /**
+     * @return int|string current user ID
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return string|null current user auth key
+     */
+    public function getAuthKey()
+    {
+        return $this->auth_key;
+    }
+
+    /**
      * Finds an identity by the given ID.
      *
      * @param string|int $id the ID to be looked for
@@ -195,22 +178,6 @@ class Users extends ActiveRecord implements IdentityInterface
     public static function findIdentityByAccessToken($token, $type = null)
     {
         return static::findOne(['access_token' => $token]);
-    }
-
-    /**
-     * @return int|string current user ID
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @return string|null current user auth key
-     */
-    public function getAuthKey()
-    {
-        return $this->auth_key;
     }
 
     public static function findByLogin($login)
@@ -247,123 +214,36 @@ class Users extends ActiveRecord implements IdentityInterface
         return Yii::$app->getSecurity()->validatePassword($password, $this->password);
     }
 
-    /**
-     * Checks for the unique value of this attribute.
-     * 
-     * @param string $attr The name of the attribute that we are checking
-     * @return bool
-     */
-    public function isUnique(string $attr): bool
-    {
-        return !self::find()
-            ->where([$attr => $this->$attr])
-            ->exists();
-    }
-
-    /**
-     * @param string $attr the name of the attribute to set a unique string value
-     * @param int $length the length string
-     * @param array $charSets An array of character sets to generate a string. Each element is a string of characters.
-     */
-    public function setUniqueStr(string $attr, int $length = 32, array $charSets = []): void
-    {
-        $this->$attr = $charSets ? $this->generateRandomString($length, $charSets) : Yii::$app->security->generateRandomString($length);
-    
-        while(!$this->isUnique($attr)) {
-            $this->$attr = $charSets ? $this->generateRandomString($length, $charSets) : Yii::$app->security->generateRandomString($length);
-        }
-    }
-
     private static function getSuperExpert()
     {
         $superExpert = Yii::$app->params['superExpert'] ?? null;
-        $user = null;
+        if (!$superExpert) {
+            return null;
+        }
 
-        if ($superExpert) {
-            $user = new self();
-            $user->id = 0;
-            $user->login = $superExpert['login'];
-            $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
-            $user->auth_key = 'super-auth-key';
-            $user->roles_id = Roles::getRoleId('expert');
+        $user = new self();
+        $user->id = 0;
+        $user->login = $superExpert['login'];
+        $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
+        $user->auth_key = 'super-auth-key';
+        $user->roles_id = Roles::getRoleId('expert');
 
-            $auth = Yii::$app->authManager;
+        $auth = Yii::$app->authManager;
+        $cacheKey = 'super_expert_role_assigned';
+        $isAssigned = Yii::$app->cache->getOrSet($cacheKey, function () use ($auth, $user) {
             $role = $auth->getRole('sExpert');
-
             if ($role && !$auth->checkAccess($user->id, $role->name)) {
                 $auth->assign($role, $user->id);
+                return true;
             }
-        }
+            return $auth->checkAccess($user->id, 'sExpert');
+        }, 3600);
 
         return $user;
     }
 
     public function getFullName()
     {
-        return "$this->surname $this->name" . ($this->patronymic ? " $this->patronymic" : '');
-    }
-
-    /**
-     * Add user
-     * 
-     * @return bool
-     */
-    public function addUser(): bool
-    {
-        $this->validate();
-
-        if (!$this->hasErrors()) {
-            return $this->save();
-        }
-
-        return false;
-    }
-
-    /**
-     * Add expert
-     * 
-     * @return bool
-     */
-    public function addExpert(): bool
-    {
-        $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_EXPERT);
-        return $this->addUser();
-    }
-
-    /**
-     * Add student
-     * 
-     * @return bool
-     */
-    public function createStudent(): bool
-    {
-        $this->roles_id = Roles::getRoleId(self::TITLE_ROLE_STUDENT);
-        return $this->addUser();
-    }
-
-    /**
-     * Deletes an existing Users model.
-     */
-    public static function deleteUser(?int $id = null): bool
-    {
-        $transaction = Yii::$app->db->beginTransaction();  
-
-        try {
-            $user = self::findOne(['id' => $id]);
-
-            if (!empty($user) && $user->id !== Yii::$app->user->id && $user->delete()) {
-                $transaction->commit();
-                return true;
-            }
-
-            $transaction->rollBack();
-        } catch(\Exception $e) {
-            $transaction->rollBack();
-            VarDumper::dump($e, 10, true);die;
-        } catch(\Throwable $e) {
-            $transaction->rollBack();
-        }
-
-        return false;
+        return trim("{$this->surname} {$this->name}" . ($this->patronymic ? " {$this->patronymic}" : ''));
     }
 }

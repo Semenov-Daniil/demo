@@ -65,7 +65,7 @@ class EncryptedPasswords extends \yii\db\ActiveRecord
      * @return bool Returns `true` if the password is successfully saved.
      * @throws Exception Throws an exception if the password fails to save.
      */
-    public static function addEncryptedPassword(int $userId, string $password): bool
+    public static function storeEncryptedPassword(int $userId, string $password): bool
     {
         $model = new EncryptedPasswords();
 
