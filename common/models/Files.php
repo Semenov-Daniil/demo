@@ -156,6 +156,11 @@ class Files extends \yii\db\ActiveRecord
         return $directories;
     }
 
+    public static function getTitleDirectoryModule(int $numberModule)
+    {
+        return "module-{$numberModule}";
+    }
+
     public function getFilename(string $filename, string $extension): string
     {
         $filePath = Yii::getAlias("@events/{$this->event->dir_title}" . (is_null($this->modules_id) ? '' : '/' . Events::getDirectoryModuleFileTitle($this->module?->number)) .  "/{$filename}.{$extension}");

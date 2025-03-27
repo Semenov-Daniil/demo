@@ -1,5 +1,16 @@
 $(() => {
 
+    function sendAjax(url, method, data, successCallback) {
+        $.ajax({
+            url,
+            method,
+            data,
+            success: successCallback,
+            error: () => location.reload(),
+            complete: () => fetchFlashMessages()
+        });
+    }
+
     $('#pjax-create-expert').on('beforeSubmit', function (event) {
         $('.btn-create-expert').find('.cnt-text').addClass('d-none');
         $('.btn-create-expert').find('.cnt-load').removeClass('d-none');
