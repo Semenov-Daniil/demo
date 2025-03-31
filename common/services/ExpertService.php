@@ -47,8 +47,9 @@ class ExpertService
         } catch (Exception $e) {
             $transaction->rollBack();
             $this->userService->deleteUser($user->id ?? null);
-            VarDumper::dump($e, 10, true);die;
         }
+
+        return false;
     }
 
     /**
@@ -98,7 +99,7 @@ class ExpertService
         $transaction = Yii::$app->db->beginTransaction();
         try {
             $eventIds = array_column($user->events, 'id');
-            $studentIds = Students::find()->select('id')->where(['events_id' => $eventIds])->asArray()->all();
+            $studentIds = Students::find()->select('students_id')->where(['events_id' => $eventIds])->asArray()->all();
             
             $this->studentService->deleteStudents($studentIds);
             Events::removeDirectory($eventIds);
@@ -106,9 +107,9 @@ class ExpertService
             return $this->userService->deleteUser($id);
         } catch (Exception $e) {
             $transaction->rollBack();
-            throw $e;
+            var_dump($e);die;
         }
 
-       
+        return false;
     }
 }

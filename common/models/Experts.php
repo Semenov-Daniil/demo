@@ -16,7 +16,10 @@ class Experts extends Model
     {
         return Users::find()
             ->select(['CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName'])
-            ->where(['roles_id' => Roles::getRoleId(Users::TITLE_ROLE_EXPERT)])
+            ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
+            ->orderBy([
+                'fullName' => SORT_ASC,
+            ])
             ->indexBy('id')
             ->column()
         ;
@@ -36,7 +39,7 @@ class Experts extends Model
                 Users::tableName() . '.id',
                 'CONCAT(surname, " ", name, COALESCE(CONCAT(" ", patronymic), "")) AS fullName',
                 'login',
-                EncryptedPasswords::tableName() . '.encrypted_password AS password'
+                'encrypted_password AS password'
             ])
             ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
             ->joinWith('encryptedPassword', false)

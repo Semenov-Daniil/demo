@@ -101,21 +101,24 @@ class ExpertController extends Controller
         $model = $this->findExpertForm($id);
         $service = new ExpertService();
 
-        if ($this->request->isPatch && $model->load($this->request->post()) && $service->updateExpert($id, $model)) {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => 'Эксперт успешно обновлен.',
-                'type' => 'success'
-            ]);
+        if ($this->request->isPatch) {
+            if ($model->load($this->request->post()) && $service->updateExpert($id, $model)) {
+                Yii::$app->session->addFlash('toastify', [
+                    'text' => 'Эксперт успешно обновлен.',
+                    'type' => 'success'
+                ]);
+                Yii::$app->session->close();
+                return $this->asJson(['success' => true]);
+            } else {
+                Yii::$app->session->addFlash('toastify', [
+                    'text' => 'Не удалось обновить эксперта.',
+                    'type' => 'error'
+                ]);
+            }
+            
             Yii::$app->session->close();
-            return $this->asJson(['success' => true]);
-        } else {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => 'Не удалось обновить эксперта.',
-                'type' => 'error'
-            ]);
         }
 
-        Yii::$app->session->close();
 
         return $this->request->isAjax 
             ? $this->renderAjax('_expert-update', ['model' => $model])

@@ -1,4 +1,7 @@
+"use strict";
+
 $(() => {
+    const expertsGrid = new GridCheckboxManager('pjax-experts', 'expertsGridCheckedItems');
 
     function sendAjax(url, method, data, successCallback) {
         $.ajax({

@@ -182,6 +182,13 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * Finds an event model by its ID.
+     *
+     * @param mixed $id The ID of the event to find.
+     * @return Events The event model found.
+     * @throws NotFoundHttpException If the event is not found.
+     */
     protected function findEvent($id)
     {
         if (($model = Events::findOne(['id' => $id])) !== null) {

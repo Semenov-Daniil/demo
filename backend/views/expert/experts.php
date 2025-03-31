@@ -40,6 +40,7 @@ $this->registerJsFile('@web/js/experts.js', ['depends' => AppAsset::class]);
         'id' => 'pjax-experts',
         'enablePushState' => false,
         'timeout' => 100000,
+        'clientOptions' => ['cache' => true],
         'options' => [
             'data' => [
                 'pjax-grid' => true
