@@ -23,21 +23,27 @@ class GridCheckboxManager {
     }
 
     bindEvents() {
-        this.container.on('click', '.grid-view .cell-checkbox', (e) => {
-            if (!$(e.target).is('input[type="checkbox"]') && !$(e.target).closest('label').length) {
-                const checkbox = $(e.currentTarget).find('input[type="checkbox"]');
-                checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
-            }
-        });
+        this.container
+            .off('click', '.grid-view .cell-checkbox')
+            .on('click', '.grid-view .cell-checkbox', (e) => {
+                if (!$(e.target).is('input[type="checkbox"]') && !$(e.target).closest('label').length) {
+                    const checkbox = $(e.currentTarget).find('input[type="checkbox"]');
+                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+                }
+            });
 
-        this.container.on('change', this.checkboxSelector, (e) => {
-            this.updateStorage($(e.target));
-            this.updateAllCheckboxState();
-        });
+        this.container
+            .off('click', this.checkboxSelector)
+            .on('change', this.checkboxSelector, (e) => {
+                this.updateStorage($(e.target));
+                this.updateAllCheckboxState();
+            });
 
-        this.container.on('change', this.allCheckboxSelector, (e) => {
-            this.setAllCheckboxes($(e.target).is(':checked'));
-        });
+        this.container
+            .off('click', this.allCheckboxSelector)
+            .on('change', this.allCheckboxSelector, (e) => {
+                this.setAllCheckboxes($(e.target).is(':checked'));
+            });
 
         this.container.on('pjax:complete', () => this.loadCheckedState());
     }
@@ -72,12 +78,3 @@ class GridCheckboxManager {
         localStorage.removeItem(this.storageKey);
     }
 }
-
-// $(() => {
-//     const expertsGrid = new GridCheckboxManager('pjax-experts', 'expertsGridCheckedItems');
-//     $('#pjax-experts').on('click', '.btn-select-all-experts', () => expertsGrid.setAllCheckboxes(true));
-//     $('#logout-btn').on('click', () => expertsGrid.clearStorage());
-
-//     // Для других страниц
-//     // const studentsGrid = new GridCheckboxManager('pjax-students', 'studentsGridCheckedItems');
-// });

@@ -1,5 +1,6 @@
 <?php
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\assets\AppAsset;
 use common\assets\CleaveAsset;
 use common\models\EncryptedPasswords;
@@ -16,9 +17,10 @@ use yii\widgets\Pjax;
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var array $options */
 
+BackendAppAsset::register($this);
+
 $this->title = 'Эксперты';
 
-$this->registerJsFile('@web/js/experts.js', ['depends' => AppAsset::class]);
 ?>
 
 <div class="row">
@@ -41,11 +43,6 @@ $this->registerJsFile('@web/js/experts.js', ['depends' => AppAsset::class]);
         'enablePushState' => false,
         'timeout' => 100000,
         'clientOptions' => ['cache' => true],
-        'options' => [
-            'data' => [
-                'pjax-grid' => true
-            ]
-        ]
     ]); ?>
 
         <?= $this->render('_experts-list', [

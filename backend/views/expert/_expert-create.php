@@ -2,10 +2,15 @@
 
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
+use yii\web\View;
+use yii\web\YiiAsset;
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\Experts $model */
+
+$this->registerJsFile('@web/js/modules/expert/expertCreate.js', ['depends' => YiiAsset::class, 'position' => View::POS_END], 'expertCreate');
+
 ?>
 
 <div class="card">

@@ -14,7 +14,7 @@ class ChoicesAsset extends AssetBundle
     public $js = [
         'libs/fuse.js/dist/fuse.min.js',
         'libs/choices.js/public/assets/scripts/choices.min.js',
-        'js/pages/choices-select.init.js',
+        'js/plugins/choices-select.init.js',
     ];
     public $depends = [
         'yii\web\YiiAsset',

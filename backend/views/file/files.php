@@ -32,7 +32,7 @@ $this->registerJs(
     'yiiOptions'
 );
 
-$this->registerJsFile('@web/js/pages/dropzone.init.js', ['depends' => DropzoneAsset::class]);
+$this->registerJsFile('@web/js/plugins/dropzone.init.js', ['depends' => DropzoneAsset::class]);
 $this->registerJsFile('@web/js/files.js', ['depends' => AppAsset::class]);
 
 ?>

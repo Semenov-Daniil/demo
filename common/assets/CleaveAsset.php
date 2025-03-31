@@ -13,7 +13,7 @@ class CleaveAsset extends AssetBundle
     public $sourcePath = '@common/assets';
     public $js = [
         'libs/cleave.js/cleave.min.js',
-        'js/pages/cleave.init.js',
+        'js/plugins/cleave.init.js',
     ];
     public $depends = [
         'common\assets\AppAsset',

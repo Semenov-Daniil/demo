@@ -31,7 +31,6 @@ class AppAsset extends AssetBundle
         'js/pages/plugins/lord-icon-2.1.0.js',
         'libs/noty/lib/noty.js',
         'js/alert-toastify.js',
-        'js/gridCheckboxPersistence.js',
         'js/app.js'
     ];
     public $depends = [
