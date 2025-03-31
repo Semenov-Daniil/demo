@@ -49,33 +49,4 @@ class EventForm extends Model
             'countModules' => 'Кол-во модулей',
         ];
     }
-
-    public function createEvent()
-    {
-        $this->validate();
-
-        if (!$this->hasErrors()) {
-            $transaction = Yii::$app->db->beginTransaction();
-
-            try {
-                $event = new Events();
-                $event->attributes = $this->attributes;
-                $event->experts_id = $this->expert ? $this->expert : Yii::$app->user->id;
-
-                if ($event->save()) {
-                    $transaction->commit();
-                    return true;
-                }
-
-                $transaction->rollBack();
-            } catch(\Exception $e) {
-                $transaction->rollBack();
-                VarDumper::dump($e, 10, true);die;
-            } catch(\Throwable $e) {
-                $transaction->rollBack();
-            }
-        }
-
-        return false;
-    }
 }

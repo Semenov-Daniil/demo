@@ -5,6 +5,7 @@ namespace common\models;
 use app\components\AppComponent;
 use app\components\DbComponent;
 use app\components\FileComponent;
+use common\services\EventService;
 use common\traits\RandomStringTrait;
 use Yii;
 use yii\data\ActiveDataProvider;
@@ -42,16 +43,16 @@ class Events extends ActiveRecord
 
     public function beforeSave($insert)
     {
-        if (parent::beforeSave($insert)) {
-            if ($this->isNewRecord) {
-                $this->dir_title = $this->getUniqueStr('dir_title', 8, ['lowercase']);
-
-                return Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/$this->dir_title"));
-            }
-            return true;
-        } else {
+        if (!parent::beforeSave($insert)) {
             return false;
         }
+
+        if ($this->isNewRecord) {
+            $this->dir_title = EventService::generateUniqueDirectoryTitle(8, ['lowercase']);
+
+            return Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/$this->dir_title"));
+        }
+        return true;
     }
 
     public function afterSave($insert, $changedAttributes)

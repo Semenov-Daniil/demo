@@ -5,6 +5,7 @@ namespace backend\controllers;
 use common\models\Events;
 use common\models\EventForm;
 use common\models\Experts;
+use common\services\EventService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -42,6 +43,11 @@ class EventController extends Controller
         ];
     }
 
+    public function getExperts()
+    {
+        return Yii::$app->user->can('sExpert') ? Experts::getExperts() : [];
+    }
+
     /**
      * Displays events page.
      *
@@ -55,41 +61,34 @@ class EventController extends Controller
         return $this->render('events', [
             'model' => $model,
             'dataProvider' => $dataProvider,
-            'experts' => Experts::getExperts(),
+            'experts' => $this->experts,
         ]);
     }
 
     public function actionCreateEvent(): string
     {
         $model = new EventForm();
+        $service = new EventService();
 
-        if ($this->request->isPost) {
-            if ($model->load(Yii::$app->request->post()) && $model->createEvent()) {  
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Чемпионат успешно создан.',
-                    'type' => 'success'
-                ]);
+        if ($this->request->isPost && $model->load(Yii::$app->request->post()) && $service->createEvent($model)) {
+            Yii::$app->session->addFlash('toastify', [
+                'text' => 'Чемпионат успешно создан.',
+                'type' => 'success'
+            ]);
 
-                $model = new EventForm();
-            } else {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Не удалось создать чемпионат.',
-                    'type' => 'error'
-                ]);
-            }
-        }
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_event-create', [
-                'model' => $model,
-                'experts' => Experts::getExperts(),
+            $model = new EventForm();
+        } else {
+            Yii::$app->session->addFlash('toastify', [
+                'text' => 'Не удалось создать чемпионат.',
+                'type' => 'error'
             ]);
         }
 
-        return $this->render('_event-create', [
-            'model' => $model,
-            'experts' => Experts::getExperts(),
-        ]);
+        Yii::$app->session->close();
+
+        return $this->request->isAjax 
+            ? $this->renderAjax('_event-create', ['model' => $model, 'experts' => $this->experts])
+            : $this->render('_event-create', ['model' => $model, 'experts' => $this->experts]);
     }
 
     public function actionAllEvents(): string
