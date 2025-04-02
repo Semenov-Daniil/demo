@@ -86,6 +86,12 @@ class StudentService
         return false;
     }
 
+    public function deleteStudentsByEvent(int $eventId): bool
+    {
+        $studentIds = Students::find()->select('students_id')->where(['events_id' => $eventId])->asArray()->all();
+        return $this->deleteStudents($studentIds);
+    }
+
     /**
      * Deletes multiple students.
      * @param array $studentIds
@@ -108,8 +114,7 @@ class StudentService
      */
     public function deleteStudent(int $id): bool
     {
-        $student = Students::findOne(['students_id' => $id]);
-        if (!$student) {
+        if (!$id || !($student = Students::findOne(['students_id' => $id]))) {
             return false;
         }
 
@@ -117,21 +122,24 @@ class StudentService
         $transaction = Yii::$app->db->beginTransaction();
         try {
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$login"));
+
             foreach ($student->modules as $module) {
                 Yii::$app->dbComponent->deleteDb($this->getTitleDb($login, $module->number));
             }
+
             Yii::$app->dbComponent->deleteUser($login);
 
-            if ($student->delete() && $this->userService->deleteUser($id)) {
+            if ($this->userService->deleteUser($id)) {
                 $transaction->commit();
                 return true;
             }
+
             $transaction->rollBack();
-            return false;
         } catch (Exception $e) {
             $transaction->rollBack();
-            throw $e;
         }
+
+        return false;
     }
 
     /**

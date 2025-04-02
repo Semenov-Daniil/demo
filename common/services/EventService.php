@@ -18,32 +18,16 @@ class EventService
 {
     use RandomStringTrait;
 
-    public function createEventDirectory(string $dirTitle): bool
-    {
-        return Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/$dirTitle"));
-    }
+    private $studentService;
 
-    public function createModulesForEvent(Events $event, int $countModules): bool
+    public function __construct()
     {
-        for ($i = 0; $i < $countModules; $i++) {
-            $module = new Modules(['events_id' => $event]);
-            if (!($module->save() && $this->createModuleDirectory($event->dir_title, $module->number))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public function createModuleDirectory(string $eventDirTitle, int $moduleNumber): bool
-    {
-        $dirPath = Yii::getAlias("@events/{$eventDirTitle}/" . $this->getDirectoryModuleFileTitle($moduleNumber));
-        return Yii::$app->fileComponent->createDirectory($dirPath);
+        $this->studentService = new StudentService();
     }
 
     public function getDirectoryModuleFileTitle(int|string $moduleNumber): string
     {
-        return "module-{$moduleNumber}"
+        return "module-{$moduleNumber}";
     }
 
     /**
@@ -62,13 +46,12 @@ class EventService
         try {
             $event = new Events();
             $event->title = $eventModel->title;
-            $event->countModules = $eventModel->countModules;
-            $event->experts_id = $eventModel->expert ? $eventModel->expert : Yii::$app->user->id;
+            $event->experts_id = $eventModel->expert ?: Yii::$app->user->id;
             $event->dir_title = $this->generateUniqueDirectoryTitle(8, ['lowercase']);
 
             if ($event->save()
-                    && $this->createEventDirectory($event->dir_title)
-                    && $this->createModulesForEvent($event, $countModules)) {
+                    && Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$event->dir_title}"))
+                    && $this->createModulesForEvent($event, $eventModel->countModules)) {
                 $transaction->commit();
                 return true;
             }
@@ -76,72 +59,82 @@ class EventService
             $transaction->rollBack();
         } catch (Exception $e) {
             $transaction->rollBack();
-            $event?->id ?? $event->delete();
+            var_dump($e);die;
         }
 
+        $this->deleteEvent($event?->id);
         return false;
     }
 
-    // /**
-    //  * Updates an existing expert.
-    //  * @param int $id
-    //  * @param Experts $expertModel
-    //  * @return bool
-    //  */
-    // public function updateExpert(int $id, ExpertForm $expertModel): bool
-    // {
-    //     if (!$expertModel->validate()) {
-    //         return false;
-    //     }
+    // TODO изменить с использованием методов из modulService
+    public function createModulesForEvent(Events $event, int $countModules): bool
+    {
+        for ($i = 0; $i < $countModules; $i++) {
+            $module = new Modules(['events_id' => $event->id]);
+            if (!($module->save() && $this->createModuleDirectory($event->dir_title, $module->number))) {
+                return false;
+            }
+        }
 
-    //     $user = Users::findOne($id);
-    //     if ($user) {
-    //         $user->surname = $expertModel->surname;
-    //         $user->name = $expertModel->name;
-    //         $user->patronymic = $expertModel->patronymic;
-    //         return $user->save();
-    //     }
-    //     return false;
-    // }
+        return true;
+    }
 
-    // /**
-    //  * Deletes multiple experts.
-    //  * @param array $expertIds
-    //  * @return bool
-    //  */
-    // public function deleteExperts(array $expertIds): bool
-    // {
-    //     foreach ($expertIds as $id) {
-    //         if (!$this->deleteExpert($id)) {
-    //             return false;
-    //         }
-    //     }
-    //     return true;
-    // }
+    // TODO вынести метод в modelService
+    public function createModuleDirectory(string $eventDirTitle, int $moduleNumber): bool
+    {
+        $dirPath = Yii::getAlias("@events/{$eventDirTitle}/" . $this->getDirectoryModuleFileTitle($moduleNumber));
+        return Yii::$app->fileComponent->createDirectory($dirPath);
+    }
 
-    // private function deleteExpert(?int $id): bool
-    // {
-    //     $user = Users::findOne($id);
-    //     if (!$user || $user->id === Yii::$app->user->id) {
-    //         return false;
-    //     }
+    private function deleteEventDirectory(string $dirTitle): bool
+    {
+        return Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$dirTitle}"));
+    }
 
-    //     $transaction = Yii::$app->db->beginTransaction();
-    //     try {
-    //         $eventIds = array_column($user->events, 'id');
-    //         $studentIds = Students::find()->select('students_id')->where(['events_id' => $eventIds])->asArray()->all();
-            
-    //         $this->studentService->deleteStudents($studentIds);
-    //         Events::removeDirectory($eventIds);
-    
-    //         return $this->userService->deleteUser($id);
-    //     } catch (Exception $e) {
-    //         $transaction->rollBack();
-    //         var_dump($e);die;
-    //     }
+    /**
+     * Deletes a single event with transaction.
+     * @param int|string $id
+     * @return bool
+     * @throws Exception
+     */
+    public function deleteEvent(int|string|null $id): bool
+    {
+        if (!$id || !($event = Events::findOne($id))) {
+            return false;
+        }
 
-    //     return false;
-    // }
+        $transaction = Yii::$app->db->beginTransaction();
+
+        try {
+            if ($this->studentService->deleteStudentsByEvent($event->id)
+                && $this->deleteEventDirectory($event->dir_title)
+                && $event->delete()
+            ) {
+                $transaction->commit();
+                return true;
+            }
+        } catch (\Exception $e) {
+            Yii::error("Ошибка удаления события $id: " . $e->getMessage(), __METHOD__);
+        }
+
+        $transaction->rollBack();
+        return false;
+    }
+
+    /**
+     * Deletes multiple events.
+     * @param array $eventIds
+     * @return bool
+     */
+    public function deleteEvents(array $eventIds): bool
+    {
+        foreach ($eventIds as $id) {
+            if (!$this->deleteEvent($id)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * Generates a unique value for the dir_title.
@@ -155,7 +148,7 @@ class EventService
     {
         $attr = $this->generateRandomString($length, $charSets);
     
-        while(Events::find()->where(['dir_prefix' => $attr])->exists()) {
+        while(Events::find()->where(['dir_title' => $attr])->exists()) {
             $attr = $this->generateRandomString($length, $charSets);
         }
 

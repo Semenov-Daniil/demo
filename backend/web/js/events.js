@@ -14,13 +14,13 @@ $(() => {
         inputStepInit();
         fetchFlashMessages();
 
-        $.pjax.reload({
-            url: '/expert/all-events',
-            container: '#pjax-events',
-            pushState: false,
-            replace: false,
-            timeout: 10000
-        });
+        // $.pjax.reload({
+        //     url: '/expert/all-events',
+        //     container: '#pjax-events',
+        //     pushState: false,
+        //     replace: false,
+        //     timeout: 10000
+        // });
     });
 
     $('#pjax-events').on('click', '.btn-select-all-events', function (event) {

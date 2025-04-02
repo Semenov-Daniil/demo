@@ -13,8 +13,6 @@ use yii\helpers\VarDumper;
 
 class EventForm extends Model
 {
-    use RandomStringTrait;
-
     public int|null $expert = null;
     public string $title = '';
     public int $countModules = 1;

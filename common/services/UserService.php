@@ -44,14 +44,13 @@ class UserService
      */
     public function deleteUser(?int $id): bool
     {
-        if ($id === null) {
+        if (!$id || !($user = Users::findOne(['id' => $id]))) {
             return false;
         }
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $user = Users::findOne($id);
-            if ($user && $user->id !== Yii::$app->user->id && $user->delete()) {
+            if ($user->id !== Yii::$app->user->id && $user->delete()) {
                 $transaction->commit();
                 return true;
             }

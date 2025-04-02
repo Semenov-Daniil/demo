@@ -15,11 +15,13 @@ class ExpertService
 {
     private $userService;
     private $studentService;
+    private $eventService;
 
     public function __construct()
     {
         $this->userService = new UserService();
         $this->studentService = new StudentService();
+        $this->eventService = new EventService();
     }
 
     /**
@@ -99,12 +101,15 @@ class ExpertService
         $transaction = Yii::$app->db->beginTransaction();
         try {
             $eventIds = array_column($user->events, 'id');
-            $studentIds = Students::find()->select('students_id')->where(['events_id' => $eventIds])->asArray()->all();
             
-            $this->studentService->deleteStudents($studentIds);
-            Events::removeDirectory($eventIds);
+            if ($this->eventService->deleteEvents($eventIds)
+                && $this->userService->deleteUser($id)
+            ) {
+                $transaction->commit();
+                return true;
+            }
     
-            return $this->userService->deleteUser($id);
+            $transaction->rollBack();
         } catch (Exception $e) {
             $transaction->rollBack();
             var_dump($e);die;
