@@ -10,7 +10,7 @@ use yii\web\YiiAsset;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
-$this->registerJsFile('@web/js/modules/expert/expertsList.js', ['depends' => YiiAsset::class, 'position' => View::POS_END], 'expertList');
+$this->registerJsFile('@web/js/modules/expert/expertsList.js', ['depends' => YiiAsset::class], 'expertList');
 
 ?>
 

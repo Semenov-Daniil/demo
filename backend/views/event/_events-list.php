@@ -1,12 +1,17 @@
 <?php
 
+use common\assets\ChoicesAsset;
 use common\models\EncryptedPasswords;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
+use yii\web\YiiAsset;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
+
+$this->registerJsFile('@web/js/modules/event/eventsList.js', ['depends' => [ChoicesAsset::class]], 'eventsList');
+
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 

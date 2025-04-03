@@ -85,57 +85,65 @@ function watchSelectExpert(select) {
     observer.observe(select, config);
 }
 
+const choiceInit = function (select) {
+    if (typeof select === 'undefined') {
+        return;
+    }
+
+    var choiceData = {};
+    var isChoicesVal = select.attributes;
+    if (isChoicesVal["data-choices-search-false"]) choiceData.searchEnabled = false;
+    if (isChoicesVal["data-choices-search-true"]) choiceData.searchEnabled = true;
+    if (isChoicesVal["data-choices-removeItem"]) choiceData.removeItemButton = true;
+    if (isChoicesVal["data-choices-sorting-false"]) choiceData.shouldSort = false;
+    if (isChoicesVal["data-choices-sorting-true"]) choiceData.shouldSort = true;
+    if (isChoicesVal["data-choices-limit"]) choiceData.maxItemCount = isChoicesVal["data-choices-limit"].value.toString();
+    if (isChoicesVal["data-choices-text-unique-true"]) choiceData.duplicateItemsAllowed = false;
+    if (isChoicesVal["data-choices-text-disabled-true"]) choiceData.addItems = false;
+    choiceData.searchChoices = true;
+    choiceData.noResultsText = 'Результаты не найдены.';
+    choiceData.noChoicesText = 'Варианты выбора не найдены.';
+    choiceData.searchFields = ['label'];
+
+    let choices = isChoicesVal["data-choices-text-disabled-true"] ? new Choices(select, choiceData).disable() : new Choices(select, choiceData);
+    
+    if (isChoicesVal["data-choices-group"]) {
+        const availableChoices = choices._store._state.choices;
+        const allGroups = choices._store._state.groups;
+        let lastSearchValue = '';
+
+        select.addEventListener('search', function(event) {
+            const searchValue = event.detail.value;
+
+            const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
+
+            if (searchValue !== lastSearchValue || !searchValue) {
+                choices.clearChoices();
+                choices.setChoices(filteredChoices, 'value', 'label', true);
+                lastSearchValue = searchValue;
+            }
+        });
+
+        const searchInput = select.parentElement.parentElement.querySelector('input.choices__input[type="search"]');
+
+        searchInput.addEventListener('input', function(event) {
+            const searchValue = event.target.value;
+            if (searchValue !== lastSearchValue) {
+                const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
+                choices.clearChoices();
+                choices.setChoices(filteredChoices, 'value', 'label', true);
+                lastSearchValue = searchValue;
+            }
+        });
+    }
+
+    watchSelectExpert(select);
+}
+
 function choicesInit() {
     var choicesExamples = document.querySelectorAll("[data-choices]");
     Array.from(choicesExamples).forEach(function (item) {
-        var choiceData = {};
-        var isChoicesVal = item.attributes;
-        if (isChoicesVal["data-choices-search-false"]) choiceData.searchEnabled = false;
-        if (isChoicesVal["data-choices-search-true"]) choiceData.searchEnabled = true;
-        if (isChoicesVal["data-choices-removeItem"]) choiceData.removeItemButton = true;
-        if (isChoicesVal["data-choices-sorting-false"]) choiceData.shouldSort = false;
-        if (isChoicesVal["data-choices-sorting-true"]) choiceData.shouldSort = true;
-        if (isChoicesVal["data-choices-limit"]) choiceData.maxItemCount = isChoicesVal["data-choices-limit"].value.toString();
-        if (isChoicesVal["data-choices-text-unique-true"]) choiceData.duplicateItemsAllowed = false;
-        if (isChoicesVal["data-choices-text-disabled-true"]) choiceData.addItems = false;
-        choiceData.searchChoices = true;
-        choiceData.noResultsText = 'Результаты не найдены.';
-        choiceData.noChoicesText = 'Варианты выбора не найдены.';
-        choiceData.searchFields = ['label'];
-
-        let choices = isChoicesVal["data-choices-text-disabled-true"] ? new Choices(item, choiceData).disable() : new Choices(item, choiceData);
-        
-        if (isChoicesVal["data-choices-group"]) {
-            const availableChoices = choices._store._state.choices;
-            const allGroups = choices._store._state.groups;
-            let lastSearchValue = '';
-
-            item.addEventListener('search', function(event) {
-                const searchValue = event.detail.value;
-
-                const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
-
-                if (searchValue !== lastSearchValue || !searchValue) {
-                    choices.clearChoices();
-                    choices.setChoices(filteredChoices, 'value', 'label', true);
-                    lastSearchValue = searchValue;
-                }
-            });
-
-            const searchInput = item.parentElement.parentElement.querySelector('input.choices__input[type="search"]');
-
-            searchInput.addEventListener('input', function(event) {
-                const searchValue = event.target.value;
-                if (searchValue !== lastSearchValue) {
-                    const filteredChoices = customSearch(searchValue, availableChoices, allGroups);
-                    choices.clearChoices();
-                    choices.setChoices(filteredChoices, 'value', 'label', true);
-                    lastSearchValue = searchValue;
-                }
-            });
-        }
-
-        watchSelectExpert(item);
+        choiceInit(item);
     });
 }
 

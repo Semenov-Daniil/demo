@@ -9,6 +9,7 @@ use common\services\ExpertService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\Html;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -16,8 +17,16 @@ use yii\web\Response;
 
 use function PHPUnit\Framework\isNull;
 
-class ExpertController extends Controller
+class ExpertController extends BaseController
 {
+    private ExpertService $expertService;
+
+    public function __construct($id, $module, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->expertService = new ExpertService();
+    }
+
     public $defaultAction = 'experts';
 
     public function behaviors()
@@ -37,7 +46,7 @@ class ExpertController extends Controller
                 'actions' => [
                     'experts' => ['GET'],
                     'create-expert' => ['POST'],
-                    'all-experts' => ['GET'],
+                    'list-experts' => ['GET'],
                     'update-expert' => ['GET', 'PATCH'],
                     'delete-experts' => ['DELETE'],
                 ],
@@ -52,77 +61,61 @@ class ExpertController extends Controller
      */
     public function actionExperts(): string
     {
-        $model = new ExpertForm();
-        $dataProvider = Experts::getExpertsDataProvider(10);
-
         return $this->render('experts', [
-            'model' => $model,
-            'dataProvider' => $dataProvider,
+            'model' => new ExpertForm(),
+            'dataProvider' => Experts::getExpertsDataProvider(),
         ]);
     }
 
     public function actionCreateExpert(): string
     {
         $model = new ExpertForm();
-        $service = new ExpertService();
 
-        if ($this->request->isPost && $model->load(Yii::$app->request->post()) && $service->createExpert($model)) {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => 'Эксперт успешно добавлен.',
-                'type' => 'success'
-            ]);
-            $model = new ExpertForm();
-        } else {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => 'Не удалось добавить эксперта.',
-                'type' => 'error'
-            ]);
+        if ($this->request->isPost && $model->load(Yii::$app->request->post())) {
+            $success = $this->expertService->createExpert($model);
+
+            $this->addFlashMessage(
+                $success ? 'Эксперт успешно добавлен.' : 'Не удалось добавить эксперта.',
+                $success ? 'success' : 'error'
+            );
+
+            if ($success) {
+                $model = new ExpertForm();
+            }
         }
 
-        Yii::$app->session->close();
-
-        return $this->request->isAjax 
-            ? $this->renderAjax('_expert-create', ['model' => $model])
-            : $this->render('_expert-create', ['model' => $model]);
+        return $this->renderAjaxIfRequested('_expert-create', ['model' => $model]);
     }
 
-    public function actionAllExperts(): string
+    public function actionListExperts(): string
     {
-        $dataProvider = Experts::getExpertsDataProvider(10);
-        Yii::$app->session->close();
-
-        return $this->request->isAjax 
-            ? $this->renderAjax('_experts-list', ['dataProvider' => $dataProvider])
-            : $this->render('_experts-list', ['dataProvider' => $dataProvider]);
+        return $this->renderAjaxIfRequested('_experts-list', [
+            'dataProvider' => Experts::getExpertsDataProvider(),
+        ]);
     }
 
     public function actionUpdateExpert(?string $id = null): Response|string
     {
         $model = $this->findExpertForm($id);
-        $service = new ExpertService();
+        $result = ['success' => false];
 
-        if ($this->request->isPatch) {
-            if ($model->load($this->request->post()) && $service->updateExpert($id, $model)) {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Эксперт успешно обновлен.',
-                    'type' => 'success'
-                ]);
-                Yii::$app->session->close();
-                return $this->asJson(['success' => true]);
-            } else {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Не удалось обновить эксперта.',
-                    'type' => 'error'
-                ]);
+        if ($this->request->isPatch && $model->load($this->request->post())) {
+            $result['success'] = $this->expertService->updateExpert($id, $model);
+
+            $this->addFlashMessage(
+                $result['success'] ? 'Эксперт успешно обновлен.' : 'Не удалось обновить эксперта.',
+                $result['success'] ? 'success' : 'error'
+            );
+
+            $result['errors'] = [];
+            foreach ($model->getErrors() as $attribute => $errors) {
+                $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
-            
-            Yii::$app->session->close();
+
+            return $this->asJson($result);
         }
 
-
-        return $this->request->isAjax 
-            ? $this->renderAjax('_expert-update', ['model' => $model])
-            : $this->render('_expert-update', ['model' => $model]);
+        return $this->renderAjaxIfRequested('_expert-update', ['model' => $model]);
     }
 
     /**
@@ -134,26 +127,26 @@ class ExpertController extends Controller
      */
     public function actionDeleteExperts(?string $id = null): Response
     {
-        $service = new ExpertService();
         $experts = $id ? [$id] : ($this->request->post('experts') ?: []);
+        $count = count($experts);
         $result = [];
 
-        if ($experts && $result['success'] = $service->deleteExperts($experts)) {
+        if ($experts && $result['success'] = $this->expertService->deleteExperts($experts)) {
             $result['message'] = 'Experts deleted.';
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($experts) > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.',
-                'type' => 'success'
-            ]);
+            $this->addFlashMessage(
+                $count > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.',
+                'success'
+            );
         } else {
             $result['message'] = 'Experts not deleted.';
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($experts) > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.',
-                'type' => 'error'
-            ]);
+            $this->addFlashMessage(
+                $count > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.',
+                'error'
+            );
         }
 
         $result['code'] = Yii::$app->response->statusCode;
-        return $this->asJson(['data' => $result]);
+        return $this->asJson($result);
     }
 
     protected function findExpertForm(?string $id): ExpertForm

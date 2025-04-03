@@ -10,6 +10,7 @@ use common\traits\RandomStringTrait;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
+use yii\db\Expression;
 use yii\helpers\VarDumper;
 
 /**
@@ -131,7 +132,7 @@ class Events extends ActiveRecord
                 'title',
                 'countModules' => Modules::find()
                     ->select('COUNT(*)')
-                    ->where(['events_id' => self::tableName() . '.id']),
+                    ->where(['events_id' => new Expression(self::tableName() . '.id')]),
             ])
             ->joinWith('expert', false)
             ->andFilterWhere(['experts_id' => Yii::$app->user->can('sExpert') ? null : $expertId])

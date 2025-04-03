@@ -86,9 +86,9 @@ class EventService
         return Yii::$app->fileComponent->createDirectory($dirPath);
     }
 
-    private function deleteEventDirectory(string $dirTitle): bool
+    private function deleteEventDirectory(string $dirTitle): void
     {
-        return Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$dirTitle}"));
+        Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$dirTitle}"));
     }
 
     /**
@@ -107,9 +107,9 @@ class EventService
 
         try {
             if ($this->studentService->deleteStudentsByEvent($event->id)
-                && $this->deleteEventDirectory($event->dir_title)
                 && $event->delete()
             ) {
+                $this->deleteEventDirectory($event->dir_title);
                 $transaction->commit();
                 return true;
             }

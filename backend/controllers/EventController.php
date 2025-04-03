@@ -9,6 +9,7 @@ use common\services\EventService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\Html;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -101,25 +102,22 @@ class EventController extends BaseController
     {
         $model = $this->findEvent($id);
         $model->scenario = Events::SCENARIO_UPDATE;
+        $result = ['success' => false];
 
         if ($this->request->isPatch && $model->load($this->request->post())) {
-            $success = $model->save();
+            $result['success'] = $model->save();
 
             $this->addFlashMessage(
-                $success ? 'Чемпионат успешно обновлен.' : 'Не удалось обновить чемпионат.',
-                $success ? 'success' : 'error'
+                $result['success'] ? 'Чемпионат успешно обновлен.' : 'Не удалось обновить чемпионат.',
+                $result['success'] ? 'success' : 'error'
             );
 
-            if ($success) {
-                return $this->asJson(['success' => true]);
+            $result['errors'] = [];
+            foreach ($model->getErrors() as $attribute => $errors) {
+                $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
-        }
 
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_event-update', [
-                'model' => $model,
-                'experts' => Experts::getExperts(),
-            ]);
+            return $this->asJson($result);
         }
 
         return $this->renderAjaxIfRequested('_event-update', [
@@ -135,26 +133,28 @@ class EventController extends BaseController
      * 
      * @return void
      */
-    public function actionDeleteEvents(?string $id = null): string
+    public function actionDeleteEvents(?string $id = null): Response
     {
         $events = $id ? [$id] : (array) $this->request->post('events', []);
         $count = count($events);
+        $result = [];
 
-        if ($count && $this->eventService->deleteEvents($events)) {
+        if ($count && $result['success'] = $this->eventService->deleteEvents($events)) {
+            $result['message'] = 'Events deleted.';
             $this->addFlashMessage(
                 $count > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.',
                 'success'
             );
         } else {
+            $result['message'] = 'Experts not deleted.';
             $this->addFlashMessage(
                 $count > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.',
                 'error'
             );
         }
 
-        return $this->renderAjaxIfRequested('_events-list', [
-            'dataProvider' => Events::getDataProviderEvents(Yii::$app->user->id),
-        ]);
+        $result['code'] = Yii::$app->response->statusCode;
+        return $this->asJson($result);
     }
 
     /**

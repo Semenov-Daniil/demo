@@ -1,27 +1,27 @@
 $(() => {
 
-    $('#pjax-create-event').on('beforeSubmit', function (event) {
-        $('.btn-create-event').find('.cnt-text').addClass('d-none');
-        $('.btn-create-event').find('.cnt-load').removeClass('d-none');
-        $('.btn-create-event').prop('disabled', true);
-    });
+    // $('#pjax-create-event').on('beforeSubmit', function (event) {
+    //     $('.btn-create-event').find('.cnt-text').addClass('d-none');
+    //     $('.btn-create-event').find('.cnt-load').removeClass('d-none');
+    //     $('.btn-create-event').prop('disabled', true);
+    // });
 
-    $('#pjax-create-event').on('pjax:complete', function (event) {
-        $('.btn-create-event').find('.cnt-text').removeClass('d-none');
-        $('.btn-create-event').find('.cnt-load').addClass('d-none');
-        $('.btn-create-event').prop('disabled', false);
+    // $('#pjax-create-event').on('pjax:complete', function (event) {
+    //     $('.btn-create-event').find('.cnt-text').removeClass('d-none');
+    //     $('.btn-create-event').find('.cnt-load').addClass('d-none');
+    //     $('.btn-create-event').prop('disabled', false);
 
-        inputStepInit();
-        fetchFlashMessages();
+    //     inputStepInit();
+    //     fetchFlashMessages();
 
-        // $.pjax.reload({
-        //     url: '/expert/all-events',
-        //     container: '#pjax-events',
-        //     pushState: false,
-        //     replace: false,
-        //     timeout: 10000
-        // });
-    });
+    //     $.pjax.reload({
+    //         url: '/expert/list-events',
+    //         container: '#pjax-events',
+    //         pushState: false,
+    //         replace: false,
+    //         timeout: 10000
+    //     });
+    // });
 
     $('#pjax-events').on('click', '.btn-select-all-events', function (event) {
         let localName = $('#pjax-events').attr('id'),

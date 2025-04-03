@@ -11,6 +11,6 @@ $(() => {
         .on('pjax:complete', () => {
             CommonUtils.toggleButtonState($('.btn-create-expert'), false);
             CommonUtils.getFlashMessages();
-            CommonUtils.reloadPjax(pjaxExperts, '/expert/all-experts');
+            CommonUtils.reloadPjax(pjaxExperts, '/expert/list-experts');
         });
 });

@@ -114,7 +114,21 @@ function watchInputStep (input) {
     observer.observe(input, config);
 }
 
-function inputStepInit() {
+function inputStepInit(input) {
+    var inputData = {};
+    let inputStep = new InputStep(input, inputData);
+
+    new Cleave(inputStep.input, {
+        numeral: true,
+        delimiter: '',
+        numeralPositiveOnly: false,
+        signBeforePrefix: true
+    });
+
+    watchInputStep(inputStep.input);
+}
+
+function inputsStepInit() {
     var inputStepExamples = document.querySelectorAll("[data-step]");
     Array.from(inputStepExamples).forEach(function (item) {
         var inputData = {};
@@ -131,4 +145,4 @@ function inputStepInit() {
     });
 }
 
-inputStepInit();
+inputsStepInit();

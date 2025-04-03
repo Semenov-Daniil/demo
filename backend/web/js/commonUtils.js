@@ -21,6 +21,7 @@ window.CommonUtils = {
             pushState: false,
             replace: false,
             timeout: 10000,
+            scrollTo: false,
             ...options,
         };
         $.pjax.reload(pjaxOptions);
@@ -29,6 +30,18 @@ window.CommonUtils = {
     getFlashMessages() {
         if (typeof fetchFlashMessages === 'function') {
             fetchFlashMessages();
+        }
+    },
+
+    inputStepInit(input) {
+        if (typeof inputStepInit === 'function') {
+            inputStepInit(input);
+        }
+    },
+
+    inputChoiceInit(select) {
+        if (typeof choiceInit === 'function') {
+            choiceInit(select);
         }
     },
 

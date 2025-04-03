@@ -32,7 +32,7 @@ class Experts extends Model
      * 
      * @return ActiveDataProvider
      */
-    public static function getExpertsDataProvider(int $records): ActiveDataProvider
+    public static function getExpertsDataProvider(int $records = 10): ActiveDataProvider
     {
         $query = Users::find()
             ->select([

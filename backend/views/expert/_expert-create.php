@@ -9,7 +9,7 @@ use yii\web\YiiAsset;
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\Experts $model */
 
-$this->registerJsFile('@web/js/modules/expert/expertCreate.js', ['depends' => YiiAsset::class, 'position' => View::POS_END], 'expertCreate');
+$this->registerJsFile('@web/js/modules/expert/expertCreate.js', ['depends' => YiiAsset::class], 'expertCreate');
 
 ?>
 
