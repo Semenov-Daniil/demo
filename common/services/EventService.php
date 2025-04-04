@@ -25,7 +25,8 @@ class EventService
         $this->studentService = new StudentService();
     }
 
-    public function getDirectoryModuleFileTitle(int|string $moduleNumber): string
+    //TODO вынести в moduleService
+    public static function getDirectoryModuleFileTitle(int|string $moduleNumber): string
     {
         return "module-{$moduleNumber}";
     }

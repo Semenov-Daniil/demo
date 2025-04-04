@@ -79,7 +79,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             </span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end">
-                            <?= Html::a('<i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i><span class="align-middle" data-key="t-logout">Выход</span>', ['logout'], ['class' => 'dropdown-item', 'data' => ['method' => 'post']]) ?>
+                            <?= Html::a('<i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i><span class="align-middle" data-key="t-logout">Выход</span>', ['/logout'], ['class' => 'dropdown-item', 'data' => ['method' => 'post']]) ?>
                         </div>
                     </div>
                     <?php endif; ?>

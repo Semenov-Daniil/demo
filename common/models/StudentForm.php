@@ -10,7 +10,7 @@ class StudentForm extends Model
     public string $surname = '';
     public string $name = '';
     public ?string $patronymic = '';
-    public int $events_id;
+    public ?int $events_id = null;
 
     const SCENARIO_CREATE = 'create';
     const SCENARIO_UPDATE = 'update';

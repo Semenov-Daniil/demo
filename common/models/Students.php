@@ -111,20 +111,20 @@ class Students extends ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderStudents(string|int|null $eventID = null, bool $withDirectories = false, int $records = 10): ActiveDataProvider
+    public static function getDataProviderStudents(string|int|null $eventId = null, bool $withDirectories = false, int $records = 10): ActiveDataProvider
     {
         $query = self::find()
             ->select([
                 'students_id',
                 'events_id',
-                'CONCAT({}surname, " ", name, COALESCE(CONCAT(" ", patronymic), "")) AS fullName',
+                'CONCAT(surname, " ", name, COALESCE(CONCAT(" ", patronymic), "")) AS fullName',
                 'login',
                 EncryptedPasswords::tableName() . '.encrypted_password AS password',
                 'dir_prefix'
             ])
             ->joinWith('encryptedPassword', false)
             ->joinWith('user', false)
-            ->where(['events_id' => $eventID])
+            ->where(['events_id' => $eventId])
             ->asArray();
 
         if ($withDirectories) {
@@ -155,20 +155,31 @@ class Students extends ActiveRecord
         return $dataProvider;
     }
 
-    public static function getExportStudents(int|string $eventID): array
+    public static function getExportStudents(?int $eventId = null): ?array
     {
-        return self::find()
+        if (is_null($eventId)) {
+            return null;
+        }
+
+        $students = self::find()
             ->select([
                 'students_id',
-                'CONCAT(surname, " ", name, COALESCE(CONCAT(" ", patronymic), "")) AS fullName',
+                'fullName' => 'CONCAT(surname, " ", name, COALESCE(CONCAT(" ", patronymic), ""))',
                 'login',
-                EncryptedPasswords::tableName() . '.encrypted_password',
+                'password' => EncryptedPasswords::tableName() . '.encrypted_password',
             ])
-            ->where(['events_id' => $eventID])
+            ->where(['events_id' => $eventId])
             ->joinWith('encryptedPassword', false)
             ->joinWith('user', false)
             ->asArray()
             ->all()
         ;
+
+        foreach ($students as &$student) {
+            $student['password'] = EncryptedPasswords::decryptByPassword($student['password']);
+        }
+        unset($student);
+
+        return $students;
     }
 }

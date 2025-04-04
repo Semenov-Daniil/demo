@@ -73,10 +73,10 @@ class EventController extends BaseController
 
     public function actionCreateEvent(): string
     {
-        $model = new EventForm();
+        $form = new EventForm();
 
-        if ($this->request->isPost && $model->load(Yii::$app->request->post())) {
-            $success = $this->eventService->createEvent($model);
+        if ($this->request->isPost && $form->load(Yii::$app->request->post())) {
+            $success = $this->eventService->createEvent($form);
 
             $this->addFlashMessage(
                 $success ? 'Чемпионат успешно создан.' : 'Не удалось создать чемпионат.',
@@ -84,11 +84,11 @@ class EventController extends BaseController
             );
 
             if ($success) {
-                $model = new EventForm();
+                $form = new EventForm();
             }
         }
 
-        return $this->renderAjaxIfRequested('_event-create', ['model' => $model, 'experts' => $this->getExperts()]);
+        return $this->renderAjaxIfRequested('_event-create', ['model' => $form, 'experts' => $this->getExperts()]);
     }
 
     public function actionListEvents(): string
@@ -139,19 +139,15 @@ class EventController extends BaseController
         $count = count($events);
         $result = [];
 
-        if ($count && $result['success'] = $this->eventService->deleteEvents($events)) {
-            $result['message'] = 'Events deleted.';
-            $this->addFlashMessage(
-                $count > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.',
-                'success'
-            );
-        } else {
-            $result['message'] = 'Experts not deleted.';
-            $this->addFlashMessage(
-                $count > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.',
-                'error'
-            );
-        }
+        $result['success'] = $count && $this->eventService->deleteEvents($events);
+        $result['message'] = $result['success'] ? 'Events deleted.' : 'Experts not deleted.';
+
+        $this->addFlashMessage(
+            $result['success'] 
+                ? ($count > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.') 
+                : ($count > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.'),
+            $result['success'] ? 'success' : 'error'
+        );
 
         $result['code'] = Yii::$app->response->statusCode;
         return $this->asJson($result);

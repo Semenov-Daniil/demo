@@ -138,4 +138,13 @@ class FileComponent extends Component implements BootstrapInterface
 
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
+
+    public static function sanitizeFileName(string $string): string
+    {
+        $invalidChars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
+        $string = str_replace($invalidChars, '', $string);
+        $string = preg_replace('/[\x00-\x1F]/', '', $string);
+        $string = trim(preg_replace('/\s+/', ' ', $string));
+        return $string;
+    }
 }

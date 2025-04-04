@@ -8,6 +8,7 @@
 /** @var array $events */
 /** @var int $event */
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
 use common\models\Events;
@@ -19,9 +20,8 @@ use yii\widgets\Pjax;
 
 $this->title = 'Студенты';
 
+BackendAppAsset::register($this);
 ChoicesAsset::register($this);
-
-$this->registerJsFile('@web/js/students.js', ['depends' => AppAsset::class]);
 ?>
 
 <div class="row">

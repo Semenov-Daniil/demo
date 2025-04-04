@@ -131,19 +131,15 @@ class ExpertController extends BaseController
         $count = count($experts);
         $result = [];
 
-        if ($experts && $result['success'] = $this->expertService->deleteExperts($experts)) {
-            $result['message'] = 'Experts deleted.';
-            $this->addFlashMessage(
-                $count > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.',
-                'success'
-            );
-        } else {
-            $result['message'] = 'Experts not deleted.';
-            $this->addFlashMessage(
-                $count > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.',
-                'error'
-            );
-        }
+        $result['success'] = $count && $this->expertService->deleteExperts($experts);
+        $result['message'] = $result['success'] ? 'Experts deleted.' : 'Experts not deleted.';
+
+        $this->addFlashMessage(
+            $result['success'] 
+                ? ($count > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.') 
+                : ($count > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.'),
+            $result['success'] ? 'success' : 'error'
+        );
 
         $result['code'] = Yii::$app->response->statusCode;
         return $this->asJson($result);

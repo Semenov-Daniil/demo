@@ -71,7 +71,7 @@ $(() => {
         .on('click', '.btn-delete-selected-events', () => {
             const events = CommonUtils.getSelectedCheckboxes('events[]');
 
-            if (experts.length) {
+            if (events.length) {
                 CommonUtils.performAjax({
                     url: `/expert/delete-events`,
                     method: 'DELETE',

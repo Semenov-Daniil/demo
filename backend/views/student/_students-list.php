@@ -1,5 +1,6 @@
 <?php
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\models\EncryptedPasswords;
 use common\models\Events;
 use common\models\Students;
@@ -9,6 +10,9 @@ use yii\grid\GridView;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var common\models\Events|null $event */
+
+$this->registerJsFile('@web/js/modules/student/studentsList.js', ['depends' => [BackendAppAsset::class]], 'studentsList');
+
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
@@ -21,7 +25,7 @@ use yii\grid\GridView;
 
 <div class="card students-list">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
-        <h4 class="card-title mb-0 flex-grow-1">Студенты<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
+        <h4 class="card-title mb-0 flex-grow-1">Студенты<?= (!is_null($event) ? ". {$event?->expert->fullName}. {$event?->title}" : ''); ?></h4>
     </div>
 
     <div class="card-body">

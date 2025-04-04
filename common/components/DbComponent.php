@@ -133,6 +133,11 @@ class DbComponent extends Component
         return false;
     }
 
+    public static function changePrivilages(string $login, string $db, bool $check): bool
+    {
+        return $check ? self::grantPrivileges($login, $db) : self::revokePrivileges($login, $db);
+    }
+
     /**
      * Grants the user privileges to the database.
      * 
@@ -207,21 +212,6 @@ class DbComponent extends Component
 
         try {
             if (self::hasDatabase($dbName)) {
-                // $originalDbName = $db->createCommand('SELECT DATABASE()')->queryScalar();
-                // $db->createCommand("USE {{".$dbName."}}")->execute();
-                // $db->createCommand('SET FOREIGN_KEY_CHECKS = 0;')->execute();
-                // $tables = $db->createCommand('SHOW TABLES')->queryColumn();
-    
-                // foreach ($tables as $table) {
-                //     $db->createCommand("DROP TABLE IF EXISTS {{".$table."}}")->execute();
-                // }
-
-                // $db->createCommand('SET FOREIGN_KEY_CHECKS = 1;')->execute();
-                // if ($originalDbName) {
-                //     $db->createCommand("USE {{".$originalDbName."}}")->execute();
-                // }
-    
-                // return true;
                 $db = Yii::$app->db;
                 $db->createCommand('SET FOREIGN_KEY_CHECKS = 0')->execute();
                 $tables = $db->createCommand("SHOW TABLES FROM " . $db->quoteTableName($dbName))->queryColumn();

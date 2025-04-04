@@ -32,6 +32,12 @@ class StudentService
         return "{$prefix}-m{$numberModule}";
     }
 
+    //TODO вынести в moduleService
+    public function getDirectoryModuleFileTitle(int|string $moduleNumber): string
+    {
+        return "module-{$moduleNumber}";
+    }
+
     public function createStudent(StudentForm $form): bool
     {
         if (!$form->validate()) {
@@ -51,7 +57,7 @@ class StudentService
             $student->events_id = $form->events_id;
             $student->dir_prefix = $this->generateRandomString(8, ['lowercase']);
 
-            if (!$student->save() || !$this->setupStudentEnvironment($student, $user->login, $user->temp_password)) {
+            if (!($student->save() && $this->setupStudentEnvironment($student, $user->login, $user->temp_password))) {
                 throw new Exception('Failed to create student');
             }
 
@@ -157,20 +163,22 @@ class StudentService
 
         foreach ($student->modules as $module) {
             $dbName = $this->getTitleDb($login, $module->number);
-            if (!Yii::$app->dbComponent->createDb($dbName) || 
-                ($module->status && !Yii::$app->dbComponent->grantPrivileges($login, $dbName))) {
+            if (!Yii::$app->dbComponent->createDb($dbName) ||
+                !Yii::$app->dbComponent->changePrivilages($login, $dbName, $module->status))
+            {
                 return false;
             }
         }
 
         if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login")) ||
-            !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public"))) {
+            !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public")))
+        {
             return false;
         }
 
         foreach ($student->modules as $module) {
             if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/{$this->getTitleDirectoryModule($student->dir_prefix, $module->number)}")) ||
-                !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public/{Files::getTitleDirectoryModule($module->number)}"))) {
+                !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public/{$this->getDirectoryModuleFileTitle($module->number)}"))) {
                 return false;
             }
         }
@@ -180,7 +188,7 @@ class StudentService
             $eventPath = Yii::getAlias("@events/{$event->dir_title}");
             $studentPath = Yii::getAlias("@students/$login/public");
             foreach ($event->files as $file) {
-                $fileCopyDirectory = ($file->modules_id ? (Files::getTitleDirectoryModule($file->module->number) . '/') : '');
+                $fileCopyDirectory = $file->modules_id ? ($this->getDirectoryModuleFileTitle($file->module->number) . '/') : '';
                 if (!copy("$eventPath/{$fileCopyDirectory}{$file->save_name}.{$file->extension}", "$studentPath/{$fileCopyDirectory}{$file->save_name}.{$file->extension}")) {
                     return false;
                 }

@@ -1,11 +1,15 @@
 <?php
 
+use common\assets\ChoicesAsset;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
+use yii\web\YiiAsset;
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\StudentsEvents $model */
+
+$this->registerJsFile('@web/js/modules/student/studentCreate.js', ['depends' => [YiiAsset::class, ChoicesAsset::class]], 'studentCreate');
 
 ?>
 
