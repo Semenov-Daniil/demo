@@ -114,17 +114,19 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             [
                                 'label' => '<i class="ri-user-settings-line"></i><span data-key="t-experts">Эксперты</span>', 
                                 'encode' => false, 
-                                'url' => ['/experts'], 
+                                'url' => ['/expert'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 
                                     'data-key' => 't-experts'
                                 ],
-                                'active' => (Yii::$app->request->getPathInfo() == '' || Yii::$app->request->getPathInfo() == 'experts')
+                                'active' => (Yii::$app->request->getPathInfo() == '' || 
+                                                Yii::$app->request->getPathInfo() == 'expert' || 
+                                                Yii::$app->request->getPathInfo() == 'expert/experts')
                             ],
                             [
                                 'label' => '<i class="ri-function-add-line"></i><span data-key="t-events">Чемпионаты</span>', 
                                 'encode' => false, 
-                                'url' => ['/events'], 
+                                'url' => ['/event'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-events'
                                 ]
@@ -132,17 +134,17 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             [
                                 'label' => '<i class="ri-user-add-line"></i><span data-key="t-students">Студенты</span>', 
                                 'encode' => false, 
-                                'url' => ['/students'], 
+                                'url' => ['/student'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-students'
                                 ]
                             ],
                             [
-                                'label' => '<i class="ri-folder-user-line"></i><span data-key="t-participants">Данные студентов</span>', 
+                                'label' => '<i class="ri-folder-user-line"></i><span data-key="t-student-data">Данные студентов</span>', 
                                 'encode' => false, 
-                                'url' => ['/participants'], 
+                                'url' => ['/student-data'], 
                                 'linkOptions' => [
-                                    'class' => 'nav-link menu-link', 'data-key' => 't-participants'
+                                    'class' => 'nav-link menu-link', 'data-key' => 't-student-data'
                                 ]
                             ],
                             [

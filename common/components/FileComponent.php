@@ -144,7 +144,11 @@ class FileComponent extends Component implements BootstrapInterface
         $invalidChars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
         $string = str_replace($invalidChars, '', $string);
         $string = preg_replace('/[\x00-\x1F]/', '', $string);
-        $string = trim(preg_replace('/\s+/', ' ', $string));
-        return $string;
+        $words = explode(' ', trim($string));
+        $words = array_filter($words, function($word) {
+            return $word !== '';
+        });
+        $words = array_map('ucfirst', $words);
+        return implode('', $words);
     }
 }

@@ -4,18 +4,28 @@ namespace backend\controllers;
 
 use common\models\Events;
 use common\models\Students;
+use common\services\StudentService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\BaseConsole;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use ZipArchive;
 
-class ParticipantController extends Controller
+class StudentDataController extends BaseController
 {
-    public $defaultAction = 'participants';
+    private StudentService $studentService;
+
+    public function __construct($id, $module, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->studentService = new StudentService();
+    }
+
+    public $defaultAction = 'students';
 
     public function behaviors()
     {
@@ -32,61 +42,50 @@ class ParticipantController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'participants' => ['GET'],
-                    'all-participants' => ['GET'],
+                    'students' => ['GET'],
+                    'list-students' => ['GET'],
                     'download-archive' => ['GET'],
                 ],
             ],
         ];
     }
 
+    private function getEvents()
+    {
+        return Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id);
+    }
+
     /**
-     * Displays participants page.
+     * Displays students data page.
      *
      * @return string
      */
-    public function actionParticipants(?int $event = null): string
+    public function actionStudents(?int $event = null): string
     {
-        $dataProvider = Students::getDataProviderStudents($event, true);
-        $dataProvider->pagination->route = 'participants';
-
-        return $this->render('participants', [
-            'dataProvider' => $dataProvider,
-            'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
-            'event' => Events::findOne(['id' => $event]),
+        return $this->render('students', [
+            'dataProvider' => Students::getDataProviderStudents($event, true),
+            'events' => $this->getEvents(),
+            'event' => $this->findEvent($event),
         ]);
     }
 
-    public function actionAllParticipants(?string $event = null): string
+    public function actionListStudents(?string $event = null): string
     {
-        $dataProvider = Students::getDataProviderStudents($event, true);
-        $dataProvider->pagination->route = 'participants';
-        $modelEvent = Events::findOne(['id' => $event]);
-
-        session_write_close();
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_participants-list', [
-                'dataProvider' => $dataProvider,
-                'event' => $modelEvent,
-            ]);
-        }
-
-        return $this->render('_participants-list', [
-            'dataProvider' => $dataProvider,
-            'event' => $modelEvent,
+        return $this->renderAjaxIfRequested('_students-list', [
+            'dataProvider' => Students::getDataProviderStudents($event, true), 
+            'event' => $this->findEvent($event),
         ]);
     }
 
     public function actionDownloadArchive(int $student, string $folderTitle = 'all')
     {
-        $student = $this->findStudent($student);
+        $modelStudent = $this->findStudent($student);
 
         try {
-            $folders = $student->getFolders($folderTitle);
+            $folders = $this->studentService->getFolders($modelStudent->students_id, $folderTitle);
 
-            $zipFileName = 'student_' . $student->user->surname . '_' . $student->user->name . ($student->user?->patronymic ? '_' . $student->user->patronymic : '') . '_' . $folderTitle . '_' . date('d-m-Y') . '.zip';
-            $zipFilePath = \Yii::getAlias('@runtime') . '/' . $zipFileName;
+            $zipFileName = 'student_' . Yii::$app->fileComponent->sanitizeFileName($modelStudent->user->fullName) . '_' . $folderTitle . '_' . date('d-m-Y') . '.zip';
+            $zipFilePath = Yii::getAlias("@runtime/{$zipFileName}");
 
             $zip = new ZipArchive();
             if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
@@ -109,8 +108,6 @@ class ParticipantController extends Controller
 
                     if ($item->isDir()) {
                         $zip->addEmptyDir($zipPath);
-                        // if ($relativePath !== '') {
-                        // }
                     } else {
                         $zip->addFile($itemPath, $zipPath);
                     }
@@ -134,26 +131,25 @@ class ParticipantController extends Controller
                     unlink($zipFilePath);
                 });
         } catch (\Exception $e) {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => 'Не удалось скачать архив.',
-                'type' => 'error'
-            ]);
+            $this->addFlashMessage('Не удалось скачать архив.', 'error');
     
             return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
         }
     }
 
-    protected function findStudent($id)
+    protected function findStudent(?int $id): ?Students
     {
-        if (($model = Students::findOne(['students_id' => $id])) !== null) {
+        if ($id && ($model = Students::findOne(['students_id' => $id])) !== null) {
             return $model;
         }
 
-        Yii::$app->session->addFlash('toastify', [
-            'text' => "Студент не найден.",
-            'type' => 'error'
-        ]);
+        $this->addFlashMessage('Студент не найден.', 'error');
 
         throw new NotFoundHttpException('Студент не найден.');
+    }
+
+    protected function findEvent(?int $id): ?Events
+    {
+        return Events::findOne(['id' => $id]);
     }
 }

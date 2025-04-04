@@ -12,13 +12,13 @@ use yii\widgets\ListView;
 ?>
 
 <div class="">
-    <h4 class="card-title m-0">Данные участников<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
+    <h4 class="card-title m-0">Данные участников<?= (!is_null($event) ? ". {$event?->expert->fullName}. {$event?->title}" : ''); ?></h4>
 </div>
 
 <?= ListView::widget([
         'dataProvider' => $dataProvider,
         'itemOptions' => ['class' => 'mt-3 item'],
-        'itemView' => '_participant-item',
+        'itemView' => '_student-item',
         'layout' => "
             <div class=\"row row-cols-1 row-cols-md-2 row-cols-xxl-3\">
                 {items}
@@ -50,6 +50,6 @@ use yii\widgets\ListView;
         ],
         'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. ' . Html::a('Добавить студентов <i class="ri-arrow-right-s-line align-middle lh-1"></i>', ['/students', 'event' => $event?->id], ['class' => 'card-link link-secondary'])),
         'emptyTextOptions' => [
-            'class' => 'text-center',
+            'class' => 'text-center pt-3',
         ],
 ]); ?>

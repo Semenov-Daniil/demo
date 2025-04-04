@@ -7,6 +7,7 @@
 /** @var array $events */
 /** @var common\models\Events|null $event */
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
 use yii\helpers\Html;
@@ -14,9 +15,10 @@ use yii\widgets\Pjax;
 
 $this->title = 'Участники';
 
+BackendAppAsset::register($this);
 ChoicesAsset::register($this);
 
-$this->registerJsFile('@web/js/participants.js', ['depends' => AppAsset::class]);
+$this->registerJsFile('@web/js/modules/student-data/student-data.js', ['depends' => BackendAppAsset::class]);
 
 ?>
 
@@ -38,11 +40,11 @@ $this->registerJsFile('@web/js/participants.js', ['depends' => AppAsset::class])
 
 <div class="row">
     <?php Pjax::begin([
-        'id' => 'pjax-participants',
+        'id' => 'pjax-students',
         'enablePushState' => false,
         'timeout' => 10000,
     ]); ?>
-        <?= $this->render('_participants-list', [
+        <?= $this->render('_students-list', [
             'dataProvider' => $dataProvider,
             'event' => $event
         ]) ?>

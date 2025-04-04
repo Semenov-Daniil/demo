@@ -74,7 +74,7 @@ return [
                 '/flash' => '/flash', 
                 '/flash/<action>' => '/flash/base/<action>',
 
-                '/<action>' => '/main/dispatch',    
+                // '/<action>' => '/main/dispatch', 
             ],
         ],
 

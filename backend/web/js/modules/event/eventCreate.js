@@ -11,7 +11,7 @@ $(() => {
         .on('pjax:complete', () => {
             CommonUtils.toggleButtonState($('.btn-create-event'), false);
             CommonUtils.getFlashMessages();
-            CommonUtils.reloadPjax(pjaxEvents, '/expert/list-events');
+            CommonUtils.reloadPjax(pjaxEvents, `${url}/list-events`);
         });
 
     $pjaxCreateEvent

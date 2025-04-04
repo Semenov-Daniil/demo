@@ -18,12 +18,14 @@ use yii\widgets\Pjax;
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var array $experts */
 
-$this->title = 'Чемпионаты';
-
 BackendAppAsset::register($this);
 ChoicesAsset::register($this);
 CleaveAsset::register($this);
 InputStepAsset::register($this);
+
+$this->title = 'Чемпионаты';
+
+$this->registerJsFile('@web/js/modules/event/events.js');
 
 ?>
 

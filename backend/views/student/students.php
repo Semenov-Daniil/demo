@@ -18,10 +18,13 @@ use yii\helpers\Html;
 use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
-$this->title = 'Студенты';
-
 BackendAppAsset::register($this);
 ChoicesAsset::register($this);
+
+$this->title = 'Студенты';
+
+$this->registerJsFile('@web/js/modules/student/students.js');
+
 ?>
 
 <div class="row">

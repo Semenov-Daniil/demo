@@ -21,6 +21,8 @@ BackendAppAsset::register($this);
 
 $this->title = 'Эксперты';
 
+$this->registerJsFile('@web/js/modules/expert/experts.js');
+
 ?>
 
 <div class="row">

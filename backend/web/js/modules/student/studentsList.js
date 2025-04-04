@@ -20,7 +20,7 @@ $(() => {
     $pjaxStudents
         .off('click', '.btn-update')
         .on('click', '.btn-update', function() {
-            $modalUpdateStudent.find('.modal-body').load(`/expert/update-student?id=${$(this).data('id')}`, () => {
+            $modalUpdateStudent.find('.modal-body').load(`${url}/update-student?id=${$(this).data('id')}`, () => {
                 $modalUpdateStudent.modal('show');
             });
         });
@@ -39,7 +39,7 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateStudent.modal('hide');
-                        CommonUtils.reloadPjax('#pjax-students', `/expert/list-students${paramQueryEvent()}`);
+                        CommonUtils.reloadPjax('#pjax-students', `${url}/list-students${paramQueryEvent()}`);
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -57,11 +57,11 @@ $(() => {
         .off('click', '.btn-delete')
         .on('click', '.btn-delete', function() {
             CommonUtils.performAjax({
-                url: `/expert/delete-students?id=${$(this).data('id')}`,
+                url: `${url}/delete-students?id=${$(this).data('id')}`,
                 method: 'DELETE',
                 success(data) {
                     if (data.success) {
-                        CommonUtils.reloadPjax('#pjax-students', `/expert/list-students${paramQueryEvent()}`);
+                        CommonUtils.reloadPjax('#pjax-students', `${url}/list-students${paramQueryEvent()}`);
                     }
                 },
             });
@@ -74,12 +74,12 @@ $(() => {
 
             if (students.length) {
                 CommonUtils.performAjax({
-                    url: `/expert/delete-students`,
+                    url: `${url}/delete-students`,
                     method: 'DELETE',
                     data: { students },
                     success(data) {
                         if (data.success) {
-                            CommonUtils.reloadPjax('#pjax-students', `/expert/list-students${paramQueryEvent()}`);
+                            CommonUtils.reloadPjax('#pjax-students', `${url}/list-students${paramQueryEvent()}`);
                         }
                     },
                 });

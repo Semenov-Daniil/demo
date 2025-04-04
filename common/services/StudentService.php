@@ -38,6 +38,25 @@ class StudentService
         return "module-{$moduleNumber}";
     }
 
+    public function getFolders(int $studentId, string $dirTitle): array
+    {
+        $folders = [];
+
+        if (!$studentId || !($student = Students::findOne(['students_id' => $studentId]))) {
+            return $folders;
+        }
+
+        if ($dirTitle == 'all') {
+            foreach ($student->modules as $module) {
+                $folders[] = Yii::getAlias("@students/{$student->user->login}/" . self::getTitleDirectoryModule($student->dir_prefix, $module->number));
+            }
+        } else {
+            $folders[] = Yii::getAlias("@students/{$student->user->login}/{$dirTitle}");
+        }
+
+        return $folders;
+    }
+
     public function createStudent(StudentForm $form): bool
     {
         if (!$form->validate()) {

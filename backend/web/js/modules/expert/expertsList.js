@@ -18,7 +18,7 @@ $(() => {
     $pjaxExperts
         .off('click', '.btn-update')
         .on('click', '.btn-update', function() {
-            $modalUpdateExpert.find('.modal-body').load(`/expert/update-expert?id=${$(this).data('id')}`, () => {
+            $modalUpdateExpert.find('.modal-body').load(`${url}/update-expert?id=${$(this).data('id')}`, () => {
                 $('#modal-update-expert').modal('show');
             });
         });
@@ -37,7 +37,7 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateExpert.modal('hide');
-                        CommonUtils.reloadPjax('#pjax-experts', '/expert/list-experts');
+                        CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -55,11 +55,11 @@ $(() => {
         .off('click', '.btn-delete')
         .on('click', '.btn-delete', function() {
             CommonUtils.performAjax({
-                url: `/expert/delete-experts?id=${$(this).data('id')}`,
+                url: `${url}/delete-experts?id=${$(this).data('id')}`,
                 method: 'DELETE',
                 success(data) {
                     if (data.success) {
-                        CommonUtils.reloadPjax('#pjax-experts', '/expert/list-experts');
+                        CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
                     }
                 },
             });
@@ -72,12 +72,12 @@ $(() => {
 
             if (experts.length) {
                 CommonUtils.performAjax({
-                    url: `/expert/delete-experts`,
+                    url: `${url}/delete-experts`,
                     method: 'DELETE',
                     data: { experts },
                     success(data) {
                         if (data.success) {
-                            CommonUtils.reloadPjax('#pjax-experts', '/expert/list-experts');
+                            CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
                         }
                     },
                 });

@@ -116,19 +116,19 @@ class Students extends ActiveRecord
         $query = self::find()
             ->select([
                 'students_id',
-                'events_id',
-                'CONCAT(surname, " ", name, COALESCE(CONCAT(" ", patronymic), "")) AS fullName',
+                self::tableName() . '.events_id',
+                'fullName' => 'CONCAT(surname, " ", name, COALESCE(CONCAT(" ", patronymic), ""))',
                 'login',
-                EncryptedPasswords::tableName() . '.encrypted_password AS password',
+                'password' => EncryptedPasswords::tableName() . '.encrypted_password',
                 'dir_prefix'
             ])
             ->joinWith('encryptedPassword', false)
             ->joinWith('user', false)
-            ->where(['events_id' => $eventId])
+            ->where([self::tableName() . '.events_id' => $eventId])
             ->asArray();
 
         if ($withDirectories) {
-            $query->with('modules directories');
+            $query->joinWith('modules');
         }
 
         $dataProvider = new ActiveDataProvider([
@@ -142,11 +142,11 @@ class Students extends ActiveRecord
         $models = $dataProvider->getModels();
         foreach ($models as &$model) {
             $model['password'] = EncryptedPasswords::decryptByPassword($model['password']);
-            if ($withDirectories && !empty($model['directories'])) {
-                $model['directories'] = array_map(function ($directory) use ($model) {
+            if ($withDirectories && !empty($model['modules'])) {
+                $model['modules'] = array_map(function ($directory) use ($model) {
                     $directory['title'] = StudentService::getTitleDirectoryModule($model['dir_prefix'], $directory['number']);
                     return $directory;
-                }, $model['directories']);
+                }, $model['modules']);
             }
         }
         unset($model);

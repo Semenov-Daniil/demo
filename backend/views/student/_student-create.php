@@ -21,7 +21,7 @@ $this->registerJsFile('@web/js/modules/student/studentCreate.js', ['depends' => 
     <div class="card-body">
         <?php $form = ActiveForm::begin([
             'id' => 'add-student-form',
-            'action' => ['/create-student'],
+            'action' => ['create-student'],
             'fieldConfig' => [
                 'template' => "{label}\n{input}\n{error}",
                 'labelOptions' => ['class' => 'col-12 col-form-label mr-lg-3 pt-0'],

@@ -18,7 +18,7 @@ $(() => {
     $pjaxEvents
         .off('click', '.btn-update')
         .on('click', '.btn-update', function() {
-            $modalUpdateEvent.find('.modal-body').load(`/expert/update-event?id=${$(this).data('id')}`, () => {
+            $modalUpdateEvent.find('.modal-body').load(`${url}/update-event?id=${$(this).data('id')}`, () => {
                 CommonUtils.inputChoiceInit($modalUpdateEvent.find('select[data-choices]')[0]);
                 $modalUpdateEvent.modal('show');
             });
@@ -38,7 +38,7 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateEvent.modal('hide');
-                        CommonUtils.reloadPjax('#pjax-events', '/expert/list-events');
+                        CommonUtils.reloadPjax('#pjax-events', `${url}/list-events`);
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -56,11 +56,11 @@ $(() => {
         .off('click', '.btn-delete')
         .on('click', '.btn-delete', function() {
             CommonUtils.performAjax({
-                url: `/expert/delete-events?id=${$(this).data('id')}`,
+                url: `${url}/delete-events?id=${$(this).data('id')}`,
                 method: 'DELETE',
                 success(data) {
                     if (data.success) {
-                        CommonUtils.reloadPjax('#pjax-events', '/expert/list-events');
+                        CommonUtils.reloadPjax('#pjax-events', `${url}/list-events`);
                     }
                 },
             });
@@ -73,12 +73,12 @@ $(() => {
 
             if (events.length) {
                 CommonUtils.performAjax({
-                    url: `/expert/delete-events`,
+                    url: `${url}/delete-events`,
                     method: 'DELETE',
                     data: { events },
                     success(data) {
                         if (data.success) {
-                            CommonUtils.reloadPjax('#pjax-events', '/expert/list-events');
+                            CommonUtils.reloadPjax('#pjax-events', `${url}/list-events`);
                         }
                     },
                 });
