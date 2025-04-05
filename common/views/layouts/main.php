@@ -150,7 +150,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             [
                                 'label' => '<i class="ri-equalizer-line"></i><span data-key="t-modules">Модули</span>', 
                                 'encode' => false, 
-                                'url' => ['/modules'], 
+                                'url' => ['/module'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-modules'
                                 ]
@@ -158,7 +158,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             [
                                 'label' => '<i class="ri-upload-2-line"></i><span data-key="t-files">Файлы</span>', 
                                 'encode' => false, 
-                                'url' => ['/files'], 
+                                'url' => ['/file'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-files'
                                 ]

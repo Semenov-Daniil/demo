@@ -19,10 +19,12 @@ class EventService
     use RandomStringTrait;
 
     private $studentService;
+    private $moduleService;
 
     public function __construct()
     {
         $this->studentService = new StudentService();
+        $this->moduleService = new ModuleService();
     }
 
     //TODO вынести в moduleService
@@ -67,24 +69,16 @@ class EventService
         return false;
     }
 
-    // TODO изменить с использованием методов из modulService
     public function createModulesForEvent(Events $event, int $countModules): bool
     {
         for ($i = 0; $i < $countModules; $i++) {
             $module = new Modules(['events_id' => $event->id]);
-            if (!($module->save() && $this->createModuleDirectory($event->dir_title, $module->number))) {
+            if (!$this->moduleService->createModule($module)) {
                 return false;
             }
         }
 
         return true;
-    }
-
-    // TODO вынести метод в modelService
-    public function createModuleDirectory(string $eventDirTitle, int $moduleNumber): bool
-    {
-        $dirPath = Yii::getAlias("@events/{$eventDirTitle}/" . $this->getDirectoryModuleFileTitle($moduleNumber));
-        return Yii::$app->fileComponent->createDirectory($dirPath);
     }
 
     private function deleteEventDirectory(string $dirTitle): void

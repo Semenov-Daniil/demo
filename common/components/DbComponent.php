@@ -133,7 +133,7 @@ class DbComponent extends Component
         return false;
     }
 
-    public static function changePrivilages(string $login, string $db, bool $check): bool
+    public static function changePrivileges(string $login, string $db, bool $check): bool
     {
         return $check ? self::grantPrivileges($login, $db) : self::revokePrivileges($login, $db);
     }

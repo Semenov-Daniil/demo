@@ -16,10 +16,12 @@ class StudentService
     use RandomStringTrait;
 
     private $userService;
+    private $moduleService;
 
     public function __construct()
     {
         $this->userService = new UserService();
+        $this->moduleService = new ModuleService();
     }
 
     public function getTitleDb(string $login, int $numberModule): string
@@ -85,7 +87,8 @@ class StudentService
         } catch (Exception $e) {
             $transaction->rollBack();
             $this->cleanupFailedStudent($user->id ?? null, $user->login ?? '');
-            throw $e;
+            Yii::error("Error create student: " . $e->getMessage(), __METHOD__);
+            return false;
         }
     }
 
@@ -176,28 +179,14 @@ class StudentService
      */
     private function setupStudentEnvironment(Students $student, string $login, string $password): bool
     {
-        if (!Yii::$app->dbComponent->createUser($login, $password)) {
-            return false;
-        }
-
-        foreach ($student->modules as $module) {
-            $dbName = $this->getTitleDb($login, $module->number);
-            if (!Yii::$app->dbComponent->createDb($dbName) ||
-                !Yii::$app->dbComponent->changePrivilages($login, $dbName, $module->status))
-            {
-                return false;
-            }
-        }
-
-        if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login")) ||
-            !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public")))
+        if (!Yii::$app->dbComponent->createUser($login, $password) ||
+            !$this->createStudentDirectory($login))
         {
             return false;
         }
 
         foreach ($student->modules as $module) {
-            if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/{$this->getTitleDirectoryModule($student->dir_prefix, $module->number)}")) ||
-                !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public/{$this->getDirectoryModuleFileTitle($module->number)}"))) {
+            if (!$this->moduleService->createStudentModuleEnvironment($student, $module)) {
                 return false;
             }
         }
@@ -215,6 +204,12 @@ class StudentService
         }
 
         return true;
+    }
+
+    public function createStudentDirectory(string $login): bool
+    {
+        return Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login")) &&
+                Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public"));
     }
 
     /**

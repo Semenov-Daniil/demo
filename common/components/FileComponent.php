@@ -41,13 +41,17 @@ class FileComponent extends Component implements BootstrapInterface
      * Removes a directory (and all its content) recursively.
      * 
      * @param string $path path of the directory to be created. 
-     * @return void
+     * @return bool
      */
-    public static function removeDirectory(string $path): void
+    public static function removeDirectory(string $path): bool
     {
-        if (!empty($path) && is_dir($path)) {
-            FileHelper::removeDirectory($path);
+        if (!file_exists($path) || !is_dir($path)) {
+            return false;
         }
+        
+        FileHelper::removeDirectory($path);
+        
+        return true;
     }
 
     /**
