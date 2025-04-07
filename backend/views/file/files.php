@@ -8,6 +8,7 @@
 /** @var array $events */
 /** @var array $directories */
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
 use common\assets\DropzoneAsset;
@@ -17,6 +18,7 @@ use yii\web\View;
 use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
+BackendAppAsset::register($this);
 ChoicesAsset::register($this);
 DropzoneAsset::register($this);
 
@@ -32,8 +34,7 @@ $this->registerJs(
     'yiiOptions'
 );
 
-$this->registerJsFile('@web/js/plugins/dropzone.init.js', ['depends' => DropzoneAsset::class]);
-$this->registerJsFile('@web/js/files.js', ['depends' => AppAsset::class]);
+$this->registerJsFile('@web/js/modules/file/files.js', ['depends' => BackendAppAsset::class]);
 
 ?>
 

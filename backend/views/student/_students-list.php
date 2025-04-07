@@ -25,7 +25,7 @@ $this->registerJsFile('@web/js/modules/student/studentsList.js', ['depends' => [
 
 <div class="card students-list">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
-        <h4 class="card-title mb-0 flex-grow-1">Студенты<?= (!is_null($event) ? ". {$event?->expert->fullName}. {$event?->title}" : ''); ?></h4>
+        <h4 class="card-title mb-0 flex-grow-1">Студенты<?= (". {$event?->expert->fullName}. {$event?->title}" ?? ''); ?></h4>
     </div>
 
     <div class="card-body">

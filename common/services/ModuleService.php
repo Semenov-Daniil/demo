@@ -11,7 +11,7 @@ use yii\helpers\VarDumper;
 
 class ModuleService
 {
-    public function getDirectoryModuleFileTitle(int $moduleNumber): string
+    public static function getDirectoryModuleFileTitle(int $moduleNumber): string
     {
         return "module-{$moduleNumber}";
     }

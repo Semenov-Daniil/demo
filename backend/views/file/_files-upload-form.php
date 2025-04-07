@@ -14,7 +14,7 @@ use yii\widgets\Pjax;
 
 <?php $form = ActiveForm::begin([
     'id' => 'form-upload-files',
-    'action' => ['/upload-files'],
+    'action' => ['upload-files'],
     'successCssClass' => '',
     'fieldConfig' => [
         'template' => "{label}\n{input}\n{error}",

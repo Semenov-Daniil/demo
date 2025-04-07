@@ -37,20 +37,18 @@ $(() => {
             </div>
         </div>    
     `;
+    const paramQueryEvent = () => ($(eventSelect).val() ? `?event=${$(eventSelect).val()}` : '');
 
     $pjaxCreateStudent
         .off('change', eventSelect)
         .on('change', eventSelect, () => {
-            const $select = $(eventSelect);
-            const paramQuery = $select.val() ? `?event=${$select.val()}` : '';
-
             $(pjaxStudents)
                 .off('pjax:beforeSend')
                 .on('pjax:beforeSend', () => $(pjaxStudents).html(placeholderData))
                 .off('pjax:end')
-                .on('pjax:end', () => window.history.pushState({}, '', `student${paramQuery}`));
+                .on('pjax:end', () => window.history.pushState({}, '', `student${paramQueryEvent()}`));
 
-            CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${paramQuery}`);
+            CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${paramQueryEvent()}`);
 
             $(pjaxStudents)
                 .off('pjax:beforeSend');
@@ -65,7 +63,7 @@ $(() => {
         .on('pjax:complete', () => {
             CommonUtils.toggleButtonState($('.btn-create-student'), false);
             CommonUtils.getFlashMessages();
-            CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${($(eventSelect).val() ? `?event=${$(eventSelect).val()}` : '')}`);
+            CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${paramQueryEvent()}`);
         });
 
     $pjaxCreateStudent

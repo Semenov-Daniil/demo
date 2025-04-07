@@ -1,7 +1,8 @@
 <?php
 
-use yii\bootstrap5\ActiveForm;
-use yii\bootstrap5\Html;
+use backend\assets\AppAsset as BackendAppAsset;
+use common\assets\ChoicesAsset;
+use common\assets\DropzoneAsset;
 use yii\widgets\Pjax;
 
 /** @var yii\web\View $this */
@@ -9,6 +10,8 @@ use yii\widgets\Pjax;
 /** @var app\models\FilesEvents $model */
 /** @var array $event */
 /** @var array $directories */
+
+$this->registerJsFile('@web/js/modules/file/filesUpload.js', ['depends' => [BackendAppAsset::class, DropzoneAsset::class, ChoicesAsset::class]], 'filesUpload');
 
 ?>
 
@@ -20,23 +23,22 @@ use yii\widgets\Pjax;
                     <div class="mb-3">
                         <i class="display-4 text-muted ri-upload-cloud-2-fill"></i>
                     </div>
-        
                     <h4>Перетащите файлы или нажмите, чтобы загрузить.</h4>
                 </div>
             </div>
             <?php Pjax::begin([
-                'id' => 'pjax-upload-files',
+                'id' => 'pjax-upload-form',
                 'enablePushState' => false,
                 'timeout' => 10000,
             ]); ?>
-                <?= $this->render('_files-form', [
+                <?= $this->render('_files-upload-form', [
                     'model' => $model,
                     'events' => $events,
                     'directories' => $directories,
                 ]); ?>
             <?php Pjax::end(); ?>
             <ul class="list-unstyled mb-0" id="dropzone-preview">
-                <li class="mt-2 dz-preview-item d-none" id="dropzone-preview-list">
+                <li class="mt-2 dz-preview-item dropzone-preview-list d-none">
                     <div class="border rounded">
                         <div class="d-flex p-2">
                             <div class="d-flex flex-shrink-0 align-items-center me-3">

@@ -1,20 +1,23 @@
-window.CommonUtils = {
-    toggleButtonState($button, isLoading) {
+"use strict";
+
+class CommonUtils
+{
+    static toggleButtonState($button, isLoading) {
         $button.find('.cnt-text').toggleClass('d-none', isLoading);
         $button.find('.cnt-load').toggleClass('d-none', !isLoading);
         $button.prop('disabled', isLoading);
-    },
+    }
 
-    performAjax(options) {
+    static performAjax(options) {
         const defauls = {
             method: 'POST',
             complete: () => this.getFlashMessages(),
             error: (jqXHR) => jqXHR.status == 500 ?? location.reload(),
         };
         return $.ajax({...defauls, ...options});
-    },
+    }
 
-    reloadPjax(container, url, options = []) {
+    static async reloadPjax(container, url, options = []) {
         const pjaxOptions = {
             container: container,
             url: url,
@@ -24,32 +27,32 @@ window.CommonUtils = {
             scrollTo: false,
             ...options,
         };
-        $.pjax.reload(pjaxOptions);
-    },
+        await $.pjax.reload(pjaxOptions);
+    }
 
-    getFlashMessages() {
+    static async getFlashMessages() {
         if (typeof fetchFlashMessages === 'function') {
-            fetchFlashMessages();
+            await fetchFlashMessages();
         }
-    },
+    }
 
-    inputStepInit(input) {
+    static inputStepInit(input) {
         if (typeof inputStepInit === 'function') {
             inputStepInit(input);
         }
-    },
+    }
 
-    inputChoiceInit(select) {
+    static inputChoiceInit(select) {
         if (typeof choiceInit === 'function') {
             choiceInit(select);
         }
-    },
+    }
 
-    getSelectedCheckboxes(checkboxName) {
+    static getSelectedCheckboxes(checkboxName) {
         return $(`input[name="${checkboxName}"]:not(:disabled):checked`).map((_, el) => el.value).get();
-    },
+    }
 
-    updateCheckboxState(allCheckboxName, itemCheckboxName, actionButtonClasses) {
+    static updateCheckboxState(allCheckboxName, itemCheckboxName, actionButtonClasses) {
         const $allCheckbox = $(`input[name="${allCheckboxName}"]`);
         const $checkboxes = $(`input[name="${itemCheckboxName}"]:not(:disabled)`);
         const $checked = $checkboxes.filter(':checked');
@@ -64,5 +67,47 @@ window.CommonUtils = {
         } else {
             $(actionButtonClasses).prop('disabled', !isAnyChecked);
         }
+    }
+
+    static showLoadingPlaceholderTable(container, title, countRows = 3) {
+        $(container).html(`
+            <div class="row">
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title mb-0 flex-grow-1">${title}</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid-view">
+                                <div class="table-responsive table-card placeholder-glow">
+                                    ${this.generatePlaceholderRows(countRows)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    static generatePlaceholderRows(count) {
+        return Array(count).fill().map(() => `
+            <div class="row gx-0 gap-2">
+                <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
+                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
+                <div class="placeholder col m-2 p-3 rounded-1"></div>
+            </div>
+        `).join("");
+    }
+
+    static debounce(func, delay) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            return new Promise((resolve) => {
+                timeout = setTimeout(() => resolve(func(...args)), delay);
+            });
+        };
     }
 };

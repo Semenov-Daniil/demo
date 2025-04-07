@@ -4,17 +4,30 @@ namespace backend\controllers;
 
 use common\models\Events;
 use common\models\Files;
+use common\services\FileService;
+use common\services\ModuleService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
-class FileController extends Controller
+class FileController extends BaseController
 {
-    public $defaultAction = 'modules';
+    private FileService $fileService;
+    private ModuleService $moduleService;
+
+    public function __construct($id, $module, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->fileService = new FileService();
+        $this->moduleService = new ModuleService();
+    }
+
+    public $defaultAction = 'files';
 
     public function behaviors()
     {
@@ -34,12 +47,17 @@ class FileController extends Controller
                     'files' => ['GET'],
                     'upload-form' => ['GET'],
                     'upload-files' => ['POST'],
-                    'all-files' => ['GET'],
+                    'list-files' => ['GET'],
                     'delete-files' => ['DELETE'],
                     'download' => ['GET'],
                 ],
             ],
         ];
+    }
+
+    private function getEvents()
+    {
+        return Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id);
     }
 
     /**
@@ -49,116 +67,69 @@ class FileController extends Controller
      */
     public function actionFiles(?int $event = null)
     {
-        $model = new Files(['scenario' => Files::SCENARIO_UPLOAD_FILE, 'events_id' => $event]);
-        $dataProvider = $model->getDataProviderFiles($event);
-        $directories = Files::getDirectories($event);
-        $events = Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id);
-        $modelEvent = Events::findOne(['id' => $event]);
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('files', [
-                'model' => $model,
-                'dataProvider' => $dataProvider,
-                'event' => $modelEvent,
-                'events' => $events,
-                'directories' => $directories,
-            ]);
-        }
-
         return $this->render('files', [
-            'model' => $model,
-            'dataProvider' => $dataProvider,
-            'event' => $modelEvent,
-            'events' => $events,
-            'directories' => $directories,
+            'model' => new Files(['scenario' => Files::SCENARIO_UPLOAD_FILE, 'events_id' => $event]),
+            'dataProvider' => Files::getDataProviderFiles($event),
+            'event' => $this->findEvent($event),
+            'events' => $this->getEvents(),
+            'directories' => Files::getDirectories($event),
         ]);
     }
 
     public function actionUploadForm(?int $event = null)
     {
-        $model = new Files(['scenario' => Files::SCENARIO_UPLOAD_FILE, 'events_id' => $event]);
-        $events = Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id);
-        $directories = Files::getDirectories($event);
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_files-form', [
-                'model' => $model,
-                'events' => $events,
-                'directories' => $directories,
-            ]);
-        }
-
-        return $this->render('_files-form', [
-            'model' => $model,
-            'events' => $events,
-            'directories' => $directories,
+        return $this->renderAjaxIfRequested('_files-upload-form', [
+            'model' => new Files(['scenario' => Files::SCENARIO_UPLOAD_FILE, 'events_id' => $event]),
+            'events' => $this->getEvents(),
+            'directories' => Files::getDirectories($event),
         ]);
     }
 
     public function actionUploadFiles()
     {
         $model = new Files(['scenario' => Files::SCENARIO_UPLOAD_FILE]);
-        $result = ['success' => true, 'files' => []];
+        $result = ['success' => false, 'files' => []];
 
-        if (Yii::$app->request->isPost) {
-            $data = Yii::$app->request->post();
+        if (Yii::$app->request->isPost && $model->load(Yii::$app->request->post())) {
             try {
-                if ($model->load($data)) {
-                    $model->files = UploadedFile::getInstancesByName('files');
-                    if ($model->processFiles()) {
-                        foreach ($model->files as $file) {
-                            $result['files'][$file->name] = ['status' => 'success'];
-                        }
+                $model->files = UploadedFile::getInstancesByName('files');
+                $count = count($model->files);
 
-                        Yii::$app->session->addFlash('toastify', [
-                            'text' => count($model->files) > 1 ? 'Файлы успешно загружены.' : 'Файл успешно загружен.',
-                            'type' => 'success'
-                        ]);
+                $result['success'] = $this->fileService->processFiles($model);
+
+                if ($result['success']) {
+                    foreach ($model->files as $file) {
+                        $result['files'][$file->name] = ['status' => 'success'];
                     }
-                    if ($model->hasErrors()) {
-                        $result['success'] = false;
-                        foreach ($model->errors['files'] as $error) {
-                            $result['files'][$error['filename']] = [
-                                'status' => 'error',
-                                'errors' => $error['errors']
-                            ];
-                        }
-
-                        Yii::$app->session->addFlash('toastify', [
-                            'text' => count($model->files) > 1 ? 'Не удалось загрузить файлы.' : 'Не удалось загрузить файл.',
-                            'type' => 'error'
-                        ]);
+                } else if (isset($model->errors['files'])) {
+                    foreach ($model->errors['files'] as $error) {
+                        $result['files'][$error['filename']] = [
+                            'status' => 'error',
+                            'errors' => $error['errors']
+                        ];
                     }
                 }
+
+                $this->addFlashMessage(
+                    $result['success'] 
+                        ? ($count > 1 ? 'Файлы успешно сохранены.' : 'Файл успешно сохранен.') 
+                        : ($count > 1 ? 'Не удалось сохранить файлы.' : 'Не удалось сохранить файл.'),
+                    $result['success'] ? 'success' : 'error'
+                );
             } catch (\Exception $e) {
                 Yii::$app->response->statusCode = 400;
-                $result['success'] = false;
-                $result['files']['global'] = ['status' => 'error', 'errors' => [$e->getMessage()]];
+                $result['files']['global'] = ['status' => 'error', 'errors' => ['Не удалось сохранить файл.']];
             }
         }
 
-        return $this->asJson([
-            'data' => $result
-        ]);
+        return $this->asJson($result);
     }
 
-    public function actionAllFiles(?int $event = null): string
+    public function actionListFiles(?int $event = null): string
     {
-        $dataProvider = Files::getDataProviderFiles($event);
-        $event = Events::findOne(['id' => $event]);
-
-        session_write_close();
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_files-list', [
-                'dataProvider' => $dataProvider,
-                'event' => $event,
-            ]);
-        }
-
-        return $this->render('_files-list', [
-            'dataProvider' => $dataProvider,
-            'event' => $event,
+        return $this->renderAjaxIfRequested('_files-list', [
+            'dataProvider' => Files::getDataProviderFiles($event),
+            'event' => $this->findEvent($event),
         ]);
     }
 
@@ -171,58 +142,60 @@ class FileController extends Controller
      */
     public function actionDeleteFiles(?string $id = null): Response
     {
-        $files = [];
+        $files = $id ? [$id] : (array) $this->request->post('files', []);
+        $count = count($files);
         $result = [];
 
-        $files = (!is_null($id) ? [$id] : ($this->request->post('files') ? $this->request->post('files') : []));
+        $result['success'] = $count && $this->fileService->deleteFilesEvent($files);
+        $result['message'] = $result['success'] ? 'Files deleted.' : 'Files not deleted.';
 
-        if (count($files) && $result['success'] = Files::deleteFilesEvent($files)) {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($files) > 1 ? 'Файлы успешно удалены.' : 'Файл успешно удален.',
-                'type' => 'success'
-            ]);
-        } else {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($files) > 1 ? 'Не удалось удалить файлы.' : 'Не удалось удалить файл.',
-                'type' => 'error'
-            ]);
-        }
+        $this->addFlashMessage(
+            $result['success'] 
+                ? ($count > 1 ? 'Файлы успешно удалены.' : 'Файл успешно удален.') 
+                : ($count > 1 ? 'Не удалось удалить файлы.' : 'Не удалось удалить файл.'),
+            $result['success'] ? 'success' : 'error'
+        );
 
         $result['code'] = Yii::$app->response->statusCode;
-
-        return $this->asJson([
-            'data' => $result
-        ]);
+        return $this->asJson($result);
     }
 
     /**
      * File download
      * 
      * @param string $filename file name.
-     * @param string $event the name of the event directory.
      */
-    public function actionDownload(string $event, string $filename)
+    public function actionDownload(string $filePath)
     {
-        $dir = Events::findOne(['id' => $event])?->dir_title;
-        if ($file = Files::findFile($event, $filename)) {
-            $filePath = Yii::getAlias("@events/{$dir}/" . (is_null($file['modules_id']) ? '' : Events::getDirectoryModuleFileTitle($file['number']) . '/') . "{$file['filename']}");
-    
-            if (file_exists($filePath)) {
-                session_write_close();
-                return Yii::$app->response
-                    ->sendStreamAsFile(fopen($filePath, 'r'), $file['filename'], [
-                        'mimeType' => mime_content_type($filePath),
-                        'inline' => false,
-                    ])
-                    ->send();
-            }
+        $file = Yii::getAlias("@events/{$filePath}");
+
+        if (file_exists($file)) {
+            return Yii::$app->response
+                ->sendStreamAsFile(fopen($file, 'r'), end(explode('/', $filePath)), [
+                    'mimeType' => mime_content_type($file),
+                    'inline' => false,
+                ])
+                ->send();
         }
 
-        Yii::$app->session->addFlash('toastify', [
-            'text' => 'Файл не найден.',
-            'type' => 'error'
-        ]);
+        $this->addFlashMessage('Файл не найден.', 'error');
 
         return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
+    }
+
+    protected function findFile(int $event, string $filename): array
+    {
+        if ($event && $filename && ($model = Files::findFile($event, $filename)) !== null) {
+            return $model;
+        }
+
+        $this->addFlashMessage('Файл не найден.', 'error');
+
+        throw new NotFoundHttpException('Файл не найден.');
+    }
+
+    protected function findEvent(?int $id): ?Events
+    {
+        return Events::findOne(['id' => $id]);
     }
 }
