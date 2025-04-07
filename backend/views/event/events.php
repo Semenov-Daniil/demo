@@ -1,8 +1,10 @@
 <?php
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
 use common\assets\CleaveAsset;
+use common\assets\InputStepAsset;
 use common\widgets\Alert;
 use yii\bootstrap5\Html;
 use yii\bootstrap5\Modal;
@@ -16,13 +18,15 @@ use yii\widgets\Pjax;
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var array $experts */
 
-$this->title = 'Чемпионаты';
-
+BackendAppAsset::register($this);
 ChoicesAsset::register($this);
 CleaveAsset::register($this);
+InputStepAsset::register($this);
 
-$this->registerJsFile('@web/js/pages/input-step.init.js', ['depends' => AppAsset::class]);
-$this->registerJsFile('@web/js/events.js', ['depends' => AppAsset::class]);
+$this->title = 'Чемпионаты';
+
+$this->registerJsFile('@web/js/modules/event/events.js');
+
 ?>
 
 <div class="row">

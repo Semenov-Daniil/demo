@@ -2,7 +2,7 @@
 
 let toastAlerts = [];
 
-function fetchFlashMessages() {
+async function fetchFlashMessages() {
     let pathname = window.location.pathname.replace(/^\/|\/$/g, '');
     const parts = pathname.split('/');
 
@@ -10,7 +10,7 @@ function fetchFlashMessages() {
         url: ((parts.length === 0 || parts[0] === '') ? '' : `/${parts[0]}`) + '/flash/get-messages',
         method: 'GET',
         dataType: 'json',
-        success: function(response) {
+        async success(response) {
             toastAlerts = response;
             renderFlashMessages();
         }

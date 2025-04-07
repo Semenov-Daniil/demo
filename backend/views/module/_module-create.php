@@ -1,5 +1,7 @@
 <?php
 
+use backend\assets\AppAsset as BackendAppAsset;
+use common\assets\ChoicesAsset;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 
@@ -8,11 +10,13 @@ use yii\bootstrap5\Html;
 /** @var app\models\Module $model */
 /** @var array $events */
 
+$this->registerJsFile('@web/js/modules/module/moduleCreate.js', ['depends' => [BackendAppAsset::class, ChoicesAsset::class]], 'moduleCreate');
+
 ?>
 
 <?php $form = ActiveForm::begin([
     'id' => 'form-create-module',
-    'action' => ['/create-module'],
+    'action' => ['create-module'],
     'fieldConfig' => [
         'template' => "{label}\n{input}\n{error}",
         'labelOptions' => ['class' => 'col-12 col-form-label mr-lg-3 pt-0'],

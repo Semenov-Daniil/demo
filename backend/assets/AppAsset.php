@@ -11,13 +11,12 @@ class AppAsset extends AssetBundle
 {
     public $basePath = '@webroot';
     public $baseUrl = '@web';
-    public $css = [
-        'css/site.css',
-    ];
+    public $css = [];
     public $js = [
+        './js/commonUtils.js',
+        './js/plugins/grid-checkbox-persistence.init.js',
     ];
     public $depends = [
         'yii\web\YiiAsset',
-        'yii\bootstrap5\BootstrapAsset',
     ];
 }

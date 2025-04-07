@@ -1,5 +1,6 @@
 <?php
 
+use backend\assets\AppAsset as BackendAppAsset;
 use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
@@ -9,19 +10,20 @@ use yii\grid\GridView;
 /** @var common\models\Events|null $event */
 /** @var array $directories */
 
+$this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => BackendAppAsset::class], 'filesList');
+
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
 <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
     <?= Html::button('<span><i class="ri-check-double-line fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-files']) ?>
     <?= Html::button('<i class="ri-delete-bin-2-line fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-files', 'disabled' => true]) ?>
-    <?// Html::button('<i class="ri-download-2-line fs-16 me-2"></i> Скачать', ['class' => 'btn btn-secondary btn-download-selected-files', 'disabled' => true]) ?>
 </div>
 <?php endif; ?>
 
 <div class="card">
     <div class="card-header align-items-center d-flex position-relative <?= ($dataProvider->totalCount ? 'border-bottom-0' : '') ?>">
-        <h4 class="card-title mb-0 flex-grow-1">Файлы<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
+        <h4 class="card-title mb-0 flex-grow-1">Файлы<?= ($event ? ". {$event?->expert->fullName}. {$event?->title}" : ''); ?></h4>
     </div>
 
     <div class="card-body">
@@ -121,10 +123,7 @@ use yii\grid\GridView;
                             return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']]]);
                         },
                         'download' => function ($url, $model, $key) use ($event) {
-                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ['/download', 'event' => $event->id, 'filename' => $model['name']], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0]]);
-                        },
-                        'download-btn' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-download-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-download', 'data' => ['filename' => $model['name']]]);
+                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ["file/download/{$model['dir_title']}/{$model['path']}"], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0]]);
                         },
                     ],
                     'visible' => $dataProvider->totalCount,

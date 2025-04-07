@@ -8,6 +8,7 @@
 /** @var array $events */
 /** @var common\models\Events $event */
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
 use common\widgets\Alert;
@@ -22,9 +23,10 @@ use yii\widgets\Pjax;
 
 $this->title = 'Модули';
 
+BackendAppAsset::register($this);
 ChoicesAsset::register($this);
 
-$this->registerJsFile('@web/js/modules.js', ['depends' => AppAsset::class]);
+$this->registerJsFile('@web/js/modules/module/modules.js', ['depends' => BackendAppAsset::class]);
 
 ?>
 

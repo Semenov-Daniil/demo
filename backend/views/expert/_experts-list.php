@@ -5,8 +5,13 @@ use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
+use yii\web\View;
+use yii\web\YiiAsset;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
+
+$this->registerJsFile('@web/js/modules/expert/expertsList.js', ['depends' => YiiAsset::class], 'expertList');
+
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 

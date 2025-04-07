@@ -1,12 +1,18 @@
 <?php
 
+use common\assets\ChoicesAsset;
+use common\assets\InputStepAsset;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
+use yii\web\View;
+use yii\web\YiiAsset;
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\EventForm $model */
 /** @var array $experts */
+
+$this->registerJsFile('@web/js/modules/event/eventCreate.js', ['depends' => [YiiAsset::class, InputStepAsset::class, ChoicesAsset::class]], 'eventCreate');
 
 ?>
 
@@ -18,7 +24,7 @@ use yii\bootstrap5\Html;
     <div class="card-body">
         <?php $form = ActiveForm::begin([
             'id' => 'form-event-create',
-            'action' => ['/create-event'],
+            'action' => ['create-event'],
             'options' => [
                 'data' => [
                     'pjax' => true

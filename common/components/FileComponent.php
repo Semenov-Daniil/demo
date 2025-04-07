@@ -41,13 +41,17 @@ class FileComponent extends Component implements BootstrapInterface
      * Removes a directory (and all its content) recursively.
      * 
      * @param string $path path of the directory to be created. 
-     * @return void
+     * @return bool
      */
-    public static function removeDirectory(string $path): void
+    public static function removeDirectory(string $path): bool
     {
-        if (!empty($path) && is_dir($path)) {
-            FileHelper::removeDirectory($path);
+        if (!file_exists($path) || !is_dir($path)) {
+            return false;
         }
+        
+        FileHelper::removeDirectory($path);
+        
+        return true;
     }
 
     /**
@@ -68,6 +72,11 @@ class FileComponent extends Component implements BootstrapInterface
 
     public static function clearDirectory(string $path, bool $delete = true): bool
     {
+        $realPath = realpath($path);
+        if (!$realPath || strpos($realPath, Yii::getAlias('@common')) !== 0) {
+            return false;
+        }
+
         if (!empty($path) && is_dir($path)) {
             $files = array_diff(scandir($path), array('.', '..'));
 
@@ -132,5 +141,18 @@ class FileComponent extends Component implements BootstrapInterface
         $bytes /= pow(1000, $pow);
 
         return round($bytes, $precision) . ' ' . $units[$pow];
+    }
+
+    public static function sanitizeFileName(string $string): string
+    {
+        $invalidChars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
+        $string = str_replace($invalidChars, '', $string);
+        $string = preg_replace('/[\x00-\x1F]/', '', $string);
+        $words = explode(' ', trim($string));
+        $words = array_filter($words, function($word) {
+            return $word !== '';
+        });
+        $words = array_map('ucfirst', $words);
+        return implode('', $words);
     }
 }

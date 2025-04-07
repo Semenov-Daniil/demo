@@ -16,14 +16,14 @@ use yii\web\NotFoundHttpException;
  */
 class MainController extends Controller
 {
-    private $controllers = [
-        'expert' => 'backend\controllers\ExpertController',
-        'event' => 'backend\controllers\EventController',
-        'student' => 'backend\controllers\StudentController',
-        'module' => 'backend\controllers\ModuleController',
-        'file' => 'backend\controllers\FileController',
-        'participant' => 'backend\controllers\ParticipantController',
-    ];
+    // private $controllers = [
+    //     'expert' => 'backend\controllers\ExpertController',
+    //     'event' => 'backend\controllers\EventController',
+    //     'student' => 'backend\controllers\StudentController',
+    //     'module' => 'backend\controllers\ModuleController',
+    //     'file' => 'backend\controllers\FileController',
+    //     'student-data' => 'backend\controllers\StudentDataController',
+    // ];
     
     /**
      * {@inheritdoc}
@@ -60,27 +60,27 @@ class MainController extends Controller
         ];
     }
 
-    public function actionDispatch($action)
-    {
-        $actionCamelCase = $this->convertToCamelCase($action);
-        $actionMethod = 'action' . $actionCamelCase;
+    // public function actionDispatch($action)
+    // {
+    //     $actionCamelCase = $this->convertToCamelCase($action);
+    //     $actionMethod = 'action' . $actionCamelCase;
 
-        foreach ($this->controllers as $controllerId => $controllerClass) {
-            if (class_exists($controllerClass)) {
-                $controller = new $controllerClass($controllerId, $this->module);
-                if (method_exists($controller, $actionMethod)) {
-                    return $controller->runAction($action, Yii::$app->request->get());
-                }
-            }
-        }
+    //     foreach ($this->controllers as $controllerId => $controllerClass) {
+    //         if (class_exists($controllerClass)) {
+    //             $controller = new $controllerClass($controllerId, $this->module);
+    //             if (method_exists($controller, $actionMethod)) {
+    //                 return $controller->runAction($action, Yii::$app->request->get());
+    //             }
+    //         }
+    //     }
 
-        throw new NotFoundHttpException("Action '$action' not found.");
-    }
+    //     throw new NotFoundHttpException("Action '$action' not found.");
+    // }
 
-    private function convertToCamelCase($input)
-    {
-        return str_replace('-', '', ucwords($input, '-'));
-    }
+    // private function convertToCamelCase($input)
+    // {
+    //     return str_replace('-', '', ucwords($input, '-'));
+    // }
 
     /**
      * Logs in a user.

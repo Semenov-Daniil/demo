@@ -16,6 +16,9 @@ class DropzoneAsset extends AssetBundle
     ];
     public $js = [
         'libs/dropzone/dropzone-min.js',
+        'js/plugins/dropzone/UploadUI.js',
+        'js/plugins/dropzone/UploadService.js',
+        'js/plugins/dropzone/DropzoneFactory.js',
     ];
     public $depends = [
         'yii\web\YiiAsset',

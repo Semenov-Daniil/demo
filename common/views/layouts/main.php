@@ -79,7 +79,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             </span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end">
-                            <?= Html::a('<i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i><span class="align-middle" data-key="t-logout">Выход</span>', ['logout'], ['class' => 'dropdown-item', 'data' => ['method' => 'post']]) ?>
+                            <?= Html::a('<i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i><span class="align-middle" data-key="t-logout">Выход</span>', ['/logout'], ['class' => 'dropdown-item', 'data' => ['method' => 'post']]) ?>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -114,17 +114,19 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             [
                                 'label' => '<i class="ri-user-settings-line"></i><span data-key="t-experts">Эксперты</span>', 
                                 'encode' => false, 
-                                'url' => ['/experts'], 
+                                'url' => ['/expert'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 
                                     'data-key' => 't-experts'
                                 ],
-                                'active' => (Yii::$app->request->getPathInfo() == '' || Yii::$app->request->getPathInfo() == 'experts')
+                                'active' => (Yii::$app->request->getPathInfo() == '' || 
+                                                Yii::$app->request->getPathInfo() == 'expert' || 
+                                                Yii::$app->request->getPathInfo() == 'expert/experts')
                             ],
                             [
                                 'label' => '<i class="ri-function-add-line"></i><span data-key="t-events">Чемпионаты</span>', 
                                 'encode' => false, 
-                                'url' => ['/events'], 
+                                'url' => ['/event'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-events'
                                 ]
@@ -132,23 +134,23 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             [
                                 'label' => '<i class="ri-user-add-line"></i><span data-key="t-students">Студенты</span>', 
                                 'encode' => false, 
-                                'url' => ['/students'], 
+                                'url' => ['/student'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-students'
                                 ]
                             ],
                             [
-                                'label' => '<i class="ri-folder-user-line"></i><span data-key="t-participants">Данные студентов</span>', 
+                                'label' => '<i class="ri-folder-user-line"></i><span data-key="t-student-data">Данные студентов</span>', 
                                 'encode' => false, 
-                                'url' => ['/participants'], 
+                                'url' => ['/student-data'], 
                                 'linkOptions' => [
-                                    'class' => 'nav-link menu-link', 'data-key' => 't-participants'
+                                    'class' => 'nav-link menu-link', 'data-key' => 't-student-data'
                                 ]
                             ],
                             [
                                 'label' => '<i class="ri-equalizer-line"></i><span data-key="t-modules">Модули</span>', 
                                 'encode' => false, 
-                                'url' => ['/modules'], 
+                                'url' => ['/module'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-modules'
                                 ]
@@ -156,7 +158,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             [
                                 'label' => '<i class="ri-upload-2-line"></i><span data-key="t-files">Файлы</span>', 
                                 'encode' => false, 
-                                'url' => ['/files'], 
+                                'url' => ['/file'], 
                                 'linkOptions' => [
                                     'class' => 'nav-link menu-link', 'data-key' => 't-files'
                                 ]

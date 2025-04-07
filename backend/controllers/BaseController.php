@@ -1,0 +1,20 @@
+<?php
+
+namespace backend\controllers;
+
+use Yii;
+use yii\web\Controller;
+
+class BaseController extends Controller
+{
+    protected function addFlashMessage(string $message, string $type): void
+    {
+        Yii::$app->session->addFlash('toastify', ['text' => $message, 'type' => $type]);
+    }
+
+    protected function renderAjaxIfRequested(string $view, array $params): string
+    {
+        session_write_close();
+        return $this->request->isAjax ? $this->renderAjax($view, $params) : $this->render($view, $params);
+    }
+}

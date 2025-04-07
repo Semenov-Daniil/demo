@@ -5,16 +5,26 @@ namespace backend\controllers;
 use common\models\Events;
 use common\models\EventForm;
 use common\models\Experts;
+use common\services\EventService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\Html;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
-class EventController extends Controller
+class EventController extends BaseController
 {
+    private EventService $eventService;
+
+    public function __construct($id, $module, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->eventService = new EventService();
+    }
+
     public $defaultAction = 'events';
 
     public function behaviors()
@@ -34,12 +44,17 @@ class EventController extends Controller
                 'actions' => [
                     'events' => ['GET'],
                     'create-event' => ['POST'],
-                    'all-events' => ['GET'],
+                    'list-events' => ['GET'],
                     'update-event' => ['GET', 'PATCH'],
                     'delete-events' => ['DELETE'],
                 ],
             ],
         ];
+    }
+
+    private function getExperts()
+    {
+        return Yii::$app->user->can('sExpert') ? Experts::getExperts() : [];
     }
 
     /**
@@ -49,97 +64,63 @@ class EventController extends Controller
      */
     public function actionEvents(): string
     {
-        $model = new EventForm();
-        $dataProvider = Events::getDataProviderEvents(Yii::$app->user->id);
-
         return $this->render('events', [
-            'model' => $model,
-            'dataProvider' => $dataProvider,
-            'experts' => Experts::getExperts(),
+            'model' => new EventForm(),
+            'dataProvider' => Events::getDataProviderEvents(Yii::$app->user->id),
+            'experts' => $this->getExperts(),
         ]);
     }
 
     public function actionCreateEvent(): string
     {
-        $model = new EventForm();
+        $form = new EventForm();
 
-        if ($this->request->isPost) {
-            if ($model->load(Yii::$app->request->post()) && $model->createEvent()) {  
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Чемпионат успешно создан.',
-                    'type' => 'success'
-                ]);
+        if ($this->request->isPost && $form->load(Yii::$app->request->post())) {
+            $success = $this->eventService->createEvent($form);
 
-                $model = new EventForm();
-            } else {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Не удалось создать чемпионат.',
-                    'type' => 'error'
-                ]);
+            $this->addFlashMessage(
+                $success ? 'Чемпионат успешно создан.' : 'Не удалось создать чемпионат.',
+                $success ? 'success' : 'error'
+            );
+
+            if ($success) {
+                $form = new EventForm();
             }
         }
 
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_event-create', [
-                'model' => $model,
-                'experts' => Experts::getExperts(),
-            ]);
-        }
-
-        return $this->render('_event-create', [
-            'model' => $model,
-            'experts' => Experts::getExperts(),
-        ]);
+        return $this->renderAjaxIfRequested('_event-create', ['model' => $form, 'experts' => $this->getExperts()]);
     }
 
-    public function actionAllEvents(): string
+    public function actionListEvents(): string
     {
-        $dataProvider = Events::getDataProviderEvents(Yii::$app->user->id);
-
-        session_write_close();
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_events-list', [
-                'dataProvider' => $dataProvider,
-            ]);
-        }
-
-        return $this->render('_events-list', [
-            'dataProvider' => $dataProvider,
+        return $this->renderAjaxIfRequested('_events-list', [
+            'dataProvider' => Events::getDataProviderEvents(Yii::$app->user->id),
         ]);
     }
 
-    public function actionUpdateEvent(?string $id = null): Response|string
+    public function actionUpdateEvent(?int $id = null): Response|string
     {
         $model = $this->findEvent($id);
         $model->scenario = Events::SCENARIO_UPDATE;
+        $result = ['success' => false];
 
-        if ($this->request->isPatch) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Чемпионат успешно обновлен.',
-                    'type' => 'success'
-                ]);
+        if ($this->request->isPatch && $model->load($this->request->post())) {
+            $result['success'] = $model->save();
 
-                return $this->asJson([
-                    'success' => true
-                ]);
-            } else {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Не удалось обновить чемпионат.',
-                    'type' => 'error'
-                ]);
+            $this->addFlashMessage(
+                $result['success'] ? 'Чемпионат успешно обновлен.' : 'Не удалось обновить чемпионат.',
+                $result['success'] ? 'success' : 'error'
+            );
+
+            $result['errors'] = [];
+            foreach ($model->getErrors() as $attribute => $errors) {
+                $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
+
+            return $this->asJson($result);
         }
 
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_event-update', [
-                'model' => $model,
-                'experts' => Experts::getExperts(),
-            ]);
-        }
-
-        return $this->render('_event-update', [
+        return $this->renderAjaxIfRequested('_event-update', [
             'model' => $model,
             'experts' => Experts::getExperts(),
         ]);
@@ -152,46 +133,40 @@ class EventController extends Controller
      * 
      * @return void
      */
-    public function actionDeleteEvents(?string $id = null): string
+    public function actionDeleteEvents(?string $id = null): Response
     {
-        $dataProvider = Events::getDataProviderEvents(Yii::$app->user->id);
-        $events = [];
+        $events = $id ? [$id] : (array) $this->request->post('events', []);
+        $count = count($events);
+        $result = [];
 
-        $events = (!is_null($id) ? [$id] : ($this->request->post('events') ? $this->request->post('events') : []));
+        $result['success'] = $count && $this->eventService->deleteEvents($events);
+        $result['message'] = $result['success'] ? 'Events deleted.' : 'Experts not deleted.';
 
-        if (count($events) && Events::deleteEvents($events)) {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($events) > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.',
-                'type' => 'success'
-            ]);
-        } else {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($events) > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.',
-                'type' => 'error'
-            ]);
-        }
+        $this->addFlashMessage(
+            $result['success'] 
+                ? ($count > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.') 
+                : ($count > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.'),
+            $result['success'] ? 'success' : 'error'
+        );
 
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_events-list', [
-                'dataProvider' => $dataProvider,
-            ]);
-        }
-
-        return $this->render('_events-list', [
-            'dataProvider' => $dataProvider,
-        ]);
+        $result['code'] = Yii::$app->response->statusCode;
+        return $this->asJson($result);
     }
 
-    protected function findEvent($id)
+    /**
+     * Finds an event model by its ID.
+     *
+     * @param ?string $id The ID of the event to find.
+     * @return Events The event model found.
+     * @throws NotFoundHttpException If the event is not found.
+     */
+    protected function findEvent(?int $id): Events
     {
-        if (($model = Events::findOne(['id' => $id])) !== null) {
+        if ($id && ($model = Events::findOne(['id' => $id])) !== null) {
             return $model;
         }
 
-        Yii::$app->session->addFlash('toastify', [
-            'text' => 'Чемпионат не найден.',
-            'type' => 'error'
-        ]);
+        $this->addFlashMessage('Чемпионат не найден.', 'error');
 
         throw new NotFoundHttpException('Чемпионат не найден.');
     }

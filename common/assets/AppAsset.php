@@ -28,10 +28,9 @@ class AppAsset extends AssetBundle
         'libs/simplebar/simplebar.min.js',
         'libs/node-waves/waves.min.js',
         'libs/feather-icons/feather.min.js',
-        'js/pages/plugins/lord-icon-2.1.0.js',
+        'js/plugins/lord-icon-2.1.0.js',
         'libs/noty/lib/noty.js',
         'js/alert-toastify.js',
-        'js/gridview.js',
         'js/app.js'
     ];
     public $depends = [

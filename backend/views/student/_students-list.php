@@ -1,5 +1,6 @@
 <?php
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\models\EncryptedPasswords;
 use common\models\Events;
 use common\models\Students;
@@ -9,11 +10,14 @@ use yii\grid\GridView;
 
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var common\models\Events|null $event */
+
+$this->registerJsFile('@web/js/modules/student/studentsList.js', ['depends' => [BackendAppAsset::class]], 'studentsList');
+
 ?>
 
 <?php if ($dataProvider->totalCount): ?> 
     <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
-        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['/export-students', 'event' => $event->id], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
+        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['export-students', 'event' => $event->id], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-students']) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</span>', ['class' => 'btn btn-danger btn-delete-selected-students', 'disabled' => true]) ?>
     </div>
@@ -21,7 +25,7 @@ use yii\grid\GridView;
 
 <div class="card students-list">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
-        <h4 class="card-title mb-0 flex-grow-1">Студенты<?= (!is_null($event) ? '. ' . $event?->expert->fullName . '. ' . $event?->title : ''); ?></h4>
+        <h4 class="card-title mb-0 flex-grow-1">Студенты<?= (". {$event?->expert->fullName}. {$event?->title}" ?? ''); ?></h4>
     </div>
 
     <div class="card-body">

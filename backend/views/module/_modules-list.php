@@ -1,5 +1,6 @@
 <?php
 
+use backend\assets\AppAsset as BackendAppAsset;
 use common\models\EncryptedPasswords;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
@@ -8,6 +9,9 @@ use yii\grid\GridView;
 
 /** @var app\models\Modules $dataProvider */
 /** @var common\models\Events|null $event */
+
+$this->registerJsFile('@web/js/modules/module/modulesList.js', ['depends' => [BackendAppAsset::class]], 'modulesList');
+
 ?>
 
 <?php if (!is_null($event)): ?> 
@@ -23,7 +27,7 @@ use yii\grid\GridView;
         Добавление...
         </span>
         </span>
-        ', ['class' => 'btn btn-success btn-load btn-add-module', 'form' => 'form-create-module']) ?>
+        ', ['class' => 'btn btn-success btn-load btn-create-module', 'form' => 'form-create-module']) ?>
     <?php if ($dataProvider->totalCount): ?> 
         <?= Html::button('<span><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-modules']) ?>
         <?= Html::button('<i class="ri-brush-2-line align-middle fs-16 me-2"></i> Очистить', ['class' => 'btn btn-secondary btn-clear-selected-modules', 'disabled' => true]) ?>

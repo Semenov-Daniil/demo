@@ -4,6 +4,7 @@ namespace backend\controllers;
 
 use common\models\Events;
 use common\models\Modules;
+use common\services\ModuleService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -11,8 +12,16 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
-class ModuleController extends Controller
+class ModuleController extends BaseController
 {
+    private ModuleService $moduleService;
+
+    public function __construct($id, $module, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->moduleService = new ModuleService();
+    }
+
     public $defaultAction = 'modules';
 
     public function behaviors()
@@ -32,12 +41,18 @@ class ModuleController extends Controller
                 'actions' => [
                     'modules' => ['GET'],
                     'create-module' => ['POST'],
+                    'list-modules' => ['GET'],
                     'change-status-module' => ['PATH'],
                     'delete-modules' => ['DELETE'],
                     'clear-modules' => ['PATH'],
                 ],
             ],
         ];
+    }
+
+    private function getEvents()
+    {
+        return Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id);
     }
 
     /**
@@ -47,34 +62,19 @@ class ModuleController extends Controller
      */
     public function actionModules(?int $event = null): string
     {
-        $model = new Modules(['events_id' => $event]);
-        $dataProvider = Modules::getDataProviderModules($event);
-
         return $this->render('modules', [
-            'model' => $model,
-            'dataProvider' => $dataProvider,
-            'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
-            'event' => Events::findOne(['id' => $event]),
+            'model' => new Modules(['events_id' => $event]),
+            'dataProvider' => Modules::getDataProviderModules($event),
+            'events' => $this->getEvents(),
+            'event' => $this->findEvent($event),
         ]);
     }
 
-    public function actionAllModules(?int $event = null): string
+    public function actionListModules(?int $event = null): string
     {
-        $dataProvider = Modules::getDataProviderModules($event);
-        $event = Events::findOne(['id' => $event]);
-
-        session_write_close();
-
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_modules-list', [
-                'dataProvider' => $dataProvider,
-                'event' => $event
-            ]);
-        }
-
-        return $this->render('_modules-list', [
-            'dataProvider' => $dataProvider,
-            'event' => $event
+        return $this->renderAjaxIfRequested('_modules-list', [
+            'dataProvider' => Modules::getDataProviderModules($event),
+            'event' => $this->findEvent($event),
         ]);
     }
 
@@ -82,74 +82,47 @@ class ModuleController extends Controller
     {
         $model = new Modules();
 
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->createModule()) {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Модуль успешно создан.',
-                    'type' => 'success'
-                ]);
-                $model = new Modules(['events_id' => $model?->events_id]);
-            } else {
-                Yii::$app->session->addFlash('toastify', [
-                    'text' => 'Не удалось создать модуль.',
-                    'type' => 'error'
-                ]);
+        if ($this->request->isPost && $model->load($this->request->post())) {
+            $success = $this->moduleService->createModule($model);
+
+            $this->addFlashMessage(
+                $success ? 'Модуль успешно создан.' : 'Не удалось создать модуль.',
+                $success ? 'success' : 'error'
+            );
+
+            if ($success) {
+                $model = new Modules(['events_id' => $model->events_id]);
             }
         }
 
-        if ($this->request->isAjax) {
-            return $this->renderAjax('_module-create', [
-                'model' => $model,
-                'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
-            ]);
-        }
-
-        return $this->render('_module-create', [
+        return $this->renderAjaxIfRequested('_module-create', [
             'model' => $model,
-            'events' => Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id),
+            'events' => $this->getEvents(),
         ]);
     }
 
     /**
      * Action change status module.
      */
-    public function actionChangeStatusModule()
+    public function actionChangeStatusModule(?int $id)
     {
-        $id = Yii::$app->request->post('id');
         $status = Yii::$app->request->post('newStatus');
-        $isChangeStatus = false;
         $model = $this->findModule($id);
 
-        try {
-            $isChangeStatus = $model->changeStatus($status);
-        } catch (\Exception $e) {
-        }
+        $success = $this->moduleService->changeStatus($model, $status);
 
-        if ($isChangeStatus) {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => "Модуль $model->number " . ($model->status ? 'включен' : 'выключен') . '.',
-                'type' => 'info'
-            ]);
-        } else {
-            Yii::$app->session->addFlash('toastify', [
-                'text' => "Не удалось " . (!$status ? 'включить' : 'выключить') . " модуль $model?->number.",
-                'type' => 'error'
-            ]);
-        }
-        
-        if ($this->request->isAjax) {
-            return $this->asJson([
-                'data' => [
-                    'success' => $isChangeStatus,
-                    'module' => [
-                        'id' => $model?->id,
-                        'status' => $model?->status,
-                    ]
-                ],
-            ]);
-        }
+        $this->addFlashMessage(
+            $success ? "Модуль {$model->number} ". ($model->status ? 'включен' : 'выключен') : 'Не удалось ' . (!$status ? 'включить' : 'выключить') . " модуль {$model?->number}.",
+            $success ? 'info' : 'error'
+        );
 
-        return $this->actionModules();
+        return $this->asJson([
+            'success' => $success,
+            'code' => Yii::$app->response->statusCode,
+            'module' => [
+                'status' => $model?->status,
+            ]
+        ]);
     }
 
     /**
@@ -161,71 +134,57 @@ class ModuleController extends Controller
      */
     public function actionDeleteModules(?string $id = null): Response
     {
-        $modules = [];
+        $modules = $id ? [$id] : ($this->request->post('modules') ?: []);
+        $count = count($modules);
         $result = [];
 
-        $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
+        $result['success'] = $count && $this->moduleService->deleteModules($modules);
+        $result['message'] = $result['success'] ? 'Modules deleted.' : 'Modules not deleted.';
 
-        if (count($modules) && $result['success'] = Modules::deleteModules($modules)) {
-            $result['message'] = 'Modules delete.';
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($modules) > 1 ? 'Модули успешно удалены.' : 'Модуль успешно удален.',
-                'type' => 'success'
-            ]);
-        } else {
-            $result['message'] = 'Modules not deleted.';
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($modules) > 1 ? 'Не удалось удалить модули.' : 'Не удалось удалить модуль.',
-                'type' => 'error'
-            ]);
-        }
+        $this->addFlashMessage(
+            $result['success'] 
+                ? ($count > 1 ? 'Модули успешно удалены.' : 'Модуль успешно удален.') 
+                : ($count > 1 ? 'Не удалось удалить модули.' : 'Не удалось удалить модуль.'),
+            $result['success'] ? 'success' : 'error'
+        );
 
         $result['code'] = Yii::$app->response->statusCode;
-
-        return $this->asJson([
-            'data' => $result
-        ]);
+        return $this->asJson($result);
     }
 
     public function actionClearModules(?string $id = null): Response
     {
-        $modules = [];
+        $modules = $id ? [$id] : ($this->request->post('modules') ?: []);
+        $count = count($modules);
         $result = [];
 
-        $modules = (!is_null($id) ? [$id] : ($this->request->post('modules') ? $this->request->post('modules') : []));
+        $result['success'] = $count && $this->moduleService->clearModules($modules);
+        $result['message'] = $result['success'] ? 'Modules cleared.' : 'Modules not cleared.';
 
-        if (count($modules) && $result['success'] = Modules::clearModules($modules)) {
-            $result['message'] = 'Modules cleare.';
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($modules) > 1 ? 'Модули успешно очищены.' : 'Модуль успешно очищен.',
-                'type' => 'success'
-            ]);
-        } else {
-            $result['message'] = 'Modules not cleared.';
-            Yii::$app->session->addFlash('toastify', [
-                'text' => count($modules) > 1 ? 'Не удалось очистить модули.' : 'Не удалось очистить модуль.',
-                'type' => 'error'
-            ]);
-        }
+        $this->addFlashMessage(
+            $result['success'] 
+                ? ($count > 1 ? 'Модули успешно очищены.' : 'Модуль успешно очищен.') 
+                : ($count > 1 ? 'Не удалось очистить модули.' : 'Не удалось очистить модуль.'),
+            $result['success'] ? 'success' : 'error'
+        );
 
         $result['code'] = Yii::$app->response->statusCode;
-
-        return $this->asJson([
-            'data' => $result
-        ]);
+        return $this->asJson($result);
     }
 
-    protected function findModule($id)
+    protected function findModule(?int $id): ?Modules
     {
-        if (($model = Modules::findOne(['id' => $id])) !== null) {
+        if ($id && ($model = Modules::findOne(['id' => $id])) !== null) {
             return $model;
         }
 
-        Yii::$app->session->addFlash('toastify', [
-            'text' => "Модуль не найден.",
-            'type' => 'error'
-        ]);
+        $this->addFlashMessage('Модул не найден.', 'error');
 
         throw new NotFoundHttpException('Модуль не найден.');
+    }
+
+    protected function findEvent(?int $id): ?Events
+    {
+        return Events::findOne(['id' => $id]);
     }
 }

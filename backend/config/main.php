@@ -74,7 +74,8 @@ return [
                 '/flash' => '/flash', 
                 '/flash/<action>' => '/flash/base/<action>',
 
-                '/<action>' => '/main/dispatch',    
+                '/file/download/<filePath:.*>' => '/file/download',
+                // '/<action>' => '/main/dispatch', 
             ],
         ],
 

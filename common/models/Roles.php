@@ -62,8 +62,11 @@ class Roles extends \yii\db\ActiveRecord
      * @param string $title
      * @return int|null
      */
-    public static function getRoleId(string $title): int|null
+    public static function getRoleId(string $title): ?int
     {
-        return (self::findOne(['title' => $title]))?->id;
+        $cacheKey = 'role_id_' . $title;
+        return Yii::$app->cache->getOrSet($cacheKey, function () use ($title) {
+            return self::find()->select('id')->where(['title' => $title])->scalar();
+        }, 3600);
     }
 }
