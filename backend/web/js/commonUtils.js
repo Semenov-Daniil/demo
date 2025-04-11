@@ -23,8 +23,8 @@ class CommonUtils
             url: url,
             pushState: false,
             replace: false,
-            timeout: 10000,
             scrollTo: false,
+            timeout: 5000,
             ...options,
         };
         await $.pjax.reload(pjaxOptions);
@@ -108,6 +108,44 @@ class CommonUtils
             return new Promise((resolve) => {
                 timeout = setTimeout(() => resolve(func(...args)), delay);
             });
+        };
+    }
+
+    static debounceWithPjax(fn, delay, pjaxContainer) {
+        let timeoutId = null;
+        let isPjaxPending = false;
+    
+        const checkPjaxStatus = () => {
+            return $(pjaxContainer).data('pjax-active') === true;
+        };
+    
+        const execute = async (...args) => {
+            if (!isPjaxPending) {
+                try {
+                    await fn(...args);
+                } catch (error) {
+                    console.error('Error in debounced PJAX execution:', error);
+                }
+            }
+        };
+    
+        return function (...args) {
+            clearTimeout(timeoutId);
+    
+            isPjaxPending = checkPjaxStatus();
+    
+            if (isPjaxPending) {
+                const onPjaxComplete = async () => {
+                    isPjaxPending = false;
+                    $(pjaxContainer).off('pjax:complete', onPjaxComplete);
+                    await execute(...args);
+                };
+                $(pjaxContainer).off('pjax:complete').on('pjax:complete', onPjaxComplete);
+            } else {
+                timeoutId = setTimeout(async () => {
+                    await execute(...args);
+                }, delay);
+            }
         };
     }
 };

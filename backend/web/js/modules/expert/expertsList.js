@@ -1,12 +1,15 @@
 $(() => {
     const checkboxManager = new GridCheckboxManager('pjax-experts', 'expertsCheckedItems');
 
+    const pjaxExperts = '#pjax-experts';
     const $pjaxExperts = $('#pjax-experts');
     const $modalUpdateExpert = $('#modal-update-expert');
 
     const actionButtonClasses = ['.btn-delete-selected-experts'];
 
     const updateCheckboxState = () => CommonUtils.updateCheckboxState('experts_all', 'experts[]', actionButtonClasses);
+
+    const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500, pjaxExperts);
 
     $pjaxExperts
         .off('click', '.btn-select-all-experts')
@@ -37,7 +40,8 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateExpert.modal('hide');
-                        CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
+                        // CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
+                        reloadPjaxDebounced(pjaxExperts, `${url}/list-experts`);
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -59,7 +63,8 @@ $(() => {
                 method: 'DELETE',
                 success(data) {
                     if (data.success) {
-                        CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
+                        // CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
+                        reloadPjaxDebounced(pjaxExperts, `${url}/list-experts`);
                     }
                 },
             });
@@ -77,7 +82,8 @@ $(() => {
                     data: { experts },
                     success(data) {
                         if (data.success) {
-                            CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
+                            // CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
+                            reloadPjaxDebounced(pjaxExperts, `${url}/list-experts`);
                         }
                     },
                 });

@@ -22,6 +22,8 @@ class m241030_122531_create_files_table extends Migration
             'modules_id' => $this->integer()->null()->defaultValue(null),
             'name' => $this->string(255)->notNull(),
             'extension' => $this->string(255)->notNull(),
+            'created_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
+            'updated_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
         ]);
 
         $this->createIndex('idx-files-events_id', self::TABLE_NAME, 'events_id');

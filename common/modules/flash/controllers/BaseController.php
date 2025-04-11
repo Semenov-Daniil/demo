@@ -10,7 +10,7 @@ use yii\web\Controller;
  */
 class BaseController extends Controller
 {
-    public function actionGetMessages()
+    public function actionMessages()
     {
         $messages = Yii::$app->session->getFlash('toastify', []);
         Yii::$app->session->close();

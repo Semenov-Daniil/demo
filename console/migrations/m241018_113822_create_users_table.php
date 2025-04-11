@@ -24,6 +24,8 @@ class m241018_113822_create_users_table extends Migration
             'password' => $this->string(255)->notNull(),
             'roles_id' => $this->integer()->notNull(),
             'auth_key' => $this->string(32)->unique()->notNull(),
+            'created_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
+            'updated_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
         ]);
 
         $this->createIndex('idx-users-roles_id', self::TABLE_NAME, 'roles_id');

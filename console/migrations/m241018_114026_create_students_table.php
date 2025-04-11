@@ -20,6 +20,8 @@ class m241018_114026_create_students_table extends Migration
             'students_id' => $this->primaryKey(),
             'events_id' => $this->integer()->notNull(),
             'dir_prefix' => $this->string(255)->unique()->notNull(),
+            'created_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
+            'updated_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
         ]);
 
         $this->addForeignKey('fk-students-students_id', self::TABLE_NAME, 'students_id', self::USERS_TABLE_NAME, 'id', 'CASCADE', 'CASCADE');

@@ -44,3 +44,5 @@ phpunit.phar
 
 /common/events
 /common/students
+
+.vscode

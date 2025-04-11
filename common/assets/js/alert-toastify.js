@@ -1,23 +1,20 @@
 ("use strict");
 
-let toastAlerts = [];
-
 async function fetchFlashMessages() {
     let pathname = window.location.pathname.replace(/^\/|\/$/g, '');
     const parts = pathname.split('/');
 
     $.ajax({
-        url: ((parts.length === 0 || parts[0] === '') ? '' : `/${parts[0]}`) + '/flash/get-messages',
+        url: ((parts.length === 0 || parts[0] === '') ? '' : `/${parts[0]}`) + '/flash/messages',
         method: 'GET',
         dataType: 'json',
         async success(response) {
-            toastAlerts = response;
-            renderFlashMessages();
+            renderFlashMessages(response);
         }
     });
 }
 
-function renderFlashMessages() {
+function renderFlashMessages(toastAlerts) {
     for (let alert of toastAlerts) {
         let newNoty = new Noty({
             text: alert.text,

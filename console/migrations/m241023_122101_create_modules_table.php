@@ -20,6 +20,8 @@ class m241023_122101_create_modules_table extends Migration
             'events_id' => $this->integer()->notNull(),
             'status' => $this->tinyInteger(1)->defaultValue(1)->notNull(),
             'number' => $this->integer()->notNull(),
+            'created_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
+            'updated_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
         ]);
 
         $this->createIndex('idx-modules-events_id', self::TABLE_NAME, 'events_id');

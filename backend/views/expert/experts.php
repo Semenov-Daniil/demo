@@ -21,7 +21,7 @@ BackendAppAsset::register($this);
 
 $this->title = 'Эксперты';
 
-$this->registerJsFile('@web/js/modules/expert/experts.js');
+$this->registerJsFile('@web/js/modules/expert/experts.js', ['depends' => BackendAppAsset::class]);
 
 ?>
 
@@ -29,7 +29,8 @@ $this->registerJsFile('@web/js/modules/expert/experts.js');
     <?php Pjax::begin([
         'id' => 'pjax-create-expert',
         'enablePushState' => false,
-        'timeout' => 100000,
+        'timeout' => 5000,
+        'clientOptions' => ['cache' => true],
     ]); ?>
     
         <?= $this->render('_expert-create', [
@@ -43,7 +44,7 @@ $this->registerJsFile('@web/js/modules/expert/experts.js');
     <?php Pjax::begin([
         'id' => 'pjax-experts',
         'enablePushState' => false,
-        'timeout' => 100000,
+        'timeout' => 5000,
         'clientOptions' => ['cache' => true],
     ]); ?>
 
