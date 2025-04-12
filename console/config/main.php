@@ -12,8 +12,8 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => [
         'log',
-        'queue',
-        'redis',
+        // 'queue',
+        // 'redis',
     ],
     'controllerNamespace' => 'console\controllers',
     'aliases' => [
@@ -32,8 +32,8 @@ return [
                 '@yii/rbac/migrations',
             ],
         ],
-        'user' => 'console\controllers\UserController',
-        'clear' => 'console\controllers\ClearController',
+        // 'user' => 'console\controllers\UserController',
+        // 'clear' => 'console\controllers\ClearController',
     ],
     'components' => [
         'log' => [
@@ -44,17 +44,17 @@ return [
                 ],
             ],
         ],
-        'redis' => [
-            'class' => 'yii\redis\Connection',
-            'hostname' => 'localhost',
-            'port' => 6379,
-            'database' => 0,
-        ],
-        'queue' => [
-            'class' => 'yii\queue\redis\Queue',
-            'redis' => 'redis', // Ссылка на компонент redis
-            'channel' => 'queue',
-        ],
+        // 'redis' => [
+        //     'class' => 'yii\redis\Connection',
+        //     'hostname' => 'localhost',
+        //     'port' => 6379,
+        //     'database' => 0,
+        // ],
+        // 'queue' => [
+        //     'class' => 'yii\queue\redis\Queue',
+        //     'redis' => 'redis',
+        //     'channel' => 'queue',
+        // ],
     ],
     'params' => $params,
 ];

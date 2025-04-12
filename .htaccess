@@ -1,17 +1,49 @@
-Options +FollowSymLinks
-IndexIgnore */*
+Options -Indexes -MultiViews +FollowSymLinks
 
-LimitRequestBody 10737418240
+DirectoryIndex index.php
 
-php_value post_max_size 12G
-php_value upload_max_filesize 10G
+LimitRequestBody 6442450944
+
+php_value post_max_size 5G
+php_value upload_max_filesize 5G
 php_value max_execution_time 300
 php_value max_input_time 300
 
-RewriteEngine on
+php_flag log_errors on
+php_value error_log /var/www/html/demo/logs/php_errors.log  
+
+RewriteEngine On
+RewriteBase /
+
+RewriteCond %{REQUEST_URI} ^/(common|frontend|backend)/(config|models|controllers|views)/ [NC]
+RewriteRule ^ - [F]
+
+RewriteCond %{REQUEST_URI} ^/(frontend|backend)/web/$
+RewriteRule ^ - [F]
 
 RewriteCond %{REQUEST_URI} ^/expert
-RewriteRule ^expert\/?(.*)$ backend/web/$1
+RewriteRule ^expert/?(.*)$ backend/web/$1 [L,NC]
 
-RewriteCond %{REQUEST_URI} !^/(expert)
-RewriteRule ^(.*)$ frontend/web/$1
+RewriteCond %{REQUEST_URI} !^/(expert|backend|frontend|assets|uploads)
+RewriteRule ^(.*)$ frontend/web/$1 [L,NC]
+
+<FilesMatch "^(\.env|\.gitignore|\.gitattributes|composer\.(json|lock)|.*\.md|.*\.yml)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+SetEnvIf User-Agent "libwww-perl|wget|curl|bot|spider|crawler" bad_bot
+Order Allow,Deny
+Allow from all
+Deny from env=bad_bot
+
+RewriteCond %{QUERY_STRING} (eval\(|base64_decode|GLOBALS|system\() [NC,OR]
+RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+RewriteCond %{QUERY_STRING} \.\./ [NC]
+RewriteRule ^ - [F]
+
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "DENY"
+Header set X-XSS-Protection "1; mode=block"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header always append Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self';"
