@@ -1,12 +1,12 @@
 <?php
 
-namespace common\modules\flash\controllers;
+namespace common\modules\toast\controllers;
 
 use Yii;
 use yii\web\Controller;
 
 /**
- * Default controller for the `flash` module
+ * Default controller for the `toast` module
  */
 class BaseController extends Controller
 {

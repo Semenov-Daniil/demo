@@ -7,7 +7,7 @@ use yii\web\Controller;
 
 class BaseController extends Controller
 {
-    protected function addFlashMessage(string $message, string $type): void
+    protected function addToastMessage(string $message, string $type): void
     {
         Yii::$app->session->addFlash('toastify', ['text' => $message, 'type' => $type]);
     }

@@ -19,14 +19,6 @@ return [
                 '@common/events'
             ],
         ],
-        'queue',
-        'redis'
-    ],
-    'modules' => [
-        'flash' => [
-            'class' => 'common\modules\flash\Module',
-            'defaultRoute' => 'base'
-        ],
     ],
     'defaultRoute' => 'expert/experts',
     'components' => [
@@ -38,6 +30,18 @@ return [
                 'multipart/form-data' => 'yii\web\MultipartFormDataParser',
             ],
         ],
+        'response' => [
+            'class' => 'yii\web\Response',
+            'on beforeSend' => function ($event) {
+                $response = $event->sender;
+                if ($response->statusCode == 500) {
+                    Yii::$app->session->addFlash('toastify', [
+                        'text' => 'Произошла внутренняя ошибка сервера.',
+                        'type' => 'error'
+                    ]);
+                }
+            },
+        ],
         'user' => [
             'identityClass' => 'common\models\Users',
             'enableAutoLogin' => false,
@@ -45,7 +49,6 @@ return [
             'loginUrl' => ['login'],
         ],
         'session' => [
-            // this is the name of the session cookie used for login on the backend
             'name' => 'advanced-backend',
             'cookieParams' => [
                 'lifetime' => 0,
@@ -71,26 +74,17 @@ return [
             'rules' => [
                 '/<action:(login|logout)>' => '/main/<action>',
 
-                '/flash' => '/flash', 
-                '/flash/<action>' => '/flash/base/<action>',
+                '/toast/<action>' => '/toast/base/<action>',
 
                 '/file/download/<filePath:.*>' => '/file/download',
-                // '/<action>' => '/main/dispatch', 
             ],
         ],
-
-        'redis' => [
-            'class' => 'yii\redis\Connection',
-            'hostname' => 'localhost',
-            'port' => 6379,
-            'database' => 0,
+    ],
+    'modules' => [
+        'toast' => [
+            'class' => 'common\modules\toast\Module',
+            'defaultRoute' => 'base'
         ],
-        'queue' => [
-            'class' => 'yii\queue\redis\Queue',
-            'redis' => 'redis', // ID компонента Redis
-            'channel' => 'queue', // Название канала
-        ],
-        
     ],
     'params' => $params,
 ];

@@ -32,9 +32,9 @@ class FileComponent extends Component implements BootstrapInterface
      * @param string $path path of the directory to be created. 
      * @return bool whether the directory is created successfully
      */
-    public static function createDirectory(string $path): bool
+    public static function createDirectory(string $path, int $mode = 0755): bool
     {
-        return !empty($path) && !is_dir($path) && FileHelper::createDirectory($path, 0755, true);
+        return !empty($path) && !is_dir($path) && FileHelper::createDirectory($path, $mode, true);
     }
 
     /**

@@ -74,7 +74,7 @@ class ExpertController extends BaseController
         if ($this->request->isPost && $model->load(Yii::$app->request->post())) {
             $success = $this->expertService->createExpert($model);
 
-            $this->addFlashMessage(
+            $this->addToastMessage(
                 $success ? 'Эксперт успешно добавлен.' : 'Не удалось добавить эксперта.',
                 $success ? 'success' : 'error'
             );
@@ -102,7 +102,7 @@ class ExpertController extends BaseController
         if ($this->request->isPatch && $model->load($this->request->post())) {
             $result['success'] = $this->expertService->updateExpert($id, $model);
 
-            $this->addFlashMessage(
+            $this->addToastMessage(
                 $result['success'] ? 'Эксперт успешно обновлен.' : 'Не удалось обновить эксперта.',
                 $result['success'] ? 'success' : 'error'
             );
@@ -134,7 +134,7 @@ class ExpertController extends BaseController
         $result['success'] = $count && $this->expertService->deleteExperts($experts);
         $result['message'] = $result['success'] ? 'Experts deleted.' : 'Experts not deleted.';
 
-        $this->addFlashMessage(
+        $this->addToastMessage(
             $result['success'] 
                 ? ($count > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.') 
                 : ($count > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.'),

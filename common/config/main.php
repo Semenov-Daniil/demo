@@ -9,29 +9,7 @@ return [
     ],
     'language' => 'ru-RU',
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
-    'modules' => [
-        'debug' => [
-            'class' => 'yii\debug\Module',
-            'allowedIPs' => ['*'],
-        ],
-        'gii' => [
-            'class' => 'yii\gii\Module',
-            'allowedIPs' => ['*'],
-        ],
-    ],
     'components' => [
-        'response' => [
-            'class' => 'yii\web\Response',
-            'on beforeSend' => function ($event) {
-                $response = $event->sender;
-                if ($response->statusCode == 500) {
-                    Yii::$app->session->addFlash('toastify', [
-                        'text' => 'Произошла внутренняя ошибка сервера.',
-                        'type' => 'error'
-                    ]);
-                }
-            },
-        ],
         'cache' => [
             'class' => \yii\caching\FileCache::class,
         ],
@@ -70,5 +48,15 @@ return [
                 ],
             ],
         ]
+    ],
+    'modules' => [
+        'debug' => [
+            'class' => 'yii\debug\Module',
+            'allowedIPs' => ['*'],
+        ],
+        'gii' => [
+            'class' => 'yii\gii\Module',
+            'allowedIPs' => ['*'],
+        ],
     ],
 ];

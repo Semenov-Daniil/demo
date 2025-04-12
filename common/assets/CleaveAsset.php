@@ -16,6 +16,6 @@ class CleaveAsset extends AssetBundle
         'js/plugins/cleave.init.js',
     ];
     public $depends = [
-        'common\assets\AppAsset',
+        'yii\web\YiiAsset',
     ];
 }

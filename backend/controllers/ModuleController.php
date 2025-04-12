@@ -85,7 +85,7 @@ class ModuleController extends BaseController
         if ($this->request->isPost && $model->load($this->request->post())) {
             $success = $this->moduleService->createModule($model);
 
-            $this->addFlashMessage(
+            $this->addToastMessage(
                 $success ? 'Модуль успешно создан.' : 'Не удалось создать модуль.',
                 $success ? 'success' : 'error'
             );
@@ -111,7 +111,7 @@ class ModuleController extends BaseController
 
         $success = $this->moduleService->changeStatus($model, $status);
 
-        $this->addFlashMessage(
+        $this->addToastMessage(
             $success ? "Модуль {$model->number} ". ($model->status ? 'включен' : 'выключен') : 'Не удалось ' . (!$status ? 'включить' : 'выключить') . " модуль {$model?->number}.",
             $success ? 'info' : 'error'
         );
@@ -141,7 +141,7 @@ class ModuleController extends BaseController
         $result['success'] = $count && $this->moduleService->deleteModules($modules);
         $result['message'] = $result['success'] ? 'Modules deleted.' : 'Modules not deleted.';
 
-        $this->addFlashMessage(
+        $this->addToastMessage(
             $result['success'] 
                 ? ($count > 1 ? 'Модули успешно удалены.' : 'Модуль успешно удален.') 
                 : ($count > 1 ? 'Не удалось удалить модули.' : 'Не удалось удалить модуль.'),
@@ -161,7 +161,7 @@ class ModuleController extends BaseController
         $result['success'] = $count && $this->moduleService->clearModules($modules);
         $result['message'] = $result['success'] ? 'Modules cleared.' : 'Modules not cleared.';
 
-        $this->addFlashMessage(
+        $this->addToastMessage(
             $result['success'] 
                 ? ($count > 1 ? 'Модули успешно очищены.' : 'Модуль успешно очищен.') 
                 : ($count > 1 ? 'Не удалось очистить модули.' : 'Не удалось очистить модуль.'),
@@ -178,7 +178,7 @@ class ModuleController extends BaseController
             return $model;
         }
 
-        $this->addFlashMessage('Модул не найден.', 'error');
+        $this->addToastMessage('Модул не найден.', 'error');
 
         throw new NotFoundHttpException('Модуль не найден.');
     }

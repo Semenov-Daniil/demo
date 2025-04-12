@@ -19,10 +19,8 @@ class LoginAsset extends AssetBundle
     ];
     public $js = [
         'libs/bootstrap/js/bootstrap.bundle.min.js',
-        'libs/simplebar/simplebar.min.js',
     ];
     public $depends = [
         'yii\web\YiiAsset',
-        'yii\bootstrap5\BootstrapAsset'
     ];
 }

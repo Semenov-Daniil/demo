@@ -1,16 +1,16 @@
 <?php
 
-namespace common\modules\flash;
+namespace common\modules\toast;
 
 /**
- * flash module definition class
+ * toast module definition class
  */
 class Module extends \yii\base\Module
 {
     /**
      * {@inheritdoc}
      */
-    public $controllerNamespace = 'common\modules\flash\controllers';
+    public $controllerNamespace = 'common\modules\toast\controllers';
 
     /**
      * {@inheritdoc}

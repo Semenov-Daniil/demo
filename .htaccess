@@ -24,7 +24,7 @@ RewriteRule ^ - [F]
 RewriteCond %{REQUEST_URI} ^/expert
 RewriteRule ^expert/?(.*)$ backend/web/$1 [L,NC]
 
-RewriteCond %{REQUEST_URI} !^/(expert|backend|frontend|assets|uploads)
+RewriteCond %{REQUEST_URI} !^/(expert|backend|frontend)
 RewriteRule ^(.*)$ frontend/web/$1 [L,NC]
 
 <FilesMatch "^(\.env|\.gitignore|\.gitattributes|composer\.(json|lock)|.*\.md|.*\.yml)$">

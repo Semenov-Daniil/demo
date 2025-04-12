@@ -131,7 +131,7 @@ class StudentDataController extends BaseController
                     unlink($zipFilePath);
                 });
         } catch (\Exception $e) {
-            $this->addFlashMessage('Не удалось скачать архив.', 'error');
+            $this->addToastMessage('Не удалось скачать архив.', 'error');
     
             return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
         }
@@ -143,7 +143,7 @@ class StudentDataController extends BaseController
             return $model;
         }
 
-        $this->addFlashMessage('Студент не найден.', 'error');
+        $this->addToastMessage('Студент не найден.', 'error');
 
         throw new NotFoundHttpException('Студент не найден.');
     }
