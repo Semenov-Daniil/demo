@@ -5,7 +5,7 @@ async function fetchFlashMessages() {
     const parts = pathname.split('/');
 
     $.ajax({
-        url: ((parts.length === 0 || parts[0] === '') ? '' : `/${parts[0]}`) + '/flash/messages',
+        url: ((parts.length === 0 || parts[0] === '') ? '' : `/${parts[0]}`) + '/toast/messages',
         method: 'GET',
         dataType: 'json',
         async success(response) {

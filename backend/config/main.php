@@ -16,7 +16,8 @@ return [
             'class' => 'common\components\FileComponent',
             'directories' => [
                 '@common/students',
-                '@common/events'
+                '@common/events',
+                '@root/logs',
             ],
         ],
     ],

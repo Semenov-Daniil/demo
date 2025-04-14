@@ -29,17 +29,6 @@ class StudentService
         return "{$login}_m{$numberModule}";
     }
 
-    public static function getTitleDirectoryModule(string $prefix, int $numberModule): string
-    {
-        return "{$prefix}-m{$numberModule}";
-    }
-
-    //TODO вынести в moduleService
-    public function getDirectoryModuleFileTitle(int|string $moduleNumber): string
-    {
-        return "module-{$moduleNumber}";
-    }
-
     public function getFolders(int $studentId, string $dirTitle): array
     {
         $folders = [];
@@ -50,7 +39,7 @@ class StudentService
 
         if ($dirTitle == 'all') {
             foreach ($student->modules as $module) {
-                $folders[] = Yii::getAlias("@students/{$student->user->login}/" . self::getTitleDirectoryModule($student->dir_prefix, $module->number));
+                $folders[] = Yii::getAlias("@students/{$student->user->login}/" . $this->moduleService->getTitleDirectoryModule($student->dir_prefix, $module->number));
             }
         } else {
             $folders[] = Yii::getAlias("@students/{$student->user->login}/{$dirTitle}");
@@ -78,9 +67,11 @@ class StudentService
             $student->events_id = $form->events_id;
             $student->dir_prefix = $this->generateRandomString(8, ['lowercase']);
 
-            if (!($student->save() && $this->setupStudentEnvironment($student, $user->login, $user->temp_password))) {
+            if (!$student->save()) {
                 throw new Exception('Failed to create student');
             }
+
+            $this->setupStudentEnvironment($student, $user->login, $user->temp_password);
 
             $transaction->commit();
             return true;
@@ -179,16 +170,16 @@ class StudentService
      */
     private function setupStudentEnvironment(Students $student, string $login, string $password): bool
     {
-        if (!Yii::$app->dbComponent->createUser($login, $password) ||
-            !$this->createStudentDirectory($login))
-        {
-            return false;
+        if (!Yii::$app->dbComponent->createUser($login, $password)) {
+            throw new Exception('Failed to create mysql account.');
+        }
+
+        if (!$this->createStudentDirectory($login)) {
+            throw new Exception('Failed to create directory.');
         }
 
         foreach ($student->modules as $module) {
-            if (!$this->moduleService->createStudentModuleEnvironment($student, $module)) {
-                return false;
-            }
+            $this->moduleService->createStudentModuleEnvironment($student, $module);
         }
 
         $event = $student->event;
@@ -196,9 +187,9 @@ class StudentService
             $eventPath = Yii::getAlias("@events/{$event->dir_title}");
             $studentPath = Yii::getAlias("@students/$login/public");
             foreach ($event->files as $file) {
-                $fileCopyDirectory = $file->modules_id ? ($this->getDirectoryModuleFileTitle($file->module->number) . '/') : '';
-                if (!copy("$eventPath/{$fileCopyDirectory}{$file->save_name}.{$file->extension}", "$studentPath/{$fileCopyDirectory}{$file->save_name}.{$file->extension}")) {
-                    return false;
+                $fileCopyDirectory = $file->modules_id ? ($this->moduleService->getDirectoryModuleFileTitle($file->module->number) . '/') : '';
+                if (!copy("$eventPath/{$fileCopyDirectory}{$file->save_name}.{$file->extension}", "{$studentPath}/{$fileCopyDirectory}{$file->save_name}.{$file->extension}")) {
+                    throw new Exception("Failed to copy the {$file->save_name}.{$file->extension} file to the {$studentPath}/{$fileCopyDirectory} directory.");
                 }
             }
         }

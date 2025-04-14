@@ -1,24 +1,23 @@
 <?php
 
-namespace frontend\controllers;
+namespace backend\controllers;
 
 use common\models\EncryptedPasswords;
 use common\models\Events;
-use common\models\FilesEvents;
-use Yii;
-use yii\web\Controller;
-use yii\filters\VerbFilter;
-use yii\filters\AccessControl;
+use common\models\Files;
 use common\models\LoginForm;
-use common\models\Passwords;
 use common\models\Roles;
 use common\models\Students;
 use common\models\Users;
+use Yii;
+use yii\filters\AccessControl;
+use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 
 /**
- * Site controller
+ * Main controller
  */
-class StudentController extends Controller
+class MainController extends Controller
 {
     /**
      * {@inheritdoc}
@@ -30,20 +29,14 @@ class StudentController extends Controller
                 'class' => AccessControl::class,
                 'rules' => [
                     [
-                        'actions' => ['index', 'logout', 'error'],
+                        'actions' => ['login', 'error'],
+                        'allow' => true,
+                        'roles' => ['?'],
+                    ],
+                    [
                         'allow' => true,
                         'roles' => ['student'],
                     ],
-                    [
-                        'actions' => ['login'],
-                        'allow' => true,
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::class,
-                'actions' => [
-                    'logout' => ['post'],
                 ],
             ],
         ];
@@ -58,10 +51,6 @@ class StudentController extends Controller
             'error' => [
                 'class' => \yii\web\ErrorAction::class,
             ],
-            'captcha' => [
-                'class' => \yii\captcha\CaptchaAction::class,
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
         ];
     }
 
@@ -73,7 +62,7 @@ class StudentController extends Controller
     public function actionIndex()
     {
         $student = Students::findOne(['students_id' => Yii::$app->user->id]);
-        $files = FilesEvents::getDataProviderFiles($student->event->id);
+        $files = Files::getDataProviderFiles($student->event->id);
         $modules = Events::findOne(['id' => $student->event->id])->modules;
 
         return $this->render('index', [
@@ -124,7 +113,6 @@ class StudentController extends Controller
     public function actionLogout()
     {
         Yii::$app->user->logout();
-
         return $this->goHome();
     }
 }

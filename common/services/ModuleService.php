@@ -11,6 +11,18 @@ use yii\helpers\VarDumper;
 
 class ModuleService
 {
+    private VirtualHostService $vhostService;
+    private array $filesModule = [
+        'access.log' => '',
+        'error.log' => '',
+        'index.php' => '<?php echo "Welcome, Student to Module";'
+    ];
+
+    public function __construct()
+    {
+        $this->vhostService = new VirtualHostService();
+    }
+
     public static function getDirectoryModuleFileTitle(int $moduleNumber): string
     {
         return "module-{$moduleNumber}";
@@ -72,19 +84,34 @@ class ModuleService
         $publicModuleDir = $this->getDirectoryModuleFileTitle($module->number);
 
         if (!Yii::$app->dbComponent->createDb($dbName) ||
-            !Yii::$app->dbComponent->changePrivileges($login, $dbName, $module->status))
-        {
-            return false;
+            !Yii::$app->dbComponent->changePrivileges($login, $dbName, $module->status)
+        ) {
+            throw new Exception("Failed to create and configure the module database: {$dbName}");
         }
 
         if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}")) ||
-            !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/{$login}/public/{$publicModuleDir}")))
-        {
-            return false;
+            !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/{$login}/public/{$publicModuleDir}"))
+        ) {
+            throw new Exception("Failed to create module folders: {$login}/{$studentModuleDir}");
         }
+
+        if (!$this->addFilesToModule(Yii::getAlias("@students/{$login}/{$studentModuleDir}"))) {
+            throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
+        }
+
+        $this->vhostService->setupVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
         return true;
     }
+
+    private function addFilesToModule(string $path): bool
+    {
+        foreach ($this->filesModule as $filename => $content) {
+            file_put_contents("$path/$filename", $content);
+        }
+
+        return true;
+    } 
 
     /**
      * Changes the activity status of the module.
