@@ -11,4 +11,5 @@ return [
         'login' => getenv('SUPER_EXPERT_LOGIN') ?: 'expert',
         'password' => getenv('SUPER_EXPERT_PASSWORD') ?: 'expert',
     ],
+    'siteName' => 'demo.ru',
 ];

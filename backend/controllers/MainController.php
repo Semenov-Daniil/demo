@@ -16,15 +16,6 @@ use yii\web\NotFoundHttpException;
  */
 class MainController extends Controller
 {
-    // private $controllers = [
-    //     'expert' => 'backend\controllers\ExpertController',
-    //     'event' => 'backend\controllers\EventController',
-    //     'student' => 'backend\controllers\StudentController',
-    //     'module' => 'backend\controllers\ModuleController',
-    //     'file' => 'backend\controllers\FileController',
-    //     'student-data' => 'backend\controllers\StudentDataController',
-    // ];
-    
     /**
      * {@inheritdoc}
      */

@@ -9,14 +9,19 @@ use Yii;
 
 class VirtualHostService
 {
-    private string $dns = 'demo';
+    public string $logFile = '';
     private string $vhostPath = '/etc/apache2/sites-available';
+
+    public function __construct()
+    {
+        $this->logFile = Yii::getAlias('@logs') . '/vhost_setup.log';
+    }
 
     private function getVhostConfig(string $path, string $title): string
     {
         return 
         "<VirtualHost *:80>
-            ServerName {$title}.{$this->dns}
+            ServerName {$title}.".Yii::$app->params['siteName']."
             DocumentRoot {$path}
             <Directory {$path}>
                 Options Indexes FollowSymLinks
@@ -34,13 +39,15 @@ class VirtualHostService
         $titleDir = basename($path);
         $vhostConfig = $this->getVhostConfig($path, $titleDir);
         $vhostFile = "{$this->vhostPath}/{$titleDir}.conf";
-        $logFile = Yii::getAlias('@logs') . "/vhost_setup.log";
 
-        if (file_put_contents($vhostFile, $vhostConfig) === false) {
-            throw new Exception("Failed to write virtual host config to {$vhostFile}");
+        $commandWrite = sprintf('echo %s | sudo /bin/tee %s 2>&1', escapeshellarg($vhostConfig), escapeshellarg($vhostFile));
+        
+        $output = shell_exec($commandWrite);
+        if ($output === null) {
+            throw new Exception("Failed to write virtual host config to {$vhostFile}: {$output}");
         }
 
-        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/enable_vhost.sh {$titleDir} {$logFile} 2>&1");
+        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/enable_vhost.sh {$titleDir} {$this->logFile} 2>&1");
         if ($output) {
             throw new Exception("Failed to enable virtual host: {$output}");
         }

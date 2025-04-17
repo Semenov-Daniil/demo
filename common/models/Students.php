@@ -5,6 +5,7 @@ namespace common\models;
 use app\components\AppComponent;
 use app\components\DbComponent;
 use app\components\FileComponent;
+use common\services\ModuleService;
 use common\services\StudentService;
 use common\traits\RandomStringTrait;
 use Exception;
@@ -144,7 +145,7 @@ class Students extends ActiveRecord
             $model['password'] = EncryptedPasswords::decryptByPassword($model['password']);
             if ($withDirectories && !empty($model['modules'])) {
                 $model['modules'] = array_map(function ($directory) use ($model) {
-                    $directory['title'] = StudentService::getTitleDirectoryModule($model['dir_prefix'], $directory['number']);
+                    $directory['title'] = ModuleService::getTitleDirectoryModule($model['dir_prefix'], $directory['number']);
                     return $directory;
                 }, $model['modules']);
             }

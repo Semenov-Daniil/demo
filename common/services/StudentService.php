@@ -15,6 +15,8 @@ class StudentService
 {
     use RandomStringTrait;
 
+    public string $logFile = '';
+
     private $userService;
     private $moduleService;
 
@@ -22,6 +24,7 @@ class StudentService
     {
         $this->userService = new UserService();
         $this->moduleService = new ModuleService();
+        $this->logFile = Yii::getAlias('@logs') . '/students.log';
     }
 
     public function getTitleDb(string $login, int $numberModule): string
@@ -178,6 +181,10 @@ class StudentService
             throw new Exception('Failed to create directory.');
         }
 
+        $this->createSystemUser($login, $password);
+
+        $this->setupSamba($login, $password);
+
         foreach ($student->modules as $module) {
             $this->moduleService->createStudentModuleEnvironment($student, $module);
         }
@@ -223,5 +230,24 @@ class StudentService
         if ($userId) {
             $this->userService->deleteUser($userId);
         }
+    }
+
+    private function createSystemUser(string $login, string $password): bool
+    {
+        $studentDir = Yii::getAlias("@students/{$login}");
+        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/create_user.sh {$login} {$password} {$studentDir} {$this->logFile} 2>&1");
+        if ($output) {
+            throw new Exception("Failed to create user {$login}: {$output}");
+        }
+        return true;
+    }
+
+    private function setupSamba(string $login, string $password): bool
+    {
+        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/setup_samba.sh {$login} {$password} {$this->logFile} 2>&1");
+        if ($output) {
+            throw new Exception("Failed to setup Samba {$login}: {$output}");
+        }
+        return true;
     }
 }

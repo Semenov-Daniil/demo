@@ -41,8 +41,11 @@ phpunit.phar
 /backend/web/index.php
 /backend/web/index-test.php
 /backend/web/robots.txt
-/common/events
-/common/students
+
+# ignore generated folders
+/events
+/students
+/logs
 
 # vscode config
 .vscode

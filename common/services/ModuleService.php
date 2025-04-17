@@ -11,6 +11,8 @@ use yii\helpers\VarDumper;
 
 class ModuleService
 {
+    public string $logFile = '';
+
     private VirtualHostService $vhostService;
     private array $filesModule = [
         'access.log' => '',
@@ -21,6 +23,7 @@ class ModuleService
     public function __construct()
     {
         $this->vhostService = new VirtualHostService();
+        $this->logFile = Yii::getAlias('@logs') . '/modules.log';
     }
 
     public static function getDirectoryModuleFileTitle(int $moduleNumber): string
@@ -28,7 +31,7 @@ class ModuleService
         return "module-{$moduleNumber}";
     }
 
-    public function getTitleDirectoryModule(string $prefix, int $moduleNumber): string
+    public static function getTitleDirectoryModule(string $prefix, int $moduleNumber): string
     {
         return "{$prefix}-m{$moduleNumber}";
     }
@@ -100,6 +103,7 @@ class ModuleService
         }
 
         $this->vhostService->setupVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+        $this->settingModule($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
         return true;
     }
@@ -112,6 +116,16 @@ class ModuleService
 
         return true;
     } 
+
+    private function settingModule(string $login, string $path)
+    {
+        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/setup_module.sh {$login} {$path} {$this->logFile} 2>&1");
+        if ($output) {
+            throw new Exception("Failed to setting module: {$output}");
+        }
+
+        return true;
+    }
 
     /**
      * Changes the activity status of the module.
