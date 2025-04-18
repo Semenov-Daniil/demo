@@ -244,7 +244,7 @@ class StudentService
 
     private function setupSamba(string $login, string $password): bool
     {
-        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/setup_samba.sh {$login} {$password} {$this->logFile} 2>&1");
+        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/add_user_samba.sh {$login} {$password} {$this->logFile} 2>&1");
         if ($output) {
             throw new Exception("Failed to setup Samba {$login}: {$output}");
         }
