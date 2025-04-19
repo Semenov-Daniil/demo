@@ -6,7 +6,7 @@ if [ -z "$1" ]; then
 fi
 
 UNIQUE_CODE=$1
-LOG_FILE="${2:-logs/vhost_setup.log}"
+LOG_FILE="${2:-logs/vhost.log}"
 
 if [[ $EUID -ne 0 ]]; then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: This script must be run with root privileges" >> "$LOG_FILE"

@@ -19,10 +19,15 @@ class m221018_114453_create_directory extends Migration
      */
     public function safeUp()
     {
+        $siteUser = Yii::$app->params['siteUser'];
+        $siteGroup = Yii::$app->params['siteGroup'];
+
         try {
             foreach ($this->directories as $directory) {
-                if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias($directory))) {
-                    throw new Exception('Failed to create directory: ' . Yii::getAlias($directory));
+                $directory = Yii::getAlias($directory);
+                $output = shell_exec("echo ".Yii::$app->params['systemPassword']. " | sudo -S ".Yii::getAlias('@bash')."/create_dir.sh {$directory} {$siteUser} {$siteGroup} 2>&1");
+                if ($output) {
+                    throw new Exception("Failed to create directory: {$output}");
                 }
             }
             return true;

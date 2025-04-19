@@ -97,7 +97,7 @@ for param in "${GLOBAL_PARAMS[@]}"; do
     fi
 done
 
-USER_SHARE="\n[%U]\n   path = $STUDENTS_DIR/%U\n   valid users = %U\n   read only = no\n   browsable = yes\n   create mask = 0660\n   directory mask = 0770\n   force user = %U\n   force group = www-data\n"
+USER_SHARE="\n[%U]\n   path = $STUDENTS_DIR/%U\n   valid users = %U\n   read only = no\n   browsable = yes\n   create mask = 0770\n   directory mask = 0770\n   force user = %U\n   force group = www-data\n"
 if ! grep -q "\[%U\]" "$TEMP_CONFIG"; then
     echo -e "$USER_SHARE" >> "$TEMP_CONFIG" || {
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to add [%U] share to $TEMP_CONFIG" >> "$LOG_FILE"

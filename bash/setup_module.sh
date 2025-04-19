@@ -55,11 +55,6 @@ if ! chmod -R 770 "$MODULE_DIR" >> "$LOG_FILE" 2>&1; then
     exit 4
 fi
 
-if ! chmod +t "$MODULE_DIR" >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed to remove write permission for module $MODULE_DIR for $USERNAME" >> "$LOG_FILE"
-    exit 4
-fi
-
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Successfully setup module $MODULE_DIR for $USERNAME" >> "$LOG_FILE"
 
 exit 0

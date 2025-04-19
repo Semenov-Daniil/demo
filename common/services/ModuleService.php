@@ -102,7 +102,7 @@ class ModuleService
             throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
         }
 
-        $this->vhostService->setupVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+        $this->vhostService->enableVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
         $this->settingModule($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
         return true;
@@ -202,9 +202,7 @@ class ModuleService
                 return false;
             }
 
-            if (!$this->deleteModulesStudents($module)) {
-                throw new Exception('Failed to delete student resources');
-            }
+            $this->deleteModulesStudents($module);
 
             $event = $module->event;
             $moduleDirTitle = $this->getDirectoryModuleFileTitle($module->number);
@@ -218,7 +216,7 @@ class ModuleService
             return true;
         } catch (Exception $e) {
             $transaction->rollBack();
-            Yii::error("Error deleting module: " . $e->getMessage(), __METHOD__);
+            Yii::error("Error delete module: " . $e->getMessage(), __METHOD__);
             return false;
         }
     }
@@ -237,18 +235,35 @@ class ModuleService
         ;
         
         foreach ($students as $student) {
-            $login = $student->user->login;
-            $dbName = $this->getTitleDb($login, $module->number);
-            $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
-
-            if (!Yii::$app->dbComponent->deleteDb($dbName) ||
-                !Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}")))
-            {
-                return false;
-            }
+            $this->deleteModuleStudent($student, $module);
         }
 
         return true;
+    }
+
+    /**
+     * Deletes a module from student.
+     * 
+     * @return bool return `true` if the module was successfully deleted.
+     */
+    public function deleteModuleStudent(Students $student, Modules $module): bool
+    {
+        try {
+            $login = $student->user->login;
+            $dbName = $this->getTitleDb($login, $module->number);
+            $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
+    
+            $this->vhostService->disableVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+    
+            Yii::$app->dbComponent->deleteDb($dbName);
+    
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+            
+            return true;
+        } catch (\Exception $e) {
+            throw new Exception("Failed to delete module {$studentModuleDir} student {$login}: {$e}");
+            return false;
+        }
     }
 
     public function clearModules(array $moduleIds): bool

@@ -52,25 +52,6 @@ if ! echo "$USERNAME:$PASSWORD" | chpasswd >> "$LOG_FILE" 2>&1; then
     exit 5
 fi
 
-if ! chown root:root "$HOME_DIR" >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed to set owner for $HOME_DIR" >> "$LOG_FILE"
-    exit 6
-fi
-
-if ! chmod 755 "$HOME_DIR" >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed to set permissions for $HOME_DIR" >> "$LOG_FILE"
-    exit 6
-fi
-
-if getent passwd www-data >/dev/null; then
-    if ! setfacl -m u:www-data:rwx "$HOME_DIR" >> "$LOG_FILE" 2>&1; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed to set ACL for $HOME_DIR" >> "$LOG_FILE"
-        exit 6
-    fi
-else
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: User www-data does not exist, skipping ACL" >> "$LOG_FILE"
-fi
-
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Successfully created user $USERNAME" >> "$LOG_FILE"
 
 exit 0

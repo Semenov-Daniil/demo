@@ -143,11 +143,15 @@ class StudentService
         $login = $student->user->login;
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$login"));
+            $this->deleteSamba($login);
+
+            $this->deleteSystemUser($login);
 
             foreach ($student->modules as $module) {
-                Yii::$app->dbComponent->deleteDb($this->getTitleDb($login, $module->number));
+                $this->moduleService->deleteModuleStudent($student, $module);
             }
+
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$login"));
 
             Yii::$app->dbComponent->deleteUser($login);
 
@@ -157,11 +161,12 @@ class StudentService
             }
 
             $transaction->rollBack();
+            return false;
         } catch (Exception $e) {
             $transaction->rollBack();
+            Yii::error("Error delete student: " . $e->getMessage(), __METHOD__);
+            return false;
         }
-
-        return false;
     }
 
     /**
@@ -242,11 +247,30 @@ class StudentService
         return true;
     }
 
+    private function deleteSystemUser(string $login): bool
+    {
+        $studentDir = Yii::getAlias("@students/{$login}");
+        $output = shell_exec('echo ' . Yii::$app->params['systemPassword'] .  " | sudo ".Yii::getAlias('@bash')."/create_user.sh {$login} {$studentDir} {$this->logFile} 2>&1");
+        if ($output) {
+            throw new Exception("Failed to create user {$login}: {$output}");
+        }
+        return true;
+    }
+
     private function setupSamba(string $login, string $password): bool
     {
         $output = shell_exec("sudo ".Yii::getAlias('@bash')."/add_user_samba.sh {$login} {$password} {$this->logFile} 2>&1");
         if ($output) {
             throw new Exception("Failed to setup Samba {$login}: {$output}");
+        }
+        return true;
+    }
+
+    private function deleteSamba(string $login): bool
+    {
+        $output = shell_exec('echo ' . Yii::$app->params['systemPassword'] . " | sudo ".Yii::getAlias('@bash')."/delete_user_samba.sh {$login} {$this->logFile} 2>&1");
+        if ($output) {
+            throw new Exception("Failed to delete user Samba {$login}: {$output}");
         }
         return true;
     }

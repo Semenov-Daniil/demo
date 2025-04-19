@@ -12,4 +12,7 @@ return [
         'password' => getenv('SUPER_EXPERT_PASSWORD') ?: 'expert',
     ],
     'siteName' => 'demo.ru',
+    'siteUser' => getenv('SITE_USER') ?: 'www-data',
+    'siteGroup' => getenv('SITE_GROUP') ?: 'www-data',
+    'systemPassword' => getenv('SYSTEM_PASSWD') ?: '',
 ];

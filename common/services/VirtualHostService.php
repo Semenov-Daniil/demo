@@ -33,7 +33,7 @@ class VirtualHostService
         </VirtualHost>";
     }
 
-    public function setupVirtualHost(string $path)
+    public function enableVirtualHost(string $path)
     {
         $path = rtrim($path, '/');
         $titleDir = basename($path);
@@ -48,6 +48,21 @@ class VirtualHostService
         }
 
         $output = shell_exec("sudo ".Yii::getAlias('@bash')."/enable_vhost.sh {$titleDir} {$this->logFile} 2>&1");
+        if ($output) {
+            throw new Exception("Failed to enable virtual host: {$output}");
+        }
+
+        return true;
+    }
+
+    public function disableVirtualHost(string $path)
+    {
+        $path = rtrim($path, '/');
+        $titleDir = basename($path);
+        $vhostFile = "{$this->vhostPath}/{$titleDir}.conf";
+
+
+        $output = shell_exec('echo ' . Yii::$app->params['systemPassword'] . " | sudo ".Yii::getAlias('@bash')."/disable_vhost.sh {$titleDir} {$this->logFile} 2>&1");
         if ($output) {
             throw new Exception("Failed to enable virtual host: {$output}");
         }
