@@ -29,6 +29,9 @@ if [[ ! -d "$HOME_DIR" ]]; then
     exit 1
 fi
 
+chown www-data:www-data "$HOME_DIR"
+chmod 755 "$HOME_DIR"
+
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking the $GROUP_NAME group" >> "$LOG_FILE"
 if getent group "$GROUP_NAME" >/dev/null; then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Group $GROUP_NAME already exists" >> "$LOG_FILE"

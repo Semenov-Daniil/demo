@@ -1,39 +1,69 @@
 #!/bin/bash
 
-LOG_FILE="logs/setup_chroot.log"
-CHROOT_DIR="/var/chroot"
+# Настройка логирования
+DEFAULT_LOG_FILE="logs/mount_student.log"
+
+LOG_FILE="${!#}" # Последний аргумент — лог-файл, если передан
+if [[ "$LOG_FILE" != /* ]]; then
+    LOG_FILE="$DEFAULT_LOG_FILE"
+fi
+
+LOG_DIR=$(dirname "$LOG_FILE")
+if [[ ! -d "$LOG_DIR" ]]; then
+    mkdir -p "$LOG_DIR" 2>/dev/null || {
+        echo "Error: Cannot create log directory '$LOG_DIR'"
+        exit 1
+    }
+fi
+
+if [ ! -f "$LOG_FILE" ]; then
+    touch "$LOG_FILE"
+    chmod 777 "$LOG_FILE"
+    chown www-data:www-data "$LOG_FILE"
+fi
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+# Начало выполнение
+echo "Beginning of the script adding commands to the environment..."
+log "Beginning of the script adding commands to the environment..."
+
+COMMANDS=("${@:1:$(($#-1))}")
 
 # Проверка root-прав
 if [[ $EUID -ne 0 ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: This script must be run with root privileges" >> "$LOG_FILE"
+    echo "Error: This script must be run with root privileges"
+    log "Error: This script must be run with root privileges"
     exit 1
 fi
 
-# Проверка входных аргументов
-if [ $# -eq 0 ]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: At least one command is required" >> "$LOG_FILE"
-    exit 2
+# Проверка наличия jk_cp
+if ! command -v jk_cp >/dev/null 2>&1; then
+    log "Error: jk_cp command not found (jailkit not installed)"
+    echo "Error: jk_cp command not found (jailkit not installed)"
+    exit 1
 fi
 
-# Проверка и копирование команд
-MISSING_COMMANDS=""
-for CMD in "$@"; do
-    CMD_PATH=$(which "$CMD" 2>/dev/null)
-    if [[ -n "$CMD_PATH" ]]; then
-        if jk_cp -v -j "$CHROOT_DIR" "$CMD_PATH" >/dev/null 2>&1; then
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Successfully added $CMD to $CHROOT_DIR" >> "$LOG_FILE"
-        else
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: Failed to add $CMD to $CHROOT_DIR" >> "$LOG_FILE"
-        fi
+# Проверка и добавление команд
+for CMD in "${COMMANDS[@]}"; do
+    if ! command -v "$CMD" >/dev/null 2>&1; then
+        log "Warning: Command not found on system: $CMD"
+        echo "Warning: Command not found on system: $CMD"
+        continue
+    fi
+
+    jk_cp -v -j "$CHROOT_DIR" "$(which $CMD)" >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        log "Info: Added command to chroot: $CMD"
     else
-        MISSING_COMMANDS="$MISSING_COMMANDS $CMD"
+        log "Error: Failed to add command to chroot: $CMD"
+        echo "Error: Failed to add command to chroot: $CMD"
     fi
 done
 
-# Предупреждение о пропущенных командах
-if [[ -n "$MISSING_COMMANDS" ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: Commands not found on server:$MISSING_COMMANDS" >> "$LOG_FILE"
-fi
+echo "Command addition process completed"
+log "Command addition process completed"
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Command addition process completed" >> "$LOG_FILE"
 exit 0
