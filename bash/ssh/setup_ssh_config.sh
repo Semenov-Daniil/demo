@@ -1,12 +1,12 @@
 #!/bin/bash
 
+# Настройка переменных
+LOG_FILE="${1:-logs/setup_ssh.log}"
 SSH_CONFIG_MAIN="/etc/ssh/sshd_config"
 SSH_CONFIG_DIR="/etc/ssh/sshd_config.d"
 STUDENT_CONF_FILE="$SSH_CONFIG_DIR/students.conf"
 
 # Настройка логирования
-LOG_FILE="${1:-logs/setup_ssh.log}"
-
 LOG_DIR=$(dirname "$LOG_FILE")
 if [[ ! -d "$LOG_DIR" ]]; then
     mkdir -p "$LOG_DIR" 2>/dev/null || {
@@ -47,10 +47,17 @@ log "Info: Writing SSH config for 'students' group to $STUDENT_CONF_FILE"
 cat > "$STUDENT_CONF_FILE" <<EOF
 Match Group students
     ChrootDirectory /var/chroot
+    ForceCommand /bin/bash
     X11Forwarding no
     AllowTcpForwarding no
     PasswordAuthentication yes
 EOF
+if [[ $? -ne 0 ]]; then
+    log "Error: Failed to create $STUDENT_CONF_FILE"
+    exit 3
+fi
+chown root:root "$STUDENT_CONF_FILE"
+chmod 644 "$STUDENT_CONF_FILE"
 
 log "Ok: SSH students.conf created"
 
@@ -64,7 +71,7 @@ fi
 
 # Проверка синтаксиса и перезапуск SSH
 log "Info: Check SSH configuration syntax and restarting..."
-if sshd -t 2>>"$LOG_FILE"; then
+if sshd -t >> "$LOG_FILE" 2>&1;  then
     if systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null; then
         log "Ok: SSH service restarted"
     else

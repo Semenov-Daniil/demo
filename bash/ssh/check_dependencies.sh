@@ -54,6 +54,49 @@ if ! systemctl is-active --quiet ssh && ! systemctl is-active --quiet sshd; then
     fi
 fi
 
+# Настройка UFW
+if command -v ufw >/dev/null 2>&1; then
+    # Проверка статуса UFW
+    if ufw status | grep -q "Status: active"; then
+        log "Info: UFW is active"
+        # Извлечение порта SSH из /etc/ssh/sshd_config
+        SSH_PORT=$(grep -E "^Port\s+[0-9]+" /etc/ssh/sshd_config | awk '{print $2}' || echo "22")
+        log "Info: Detected SSH port: $SSH_PORT"
+        
+        # Проверка, разрешён ли порт в UFW
+        if ! ufw status | grep -q "$SSH_PORT.*ALLOW"; then
+            log "Info: Configuring UFW to allow SSH on port $SSH_PORT"
+            if ufw allow "$SSH_PORT/tcp" >> "$LOG_FILE" 2>&1; then
+                log "Ok: UFW configured to allow SSH on port $SSH_PORT"
+                echo "Ok: UFW configured to allow SSH on port $SSH_PORT"
+            else
+                log "Error: Failed to configure UFW for port $SSH_PORT"
+                echo "Error: Failed to configure UFW for port $SSH_PORT"
+                exit 5
+            fi
+        else
+            log "Info: UFW already allows SSH on port $SSH_PORT"
+            echo "Info: UFW already allows SSH on port $SSH_PORT"
+        fi
+        
+        # Проверка статуса UFW после настройки
+        if ufw status | grep -q "$SSH_PORT.*ALLOW"; then
+            log "Ok: UFW status confirmed: SSH port $SSH_PORT is allowed"
+            echo "Ok: UFW status confirmed: SSH port $SSH_PORT is allowed"
+        else
+            log "Error: UFW status check failed: SSH port $SSH_PORT not allowed"
+            echo "Error: UFW status check failed: SSH port $SSH_PORT not allowed"
+            exit 6
+        fi
+    else
+        log "Warning: UFW is installed but not active, skipping SSH port configuration"
+        echo "Warning: UFW is installed but not active, skipping SSH port configuration"
+    fi
+else
+    log "Warning: UFW not installed, skipping firewall configuration"
+    echo "Warning: UFW not installed, skipping firewall configuration"
+fi
+
 echo "All dependencies are available and ssh is active"
 log "All dependencies are available and ssh is active"
 

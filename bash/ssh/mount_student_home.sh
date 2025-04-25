@@ -1,8 +1,10 @@
 #!/bin/bash
 
-# Настройка логирования
-LOG_FILE="${2:-logs/mount_student.log}"
+# Настройка переменных
+CHROOT_DIR="/var/chroot"
+LOG_FILE="${2:-logs/mount_student_home.log}"
 
+# Настройка логирования
 LOG_DIR=$(dirname "$LOG_FILE")
 if [[ ! -d "$LOG_DIR" ]]; then
     mkdir -p "$LOG_DIR" 2>/dev/null || {
@@ -22,8 +24,8 @@ log() {
 }
 
 # Начало выполнение
-echo "Beginning of the script to mount the student's home folder..."
 log "Beginning of the script to mount the student's home folder..."
+echo "Beginning of the script to mount the student's home folder..."
 
 if [ -z "$1" ]; then
     log "Error: username is required"
@@ -32,14 +34,20 @@ if [ -z "$1" ]; then
 fi
 
 USERNAME=$1
-STUDENT_HOME="/var/www/demo/students/$USERNAME"
 CHROOT_DIR="/var/chroot"
+STUDENT_HOME="/var/www/demo/students/$USERNAME"
 CHROOT_HOME="$CHROOT_DIR/home/$USERNAME"
 
 # Проверка root-прав
 if [[ $EUID -ne 0 ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: This script must be run with root privileges" >> "$LOG_FILE"
+    echo "Error: This script must be run with root privileges" >> "$LOG_FILE"
     exit 2
+fi
+
+# Проверка существования chroot
+if [[ ! -d "$CHROOT_DIR" ]]; then
+    log "Error: Chroot directory '$CHROOT_DIR' does not exist"
+    exit 3
 fi
 
 # Проверка существования папки студента
@@ -49,12 +57,25 @@ if [[ ! -d "$STUDENT_HOME" ]]; then
     exit 3
 fi
 
+# Проверка существования папки etc/passwd
+if [ ! -d "$CHROOT_DIR/etc/passwd" ]; then
+    mkdir -p "$CHROOT_DIR/etc/passwd"
+    chown root:root "$CHROOT_DIR/etc/passwd"
+    chmod 755 "$CHROOT_DIR/etc/passwd"
+fi
+
+# Добавление пользователя в chroot /etc/passwd
+if ! grep -q "^$USERNAME:" "$CHROOT_DIR/etc/passwd"; then
+    echo "$USERNAME:x:$(id -u $USERNAME):$(id -g $USERNAME)::/home/$USERNAME:/bin/bash" >> "$CHROOT_DIR/etc/passwd"
+    log "Added $USERNAME to $CHROOT_DIR/etc/passwd"
+fi
+
 # Создание целевой папки при необходимости
 if [ ! -d "$CHROOT_HOME" ]; then
     mkdir -p "$CHROOT_HOME"
 fi
 
-chown www-data:www-data "$CHROOT_HOME"
+chown root:root "$CHROOT_HOME"
 chmod 755 "$CHROOT_HOME"
 
 # Проверка, уже смонтировано или нет
@@ -76,15 +97,14 @@ fi
 
 # Добавление записи в /etc/fstab (если её ещё нет)
 FSTAB_ENTRY="$STUDENT_HOME $CHROOT_HOME none bind 0 0"
-FSTAB_FILE="/etc/fstab"
-grep -qsF "$FSTAB_ENTRY" "$FSTAB_FILE"
+grep -qsF "$FSTAB_ENTRY" /etc/fstab
 if [ $? -ne 0 ]; then
-    echo "$FSTAB_ENTRY" >> "$FSTAB_FILE"
-    log "Info: Added mount entry to $FSTAB_FILE for persistence."
-    echo "Info: Added mount entry to $FSTAB_FILE."
+    echo "$FSTAB_ENTRY" >> /etc/fstab
+    log "Info: Added mount entry to /etc/fstab for persistence."
+    echo "Info: Added mount entry to /etc/fstab."
 else
-    log "Info: Mount entry already exists in $FSTAB_FILE."
-    echo "Info: Mount entry already exists in $FSTAB_FILE."
+    log "Info: Mount entry already exists in /etc/fstab."
+    echo "Info: Mount entry already exists in /etc/fstab."
 fi
 
 echo "Successfully mounted $STUDENT_HOME to $CHROOT_HOME for $USERNAME"

@@ -34,7 +34,6 @@ fi
 USERNAME=$1
 CHROOT_HOME="/var/chroot/home/$USERNAME"
 STUDENT_DIR="/var/www/demo/students/$USERNAME"
-FSTAB="/etc/fstab"
 
 # Проверка root-прав
 if [[ $EUID -ne 0 ]]; then
@@ -45,7 +44,7 @@ fi
 
 # Проверка существования точки монтирования
 if [[ ! -d "$CHROOT_HOME" ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: Chroot home '$CHROOT_HOME' does not exist" >> "$LOG_FILE"
+    log "Warning: Chroot home '$CHROOT_HOME' does not exist"
     exit 0
 fi
 
@@ -53,8 +52,8 @@ fi
 if mountpoint -q "$CHROOT_HOME"; then
     umount "$CHROOT_HOME"
     if [ $? -eq 0 ]; then
-        log "Info: Unmounted home directory for user: $LOGIN"
-        echo "Info: Unmounted home directory for user: $LOGIN"
+        log "Info: Unmounted home directory for user: $USERNAME"
+        echo "Info: Unmounted home directory for user: $USERNAME"
     else
         log "Error: Failed to unmount: $CHROOT_HOME"
         echo "Error: Failed to unmount: $CHROOT_HOME"
@@ -71,15 +70,15 @@ grep -F -- "$FSTAB_LINE" /etc/fstab >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     sed -i "\|$FSTAB_LINE|d" /etc/fstab
     if [ $? -eq 0 ]; then
-        log "Info: Removed fstab entry for: $LOGIN"
-        echo "Info: Removed fstab entry for: $LOGIN"
+        log "Info: Removed fstab entry for: $USERNAME"
+        echo "Info: Removed fstab entry for: $USERNAME"
     else
-        log "Error: Failed to remove fstab entry for: $LOGIN"
-        echo "Error: Failed to remove fstab entry for: $LOGIN"
+        log "Error: Failed to remove fstab entry for: $USERNAME"
+        echo "Error: Failed to remove fstab entry for: $USERNAME"
     fi
 else
-    log "Warning: No fstab entry found for: $LOGIN"
-    echo "Warning: No fstab entry found for: $LOGIN"
+    log "Warning: No fstab entry found for: $USERNAME"
+    echo "Warning: No fstab entry found for: $USERNAME"
 fi
 
 # Удаление папки из chroot

@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# Настройка логирования
-DEFAULT_LOG_FILE="logs/mount_student.log"
+# Настройка переменных
+CHROOT_DIR="/var/chroot"
+DEFAULT_LOG_FILE="logs/add_chroot_commands.log"
 
-LOG_FILE="${!#}" # Последний аргумент — лог-файл, если передан
+# Настройка логирования
+LOG_FILE="${!#}"
 if [[ "$LOG_FILE" != /* ]]; then
     LOG_FILE="$DEFAULT_LOG_FILE"
 fi
@@ -27,15 +29,20 @@ log() {
 }
 
 # Начало выполнение
-echo "Beginning of the script adding commands to the environment..."
 log "Beginning of the script adding commands to the environment..."
-
-COMMANDS=("${@:1:$(($#-1))}")
+echo "Beginning of the script adding commands to the environment..."
 
 # Проверка root-прав
 if [[ $EUID -ne 0 ]]; then
-    echo "Error: This script must be run with root privileges"
     log "Error: This script must be run with root privileges"
+    echo "Error: This script must be run with root privileges"
+    exit 1
+fi
+
+# Проверка chroot-окружения
+if [[ ! -d "$CHROOT_DIR/bin" ]]; then
+    log "Error: Chroot environment '$CHROOT_DIR' is not initialized"
+    echo "Error: Chroot environment '$CHROOT_DIR' is not initialized"
     exit 1
 fi
 
@@ -43,6 +50,14 @@ fi
 if ! command -v jk_cp >/dev/null 2>&1; then
     log "Error: jk_cp command not found (jailkit not installed)"
     echo "Error: jk_cp command not found (jailkit not installed)"
+    exit 1
+fi
+
+# Получение команд (исключая последний аргумент — лог-файл)
+COMMANDS=("${@:1:$(($#-1))}")
+if [[ ${#COMMANDS[@]} -eq 0 ]]; then
+    log "Error: At least one command is required"
+    echo "Error: At least one command is required"
     exit 1
 fi
 

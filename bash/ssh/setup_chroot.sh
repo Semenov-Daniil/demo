@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Настройка переменных
 CHROOT_DIR="/var/chroot"
 
 # Настройка логирования
@@ -44,20 +45,21 @@ if [ -d "$CHROOT_DIR" ]; then
     log "Info: Chroot directory $CHROOT_DIR already exists. Skipping creation."
 else
     mkdir -p "$CHROOT_DIR"
-    chown root:root "$CHROOT_DIR"
-    chmod 755 "$CHROOT_DIR"
     log "Info: Chroot directory $CHROOT_DIR created."
 fi
 
+chown root:root "$CHROOT_DIR"
+chmod 755 "$CHROOT_DIR"
+
 # Базовая структура внутри chroot
-mkdir -p "$CHROOT_DIR/home" "$CHROOT_DIR/etc"
-chmod 755 "$CHROOT_DIR/home" "$CHROOT_DIR/etc"
-chown root:root "$CHROOT_DIR/home" "$CHROOT_DIR/etc"
-log "Info: Basic chroot structure created (home, etc)."
+mkdir -p "$CHROOT_DIR/home" "$CHROOT_DIR/etc" "$CHROOT_DIR/etc/passwd"
+chmod 755 "$CHROOT_DIR/home" "$CHROOT_DIR/etc" "$CHROOT_DIR/etc/passwd"
+chown root:root "$CHROOT_DIR/home" "$CHROOT_DIR/etc" "$CHROOT_DIR/etc/passwd"
+log "Info: Basic chroot structure created (home, etc, etc/passwd)."
 
 # Настройка bash.bashrc внутри chroot
 cat << EOF > "$CHROOT_DIR/etc/bash.bashrc"
-PS1='\u@\$(hostname):~\\$ '
+export PS1='\u@\h:~\\$ '
 export HOME=/home/\$USER
 export PATH=/bin:/usr/bin
 cd /home/\$USER
@@ -72,9 +74,9 @@ chmod 644 "$CHROOT_DIR/etc/bash.bashrc"
 log "Info: bash.bashrc configured inside chroot."
 
 # Инициализация chroot окружения с минимальными модулями
-jk_init -v "$CHROOT_DIR" basicshell editors extendedshell >/dev/null
+jk_init -v -j "$CHROOT_DIR" basicshell editors extendedshell netutils ssh sftp scp >> "$LOG_FILE" 2>&1;
 if [ $? -eq 0 ]; then
-    log "Info: Chroot environment initialized with jailkit (basicshell, editors, extendedshell)."
+    log "Info: Chroot environment initialized with jailkit (basicshell, editors, extendedshell, netutils, ssh, sftp, scp)."
 else
     log "Error: Failed to initialize chroot environment."
     exit 1
