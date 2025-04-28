@@ -1,103 +1,100 @@
 #!/bin/bash
 
-# Настройка логирования
-LOG_FILE="${1:-logs/setup_ssh.log}"
-
-LOG_DIR=$(dirname "$LOG_FILE")
-if [[ ! -d "$LOG_DIR" ]]; then
-    mkdir -p "$LOG_DIR" 2>/dev/null || {
-        echo "Error: Cannot create log directory '$LOG_DIR'"
-        exit 1
-    }
-fi
-
-if [ ! -f "$LOG_FILE" ]; then
-    touch "$LOG_FILE"
-    chmod 777 "$LOG_FILE"
-    chown www-data:www-data "$LOG_FILE"
-fi
-
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
-}
-
-# Начало выполнение
-echo "Checking for dependencies..."
-log "Checking for dependencies..."
-
-# Проверка прав root
+# Проверка root-прав
 if [[ $EUID -ne 0 ]]; then
-    log "Error: This script must be run with root privileges"
-    exit 1
+    echo "Error: This script must be run with root privileges" >&2
+    exit $ERR_ROOT_REQUIRED
 fi
 
-# Проверка наличия openssh-server
-if ! command -v sshd >/dev/null 2>&1; then
-    log "Error: openssh-server is not installed"
-    exit 2
-fi
+# Подключение конфигурации
+CONFIG_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/config.sh"
 
-# Проверка наличия jailkit
-if ! command -v jk_init >/dev/null 2>&1; then
-    log "Error: jailkit is not installed"
+if [[ ! -f "$CONFIG_SCRIPT" ]]; then
+    echo "Error: Config script '$CONFIG_SCRIPT' not found" >&2
     exit 3
 fi
 
+ret_file=$(mktemp)
+mapfile -t ARGS < <(source "$CONFIG_SCRIPT" "$@"; echo $? > "$ret_file")
+ret=$(cat "$ret_file")
+rm -f "$ret_file"
+if [[ $ret -ne 0 ]]; then
+    echo "Error: Failed to source config script '$CONFIG_SCRIPT'" >&2
+    exit $ERR_FILE_NOT_FOUND
+fi
+
+log "Starting dependency checking"
+
+# Список зависимостей
+DEPENDENCIES=("openssh-server" "jailkit" "parallel")
+
+# Проверка зависимостей
+for dep in "${DEPENDENCIES[@]}"; do
+    if dpkg -l | grep -qw "$dep"; then
+        log "Info: $dep is installed"
+    else
+        log "Error: $dep is not installed"
+        exit $ERR_GENERAL
+    fi
+done
+
 # Проверка статуса SSH
 if ! systemctl is-active --quiet ssh && ! systemctl is-active --quiet sshd; then
-    log "Info: ssh service is not active, trying to start it..."
-    if systemctl start ssh 2>/dev/null || systemctl start sshd 2>/dev/null; then
-        log "Ok: ssh service started successfully"
+    log "Info: SSH service is not active, trying to start it"
+    if systemctl start ssh 2>>"$LOG_FILE" || systemctl start sshd 2>>"$LOG_FILE"; then
+        log "Info: SSH service started successfully"
     else
-        log "Error: failed to start ssh service"
-        exit 4
-    fi
-fi
-
-# Настройка UFW
-if command -v ufw >/dev/null 2>&1; then
-    # Проверка статуса UFW
-    if ufw status | grep -q "Status: active"; then
-        log "Info: UFW is active"
-        # Извлечение порта SSH из /etc/ssh/sshd_config
-        SSH_PORT=$(grep -E "^Port\s+[0-9]+" /etc/ssh/sshd_config | awk '{print $2}' || echo "22")
-        log "Info: Detected SSH port: $SSH_PORT"
-        
-        # Проверка, разрешён ли порт в UFW
-        if ! ufw status | grep -q "$SSH_PORT.*ALLOW"; then
-            log "Info: Configuring UFW to allow SSH on port $SSH_PORT"
-            if ufw allow "$SSH_PORT/tcp" >> "$LOG_FILE" 2>&1; then
-                log "Ok: UFW configured to allow SSH on port $SSH_PORT"
-                echo "Ok: UFW configured to allow SSH on port $SSH_PORT"
-            else
-                log "Error: Failed to configure UFW for port $SSH_PORT"
-                echo "Error: Failed to configure UFW for port $SSH_PORT"
-                exit 5
-            fi
-        else
-            log "Info: UFW already allows SSH on port $SSH_PORT"
-            echo "Info: UFW already allows SSH on port $SSH_PORT"
-        fi
-        
-        # Проверка статуса UFW после настройки
-        if ufw status | grep -q "$SSH_PORT.*ALLOW"; then
-            log "Ok: UFW status confirmed: SSH port $SSH_PORT is allowed"
-            echo "Ok: UFW status confirmed: SSH port $SSH_PORT is allowed"
-        else
-            log "Error: UFW status check failed: SSH port $SSH_PORT not allowed"
-            echo "Error: UFW status check failed: SSH port $SSH_PORT not allowed"
-            exit 6
-        fi
-    else
-        log "Warning: UFW is installed but not active, skipping SSH port configuration"
-        echo "Warning: UFW is installed but not active, skipping SSH port configuration"
+        log "Error: failed to start SSH service"
+        exit $ERR_GENERAL
     fi
 else
-    log "Warning: UFW not installed, skipping firewall configuration"
-    echo "Warning: UFW not installed, skipping firewall configuration"
+    log "Info: SSH service is active"
 fi
 
-echo "All dependencies are available and ssh is active"
-log "All dependencies are available and ssh is active"
+# Проверка порта SSH
+if [[ ! -f /etc/ssh/sshd_config ]]; then
+    log "Error: SSH configuration file '/etc/ssh/sshd_config' not found"
+    exit $ERR_FILE_NOT_FOUND
+fi
+
+SSH_PORT=$(grep -h -E "^Port " /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null | awk '{print $2}' | head -n 1 || echo "22")
+
+if [[ -z "$SSH_PORT" ]]; then
+    log "Warning: Could not detect SSH port, defaulting to 22"
+    SSH_PORT="22"
+fi
+
+log "Info: Detected SSH port: $SSH_PORT"
+
+# Проверка UFW
+if command -v ufw >/dev/null 2>&1; then
+    if ufw status | grep -qw "active"; then
+        log "Info: UFW is active"
+        if ! ufw status | grep -E "$SSH_PORT/tcp.*ALLOW" >/dev/null; then
+            ufw allow "$SSH_PORT/tcp" >> "$LOG_FILE" 2>&1 || {
+                log "Error: Failed to configure UFW for SSH port $SSH_PORT"
+                exit $ERR_GENERAL
+            }
+            log "Info: UFW configured to allow SSH on port $SSH_PORT"
+        else
+            log "Info: UFW already allows SSH on port $SSH_PORT"
+        fi
+    else
+        log "Warning: UFW is installed but not active"
+        ufw enable >> "$LOG_FILE" 2>&1 || {
+            log "Error: Failed to enable UFW"
+            exit $ERR_GENERAL
+        }
+        ufw allow "$SSH_PORT/tcp" >> "$LOG_FILE" 2>&1 || {
+            log "Error: Failed to configure UFW for SSH port $SSH_PORT"
+            exit $ERR_GENERAL
+        }
+        log "Info: UFW enabled and configured for SSH on port $SSH_PORT"
+    fi
+else
+    log "Warning: UFW is not installed"
+fi
+
+log "All dependencies are available and SSH is active"
 
 exit 0

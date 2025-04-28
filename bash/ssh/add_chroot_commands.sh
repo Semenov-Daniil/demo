@@ -1,84 +1,100 @@
 #!/bin/bash
 
-# Настройка переменных
-CHROOT_DIR="/var/chroot"
-DEFAULT_LOG_FILE="logs/add_chroot_commands.log"
-
-# Настройка логирования
-LOG_FILE="${!#}"
-if [[ "$LOG_FILE" != /* ]]; then
-    LOG_FILE="$DEFAULT_LOG_FILE"
-fi
-
-LOG_DIR=$(dirname "$LOG_FILE")
-if [[ ! -d "$LOG_DIR" ]]; then
-    mkdir -p "$LOG_DIR" 2>/dev/null || {
-        echo "Error: Cannot create log directory '$LOG_DIR'"
-        exit 1
-    }
-fi
-
-if [ ! -f "$LOG_FILE" ]; then
-    touch "$LOG_FILE"
-    chmod 777 "$LOG_FILE"
-    chown www-data:www-data "$LOG_FILE"
-fi
-
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
-}
-
-# Начало выполнение
-log "Beginning of the script adding commands to the environment..."
-echo "Beginning of the script adding commands to the environment..."
-
 # Проверка root-прав
 if [[ $EUID -ne 0 ]]; then
-    log "Error: This script must be run with root privileges"
-    echo "Error: This script must be run with root privileges"
-    exit 1
+    echo "Error: This script must be run with root privileges" >&2
+    exit $ERR_ROOT_REQUIRED
 fi
 
-# Проверка chroot-окружения
-if [[ ! -d "$CHROOT_DIR/bin" ]]; then
-    log "Error: Chroot environment '$CHROOT_DIR' is not initialized"
-    echo "Error: Chroot environment '$CHROOT_DIR' is not initialized"
-    exit 1
+# Подключение конфигурации
+CONFIG_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/../config.sh"
+if [[ ! -f "$CONFIG_SCRIPT" ]]; then
+    echo "Error: Config script '$CONFIG_SCRIPT' not found" >&2
+    exit $ERR_FILE_NOT_FOUND
+fi
+mapfile -t COMMANDS < <(source "$CONFIG_SCRIPT" "$@") || {
+    echo "Error: Failed to source config script '$CONFIG_SCRIPT'" >&2
+    exit $ERR_FILE_NOT_FOUND
+}
+
+log "Starting addition of commands to chroot environments"
+
+# Проверка аргументов
+if [[ ${#COMMANDS[@]} -lt 1 ]]; then
+    log "Error: At least one command is required"
+    exit $ERR_GENERAL
 fi
 
 # Проверка наличия jk_cp
 if ! command -v jk_cp >/dev/null 2>&1; then
-    log "Error: jk_cp command not found (jailkit not installed)"
-    echo "Error: jk_cp command not found (jailkit not installed)"
-    exit 1
+    log "Error: jk_cp command not found"
+    exit $ERR_GENERAL
 fi
 
-# Получение команд (исключая последний аргумент — лог-файл)
-COMMANDS=("${@:1:$(($#-1))}")
-if [[ ${#COMMANDS[@]} -eq 0 ]]; then
-    log "Error: At least one command is required"
-    echo "Error: At least one command is required"
-    exit 1
+# Проверка наличия parallel
+if ! command -v parallel >/dev/null 2>&1; then
+    log "Error: parallel command not found"
+    exit $ERR_GENERAL
 fi
 
-# Проверка и добавление команд
-for CMD in "${COMMANDS[@]}"; do
-    if ! command -v "$CMD" >/dev/null 2>&1; then
-        log "Warning: Command not found on system: $CMD"
-        echo "Warning: Command not found on system: $CMD"
-        continue
+# Проверка существования /var/chroot/home
+if [[ ! -d "$CHROOTS_HOME" ]]; then
+    log "Error: Chroot base directory '$CHROOTS_HOME' does not exist"
+    exit $ERR_FILE_NOT_FOUND
+fi
+
+log "Adding commands to all chroot environments in $CHROOTS_HOME"
+
+# Функция для добавления команд в одно chroot-окружение
+add_commands_to_chroot() {
+    local CHROOT_HOME="$1"
+    local USERNAME=$(basename "$CHROOT_HOME")
+    local LOG_FILE="$2"
+    shift 2
+    if ! id "$USERNAME" >/dev/null 2>&1; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: User '$USERNAME' does not exist, skipping" | tee -a "$LOG_FILE"
+        return
     fi
+    local CMD
+    for CMD in "$@"; do
+        if ! command -v "$CMD" >/dev/null 2>&1; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: Command not found on system: $CMD for $USERNAME" | tee -a "$LOG_FILE"
+            continue
+        fi
+        if [[ -f "$CHROOT_HOME/bin/$CMD" ]]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Info: Command $CMD already exists in chroot for $USERNAME" | tee -a "$LOG_FILE"
+            continue
+        fi
+        if jk_cp -v -j "$CHROOT_HOME" "$(which "$CMD")" >> "$LOG_FILE" 2>&1; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Info: Added command $CMD to chroot for $USERNAME" | tee -a "$LOG_FILE"
+        else
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to add command $CMD to chroot for $USERNAME" | tee -a "$LOG_FILE"
+            exit $ERR_CHROOT_INIT_FAILED
+        fi
+    done
+}
+export -f add_commands_to_chroot
 
-    jk_cp -v -j "$CHROOT_DIR" "$(which $CMD)" >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        log "Info: Added command to chroot: $CMD"
+# Сбор списка chroot-окружений
+CHROOT_DIRS=()
+while IFS= read -r dir; do
+    if [[ -d "$dir/bin" ]]; then
+        CHROOT_DIRS+=("$dir")
     else
-        log "Error: Failed to add command to chroot: $CMD"
-        echo "Error: Failed to add command to chroot: $CMD"
+        log "Warning: Directory '$dir' is not a valid chroot environment"
     fi
-done
+done < <(find "$CHROOTS_HOME" -maxdepth 1 -type d -not -path "$CHROOTS_HOME")
 
-echo "Command addition process completed"
-log "Command addition process completed"
+if [[ ${#CHROOT_DIRS[@]} -eq 0 ]]; then
+    log "Warning: No valid chroot environments found in $CHROOTS_HOME"
+    exit 0
+fi
 
+# Параллельное добавление команд
+printf '%s\n' "${CHROOT_DIRS[@]}" | parallel --halt now,fail=1 --will-cite add_commands_to_chroot {} "$LOG_FILE" "${COMMANDS[@]}" 2>>"$LOG_FILE" || {
+    log "Error: Parallel command execution failed, check $LOG_FILE for details"
+    exit $ERR_GENERAL
+}
+
+log "Command addition process completed for all chroot environments"
 exit 0
