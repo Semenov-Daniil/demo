@@ -52,7 +52,7 @@ fi
 
 # Размонтирование домашней папки
 if mountpoint -q "$CHROOT_HOME"; then
-    umount "$CHROOT_HOME" >> "$LOG_FILE" 2>&1 || {
+    umount "$CHROOT_HOME" >> "$LOG_FILE" 2>&1 || pkill -u "$USERNAME" >> "$LOG_FILE" 2>&1 ||  umount "$CHROOT_HOME" >> "$LOG_FILE" 2>&1 || {
         log "Error: Failed to unmount $CHROOT_HOME"
         exit $ERR_MOUNT_FAILED
     }
