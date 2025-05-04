@@ -1,61 +1,41 @@
 #!/bin/bash
+# check_deps.sh - Функция для проверки наличия зависимостей
+# Расположение: bash/lib/check_deps.sh
 
-# Скрипт для проверки зависимостей
-# Предназначен для подключения через source
+set -euo pipefail
 
-# Проверка на прямой запуск
+# Проверка, что скрипт не запущен напрямую
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    echo "[ERROR]: This script ('$0') is meant to be sourced, not executed directly" >&2
+    echo "This script ('$0') is meant to be sourced" >&2
     exit 1
 fi
 
-# Проверка переменных
-if ! declare -p ERR_FILE_NOT_FOUND >/dev/null 2>&1; then
-    echo "[ERROR]: ERR_FILE_NOT_FOUND is not defined" >&2
-fi
+# Установка переменных по умолчанию
+: "${EXIT_SUCCESS:=0}"
+: "${EXIT_NO_DEPENDENCY:=1}"
 
-if ! declare -p LOG_INFO >/dev/null 2>&1; then
-    echo "[ERROR]: LOG_INFO is not defined" >&2
-fi
-
-if ! declare -p LOG_ERROR >/dev/null 2>&1; then
-    echo "[ERROR]: LOG_ERROR is not defined" >&2
-fi
-
-# Проверка наличия функции log
-if ! declare -F log >/dev/null; then
-    echo "[ERROR]: Logging function 'log' not defined after sourcing '$LOGGING_SCRIPT'" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
-
-# Функция проверки зависимостей
-# Принимает массив зависимостей как аргумент
+# Проверка наличия зависимостей
+# check_deps grep tar
 check_deps() {
-    local deps=("$@")
     local missing_deps=()
     local dep
 
-    log "$LOG_INFO: Starting dependency checking"
-
-    for dep in "${deps[@]}"; do
-        if dpkg-query -W -f='${Status}' "$dep" 2>/dev/null | grep -q "install ok installed"; then
-            log "$LOG_INFO: $dep is installed"
-        else
-            log "$LOG_ERROR: $dep is not installed"
+    for dep in "$@"; do
+        if ! dpkg-query -W -f='${Status}' "$dep" 2>/dev/null | grep -q "install ok installed"; then
+            echo "Dependency '$dep' is not installed" >&2
             missing_deps+=("$dep")
         fi
     done
 
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
-        log "$LOG_ERROR: Missing dependencies: ${missing_deps[*]}"
-        return $ERR_GENERAL
+        echo "Missing dependencies: ${missing_deps[*]}" >&2
+        return "${EXIT_NO_DEPENDENCY}"
     fi
 
-    log "$LOG_INFO: All dependencies are installed"
-    return 0
+    return ${EXIT_SUCCESS}
 }
 
 # Экспорт функции
 export -f check_deps
 
-return 0
+return ${EXIT_SUCCESS}

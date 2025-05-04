@@ -1,0 +1,22 @@
+[2025-05-04 18:38:53] [INFO] Starting chroot removal for testuser
+[2025-05-04 18:38:53] [ERROR] Failed to unmount: /var/chroot/students/testuser/dev /var/chroot/students/testuser/usr
+[2025-05-04 19:17:29] [INFO] Starting chroot removal for testuser
+[2025-05-04 19:17:29] [ERROR] Failed to unmount: /var/chroot/students/testuser/usr
+[2025-05-04 19:19:10] [INFO] Starting chroot removal for testuser
+[2025-05-04 19:20:02] [INFO] Starting chroot removal for testuser
+[2025-05-04 19:20:02] [INFO] Chroot for testuser removed successfully
+[2025-05-04 19:54:55] [INFO] Starting chroot removal for testuser
+[2025-05-04 19:54:55] [ERROR] Failed to unmount: /var/chroot/students/testuser/dev /var/chroot/students/testuser/usr
+[2025-05-04 19:55:44] [INFO] Starting chroot removal for testuser
+[2025-05-04 19:57:01] [INFO] Starting chroot removal for testuser
+[2025-05-04 19:57:02] [INFO] Chroot for testuser removed successfully
+[2025-05-04 20:00:59] [INFO] Starting chroot removal for testuser
+[2025-05-04 20:00:59] [ERROR] Failed to unmount: /var/chroot/students/testuser/dev /var/chroot/students/testuser/usr
+[2025-05-04 20:01:56] [INFO] Starting chroot removal for testuser
+[2025-05-04 20:01:56] [INFO] Chroot for testuser removed successfully
+[2025-05-04 20:03:22] [INFO] Starting chroot removal for testuser
+[2025-05-04 20:03:22] [ERROR] Failed to unmount: /var/chroot/students/testuser/dev /var/chroot/students/testuser/usr
+[2025-05-04 20:05:22] [INFO] Starting chroot removal for testuser
+[2025-05-04 20:05:22] [INFO] Chroot for testuser removed successfully
+[2025-05-04 21:56:19] [INFO] Starting chroot removal for testuser
+[2025-05-04 21:56:20] [INFO] Chroot for testuser removed successfully

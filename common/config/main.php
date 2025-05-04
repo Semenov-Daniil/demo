@@ -12,6 +12,15 @@ return [
     ],
     'language' => 'ru-RU',
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
+    'bootstrap' => [
+        [
+            'class' => '@common\components\FileComponent',
+            'directories' => [
+                '@students',
+                '@events',
+            ],
+        ],
+    ],
     'components' => [
         'cache' => [
             'class' => \yii\caching\FileCache::class,

@@ -1,230 +1,243 @@
 #!/bin/bash
+# init_student_chroot.sh - Скрипт инициализации chroot-окружения студента
+# Расположение: bash/ssh/init_student_chroot.sh
 
-# Скрипт инициализации chroot-окружения пользователя
+set -euo pipefail
 
-# Подключение конфигурации
-CONFIG_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/config.sh"
-if [[ ! -f "$CONFIG_SCRIPT" ]]; then
-    echo "[ERROR]: Config script '$CONFIG_SCRIPT' not found" >&2
-    exit 3
-fi
-source "$CONFIG_SCRIPT" "$@"
-if [[ $? -ne 0 ]]; then
-    echo "[ERROR]: Failed to source config script '$CONFIG_SCRIPT'" >&2
-    exit 3
-fi
+# Подключение логального config.sh
+LOCAL_CONFIG="$(dirname "${BASH_SOURCE[0]}")/config.sh"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source script $LOCAL_CONFIG" >&2
+    exit 1
+}
 
-# Подключение скрипта проверки команд
-if [[ ! -f "$CHECK_CMDS_SCRIPT" ]]; then
-    echo "[ERROR]: Script '$CHECK_CMDS_SCRIPT' not found" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
-source "$CHECK_CMDS_SCRIPT" "$@"
-if [[ $? -ne 0 ]]; then
-    echo "[ERROR]: Failed to source script '$CHECK_CMDS_SCRIPT'" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
+# Подключение скрипта удаления chroot-окружения
+source "$REMOVE_CHROOT" || {
+    echo "Failed to source script $REMOVE_CHROOT" >&2
+    exit ${EXIT_GENERAL_ERROR}
+}
 
-# Проверка наличия функции check_cmds
-if ! declare -F check_cmds >/dev/null; then
-    echo "[ERROR]: Function 'check_cmds' not defined after sourcing '$CHECK_CMDS_SCRIPT'" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
+# Очистка
+cleanup() {
+    exit_code=$?
+    
+    if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq $EXIT_INVALID_ARG ]]; then
+        return
+    fi
 
-# Подключение скрипта создания директорий
-if [[ ! -f "$CREATE_DIRS_SCRIPT" ]]; then
-    echo "[ERROR]: Script '$CREATE_DIRS_SCRIPT' not found" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
-source "$CREATE_DIRS_SCRIPT" "$@"
-if [[ $? -ne 0 ]]; then
-    echo "[ERROR]: Failed to source script '$CREATE_DIRS_SCRIPT'" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
+    remove_chroot ${USERNAME}
+}
 
-# Проверка наличия функции create_directories
-if ! declare -F create_directories >/dev/null; then
-    echo "[ERROR]: Function 'create_directories' not defined after sourcing '$CREATE_DIRS_SCRIPT'" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
+# Создание базовых директорий
+create_basic_dirs() {
+    local chroot_dir="$1"
 
-# Проверка root-прав
-check_root
-if [[ $? -ne 0 ]]; then
-    exit $ERR_ROOT_REQUIRED
-fi
+    for dir in "${CHROOT_BASE_DIRS[@]}"; do
+        install -d -m 755 -o root -g root "$chroot_dir/$dir" || {
+            log_message "error" "Failed to create basic directories in $chroot_dir/$dir"
+            exit ${EXIT_CHROOT_INIT_FAILED}
+        }
+    done
+
+    chmod 1777 "$chroot_dir/tmp" || {
+        log_message "error" "Failed to set permissions for $chroot_dir/tmp"
+        exit ${EXIT_CHROOT_INIT_FAILED}
+    }
+}
+
+# Монтирование read-only
+mount_bind_ro() {
+    local src="$1"
+    local dest="$2"
+
+    mount --bind "$src" "$dest" 2>/dev/null 2>/dev/null || {
+        log_message "error" "Failed to bind mount $src to $dest"
+        exit ${EXIT_MOUNT_FAILED}
+    }
+
+    mount -o remount,ro,bind "$dest" 2>/dev/null 2>/dev/null || {
+        log_message "error" "Failed to set read-only mount for $dest"
+        exit ${EXIT_MOUNT_FAILED}
+    }
+
+    FSTAB_ENTRY+=("$src $dest none bind,ro 0 0")
+}
+
+# Создание и монтирование фалов
+mount_files() {
+    local chroot_dir="$1"
+
+    for files in "${MOUNT_FILES[@]}"; do
+        touch "$chroot_dir$files" || {
+            log_message "error" "Failed to create $chroot_dir/$files"
+            exit ${EXIT_CHROOT_INIT_FAILED}
+        }
+
+        mount_bind_ro "$files" "$chroot_dir/$files"
+    done  
+}
+
+# Синхронизация файлов /etc
+sync_etc_files() {
+    local username="$1"
+    local target_etc="$2/etc"
+
+    install -d -m 755 -o root -g root "$target_etc" || {
+        log_message "error" "Failed to create $target_etc"
+        exit ${EXIT_CHROOT_INIT_FAILED}
+    }
+
+    getent passwd "$username" > "$target_etc/passwd" || {
+        log_message "error" "Failed to create $target_etc/passwd"
+        exit ${EXIT_CHROOT_INIT_FAILED}
+    }
+
+    getent group "$STUDENT_GROUP" > "$target_etc/group" || {
+        log_message "error" "Failed to create $target_etc/group"
+        exit ${EXIT_CHROOT_INIT_FAILED}
+    }
+
+    config_content=$(cat <<EOF
+export PS1='\u@\h:\w\\\$ '
+export HOME=/tmp
+export PATH=/bin:/usr/bin:/usr/local/bin
+export PAGER=cat
+cd /home
+unset CDPATH
+EOF
+)
+
+    echo "$config_content" > "$target_etc/bash.bashrc" || {
+        log_message "error" "Failed to create $target_etc/bash.bashrc"
+        exit ${EXIT_CHROOT_INIT_FAILED}
+    }
+}
+
+# Настройка устройств
+create_devices() {
+    local chroot_dev="$1/dev"
+
+    if [[ -d "$chroot_dev" ]]; then
+        install -d -m 755 -o root -g root "$chroot_dev" || {
+            log_message "error" "Failed to create $chroot_dev"
+            exit ${EXIT_CHROOT_INIT_FAILED}
+        }
+    fi
+
+    mount --bind /dev "$chroot_dev" 2>/dev/null || {
+        log_message "error" "Failed to bind mount /dev to $chroot_dev"
+        exit ${EXIT_MOUNT_FAILED}
+    }
+
+    mount -o remount,bind "$chroot_dev" 2>/dev/null || {
+        log_message "error" "Failed to remount $chroot_dev"
+        exit ${EXIT_MOUNT_FAILED}
+    }
+
+    FSTAB_ENTRY+=("/dev $chroot_dev none bind 0 0")
+}
+
+# Настройка /proc с ограничениями
+mount_proc() {
+    local chroot_proc="$1/proc"
+    mount -t proc proc "$chroot_proc" -o hidepid=2,noexec,nosuid 2>/dev/null || {
+        log_message "error" "Failed to mount proc to $chroot_proc with hidepid=2,noexec,nosuid"
+        exit ${EXIT_MOUNT_FAILED}
+    }
+
+    FSTAB_ENTRY+=("proc $chroot_proc proc defaults,hidepid=2,noexec,nosuid 0 0")
+}
+
+# Монтирование домашней директории
+mount_home_dir() {
+    local home_dir="$1"
+    local chroot_home="$2/home"
+    mount --bind "$home_dir" "$chroot_home" 2>/dev/null || {
+        log_message "error" "Failed to bind mount $home_dir to $chroot_home"
+        exit ${EXIT_MOUNT_FAILED}
+    }
+
+    FSTAB_ENTRY+=("$home_dir $chroot_home none bind 0 0")
+}
+
+# Настройка /etc/fstab
+setup_fstab_entries() {
+    local chroot_dir="$1"
+    local home_dir="$2"
+
+    for entry in "${FSTAB_ENTRY[@]}"; do
+        if ! grep -qs "^${entry%% *} ${entry#* }" /etc/fstab; then
+            echo "$entry" >> /etc/fstab || {
+                log_message "error" "Failed to add fstab entry: $entry"
+                exit ${EXIT_CHROOT_INIT_FAILED}
+            }
+        fi
+    done
+
+    systemctl daemon-reload || {
+        log_message "warning" "Failed to execute systemctl daemon-reload"
+    }
+}
+
+# Основная логика
+trap cleanup SIGINT SIGTERM EXIT
 
 # Проверка массива ARGS
 if ! declare -p ARGS >/dev/null 2>&1; then
-    log "$LOG_ERROR: ARGS array is not defined"
-    exit $ERR_GENERAL
+    echo "ARGS array is not defined"
+    exit ${EXIT_INVALID_ARG}
 fi
 
 # Проверка аргументов
 if [[ ${#ARGS[@]} -lt 1 ]]; then
-    log "$LOG_ERROR: Username is required"
-    exit $ERR_GENERAL
+    echo "Usage: $0 <username>"
+    exit ${EXIT_INVALID_ARG}
 fi
 
 USERNAME="${ARGS[0]}"
+
 if [[ ! "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    log "$LOG_ERROR: Invalid username: $USERNAME"
-    exit $ERR_INVALID_USERNAME
+    echo "Invalid username: $USERNAME"
+    exit ${EXIT_INVALID_ARG}
 fi
 
-log "$LOG_INFO: Setting up chroot environment for user $USERNAME"
-
-STUDENT_HOME="${STUDENTS_HOME}/$USERNAME"
-STUDENT_CHROOT="${CHROOT_STUDENTS}/$USERNAME"
-STUDENT_CHROOT_HOME="${STUDENT_CHROOT}/home/$USERNAME"
-
-# Проверка существования пользователя
-if ! id "$USERNAME" >/dev/null 2>&1; then
-    log "$LOG_ERROR: User '$USERNAME' does not exist"
-    exit $ERR_GENERAL
+if ! id "$USERNAME" &>/dev/null; then
+    log_message "error" "User '$USERNAME' does not exist"
+    exit ${EXIT_INVALID_ARG}
 fi
 
-# Проверка команд
-check_cmds "jk_init"
-if [[ $? -ne 0 ]]; then
-    exit $ERR_GENERAL
+HOME_DIR="$(getent passwd "$USERNAME" | cut -d: -f6)"
+STUDENT_CHROOT="${CHROOT_STUDENTS}/${USERNAME}"
+FSTAB_ENTRY=()
+
+log_message "info" "Starting chroot initialization for $USERNAME"
+
+# Проверка существования chroot
+if [[ -d "$STUDENT_CHROOT" && -d "$STUDENT_CHROOT/etc" ]]; then
+    log_message "info" "Chroot directory $STUDENT_CHROOT already exists, checking mounts"
+    remove_chroot ${USERNAME}
 fi
 
-# Проверка существования папки студента
-if [[ ! -d "$STUDENT_HOME" ]]; then
-    log "$LOG_ERROR: Student home directory '$STUDENT_HOME' does not exist"
-    exit $ERR_FILE_NOT_FOUND
-fi
+# Создание chroot-директории
+create_directories "$STUDENT_CHROOT" "755" "root:root" || {
+    log_message "error" "Failed create directory: ${STUDENT_CHROOT}"
+    exit ${EXIT_CHROOT_INIT_FAILED}
+}
 
-# Создание и настройка chroot-директорий
-create_directories "$STUDENT_CHROOT" "$STUDENT_CHROOT_HOME" 755 "root:root"
-if [[ $? -ne 0 ]]; then
-    exit $ERR_GENERAL
-fi
+create_basic_dirs "$STUDENT_CHROOT"
+sync_etc_files "$USERNAME" "$STUDENT_CHROOT"
+create_devices "$STUDENT_CHROOT"
 
-# Проверка свободного места
-MIN_SPACE_MB=100
-FREE_SPACE=$(df -m "$STUDENT_CHROOT" | awk 'NR==2 {print $4}' || echo 0)
-if [[ "$FREE_SPACE" -lt "$MIN_SPACE_MB" ]]; then
-    log "$LOG_ERROR: Insufficient disk space for $STUDENT_CHROOT ($FREE_SPACE MB available, $MIN_SPACE_MB MB required)"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
+mount_bind_ro /usr "$STUDENT_CHROOT/usr"
+mount_bind_ro /bin "$STUDENT_CHROOT/bin"
+mount_bind_ro /lib "$STUDENT_CHROOT/lib"
+mount_bind_ro /lib64 "$STUDENT_CHROOT/lib64"
+mount_home_dir "$HOME_DIR" "$STUDENT_CHROOT"
+mount_proc "$STUDENT_CHROOT"
+mount_files "$STUDENT_CHROOT"
 
-# Копирование шаблона
-if [[ ! -d  "$CHROOT_TEMPLATE" ]]; then
-    log "$LOG_ERROR: Template chroot directory '$CHROOT_TEMPLATE' does not exist"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-log "$LOG_INFO: Copying chroot template from $CHROOT_TEMPLATE to $STUDENT_CHROOT"
-if ! cp -a "$CHROOT_TEMPLATE"/* "$STUDENT_CHROOT/" 2>&1 | tee -a "$LOG_FILE"; then
-    log "$LOG_ERROR: Failed to copy chroot template to $STUDENT_CHROOT"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-log "$LOG_INFO: Copied chroot template to $STUDENT_CHROOT"
+setup_fstab_entries "$STUDENT_CHROOT" "$HOME_DIR"
 
-# Создание /etc/passwd и /etc/group в chroot
-ETC_DIR="$STUDENT_CHROOT/etc"
-if [[ ! -d "$ETC_DIR" ]]; then
-    if ! mkdir -p "$ETC_DIR" 2>>"$LOG_FILE"; then
-        log "$LOG_ERROR: Cannot create directory '$ETC_DIR'"
-        exit $ERR_CHROOT_INIT_FAILED
-    fi
-    log "$LOG_INFO: Created directory '$ETC_DIR'"
-fi
+log_message "info" "Chroot for $USERNAME initialized successfully"
 
-# Получение UID, GID и домашней директории пользователя
-USER_INFO=$(getent passwd "$USERNAME")
-if [[ -z "$USER_INFO" ]]; then
-    log "$LOG_ERROR: Failed to retrieve user info for $USERNAME"
-    exit $ERR_GENERAL
-fi
-USER_UID=$(echo "$USER_INFO" | cut -d: -f3)
-USER_GID=$(echo "$USER_INFO" | cut -d: -f4)
-USER_GECOS=$(echo "$USER_INFO" | cut -d: -f5)
-USER_SHELL=$(echo "$USER_INFO" | cut -d: -f7)
-GROUP_INFO=$(getent group "$USER_GID")
-GROUP_NAME=$(echo "$GROUP_INFO" | cut -d: -f1)
-
-# Создание минимального /etc/passwd
-echo "$USERNAME:x:$USER_UID:$USER_GID:$USER_GECOS:/home/$USERNAME:$USER_SHELL" > "$STUDENT_CHROOT/etc/passwd" 2>>"$LOG_FILE"
-if [[ $? -ne 0 ]]; then
-    log "$LOG_ERROR: Failed to create /etc/passwd for $USERNAME"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-if ! chown root:root "$STUDENT_CHROOT/etc/passwd" 2>>"$LOG_FILE" || ! chmod 644 "$STUDENT_CHROOT/etc/passwd" 2>>"$LOG_FILE"; then
-    log "$LOG_ERROR: Failed to set permissions for /etc/passwd"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-log "$LOG_INFO: Created /etc/passwd for $USERNAME"
-
-# Создание минимального /etc/group
-echo "$GROUP_NAME:x:$USER_GID:" > "$STUDENT_CHROOT/etc/group" 2>>"$LOG_FILE"
-if [[ $? -ne 0 ]]; then
-    log "$LOG_ERROR: Failed to create /etc/group for $USERNAME"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-if ! chown root:root "$STUDENT_CHROOT/etc/group" 2>>"$LOG_FILE" || ! chmod 644 "$STUDENT_CHROOT/etc/group" 2>>"$LOG_FILE"; then
-    log "$LOG_ERROR: Failed to set permissions for /etc/group"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-log "$LOG_INFO: Created /etc/group for $USERNAME"
-
-# Настройка bash.bashrc
-BASHRC_DIR="$STUDENT_CHROOT/etc"
-if [[ ! -d "$BASHRC_DIR" ]]; then
-    if ! mkdir -p "$BASHRC_DIR" 2>>"$LOG_FILE"; then
-        log "$LOG_ERROR: Cannot create directory '$BASHRC_DIR'"
-        exit $ERR_CHROOT_INIT_FAILED
-    fi
-    log "$LOG_INFO: Created directory '$BASHRC_DIR'"
-fi
-cat << EOF > "$BASHRC_DIR/bash.bashrc" 2>>"$LOG_FILE"
-export PS1='\u@\h:\w\\\$ '
-export HOME=/home/$USERNAME
-export PATH=/bin:/usr/bin
-if [[ -d "\$HOME" ]]; then
-    cd "\$HOME"
-else
-    cd /
-fi
-unset CDPATH
-EOF
-if [[ $? -ne 0 ]]; then
-    log "$LOG_ERROR: Failed to configure bash.bashrc for $USERNAME"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-if ! chown root:root "$BASHRC_DIR/bash.bashrc" 2>>"$LOG_FILE" || ! chmod 644 "$BASHRC_DIR/bash.bashrc" 2>>"$LOG_FILE"; then
-    log "$LOG_ERROR: Failed to set permissions for bash.bashrc"
-    exit $ERR_CHROOT_INIT_FAILED
-fi
-log "$LOG_INFO: bash.bashrc configured for $USERNAME"
-
-# Проверка монтирования домашней папки
-if mountpoint -q "$STUDENT_CHROOT_HOME"; then
-    log "$LOG_INFO: $STUDENT_CHROOT_HOME is already mounted"
-else
-    if ! mount --bind "$STUDENT_HOME" "$STUDENT_CHROOT_HOME" 2>&1 | tee -a "$LOG_FILE"; then
-        log "$LOG_ERROR: Failed to mount $STUDENT_HOME to $STUDENT_CHROOT_HOME"
-        exit $ERR_MOUNT_FAILED
-    fi
-    log "$LOG_INFO: Mounted $STUDENT_HOME to $STUDENT_CHROOT_HOME"
-fi
-
-# Добавление в /etc/fstab
-FSTAB_ENTRY="$STUDENT_HOME $STUDENT_CHROOT_HOME none bind 0 0"
-if ! grep -qsF "$FSTAB_ENTRY" /etc/fstab; then
-    cp /etc/fstab /etc/fstab.bak 2>>"$LOG_FILE" || {
-        log "$LOG_ERROR: Failed to backup /etc/fstab"
-        exit $ERR_FSTAB_FAILED
-    }
-    if ! echo "$FSTAB_ENTRY" >> /etc/fstab 2>>"$LOG_FILE"; then
-        log "$LOG_ERROR: Failed to add mount entry to /etc/fstab"
-        exit $ERR_FSTAB_FAILED
-    fi
-    log "$LOG_INFO: Added mount entry to /etc/fstab"
-else
-    log "$LOG_INFO: Mount entry already exists in /etc/fstab"
-fi
-
-log "$LOG_INFO: Successfully set up chroot for $USERNAME"
-exit 0
+exit ${EXIT_SUCCESS}

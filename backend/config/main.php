@@ -12,14 +12,6 @@ return [
     'controllerNamespace' => 'backend\controllers',
     'bootstrap' => [
         'log',
-        [
-            'class' => 'common\components\FileComponent',
-            'directories' => [
-                '@students',
-                '@events',
-                '@logs',
-            ],
-        ],
     ],
     'defaultRoute' => 'expert/experts',
     'components' => [

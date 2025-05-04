@@ -1,59 +1,41 @@
 #!/bin/bash
+# check_cmds.sh - Функция для проверки наличия команд
+# Расположение: bash/lib/check_cmds.sh
 
-# Скрипт для проверки наличия команд
-# Предназначен для подключения через source
+set -euo pipefail
 
-# Проверка на прямой запуск
+# Проверка, что скрипт не запущен напрямую
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    echo "[ERROR]: This script ('$0') is meant to be sourced, not executed directly" >&2
+    echo "This script ('$0') is meant to be sourced" >&2
     exit 1
 fi
 
-# Проверка переменных
-if ! declare -p ERR_FILE_NOT_FOUND >/dev/null 2>&1; then
-    echo "[ERROR]: ERR_FILE_NOT_FOUND is not defined" >&2
-fi
+# Установка переменных по умолчанию
+: "${EXIT_SUCCESS:=0}"
+: "${EXIT_NO_CMD:=1}"
 
-if ! declare -p LOG_INFO >/dev/null 2>&1; then
-    echo "[ERROR]: LOG_INFO is not defined" >&2
-fi
-
-if ! declare -p LOG_ERROR >/dev/null 2>&1; then
-    echo "[ERROR]: LOG_ERROR is not defined" >&2
-fi
-
-# Проверка наличия функции log
-if ! declare -F log >/dev/null; then
-    echo "[ERROR]: Logging function 'log' not defined after sourcing '$LOGGING_SCRIPT'" >&2
-    return $ERR_FILE_NOT_FOUND
-fi
-
-# Функция проверки команд
-# Принимает массив команд как аргумент
+# Проверка наличия команд
+# check_cmds ls cat rm
 check_cmds() {
-    local cmds=("$@")
     local missing_cmds=()
     local cmd
 
-    log "$LOG_INFO: Starting commands checking"
-
-    for cmd in "${cmds[@]}"; do
+    for cmd in "$@"; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
-            log "$LOG_ERROR: $cmd is not exist"
-            missing_cmds+=("$cmd") 
+            echo "Command '$cmd' not found" >&2
+            missing_cmds+=("$cmd")
         fi
     done
 
     if [[ ${#missing_cmds[@]} -gt 0 ]]; then
-        log "$LOG_ERROR: Missing command: ${missing_cmds[*]}"
-        return $ERR_GENERAL
+        echo "Missing commands: ${missing_cmds[*]}"
+        return ${EXIT_NO_CMD}
     fi
 
-    log "$LOG_INFO: All commands are exist"
-    return 0
+    return ${EXIT_SUCCESS}
 }
 
 # Экспорт функции
 export -f check_cmds
 
-return 0
+return ${EXIT_SUCCESS}
