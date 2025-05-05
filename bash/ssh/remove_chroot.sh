@@ -11,21 +11,28 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 fi
 
 # Установка переменных по умолчанию
-: "${MOUNT_DIRS:=()}"
-: "${MOUNT_FILES:=()}"
 : "${CHROOT_STUDENTS:=/var/chroot/students}"
 : "${EXIT_SUCCESS:=0}"
 : "${EXIT_GENERAL_ERROR:=1}"
 : "${EXIT_INVALID_ARG:=5}"
-: "${EXIT_MOUNT_FAILED:=6}"
-: "${EXIT_CHROOT_INIT_FAILED:=7}"
+: "${EXIT_MOUNT_FAILED:=10}"
+: "${EXIT_CHROOT_INIT_FAILED:=11}"
 
 # Очистка монтирований
 cleanup_mounts() {
     local student_chroot="$1"
     local failed_mounts=()
+    local mount_dirs=()
+    if declare -p MOUNT_DIRS &>/dev/null; then
+        mount_dirs=(${MOUNT_DIRS[@]})
+    fi
+    local mount_files=()
+    if declare -p MOUNT_FILES &>/dev/null; then
+        mount_files=(${MOUNT_FILES[@]})
+    fi
 
-    for dir in "${MOUNT_DIRS[@]}"; do
+    for dir in "${mount_dirs[@]}"; do
+        [[ -z "$dir" ]] && continue
         if mountpoint -q "$student_chroot/$dir" 2>/dev/null; then
             if ! umount "$student_chroot/$dir" 2>/dev/null; then
                 failed_mounts+=("$student_chroot/$dir")
@@ -34,7 +41,8 @@ cleanup_mounts() {
         fi
     done
 
-    for file in "${MOUNT_FILES[@]}"; do
+    for file in "${mount_files[@]}"; do
+        [[ -z "$file" ]] && continue
         if mountpoint -q "$student_chroot/$file" 2>/dev/null; then
             if ! umount "$student_chroot/$file" 2>/dev/null; then
                 failed_mounts+=("$student_chroot/$file")

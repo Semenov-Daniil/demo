@@ -31,13 +31,23 @@ cleanup() {
 # Создание базовых директорий
 create_basic_dirs() {
     local chroot_dir="$1"
+    local chroot_base_dirs=()
+    if declare -p CHROOT_BASE_DIRS &>/dev/null; then
+        chroot_base_dirs=(${CHROOT_BASE_DIRS[@]})
+    fi
 
-    for dir in "${CHROOT_BASE_DIRS[@]}"; do
+    for dir in "${chroot_base_dirs[@]}"; do
+        [[ -z "$dir" ]] && continue
         install -d -m 755 -o root -g root "$chroot_dir/$dir" || {
             log_message "error" "Failed to create basic directories in $chroot_dir/$dir"
             exit ${EXIT_CHROOT_INIT_FAILED}
         }
     done
+
+    [[ ! -d "$chroot_dir/tmp" ]] && {
+        log_message "error" "Failed to create basic directories in $chroot_dir/tmp"
+        exit ${EXIT_CHROOT_INIT_FAILED}
+    }
 
     chmod 1777 "$chroot_dir/tmp" || {
         log_message "error" "Failed to set permissions for $chroot_dir/tmp"
@@ -64,17 +74,22 @@ mount_bind_ro() {
 }
 
 # Создание и монтирование фалов
-mount_files() {
+mount_chroot_files() {
     local chroot_dir="$1"
+    local mount_files=()
+    if declare -p MOUNT_FILES &>/dev/null; then
+        mount_files=(${MOUNT_FILES[@]})
+    fi
 
-    for files in "${MOUNT_FILES[@]}"; do
+    for files in "${mount_files[@]}"; do
+        [[ -z "$files" ]] && continue
         touch "$chroot_dir$files" || {
             log_message "error" "Failed to create $chroot_dir/$files"
             exit ${EXIT_CHROOT_INIT_FAILED}
         }
 
-        mount_bind_ro "$files" "$chroot_dir/$files"
-    done  
+        mount_bind_ro "$files" "$chroot_dir$files"
+    done
 }
 
 # Синхронизация файлов /etc
@@ -234,7 +249,7 @@ mount_bind_ro /lib "$STUDENT_CHROOT/lib"
 mount_bind_ro /lib64 "$STUDENT_CHROOT/lib64"
 mount_home_dir "$HOME_DIR" "$STUDENT_CHROOT"
 mount_proc "$STUDENT_CHROOT"
-mount_files "$STUDENT_CHROOT"
+mount_chroot_files "$STUDENT_CHROOT"
 
 setup_fstab_entries "$STUDENT_CHROOT" "$HOME_DIR"
 

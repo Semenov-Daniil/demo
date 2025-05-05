@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# config.sh - Локальный конфигурационный файл для скриптов настройки ssh и создания/удаления chroot-окружения
-# Расположение: bash/ssh/config.sh
+# config.sh - Локальный конфигурационный файл для скриптов настройки Samba
+# Расположение: bash/samba/config.sh
 
 set -euo pipefail
 
@@ -42,42 +42,48 @@ done
 export ARGS
 
 # Переменные
-export CHROOT_DIR="/var/chroot"
-export CHROOT_STUDENTS="${CHROOT_DIR}/${STUDENT_GROUP}"
-export SSH_CONFIG_FILE="/etc/ssh/sshd_config"
-export SSH_CONFIGS_DIR="/etc/ssh/sshd_config.d"
-export STUDENT_CONF_FILE="${SSH_CONFIGS_DIR}/${STUDENT_GROUP}.conf"
+export SAMBA_CONFIG_FILE="/etc/samba/smb.conf"
+export SAMBA_BACKUP_CONFIG="/etc/samba/smb.conf.bak"
+export SAMBA_LOG_DIR="/var/log/samba"
+export SAMBA_LOG_FILE="${SAMBA_LOG_DIR}/samba.log"
+export SAMBA_TEMP_CONFIG="/tmp/smb.conf.tmp"
 
-MOUNT_DIRS=(
-    "dev"
-    "proc"
-    "usr"
-    "bin"
-    "lib"
-    "lib64"
-    "home"
+SAMBA_SERVICES=(
+    "smbd"
+    "nmbd"
 )
-MOUNT_FILES=()
-CHROOT_BASE_DIRS=(
-    "dev"
-    "etc"
-    "home"
-    "usr"
-    "bin"
-    "lib"
-    "lib64"
-    "proc"
-    "tmp"
+
+SAMBA_PORTS=(
+    "137/udp"
+    "138/udp"
+    "139/tcp"
+    "445/tcp"
+)
+
+SAMBA_GLOBAL_PARAMS=(
+    "workgroup = WORKGROUP"
+    "server string = %h server (Samba, Ubuntu)"
+    "server role = standalone server"
+    "security = user"
+    "map to guest = never"
+    "smb encrypt = required"
+    "min protocol = SMB3"
+    "log file = ${SAMBA_LOG_FILE}"
+    "max log size = 1000"
 )
 
 # Коды выхода
-export EXIT_MOUNT_FAILED=10
-export EXIT_CHROOT_INIT_FAILED=11
-export EXIT_SSH_CONFIG_FAILED=12
-export EXIT_SSH_SERVICE=13
+export EXIT_SAMBA_NOT_INSTALLED=20
+export EXIT_SAMBA_CONFIG_FAILED=21
+export EXIT_SAMBA_SHARE_FAILED=22
+export EXIT_SAMBA_TEST_FAILED=23
+export EXIT_SAMBA_UPDATE_FAILED=24
+export EXIT_SAMBA_USER_DELETE_FAILED=25
+export EXIT_SAMBA_SERVICE_FAILED=26
+export EXIT_SAMBA_USER_ADD_FAILED=27
 
 # Пути к скриптам
-export REMOVE_CHROOT="$(dirname "${BASH_SOURCE[0]}")/remove_chroot.sh"
+export DELETE_USER_SAMBA="$(dirname "${BASH_SOURCE[0]}")/delete_user_samba.sh"
 
 # Подключение логирования
 source_script "$LOGGING_SCRIPT" "$LOG_FILE" || {
@@ -103,16 +109,16 @@ source_script "$CREATE_DIRS_SCRIPT" || {
     exit "${EXIT_GENERAL_ERROR}"
 }
 
-# Подключение обновления владельца и прав фалов/директорий
+# Подключение обновления владельца и прав файлов/директорий
 source_script "$UPDATE_PERMS_SCRIPT" || {
     echo "Failed to source script $UPDATE_PERMS_SCRIPT" >&2
     exit "${EXIT_GENERAL_ERROR}"
 }
 
-# Подключение проверки и настройки SSH
-SETUP_SSH_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/setup_ssh.sh"
-source_script "$SETUP_SSH_SCRIPT" || {
-    echo "Failed to source script $SETUP_SSH_SCRIPT" >&2
+# Подключение настройки Samba
+SETUP_SAMBA_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/setup_samba.sh"
+source_script "$SETUP_SAMBA_SCRIPT" || {
+    echo "Failed to source script $SETUP_SAMBA_SCRIPT" >&2
     exit "${EXIT_GENERAL_ERROR}"
 }
 

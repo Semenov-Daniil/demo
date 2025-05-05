@@ -1,0 +1,3 @@
+[2025-05-05 14:46:01] [INFO] Samba configuration successfully checked and applied
+[2025-05-05 14:46:01] [INFO] Starting Samba user removal for testuser
+[2025-05-05 14:46:02] [INFO] Samba user testuser removed successfully

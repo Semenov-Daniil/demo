@@ -1,61 +1,93 @@
 #!/bin/bash
+# delete_user_samba.sh - Функция для удаления пользователя из Samba
+# Расположение: bash/samba/delete_user_samba.sh
 
-# Проверка аргументов
-if [ -z "$1" ]; then
-    echo "Error: Username is required" >&2
-    exit 1
+set -euo pipefail
+
+# Проверка, что скрипт не запущен напрямую
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    echo "This script ('$0') is meant to be sourced" >&2
+    return 1
 fi
 
-USERNAME="$1"
-LOG_FILE="${2:-logs/samba.log}"
+# Установка переменных по умолчанию
+: "${SAMBA_SERVICES:=("smbd" "nmbd")}"
+: "${EXIT_SUCCESS:=0}"
+: "${EXIT_GENERAL_ERROR:=1}"
+: "${EXIT_INVALID_ARG:=5}"
+: "${EXIT_SAMBA_NOT_INSTALLED:=20}"
+: "${EXIT_SAMBA_USER_DELETE_FAILED:=25}"
 
-# Проверка прав root
-if [[ $EUID -ne 0 ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: This script must be run with root privileges" >> "$LOG_FILE"
-    exit 2
-fi
+# Проверка активности пользователя и завершение его сеансов
+check_and_terminate_user() {
+    local username="$1"
+    local user_processes
 
-# Проверка директории для лога
-LOG_DIR=$(dirname "$LOG_FILE")
-if [[ ! -d "$LOG_DIR" ]]; then
-    mkdir -p "$LOG_DIR" 2>/dev/null || {
-        echo "Error: Cannot create log directory '$LOG_DIR'" >&2
-        exit 3
+    # Проверяем, есть ли активные процессы пользователя
+    if user_processes=$(pgrep -u "$username" 2>/dev/null); then
+        if ! pkill -u "$username" 2>/dev/null; then
+            log_message "warning" "Some processes for $username could not be terminated gracefully"
+            pkill -9 -u "$username" 2>/dev/null || {
+                log_message "error" "Failed to terminate processes for $username"
+                return ${EXIT_GENERAL_ERROR}
+            }
+        fi
+
+        sleep 1
+
+        if pgrep -u "$username" >/dev/null 2>&1; then
+            log_message "error" "Some processes for $username are still running after termination attempt"
+            return ${EXIT_GENERAL_ERROR}
+        fi
+    fi
+}
+
+# Основная функция удаления Samba-пользователя
+# delete_user_samba username
+delete_user_samba() {
+    local username="$1"
+
+    # Проверка наличия pdbedit
+    if ! command -v pdbedit >/dev/null 2>&1; then
+        log_message "error" "pdbedit command not found, is Samba installed?"
+        return ${EXIT_SAMBA_NOT_INSTALLED}
+    fi
+
+    # Проверка наличия Samba
+    if ! command -v smbpasswd >/dev/null 2>&1; then
+        log_message "error" "smbpasswd command not found, is Samba installed?"
+        return ${EXIT_SAMBA_NOT_INSTALLED}
+    fi
+
+    # Проверка, существует ли пользователь в базе Samba
+    if ! pdbedit -L | grep -q "^$username:"; then
+        log_message "info" "Samba user '$username' does not exist, nothing to delete"
+        return ${EXIT_SUCCESS}
+    fi
+
+    log_message "info" "Starting Samba user removal for $username"
+
+    # Завершение активных сеансов пользователя
+    check_and_terminate_user "$username" || return $?
+
+    # Удаление пользователя из Samba
+    smbpasswd -x "$username" >/dev/null 2>>"$LOG_FILE" || {
+        log_message "error" "Failed to delete Samba user $username"
+        return ${EXIT_SAMBA_USER_DELETE_FAILED}
     }
-fi
 
-# Проверка наличия Samba
-if ! command -v smbpasswd >/dev/null 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: smbpasswd command not found, is Samba installed?" >> "$LOG_FILE"
-    exit 5
-fi
+    # Перезагрузка конфигурации Samba
+    smbcontrol smbd reload-config >/dev/null 2>>"$LOG_FILE" || {
+        log_message "error" "Failed to reload Samba configuration after removing $username"
+        return ${EXIT_SAMBA_SERVICE_FAILED}
+    }
 
-# Проверка существования системного пользователя
-if ! id "$USERNAME" >/dev/null 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: System user '$USERNAME' does not exist" >> "$LOG_FILE"
-    exit 6
-fi
+    log_message "info" "Samba user $username removed successfully"
+    return ${EXIT_SUCCESS}
+}
 
-# Проверка принадлежности к группе students
-if ! groups "$USERNAME" | grep -q "\bstudents\b"; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: User '$USERNAME' is not a member of the 'students' group" >> "$LOG_FILE"
-    exit 5
-fi
+# Экспорт функций
+export -f delete_user_samba
+export -f check_and_terminate_user
 
-# Проверка, существует ли пользователь в базе Samba
-if ! pdbedit -L | grep -q "^$USERNAME:"; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: Samba user '$USERNAME' does not exist, nothing to delete" >> "$LOG_FILE"
-    exit 0
-fi
-
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deleting Samba user $USERNAME" >> "$LOG_FILE"
-
-# Удаление пользователя Samba
-if ! smbpasswd -x "$USERNAME" >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to delete Samba user $USERNAME" >> "$LOG_FILE"
-    exit 7
-fi
-
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Successfully deleted Samba user $USERNAME" >> "$LOG_FILE"
-
-exit 0
+return ${EXIT_SUCCESS}

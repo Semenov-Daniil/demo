@@ -1,6 +1,6 @@
 #!/bin/bash
-# remove_student_chroot.sh - Скрипт удаления chroot-окружения студента
-# Расположение: bash/ssh/remove_student_chroot.sh
+# delete_student_samba.sh - Скрипт удаления пользователя из Samba
+# Расположение: bash/samba/delete_student_samba.sh
 
 set -euo pipefail
 
@@ -11,25 +11,27 @@ source "$LOCAL_CONFIG" || {
     exit 1
 }
 
-# Подключение скрипта удаления chroot-окружения
-source "$REMOVE_CHROOT" || {
-    echo "Failed to source script $REMOVE_CHROOT" >&2
+# Подключение скрипта удаления Samba-пользователя
+source "$DELETE_USER_SAMBA" || {
+    echo "Failed to source script $DELETE_USER_SAMBA" >&2
     exit ${EXIT_GENERAL_ERROR}
 }
 
 # Основная логика
 # Проверка массива ARGS
 if ! declare -p ARGS >/dev/null 2>&1; then
-    echo "ARGS array is not defined"
+    echo "ARGS array is not defined" >&2
     exit ${EXIT_INVALID_ARG}
 fi
 
 # Проверка аргументов
 if [[ ${#ARGS[@]} -lt 1 ]]; then
-    echo "Usage: $0 <username>"
+    echo "Usage: $0 <username>" >&2
     exit ${EXIT_INVALID_ARG}
 fi
 
 USERNAME="${ARGS[0]}"
 
-remove_chroot ${USERNAME} || exit $?
+delete_user_samba "${USERNAME}" || exit $?
+
+exit ${EXIT_SUCCESS}

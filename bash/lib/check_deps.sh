@@ -21,6 +21,7 @@ check_deps() {
     local dep
 
     for dep in "$@"; do
+        [[ -z "$dep" ]] && continue
         if ! dpkg-query -W -f='${Status}' "$dep" 2>/dev/null | grep -q "install ok installed"; then
             echo "Dependency '$dep' is not installed" >&2
             missing_deps+=("$dep")

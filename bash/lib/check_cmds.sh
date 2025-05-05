@@ -21,6 +21,7 @@ check_cmds() {
     local cmd
 
     for cmd in "$@"; do
+        [[ -z "$cmd" ]] && continue
         if ! command -v "$cmd" >/dev/null 2>&1; then
             echo "Command '$cmd' not found" >&2
             missing_cmds+=("$cmd")

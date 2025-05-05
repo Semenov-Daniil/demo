@@ -46,10 +46,10 @@ export SITE_GROUP="${SITE_GROUP:-"www-data"}"
 
 # Названия групп и директорий студентов
 export STUDENT_GROUP="students"
-export STUDENT_DIR="${PROJECT_ROOT}/students"
+export STUDENTS_DIR="${PROJECT_ROOT}/students"
 
 # Зависимости для утилит
-export REQUIRED_SERVICES=("openssh-server" "samba")
+export REQUIRED_SERVICES=("openssh-server" "samba" "samba-common-bin")
 
 # --- Коды выхода ---
 export EXIT_SUCCESS=0        # Успешное выполнение
@@ -82,6 +82,7 @@ export LOGGING_SCRIPT="${LIB_DIR}/logging.sh"
 export CHECK_DEPS_SCRIPT="${LIB_DIR}/check_deps.sh"
 export CHECK_CMDS_SCRIPT="${LIB_DIR}/check_cmds.sh"
 export CREATE_DIRS_SCRIPT="${LIB_DIR}/create_dirs.sh"
+export UPDATE_PERMS_SCRIPT="${LIB_DIR}/update_perms.sh"
 
 export -f source_script
 

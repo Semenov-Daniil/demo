@@ -1,129 +1,177 @@
 #!/bin/bash
+# setup_samba.sh - Скрипт для настройки Samba-сервера
+# Расположение: bash/samba/setup_samba.sh
 
-if [ -z "$1" ]; then
-    echo "Error: students directory path are required" >&2
-    exit 1
+set -euo pipefail
+
+# Проверка, что скрипт не запущен напрямую
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    echo "This script ('$0') is meant to be sourced" >&2
+    return 1
 fi
 
-STUDENTS_DIR=$1
-LOG_FILE="${2:-logs/samba.log}"
-CONFIG_FILE="/etc/samba/smb.conf"
-BACKUP_CONFIG="/etc/samba/smb.conf.bak"
+# Установка переменных по умолчанию
+: "${SAMBA_CONFIG_FILE:=/etc/samba/smb.conf}"
+: "${SAMBA_BACKUP_CONFIG:=/etc/samba/smb.conf.bak}"
+: "${SAMBA_LOG_DIR:=/var/log/samba}"
+: "${SAMBA_LOG_FILE:=${SAMBA_LOG_DIR}/samba.log}"
+: "${SAMBA_TEMP_CONFIG:=/tmp/smb.conf.tmp}"
+: "${EXIT_SUCCESS:=0}"
+: "${EXIT_GENERAL_ERROR:=1}"
+: "${EXIT_SAMBA_NOT_INSTALLED:=20}"
+: "${EXIT_SAMBA_CONFIG_FAILED:=21}"
+: "${EXIT_SAMBA_SHARE_FAILED:=22}"
+: "${EXIT_SAMBA_TEST_FAILED:=23}"
+: "${EXIT_SAMBA_UPDATE_FAILED:=24}"
 
-if [[ $EUID -ne 0 ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: This script must be run with root privileges" >> "$LOG_FILE"
-    exit 1
-fi
-
-LOG_DIR=$(dirname "$LOG_FILE")
-if [[ ! -d "$LOG_DIR" ]]; then
-    mkdir -p "$LOG_DIR" 2>/dev/null || {
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Cannot create log directory '$LOG_DIR'" >> "$LOG_FILE"
-        exit 1
-    }
-fi
-
-if [[ ! -d "$STUDENTS_DIR" ]]; then
-    mkdir -p "$STUDENTS_DIR" 2>/dev/null || {
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Cannot create log directory '$STUDENTS_DIR'" >> "$LOG_FILE"
-        exit 1
-    }
-fi
-
-if ! command -v smbd >/dev/null 2>&1 || ! command -v nmbd >/dev/null 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Samba is not installed. Please install samba and samba-common-bin" >> "$LOG_FILE"
-    exit 1
-fi
-
-for service in smbd nmbd; do
-    if ! systemctl is-active --quiet "$service"; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting $service service" >> "$LOG_FILE"
-        if ! systemctl enable "$service" >> "$LOG_FILE" 2>&1 || ! systemctl start "$service" >> "$LOG_FILE" 2>&1; then
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to start $service service" >> "$LOG_FILE"
-            exit 2
-        fi
-    fi
-done
-
-if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] UFW is active, checking Samba ports" >> "$LOG_FILE"
-    for port in 137/udp 138/udp 139/tcp 445/tcp; do
-        if ! ufw status | grep -q "$port"; then
-            if ! ufw allow "$port" >> "$LOG_FILE" 2>&1; then
-                echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to open port $port in UFW" >> "$LOG_FILE"
-                exit 1
-            fi
+# Проверка и запуск Samba-сервисов
+start_samba_services() {
+    for service in "${SAMBA_SERVICES[@]}"; do
+        if ! systemctl is-active --quiet "$service"; then
+            systemctl enable "$service" && systemctl start "$service" || {
+                log_message "error" "Failed to start $service service"
+                exit ${EXIT_SAMBA_NOT_INSTALLED}
+            }
         fi
     done
-fi
-
-if [[ ! -f "$BACKUP_CONFIG" ]]; then
-    cp "$CONFIG_FILE" "$BACKUP_CONFIG" 2>/dev/null || {
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to create backup of $CONFIG_FILE" >> "$LOG_FILE"
-        exit 1
-    }
-fi
-
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking [global] section in $CONFIG_FILE" >> "$LOG_FILE"
-GLOBAL_PARAMS=(
-    "workgroup = WORKGROUP"
-    "server string = %h server (Samba, Ubuntu)"
-    "server role = standalone server"
-    "security = user"
-    "map to guest = never"
-    "smb encrypt = required"
-    "min protocol = SMB3"
-    "log file = /var/log/samba.log"
-    "max log size = 1000"
-)
-
-TEMP_CONFIG=$(mktemp)
-cp "$CONFIG_FILE" "$TEMP_CONFIG" 2>/dev/null || {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to copy $CONFIG_FILE to temporary file" >> "$LOG_FILE"
-    exit 1
 }
 
-if ! grep -q "\[global\]" "$TEMP_CONFIG"; then
-    echo "[global]" >> "$TEMP_CONFIG"
-fi
+# Настройка UFW для Samba-портов
+configure_ufw() {
+    if ! command -v ufw >/dev/null; then
+        return
+    fi
+    if ufw status | grep -qw "active"; then
+        for port in "${SAMBA_PORTS[@]}"; do
+            if ! ufw status numbered | grep -E "${port}\s+ALLOW" >/dev/null; then
+                ufw allow "$port" || {
+                    log_message "error" "Failed to open port $port in UFW"
+                    exit ${EXIT_GENERAL_ERROR}
+                }
+            fi
+        done
+    fi
+}
 
-for param in "${GLOBAL_PARAMS[@]}"; do
-    key=$(echo "$param" | cut -d'=' -f1 | xargs)
-    if ! grep -q "^\s*$key\s*=" "$TEMP_CONFIG"; then
-        sed -i "/\[global\]/a $param" "$TEMP_CONFIG" || {
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to add $param to [global] section" >> "$LOG_FILE"
-            exit 3
+# Создание резервной копии конфигурации Samba
+backup_samba_config() {
+    if [[ ! -f "$SAMBA_BACKUP_CONFIG" ]]; then
+        cp "$SAMBA_CONFIG_FILE" "$SAMBA_BACKUP_CONFIG" || {
+            log_message "error" "Failed to create backup of $SAMBA_CONFIG_FILE"
+            exit ${EXIT_SAMBA_CONFIG_FAILED}
         }
     fi
-done
+}
 
-USER_SHARE="\n[%U]\n   path = $STUDENTS_DIR/%U\n   valid users = %U\n   read only = no\n   browsable = yes\n   create mask = 0770\n   directory mask = 0770\n   force user = %U\n   force group = www-data\n"
-if ! grep -q "\[%U\]" "$TEMP_CONFIG"; then
-    echo -e "$USER_SHARE" >> "$TEMP_CONFIG" || {
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to add [%U] share to $TEMP_CONFIG" >> "$LOG_FILE"
-        exit 4
+# Обновление глобальной секции конфигурации Samba
+update_global_config() {
+    cp "$SAMBA_CONFIG_FILE" "$SAMBA_TEMP_CONFIG" || {
+        log_message "error" "Failed to copy $SAMBA_CONFIG_FILE to temporary file"
+        exit ${EXIT_SAMBA_CONFIG_FAILED}
     }
-fi
 
-if ! testparm -s "$TEMP_CONFIG" >/dev/null 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Invalid Samba configuration in $TEMP_CONFIG" >> "$LOG_FILE"
-    exit 5
-fi
-
-if ! cmp -s "$TEMP_CONFIG" "$CONFIG_FILE"; then
-    cp "$TEMP_CONFIG" "$CONFIG_FILE" || {
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to update $CONFIG_FILE" >> "$LOG_FILE"
-        exit 6
-    }
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Updated $CONFIG_FILE with required parameters" >> "$LOG_FILE"
-    if ! smbcontrol smbd reload-config >> "$LOG_FILE" 2>&1; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to reload Samba configuration" >> "$LOG_FILE"
-        exit 6
+    if ! grep -q "\[global\]" "$SAMBA_TEMP_CONFIG"; then
+        echo "[global]" >> "$SAMBA_TEMP_CONFIG"
     fi
-fi
 
-rm -f "$TEMP_CONFIG"
+    for param in "${SAMBA_GLOBAL_PARAMS[@]}"; do
+        key=$(echo "$param" | cut -d'=' -f1 | xargs)
+        if ! grep -q "^\s*$key\s*=" "$SAMBA_TEMP_CONFIG"; then
+            sed -i "/\[global\]/a $param" "$SAMBA_TEMP_CONFIG" || {
+                log_message "error" "Failed to add $param to [global] section"
+                exit ${EXIT_SAMBA_CONFIG_FAILED}
+            }
+        fi
+    done
+}
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Samba configuration successfully checked and applied" >> "$LOG_FILE"
+# Добавление пользовательской шары Samba
+add_user_share() {
+    local user_share
+    user_share=$(cat <<EOF
+[%U]
+   path = ${STUDENTS_DIR}/%U
+   valid users = %U
+   read only = no
+   browsable = yes
+   create mask = 0775
+   force create mode = 0775
+   directory mask = 2775
+   force directory mode = 2775
+   force user = %U
+   force group = ${SITE_GROUP}
+EOF
+)
+    if ! grep -q "\[%U\]" "$SAMBA_TEMP_CONFIG"; then
+        echo -e "$user_share" >> "$SAMBA_TEMP_CONFIG" || {
+            log_message "error" "Failed to add [%U] share to $SAMBA_TEMP_CONFIG"
+            exit ${EXIT_SAMBA_SHARE_FAILED}
+        }
+    fi
+}
 
-exit 0
+# Проверка и применение конфигурации Samba
+apply_samba_config() {
+    if ! testparm -s "$SAMBA_TEMP_CONFIG" >/dev/null 2>&1; then
+        log_message "error" "Invalid Samba configuration in $SAMBA_TEMP_CONFIG"
+        exit ${EXIT_SAMBA_TEST_FAILED}
+    fi
+
+    if ! cmp -s "$SAMBA_TEMP_CONFIG" "$SAMBA_CONFIG_FILE"; then
+        cp "$SAMBA_TEMP_CONFIG" "$SAMBA_CONFIG_FILE" || {
+            log_message "error" "Failed to update $SAMBA_CONFIG_FILE"
+            exit ${EXIT_SAMBA_UPDATE_FAILED}
+        }
+        update_permissions "$SAMBA_CONFIG_FILE" "644" "root:root" || {
+            log_message "error" "Failed to set permissions or owner for '$SAMBA_CONFIG_FILE'"
+            exit ${EXIT_SAMBA_UPDATE_FAILED}
+        }
+        smbcontrol smbd reload-config || {
+            log_message "error" "Failed to reload Samba configuration"
+            exit ${EXIT_SAMBA_UPDATE_FAILED}
+        }
+    fi
+}
+
+# Очистка временных файлов
+cleanup() {
+    rm -f "$SAMBA_TEMP_CONFIG"
+}
+
+# Основная логика
+# Проверка зависимостей
+check_deps "samba" "samba-common-bin" || {
+    log_message "error" "Failed check dependencies"
+    exit "${EXIT_SAMBA_NOT_INSTALLED}"
+}
+
+# Создание директорий
+create_directories "$SAMBA_LOG_DIR" "$STUDENTS_DIR" 755 root:root || {
+    log_message "error" "Failed create directories: ${SAMBA_LOG_DIR}, ${STUDENTS_DIR}"
+    exit ${EXIT_GENERAL_ERROR}
+}
+
+# Запуск Samba-сервисов
+start_samba_services
+
+# Настройка UFW для Samba-портов
+configure_ufw
+
+# Создание резервной копии конфигурации
+backup_samba_config
+
+# Обновление глобальной секции конфигурации
+update_global_config
+
+# Добавление пользовательской шары
+add_user_share
+
+# Проверка и применение конфигурации
+apply_samba_config
+
+# Очистка
+cleanup
+
+log_message "info" "Samba configuration successfully checked and applied"
+
+return ${EXIT_SUCCESS}

@@ -1,8 +1,25 @@
 #!/bin/bash
-# Скрипт для настройки chroot-окружения и конфигурации SSH
+# setup_ssh.sh - Скрипт для настройки chroot-окружения и конфигурации SSH
 # Расположение: bash/ssh/setup_ssh.sh
 
 set -euo pipefail
+
+# Проверка, что скрипт не запущен напрямую
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    echo "This script ('$0') is meant to be sourced" >&2
+    return 1
+fi
+
+# Установка переменных по умолчанию
+: "${STUDENT_GROUP:="students"}"
+: "${CHROOT_STUDENTS:=/var/chroot/${STUDENT_GROUP}}"
+: "${SSH_CONFIG_FILE:=/etc/ssh/sshd_config}"
+: "${SSH_CONFIGS_DIR:=/etc/ssh/sshd_config.d}"
+: "${STUDENT_CONF_FILE:="${SSH_CONFIGS_DIR}/${STUDENT_GROUP}.conf"}"
+: "${EXIT_SUCCESS:=0}"
+: "${EXIT_GENERAL_ERROR:=1}"
+: "${EXIT_NO_DEPENDENCY:=3}"
+: "${EXIT_SSH_CONFIG_FAILED:=8}"
 
 # Проверка и запуск SSH-сервиса
 start_ssh_service() {
@@ -31,7 +48,7 @@ configure_ufw() {
         return
     fi
     if ufw status | grep -qw "active"; then
-        if ! ufw status | grep -E "${port}/tcp.*ALLOW" >/dev/null; then
+        if ! ufw status numbered | grep -E "${port}/tcp.*ALLOW" >/dev/null; then
             ufw allow "$port/tcp" || {
                 log_message "error" "Failed to configure UFW for SSH port $port"
                 exit ${EXIT_GENERAL_ERROR}
@@ -71,47 +88,10 @@ EOF
         log_message "error" "Failed to create/update $STUDENT_CONF_FILE"
         exit ${EXIT_SSH_CONFIG_FAILED}
     }
-    update_file_permissions "$STUDENT_CONF_FILE" "644" "root:root" || {
+    update_permissions "$STUDENT_CONF_FILE" "644" "root:root" || {
         log_message "error" "Failed to set permissions or owner for '$STUDENT_CONF_FILE'"
         exit ${EXIT_GENERAL_ERROR}
     }
-}
-
-# Обновление владельца и прав файла
-update_file_permissions() {
-    local -a files=("${@:1:$#-2}") 
-    local perms="${@: -2:1}"
-    local owner="${@: -1:1}"
-
-    if [[ ! "$perms" =~ ^[0-7]{3}$ ]]; then
-        log_message "error" "Invalid permissions format: $perms (expected octal, e.g., 755)"
-        return ${EXIT_INVALID_ARG}
-    fi
-
-    if [[ ! "$owner" =~ ^[a-zA-Z0-9._-]+(:[a-zA-Z0-9._-]+)?$ ]]; then
-        log_message "error" "Invalid owner format: $owner (expected user:group or user)"
-        return ${EXIT_INVALID_ARG}
-    fi
-
-    for file in "${files[@]}"; do
-        current_perms=$(stat -c %a "$file")
-        current_owner=$(stat -c %U:%G "$file")
-        
-        if [[ "$current_owner" != "$owner" ]]; then
-            chown "$owner" "$file" || {
-                log_message "error" "Failed to set ownership $owner for '$file'"
-                return ${EXIT_GENERAL_ERROR}
-            }
-        fi
-
-        if [[ "$current_perms" != "$perms" ]]; then
-            chown "$perms" "$file" || {
-                log_message "error" "Failed to set permissions $perms for '$file'"
-                return ${EXIT_GENERAL_ERROR}
-            }
-        fi
-    done
-    return ${EXIT_SUCCESS}
 }
 
 # Проверка и обновление основного sshd_config
