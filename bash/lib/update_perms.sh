@@ -18,11 +18,16 @@ fi
 # Обновление владельца и прав фалов/директорий
 # update_permissions /path/dir /path/dir/file "755" "root:root"
 update_permissions() {
+    if [[ ${#@} -lt 3 ]]; then
+        echo "Usage update_permissions: <path> <perms> <owner>"
+        exit ${EXIT_INVALID_ARG}
+    fi
+
     local -a files=("${@:1:$#-2}") 
     local perms="${@: -2:1}"
     local owner="${@: -1:1}"
-    local missing_files=()
-    local file
+    local -a missing_files=()
+    local user group file
 
     if [[ ! "$perms" =~ ^[0-7]{3}$ ]]; then
         echo "Invalid permissions format: $perms (expected octal, e.g., 755)"
@@ -34,10 +39,35 @@ update_permissions() {
         return ${EXIT_INVALID_ARG}
     fi
 
+    if [[ "$owner" =~ : ]]; then
+        user="${owner%%:*}"
+        group="${owner#*:}"
+    else
+        user="$owner"
+        group=""
+    fi
+
+    if ! id "$user" &>/dev/null; then
+        echo "User '$user' does not exist"
+        return ${EXIT_INVALID_ARG}
+    fi
+
+    if [[ -n "$group" ]] && ! getent group "$group" &>/dev/null; then
+        echo "Group '$group' does not exist"
+        return ${EXIT_INVALID_ARG}
+    fi
+
     for file in "${files[@]}"; do
         [[ -z "$file" ]] && continue
-        current_perms=$(stat -c %a "$file")
-        current_owner=$(stat -c %U:%G "$file")
+        if [[ ! -e "$file" ]]; then
+            echo "File or directory '$file' does not exist"
+            missing_files+=("$file")
+            continue
+        fi
+
+        local current_perms current_owner
+        current_perms=$(stat -c %a "$file" 2>/dev/null || echo "unknown")
+        current_owner=$(stat -c %U:%G "$file" 2>/dev/null || echo "unknown")
         
         if [[ "$current_owner" != "$owner" ]]; then
             chown "$owner" "$file" || {
@@ -47,7 +77,7 @@ update_permissions() {
         fi
 
         if [[ "$current_perms" != "$perms" ]]; then
-            chown "$perms" "$file" || {
+            chmod "$perms" "$file" || {
                 echo "Failed to set permissions $perms for '$file'"
                 missing_files+=($file)
             }
@@ -55,7 +85,7 @@ update_permissions() {
     done
 
     if [[ ${#missing_files[@]} -gt 0 ]]; then
-        echo "Missing update permissions: ${missing_files[*]}" >&2
+        echo "Failed to update permissions/ownership for: ${missing_files[*]}" >&2
         return "${EXIT_GENERAL_ERROR}"
     fi
 
