@@ -1,8 +1,0 @@
-[2025-05-05 19:16:28] [ERROR] Home directory '/vat/www/demo/students/teststudent' does not exist
-[2025-05-05 19:17:09] [ERROR] Failed to set password for 'teststudent'
-[2025-05-05 19:37:53] [ERROR] User 'teststudent' exists
-[2025-05-05 19:39:26] [INFO] Start creating the system user 'teststudent'
-[2025-05-05 19:39:27] [INFO] System user 'teststudent' successfully created
-[2025-05-05 19:56:19] [INFO] Start creating the system user 'teststudent'
-[2025-05-05 19:56:19] [INFO] System user 'teststudent' successfully created
-[2025-05-05 20:21:24] [ERROR] Failed to update permissions 1 or ownership www-data:www-data for: '/var/www/demo/students/teststudent'

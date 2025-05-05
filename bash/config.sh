@@ -81,8 +81,21 @@ if [[ ! -d "$STUDENTS_DIR" ]]; then
     exit ${EXIT_NOT_FOUND}
 fi
 
-# Зависимости для утилит
-export REQUIRED_SERVICES=("apache2" "openssh-server" "samba" "samba-common-bin")
+# Массив необходимых сервисов
+export REQUIRED_SERVICES=(
+    "apache2"
+    "openssh-server"
+    "samba"
+    "samba-common-bin"
+)
+
+# Ассоциативный массив соответствий пакетов и сервисов
+declare -A SERVICE_MAP=(
+    ["apache2"]="apache2"
+    ["openssh-server"]="ssh"
+    ["samba"]="smbd nmbd"
+    ["samba-common-bin"]=""
+)
 
 # Функция для подключения скриптов
 source_script() {

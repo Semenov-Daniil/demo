@@ -1,0 +1,22 @@
+[2025-05-05 22:20:46] [INFO] Starting check for required services: apache2 openssh-server samba samba-common-bin
+[2025-05-05 22:20:46] [INFO] Package apache2 is already installed
+[2025-05-05 22:20:46] [INFO] Package openssh-server is already installed
+[2025-05-05 22:20:46] [INFO] Package samba is already installed
+[2025-05-05 22:20:46] [INFO] Package samba-common-bin is already installed
+[2025-05-05 22:20:46] [WARNING] Service apache2 not found for package apache2
+[2025-05-05 22:20:47] [INFO] Service ssh is enabled and active
+[2025-05-05 22:20:47] [INFO] Service smbd is enabled and active
+[2025-05-05 22:20:47] [WARNING] Service nmbd not found for package samba
+[2025-05-05 22:20:47] [INFO] Package samba-common-bin has no associated service
+[2025-05-05 22:20:47] [INFO] All required services checked and configured successfully
+[2025-05-05 22:26:42] [INFO] Starting check for required services: apache2 openssh-server samba samba-common-bin
+[2025-05-05 22:26:42] [INFO] Package apache2 is already installed
+[2025-05-05 22:26:42] [INFO] Package openssh-server is already installed
+[2025-05-05 22:26:42] [INFO] Package samba is already installed
+[2025-05-05 22:26:42] [INFO] Package samba-common-bin is already installed
+[2025-05-05 22:26:42] [WARNING] Service apache2 not found for package apache2: systemctl list-units --type=service --all | grep -qw apache2.service
+[2025-05-05 22:26:42] [INFO] Service ssh is enabled and active
+[2025-05-05 22:26:42] [INFO] Service smbd is enabled and active
+[2025-05-05 22:26:42] [WARNING] Service nmbd not found for package samba: systemctl list-units --type=service --all | grep -qw nmbd.service
+[2025-05-05 22:26:42] [INFO] Package samba-common-bin has no associated service
+[2025-05-05 22:26:42] [INFO] All required services checked and configured successfully
