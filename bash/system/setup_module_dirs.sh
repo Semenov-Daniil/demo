@@ -1,6 +1,6 @@
 #!/bin/bash
-# setup_module.sh - Скрипт настройки папок модулей
-# Расположение: bash/system/setup_module.sh
+# setup_module_dirs.sh - Скрипт настройки папок модулей
+# Расположение: bash/system/setup_module_dirs.sh
 
 set -euo pipefail
 
@@ -20,21 +20,23 @@ fi
 
 # Проверка аргументов
 if [[ ${#ARGS[@]} -lt 2 ]]; then
-    echo "Usage: $0 <username> <module_dir>"
+    echo "Usage: $0 <username> <module_dirs>"
     exit ${EXIT_INVALID_ARG}
 fi
 
 USERNAME="${ARGS[0]}"
-MODULE_DIR="${ARGS[1]}"
+MODULE_DIRS="${ARGS[@]:1}"
 
 if ! id "$USERNAME" >/dev/null 2>&1; then
     log_message "error" "User '$USERNAME' does not exist"
     exit ${EXIT_USER_NOT_FOUND}
 fi
 
-if [[ ! -d "$MODULE_DIR" ]]; then
-    log_message "error" "Module directory '$MODULE_DIR' does not exist"
-    exit ${EXIT_NOT_FOUND}
-fi
+for dir in "${MODULE_DIRS[@]}"; do
+    if [[ ! -d "$dir" ]]; then
+        log_message "error" "Module directory '$dir' does not exist"
+        exit ${EXIT_NOT_FOUND}
+    fi
+done
 
-update_permissions "$MODULE_DIR" 770 "$USERNAME:$SITE_GROUP" || exit $? 
+update_permissions ${MODULE_DIRS[@]} 770 "$USERNAME:$SITE_GROUP" || exit $?

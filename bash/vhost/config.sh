@@ -1,7 +1,6 @@
 #!/bin/bash
-
-# config.sh - Локальный конфигурационный файл для скриптов настройки ssh и создания/удаления chroot-окружения
-# Расположение: bash/ssh/config.sh
+# config.sh - Локальный конфигурационный файл для скриптов настройки виртуальных хостов Apache2
+# Расположение: bash/vhost/config.sh
 
 set -euo pipefail
 
@@ -25,10 +24,12 @@ source "$GLOBAL_CONFIG" || {
 }
 
 # Коды выхода
-export EXIT_MOUNT_FAILED=10
-export EXIT_CHROOT_INIT_FAILED=11
-export EXIT_SSH_CONFIG_FAILED=12
-export EXIT_SSH_SERVICE=13
+export EXIT_VHOST_NOT_INSTALLED=40
+export EXIT_VHOST_CONFIG_FAILED=41
+export EXIT_VHOST_ENABLE_FAILED=42
+export EXIT_VHOST_DISABLE_FAILED=43
+export EXIT_VHOST_DELETE_FAILED=44
+export EXIT_VHOST_INVALID_CONFIG=45
 
 # Парсинг аргументов
 declare -a ARGS=()
@@ -48,36 +49,17 @@ done
 export ARGS
 
 # Переменные
-export CHROOT_DIR="/var/chroot"
-export CHROOT_STUDENTS="${CHROOT_DIR}/${STUDENT_GROUP}"
-export SSH_CONFIG_FILE="/etc/ssh/sshd_config"
-export SSH_CONFIGS_DIR="/etc/ssh/sshd_config.d"
-export STUDENT_CONF_FILE="${SSH_CONFIGS_DIR}/${STUDENT_GROUP}.conf"
-
-MOUNT_DIRS=(
-    "dev"
-    "proc"
-    "usr"
-    "bin"
-    "lib"
-    "lib64"
-    "home"
-)
-MOUNT_FILES=()
-CHROOT_BASE_DIRS=(
-    "dev"
-    "etc"
-    "home"
-    "usr"
-    "bin"
-    "lib"
-    "lib64"
-    "proc"
-    "tmp"
-)
+export VHOST_AVAILABLE_DIR="/etc/apache2/sites-available"
+export VHOST_ENABLED_DIR="/etc/apache2/sites-enabled"
+export VHOST_LOG_DIR="/var/log/apache2"
+export VHOST_LOG_FILE="${VHOST_LOG_DIR}/vhost.log"
+export APACHE_SERVICES=("apache2")
+export APACHE_PORTS=("80/tcp" "443/tcp")
+export VHOST_PERMS="644"
+export VHOST_OWNER="root:root"
 
 # Пути к скриптам
-export REMOVE_CHROOT="$(dirname "${BASH_SOURCE[0]}")/remove_chroot.sh"
+export REMOVE_VHOST_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/remove_vhost.fn.sh"
 
 # Подключение логирования
 source_script "$LOGGING_SCRIPT" "$LOG_FILE" || {
@@ -103,16 +85,16 @@ source_script "$CREATE_DIRS_SCRIPT" || {
     exit "${EXIT_GENERAL_ERROR}"
 }
 
-# Подключение обновления владельца и прав фалов/директорий
+# Подключение обновления владельца и прав
 source_script "$UPDATE_PERMS_SCRIPT" || {
     echo "Failed to source script $UPDATE_PERMS_SCRIPT" >&2
     exit "${EXIT_GENERAL_ERROR}"
 }
 
-# Подключение проверки и настройки SSH
-SETUP_SSH_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/setup_ssh.sh"
-source_script "$SETUP_SSH_SCRIPT" || {
-    echo "Failed to source script $SETUP_SSH_SCRIPT" >&2
+# Подключение проверки и настройки Apache2
+SETUP_APACHE_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/setup_apache.sh"
+source_script "$SETUP_APACHE_SCRIPT" || {
+    echo "Script error '$SETUP_APACHE_SCRIPT'" >&2
     exit "${EXIT_GENERAL_ERROR}"
 }
 

@@ -1,0 +1,54 @@
+[2025-05-05 21:10:54] [INFO] Starting to check Apache settings
+[2025-05-05 21:10:54] [ERROR] Command a2ensite not found
+[2025-05-05 21:13:24] [INFO] Starting to check Apache settings
+[2025-05-05 21:13:24] [INFO] Apache is configured and running
+[2025-05-05 21:14:16] [INFO] Starting to check Apache settings
+[2025-05-05 21:14:16] [INFO] Apache is configured and running
+[2025-05-05 21:14:56] [INFO] Starting to check Apache settings
+[2025-05-05 21:14:56] [INFO] Apache is configured and running
+[2025-05-05 21:14:56] [INFO] Starting virtual host creation for module-1
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+Syntax OK
+Job for apache2.service failed.
+See "systemctl status apache2.service" and "journalctl -xeu apache2.service" for details.
+[2025-05-05 21:14:57] [ERROR] Failed to reload Apache2 service
+[2025-05-05 21:14:57] [INFO] Starting virtual host removal for module-1
+[2025-05-05 21:14:57] [INFO] Virtual host module-1 removed successfully
+[2025-05-05 21:22:50] [INFO] Starting to check Apache settings
+[2025-05-05 21:22:50] [INFO] Apache is configured and running
+[2025-05-05 21:22:50] [INFO] Starting virtual host creation for module-1
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+Syntax OK
+Job for apache2.service failed.
+See "systemctl status apache2.service" and "journalctl -xeu apache2.service" for details.
+[2025-05-05 21:22:50] [ERROR] Failed to reload Apache2 service
+[2025-05-05 21:22:50] [INFO] Starting virtual host removal for module-1
+[2025-05-05 21:22:51] [INFO] Virtual host module-1 removed successfully
+[2025-05-05 21:23:30] [INFO] Starting to check Apache settings
+[2025-05-05 21:23:31] [INFO] Apache is configured and running
+[2025-05-05 21:23:31] [INFO] Starting virtual host creation for module-1
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+Syntax OK
+Job for apache2.service failed.
+See "systemctl status apache2.service" and "journalctl -xeu apache2.service" for details.
+[2025-05-05 21:23:31] [ERROR] Failed to reload Apache2 service
+[2025-05-05 21:26:20] [INFO] Starting to check Apache settings
+[2025-05-05 21:26:20] [INFO] Apache is configured and running
+[2025-05-05 21:26:20] [ERROR] Virtual host configuration '/etc/apache2/sites-available/module-1.conf' already exists
+[2025-05-05 21:26:20] [INFO] Starting virtual host removal for module-1
+[2025-05-05 21:26:21] [INFO] Virtual host module-1 removed successfully
+[2025-05-05 21:27:10] [INFO] Starting to check Apache settings
+[2025-05-05 21:27:10] [INFO] Apache is configured and running
+[2025-05-05 21:27:10] [INFO] Starting virtual host creation for module-1
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+Syntax OK
+[2025-05-05 21:27:10] [INFO] Virtual host module-1 created and enabled successfully
+[2025-05-05 21:27:15] [INFO] Starting to check Apache settings
+[2025-05-05 21:27:16] [INFO] Apache is configured and running
+[2025-05-05 21:27:16] [ERROR] Virtual host configuration '/etc/apache2/sites-available/module-1.conf' already exists
+[2025-05-05 21:27:16] [INFO] Starting virtual host removal for module-1
+[2025-05-05 21:27:16] [INFO] Virtual host module-1 removed successfully
+[2025-05-05 21:27:16] [INFO] Starting virtual host creation for module-1
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+Syntax OK
+[2025-05-05 21:27:16] [INFO] Virtual host module-1 created and enabled successfully

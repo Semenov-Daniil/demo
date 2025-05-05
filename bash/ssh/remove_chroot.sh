@@ -7,7 +7,7 @@ set -euo pipefail
 # Проверка, что скрипт не запущен напрямую
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     echo "This script ('$0') is meant to be sourced" >&2
-    return 1
+    exit 1
 fi
 
 # Установка переменных по умолчанию

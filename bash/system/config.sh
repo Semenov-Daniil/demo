@@ -24,6 +24,10 @@ source "$GLOBAL_CONFIG" || {
     exit 1
 }
 
+# Коды выхода
+export EXIT_FAILED_CREATE_USER=30
+export EXIT_FAILED_DELETE_USER=31
+
 # Парсинг аргументов
 declare -a ARGS=()
 LOG_FILE="$(basename "${BASH_SOURCE[1]}" .sh).log"
@@ -44,9 +48,6 @@ export ARGS
 # Переменные
 
 
-# Коды выхода
-export EXIT_FAILED_CREATE_USER=30
-export EXIT_FAILED_DELETE_USER=31
 
 # Пути к скриптам
 

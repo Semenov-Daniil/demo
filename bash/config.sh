@@ -82,7 +82,7 @@ if [[ ! -d "$STUDENTS_DIR" ]]; then
 fi
 
 # Зависимости для утилит
-export REQUIRED_SERVICES=("openssh-server" "samba" "samba-common-bin")
+export REQUIRED_SERVICES=("apache2" "openssh-server" "samba" "samba-common-bin")
 
 # Функция для подключения скриптов
 source_script() {

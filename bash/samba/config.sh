@@ -24,6 +24,16 @@ source "$GLOBAL_CONFIG" || {
     exit 1
 }
 
+# Коды выхода
+export EXIT_SAMBA_NOT_INSTALLED=20
+export EXIT_SAMBA_CONFIG_FAILED=21
+export EXIT_SAMBA_SHARE_FAILED=22
+export EXIT_SAMBA_TEST_FAILED=23
+export EXIT_SAMBA_UPDATE_FAILED=24
+export EXIT_SAMBA_USER_DELETE_FAILED=25
+export EXIT_SAMBA_SERVICE_FAILED=26
+export EXIT_SAMBA_USER_ADD_FAILED=27
+
 # Парсинг аргументов
 declare -a ARGS=()
 LOG_FILE="$(basename "${BASH_SOURCE[1]}" .sh).log"
@@ -71,16 +81,6 @@ SAMBA_GLOBAL_PARAMS=(
     "log file = ${SAMBA_LOG_FILE}"
     "max log size = 1000"
 )
-
-# Коды выхода
-export EXIT_SAMBA_NOT_INSTALLED=20
-export EXIT_SAMBA_CONFIG_FAILED=21
-export EXIT_SAMBA_SHARE_FAILED=22
-export EXIT_SAMBA_TEST_FAILED=23
-export EXIT_SAMBA_UPDATE_FAILED=24
-export EXIT_SAMBA_USER_DELETE_FAILED=25
-export EXIT_SAMBA_SERVICE_FAILED=26
-export EXIT_SAMBA_USER_ADD_FAILED=27
 
 # Пути к скриптам
 export DELETE_USER_SAMBA="$(dirname "${BASH_SOURCE[0]}")/delete_user_samba.sh"

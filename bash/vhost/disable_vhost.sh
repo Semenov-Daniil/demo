@@ -1,109 +1,60 @@
 #!/bin/bash
+# disable_vhost.sh - Скрипт отключения виртуального хоста Apache2
+# Расположение: bash/vhost/disable_vhost.sh
+
+set -euo pipefail
+
+# Подключение локального config.sh
+LOCAL_CONFIG="$(dirname "${BASH_SOURCE[0]}")/config.sh"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source script $LOCAL_CONFIG" >&2
+    exit 1
+}
+
+# Основная логика
+# Проверка массива ARGS
+if ! declare -p ARGS >/dev/null 2>&1; then
+    echo "ARGS array is not defined" >&2
+    exit ${EXIT_INVALID_ARG}
+fi
 
 # Проверка аргументов
-if [ -z "$1" ]; then
-    echo "Error: Configuration file name is required" >&2
-    exit 1
+if [[ ${#ARGS[@]} -lt 1 ]]; then
+    echo "Usage: $0 <vhost-name>" >&2
+    exit ${EXIT_INVALID_ARG}
 fi
 
-CONFIG_FILE="$1"
-LOG_FILE="${2:-logs/vhost.log}"
-CONFIG_PATH="/etc/apache2/sites-available/$CONFIG_FILE.conf"
-BACKUP_PATH="/etc/apache2/sites-available/backup/$CONFIG_FILE.conf.$(date +%Y%m%d_%H%M%S)"
+VHOST_NAME="${ARGS[0]}"
 
-# Проверка прав root
-if [[ $EUID -ne 0 ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: This script must be run with root privileges" >> "$LOG_FILE"
-    exit 2
+VHOST_FILE="${VHOST_AVAILABLE_DIR}/${VHOST_NAME}.conf"
+VHOST_ENABLED_FILE="${VHOST_ENABLED_DIR}/${VHOST_NAME}.conf"
+
+# Проверка, существует ли файл конфигурации
+if [[ ! -f "$VHOST_FILE" ]]; then
+    log_message "info" "Virtual host configuration '$VHOST_FILE' does not exist"
+    exit ${EXIT_SUCCESS}
 fi
 
-# Проверка директории для лога
-LOG_DIR=$(dirname "$LOG_FILE")
-if [[ ! -d "$LOG_DIR" ]]; then
-    mkdir -p "$LOG_DIR" 2>/dev/null || {
-        echo "Error: Cannot create log directory '$LOG_DIR'" >&2
-        exit 3
-    }
+# Проверка, активирован ли виртуальный хост
+if [[ ! -f "$VHOST_ENABLED_FILE" ]]; then
+    log_message "info" "Virtual host '$VHOST_NAME' is already disabled"
+    exit ${EXIT_SUCCESS}
 fi
 
-# Проверка наличия необходимых команд
-for cmd in a2dissite apachectl systemctl; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Command '$cmd' not found" >> "$LOG_FILE"
-        exit 4
-    fi
-done
+log_message "info" "Disabling virtual host $VHOST_NAME"
 
-# Проверка существования файла конфигурации
-if [[ ! -f "$CONFIG_PATH" ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Configuration file '$CONFIG_PATH' does not exist" >> "$LOG_FILE"
-    exit 5
-fi
+# Отключение виртуального хоста
+a2dissite "$VHOST_NAME" >/dev/null 2>>"$LOG_FILE" || {
+    log_message "error" "Failed to disable virtual host $VHOST_NAME"
+    exit ${EXIT_VHOST_DISABLE_FAILED}
+}
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Disabling virtual host for $CONFIG_FILE" >> "$LOG_FILE"
+# Перезагрузка Apache2
+systemctl reload "apache2" >/dev/null 2>>"$LOG_FILE" || {
+    log_message "error" "Failed to reload Apache2 service"
+    exit ${EXIT_VHOST_DISABLE_FAILED}
+}
 
-# Проверка, включен ли виртуальный хост
-if [[ -L "/etc/apache2/sites-enabled/$CONFIG_FILE" ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Disabling virtual host $CONFIG_FILE" >> "$LOG_FILE"
-    if ! a2dissite "$CONFIG_FILE" >> "$LOG_FILE" 2>&1; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to disable virtual host $CONFIG_FILE" >> "$LOG_FILE"
-        exit 6
-    fi
-else
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Virtual host $CONFIG_FILE is already disabled" >> "$LOG_FILE"
-fi
+log_message "info" "Virtual host $VHOST_NAME disabled successfully"
 
-# Проверка синтаксиса конфигурации Apache
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking Apache configuration syntax" >> "$LOG_FILE"
-if ! apachectl configtest >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Apache configuration test failed" >> "$LOG_FILE"
-    # Попытка отката
-    if [[ -L "/etc/apache2/sites-enabled/$CONFIG_FILE" ]]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Attempting to restore virtual host $CONFIG_FILE" >> "$LOG_FILE"
-        if ! a2ensite "$CONFIG_FILE" >> "$LOG_FILE" 2>&1; then
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to restore virtual host $CONFIG_FILE" >> "$LOG_FILE"
-        else
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Virtual host $CONFIG_FILE restored" >> "$LOG_FILE"
-        fi
-    fi
-    exit 7
-fi
-
-# Перезагрузка Apache
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Reloading Apache" >> "$LOG_FILE"
-if ! systemctl reload apache2 >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to reload Apache" >> "$LOG_FILE"
-    exit 8
-fi
-
-# Проверка статуса Apache
-if ! systemctl is-active apache2 >/dev/null 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Apache is not active after reload" >> "$LOG_FILE"
-    exit 9
-fi
-
-# Создание резервной копии
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Creating backup of $CONFIG_PATH" >> "$LOG_FILE"
-mkdir -p "$(dirname "$BACKUP_PATH")" 2>/dev/null
-if ! cp "$CONFIG_PATH" "$BACKUP_PATH" >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to create backup of $CONFIG_PATH" >> "$LOG_FILE"
-    exit 10
-fi
-
-# Удаление файла конфигурации
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deleting configuration file $CONFIG_PATH" >> "$LOG_FILE"
-if ! rm -f "$CONFIG_PATH" >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Failed to delete configuration file $CONFIG_PATH" >> "$LOG_FILE"
-    exit 11
-fi
-
-# Повторная проверка синтаксиса
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Re-checking Apache configuration syntax" >> "$LOG_FILE"
-if ! apachectl configtest >> "$LOG_FILE" 2>&1; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Apache configuration test failed after deletion" >> "$LOG_FILE"
-    exit 12
-fi
-
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Successfully disabled and deleted virtual host $CONFIG_FILE" >> "$LOG_FILE"
-
-exit 0
+exit ${EXIT_SUCCESS}
