@@ -122,7 +122,7 @@ class ModuleService
     {
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/setup_module_dirs.sh'), [$login, $path, "--log={$this->logFile}"]);
         
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to setup module directory '{$path}': {$output['stderr']}");
         }
         

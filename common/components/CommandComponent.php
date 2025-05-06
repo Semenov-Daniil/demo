@@ -12,11 +12,10 @@ class CommandComponent extends Component
      *
      * @param string $scriptPath The path to the Bash script
      * @param array $args Array of arguments for the script
-     * @param string $sudoUser The user on whose behalf the command is executed (root by default)
      * @return array Execution result: return code, stdout and stderr
      * @throws Exception If the script does not exist or is not executable
      */
-    function executeBashScript(string $scriptPath, array $args = [], string $sudoUser = 'root'): array
+    function executeBashScript(string $scriptPath, array $args = []): array
     {
         if (!file_exists($scriptPath)) {
             throw new Exception("Script does not exist: $scriptPath");
@@ -27,9 +26,8 @@ class CommandComponent extends Component
 
         $escapedScriptPath = escapeshellarg($scriptPath);
         $escapedArgs = array_map('escapeshellarg', $args);
-        $escapedSudoUser = escapeshellarg($sudoUser);
 
-        $command = "sudo -u $escapedSudoUser $escapedScriptPath " . implode(' ', $escapedArgs);
+        $command = "sudo $escapedScriptPath " . implode(' ', $escapedArgs);
 
         $descriptors = [
             1 => ['pipe', 'w'],

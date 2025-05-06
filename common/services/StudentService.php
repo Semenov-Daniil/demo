@@ -241,7 +241,7 @@ class StudentService
     {
         $studentDir = Yii::getAlias("@students/{$login}");
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/create_user.sh'), [$login, $password, $studentDir, "--log={$this->logFile}"]);
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to create user {$login}: {$output['stderr']}");
         }
         return true;
@@ -250,7 +250,7 @@ class StudentService
     private function deleteSystemUser(string $login): bool
     {
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/delete_user.sh'), [$login, "--log={$this->logFile}"]);
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to delete user {$login}: {$output['stderr']}");
         }
         return true;
@@ -259,7 +259,7 @@ class StudentService
     private function addStudentSamba(string $login, string $password): bool
     {
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/samba/add_student_samba.sh'), [$login, $password, "--log={$this->logFile}"]);
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to add student Samba {$login}: {$output['stderr']}");
         }
         return true;
@@ -268,7 +268,7 @@ class StudentService
     private function deleteStudentSamba(string $login): bool
     {
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/samba/delete_student_samba.sh'), [$login, "--log={$this->logFile}"]);
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to delete student Samba {$login}: {$output['stderr']}");
         }
         return true;

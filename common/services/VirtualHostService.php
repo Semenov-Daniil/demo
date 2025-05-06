@@ -40,7 +40,7 @@ class VirtualHostService
 
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/create_vhost.sh'), [$titleDir, $vhostConfig, "--log={$this->logFile}"]);
 
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to create virtual host {$titleDir}: {$output['stderr']}");
         }
 
@@ -54,7 +54,7 @@ class VirtualHostService
 
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/disable_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
 
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to disabled virtual host {$titleDir}: {$output['stderr']}");
         }
 
@@ -68,7 +68,7 @@ class VirtualHostService
 
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/remove_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
 
-        if (!$output['returnCode']) {
+        if ($output['returnCode']) {
             throw new Exception("Failed to delete virtual host {$titleDir}: {$output['stderr']}");
         }
 
