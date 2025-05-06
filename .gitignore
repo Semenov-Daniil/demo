@@ -45,10 +45,12 @@ phpunit.phar
 # ignore generated folders
 /events
 /students
-/logs
 
 # vscode config
 .vscode
 
 # env
 .env
+
+# bash script logs
+/bash/logs/

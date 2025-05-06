@@ -81,14 +81,30 @@ mount_chroot_files() {
         mount_files=(${MOUNT_FILES[@]})
     fi
 
-    for files in "${mount_files[@]}"; do
-        [[ -z "$files" ]] && continue
-        touch "$chroot_dir$files" || {
-            log_message "error" "Failed to create $chroot_dir/$files"
+    for path in "${mount_files[@]}"; do
+        [[ -z "$path" ]] && continue
+
+        [[ ! -e "$path" ]] && {
+            log_message "error" "Path '$path' does not exist"
             exit ${EXIT_CHROOT_INIT_FAILED}
         }
 
-        mount_bind_ro "$files" "$chroot_dir$files"
+        touch "$chroot_dir$path" || {
+            log_message "error" "Failed to create $chroot_dir/$path"
+            exit ${EXIT_CHROOT_INIT_FAILED}
+        }
+
+        local real_path=$path
+
+        [[ -L "$path" ]] && {
+            real_path=$(readlink -f "$path")
+            if [ -z "$real_path" ]; then
+                log_message "error" "Failed to resolve symbolic link '$path'"
+                exit ${EXIT_CHROOT_INIT_FAILED}
+            fi
+        }
+
+        mount_bind_ro "$real_path" "$chroot_dir$real_path"
     done
 }
 
@@ -164,15 +180,15 @@ mount_proc() {
 }
 
 # Монтирование домашней директории
-mount_home_dir() {
-    local home_dir="$1"
-    local chroot_home="$2/home"
-    mount --bind "$home_dir" "$chroot_home" 2>/dev/null || {
-        log_message "error" "Failed to bind mount $home_dir to $chroot_home"
+mount_bind() {
+    local src="$1"
+    local dest="$2"
+    mount --bind "$src" "$dest" 2>/dev/null || {
+        log_message "error" "Failed to bind mount $src to $dest"
         exit ${EXIT_MOUNT_FAILED}
     }
 
-    FSTAB_ENTRY+=("$home_dir $chroot_home none bind 0 0")
+    FSTAB_ENTRY+=("$src $dest none bind 0 0")
 }
 
 # Настройка /etc/fstab
@@ -247,7 +263,7 @@ mount_bind_ro /usr "$STUDENT_CHROOT/usr"
 mount_bind_ro /bin "$STUDENT_CHROOT/bin"
 mount_bind_ro /lib "$STUDENT_CHROOT/lib"
 mount_bind_ro /lib64 "$STUDENT_CHROOT/lib64"
-mount_home_dir "$HOME_DIR" "$STUDENT_CHROOT"
+mount_bind "$HOME_DIR" "$STUDENT_CHROOT/home"
 mount_proc "$STUDENT_CHROOT"
 mount_chroot_files "$STUDENT_CHROOT"
 
