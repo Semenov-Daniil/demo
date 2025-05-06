@@ -24,7 +24,7 @@ class StudentService
     {
         $this->userService = new UserService();
         $this->moduleService = new ModuleService();
-        $this->logFile = Yii::getAlias('@logs') . '/students.log';
+        $this->logFile = 'students.log';
     }
 
     public function getTitleDb(string $login, int $numberModule): string
@@ -143,7 +143,7 @@ class StudentService
         $login = $student->user->login;
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $this->deleteSamba($login);
+            $this->deleteStudentSamba($login);
 
             $this->deleteSystemUser($login);
 
@@ -188,7 +188,7 @@ class StudentService
 
         $this->createSystemUser($login, $password);
 
-        $this->setupSamba($login, $password);
+        $this->addStudentSamba($login, $password);
 
         foreach ($student->modules as $module) {
             $this->moduleService->createStudentModuleEnvironment($student, $module);
@@ -240,37 +240,36 @@ class StudentService
     private function createSystemUser(string $login, string $password): bool
     {
         $studentDir = Yii::getAlias("@students/{$login}");
-        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/create_user.sh {$login} {$password} {$studentDir} {$this->logFile} 2>&1");
-        if ($output) {
-            throw new Exception("Failed to create user {$login}: {$output}");
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/create_user.sh'), [$login, $password, $studentDir, "--log={$this->logFile}"]);
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to create user {$login}: {$output['stderr']}");
         }
         return true;
     }
 
     private function deleteSystemUser(string $login): bool
     {
-        $studentDir = Yii::getAlias("@students/{$login}");
-        $output = shell_exec('echo ' . Yii::$app->params['systemPassword'] .  " | sudo ".Yii::getAlias('@bash')."/create_user.sh {$login} {$studentDir} {$this->logFile} 2>&1");
-        if ($output) {
-            throw new Exception("Failed to create user {$login}: {$output}");
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/delete_user.sh'), [$login, "--log={$this->logFile}"]);
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to delete user {$login}: {$output['stderr']}");
         }
         return true;
     }
 
-    private function setupSamba(string $login, string $password): bool
+    private function addStudentSamba(string $login, string $password): bool
     {
-        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/add_user_samba.sh {$login} {$password} {$this->logFile} 2>&1");
-        if ($output) {
-            throw new Exception("Failed to setup Samba {$login}: {$output}");
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/samba/add_student_samba.sh'), [$login, $password, "--log={$this->logFile}"]);
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to add student Samba {$login}: {$output['stderr']}");
         }
         return true;
     }
 
-    private function deleteSamba(string $login): bool
+    private function deleteStudentSamba(string $login): bool
     {
-        $output = shell_exec('echo ' . Yii::$app->params['systemPassword'] . " | sudo ".Yii::getAlias('@bash')."/delete_user_samba.sh {$login} {$this->logFile} 2>&1");
-        if ($output) {
-            throw new Exception("Failed to delete user Samba {$login}: {$output}");
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/samba/delete_student_samba.sh'), [$login, "--log={$this->logFile}"]);
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to delete student Samba {$login}: {$output['stderr']}");
         }
         return true;
     }

@@ -10,11 +10,10 @@ use Yii;
 class VirtualHostService
 {
     public string $logFile = '';
-    private string $vhostPath = '/etc/apache2/sites-available';
 
     public function __construct()
     {
-        $this->logFile = Yii::getAlias('@logs') . '/vhost_setup.log';
+        $this->logFile = 'vhost.log';
     }
 
     private function getVhostConfig(string $path, string $title): string
@@ -33,23 +32,16 @@ class VirtualHostService
         </VirtualHost>";
     }
 
-    public function enableVirtualHost(string $path)
+    public function createVirtualHost(string $path): bool
     {
         $path = rtrim($path, '/');
         $titleDir = basename($path);
         $vhostConfig = $this->getVhostConfig($path, $titleDir);
-        $vhostFile = "{$this->vhostPath}/{$titleDir}.conf";
 
-        $commandWrite = sprintf('echo %s | sudo /bin/tee %s 2>&1', escapeshellarg($vhostConfig), escapeshellarg($vhostFile));
-        
-        $output = shell_exec($commandWrite);
-        if ($output === null) {
-            throw new Exception("Failed to write virtual host config to {$vhostFile}: {$output}");
-        }
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/create_vhost.sh'), [$titleDir, $vhostConfig, "--log={$this->logFile}"]);
 
-        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/enable_vhost.sh {$titleDir} {$this->logFile} 2>&1");
-        if ($output) {
-            throw new Exception("Failed to enable virtual host: {$output}");
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to create virtual host {$titleDir}: {$output['stderr']}");
         }
 
         return true;
@@ -59,12 +51,25 @@ class VirtualHostService
     {
         $path = rtrim($path, '/');
         $titleDir = basename($path);
-        $vhostFile = "{$this->vhostPath}/{$titleDir}.conf";
 
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/disable_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
 
-        $output = shell_exec('echo ' . Yii::$app->params['systemPassword'] . " | sudo ".Yii::getAlias('@bash')."/disable_vhost.sh {$titleDir} {$this->logFile} 2>&1");
-        if ($output) {
-            throw new Exception("Failed to enable virtual host: {$output}");
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to disabled virtual host {$titleDir}: {$output['stderr']}");
+        }
+
+        return true;
+    }
+
+    public function deleteVirtualHost(string $path)
+    {
+        $path = rtrim($path, '/');
+        $titleDir = basename($path);
+
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/remove_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
+
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to delete virtual host {$titleDir}: {$output['stderr']}");
         }
 
         return true;

@@ -8,13 +8,12 @@ return [
         '@students' => '@root/students',
         '@templates' => '@common/templates',
         '@bash' => '@root/bash',
-        '@logs' => '@root/logs',
     ],
     'language' => 'ru-RU',
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
     'bootstrap' => [
         [
-            'class' => '@common\components\FileComponent',
+            'class' => 'common\components\FileComponent',
             'directories' => [
                 '@students',
                 '@events',
@@ -48,6 +47,9 @@ return [
         ],
         'fileComponent' => [
             'class' => 'common\components\FileComponent'
+        ],
+        'commandComponent' => [
+            'class' => 'common\components\CommandComponent'
         ],
         'assetManager' => [
             'forceCopy' => true,

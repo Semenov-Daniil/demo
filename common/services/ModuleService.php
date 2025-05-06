@@ -23,7 +23,7 @@ class ModuleService
     public function __construct()
     {
         $this->vhostService = new VirtualHostService();
-        $this->logFile = Yii::getAlias('@logs') . '/modules.log';
+        $this->logFile ='modules.log';
     }
 
     public static function getDirectoryModuleFileTitle(int $moduleNumber): string
@@ -102,8 +102,9 @@ class ModuleService
             throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
         }
 
-        $this->vhostService->enableVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
-        $this->settingModule($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+        $this->vhostService->createVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+
+        $this->setupModuleDir($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
         return true;
     }
@@ -117,13 +118,14 @@ class ModuleService
         return true;
     } 
 
-    private function settingModule(string $login, string $path)
+    private function setupModuleDir(string $login, string $path)
     {
-        $output = shell_exec("sudo ".Yii::getAlias('@bash')."/setup_module.sh {$login} {$path} {$this->logFile} 2>&1");
-        if ($output) {
-            throw new Exception("Failed to setting module: {$output}");
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/setup_module_dirs.sh'), [$login, $path, "--log={$this->logFile}"]);
+        
+        if (!$output['returnCode']) {
+            throw new Exception("Failed to setup module directory '{$path}': {$output['stderr']}");
         }
-
+        
         return true;
     }
 
