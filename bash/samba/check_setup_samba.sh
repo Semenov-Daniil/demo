@@ -31,6 +31,11 @@ start_samba_services() {
 configure_ufw() {
     command -v ufw >/dev/null || { log_message "warning" "UFW not installed"; return; }
     ufw status | grep -q "Status: active" || { log_message "info" "UFW is inactive"; return; }
+
+    local cache_file="${TMP_DIR}/ufw_samba_hash"
+    local port_hash=$(echo "${SAMBA_PORTS[*]}" | md5sum | cut -d' ' -f1)
+    [[ -f "$cache_file" && "$(cat "$cache_file")" == "$port_hash" ]] && return
+
     for port in "${SAMBA_PORTS[@]}"; do
         ufw status numbered | grep -q "$port.*ALLOW" || {
             ufw allow "$port" || {
@@ -39,6 +44,8 @@ configure_ufw() {
             }
         }
     done
+
+    echo "$port_hash" > "$cache_file" 2>/dev/null || log_message "warning" "Failed to cache UFW config for Samba: ${SAMBA_PORTS[*]}"
 }
 
 # Проверка зависимостей и команд

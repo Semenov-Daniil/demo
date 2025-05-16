@@ -27,6 +27,23 @@ cleanup() {
     }
 }
 
+# Функция добавления пользователя Samba
+add_user_samba() {
+    local username="$1" password="$2"
+    pdbedit -L -u "$username" | grep -q "^$username:" && {
+        log_message "warning" "Samba user '$username' already exists"
+        return ${EXIT_SUCCESS}
+    }
+    printf "%s\n" "$password" | smbpasswd -s -a "$username" >/dev/null || {
+        log_message "error" "Failed to add Samba user '$username'"
+        return ${EXIT_SAMBA_USER_ADD_FAILED}
+    }
+    touch "${RELOAD_NEEDED_FILE}" || {
+        log_message "error" "Failed to create Samba reload flag"
+        return ${EXIT_SAMBA_SERVICE_FAILED}
+    }
+}
+
 # Основная логика
 trap cleanup SIGINT SIGTERM EXIT
 
@@ -56,26 +73,11 @@ groups "$USERNAME" | grep -q "$STUDENT_GROUP" || {
     exit ${EXIT_INVALID_ARG}
 }
 
-# Функция добавления пользователя Samba
-add_user_samba() {
-    local username="$1" password="$2"
-    pdbedit -L -u "$username" | grep -q "^$username:" && {
-        log_message "warning" "Samba user '$username' already exists"
-        return ${EXIT_SUCCESS}
-    }
-    log_message "info" "Adding Samba user '$username'"
-    printf "%s\n" "$password" | smbpasswd -s -a "$username" >/dev/null || {
-        log_message "error" "Failed to add Samba user '$username'"
-        return ${EXIT_SAMBA_USER_ADD_FAILED}
-    }
-    touch "${RELOAD_NEEDED_FILE}" || {
-        log_message "error" "Failed to create Samba reload flag"
-        return ${EXIT_SAMBA_SERVICE_FAILED}
-    }
-    log_message "info" "Samba user '$username' added successfully"
-}
+log_message "info" "Adding Samba user '$username'"
 
 # Установка блокировки
-with_lock ${LOCK_SAMBA_FILE} add_user_samba "$USERNAME" "$PASSWORD"
+with_lock ${LOCK_SAMBA_FILE} add_user_samba "$USERNAME" "$PASSWORD" || exit $?
+
+log_message "info" "Samba user '$username' added successfully"
 
 exit ${EXIT_SUCCESS}

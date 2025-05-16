@@ -4,34 +4,34 @@
 
 set -euo pipefail
 
-# Подключение локального config.sh
-LOCAL_CONFIG="$(dirname "${BASH_SOURCE[0]}")/config.sh"
-source "$LOCAL_CONFIG" || {
-    echo "Failed to source script $LOCAL_CONFIG" >&2
+# Подключение логального config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
+    echo "Failed to source local config.sh"
     exit 1
 }
 
 # Подключение скрипта удаления виртуального хоста
-source "$REMOVE_VHOST_SCRIPT" || {
-    echo "Failed to source script $REMOVE_VHOST_SCRIPT" >&2
+source "$REMOVE_VHOST" || {
+    echo "Failed to source script '$REMOVE_VHOST'"
     exit ${EXIT_GENERAL_ERROR}
 }
 
 # Основная логика
 # Проверка массива ARGS
-if ! declare -p ARGS >/dev/null 2>&1; then
-    echo "ARGS array is not defined" >&2
-    exit ${EXIT_INVALID_ARG}
-fi
+[[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
 
 # Проверка аргументов
-if [[ ${#ARGS[@]} -lt 1 ]]; then
-    echo "Usage: $0 <vhost-name>" >&2
+[[ ${#ARGS[@]} -ge 1 ]] || { echo "Usage: $0 <vhost-name> <vhost-config>"; exit ${EXIT_INVALID_ARG}; }
+
+# Установка переменных
+VHOST_NAME="${ARGS[0]}"
+
+# Валидация имени виртуального хоста
+if [[ ! "$VHOST_NAME" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    log_message "error" "Invalid virtual host name $VHOST_NAME"
     exit ${EXIT_INVALID_ARG}
 fi
 
-VHOST_NAME="${ARGS[0]}"
-
-remove_vhost "${VHOST_NAME}" || exit $?
+with_lock "${TMP_DIR}/${LOCK_VHOST_PREF}_${VHOST_NAME}.lock" remove_vhost "$VHOST_NAME" || exit $?
 
 exit ${EXIT_SUCCESS}
