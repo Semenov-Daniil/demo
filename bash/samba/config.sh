@@ -6,21 +6,20 @@
 set -euo pipefail
 
 # Проверка, что скрипт не запущен напрямую
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    echo "This script ('$0') is meant to be sourced" >&2
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
+    echo "This script ('$0') is meant to be sourced"
     exit 1
-fi
+}
 
 # Проверка root-прав
-if [[ $EUID -ne 0 ]]; then
-    echo "This operation requires root privileges" >&2
+[[ $EUID -ne 0 ]] || {
+    echo "This operation requires root privileges"
     exit 1
-fi
+}
 
 # Подключение глобального config.sh
-GLOBAL_CONFIG="$(dirname "${BASH_SOURCE[0]}")/../config.sh"
-source "$GLOBAL_CONFIG" || {
-    echo "Failed to source script $GLOBAL_CONFIG" >&2
+source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
+    echo "Failed to source global config.sh"
     exit 1
 }
 
@@ -36,41 +35,29 @@ export EXIT_SAMBA_USER_ADD_FAILED=27
 
 # Парсинг аргументов
 declare -a ARGS=()
-LOG_FILE="$(basename "${BASH_SOURCE[1]}" .sh).log"
+export LOG_FILE="$(basename "${BASH_SOURCE[1]}" .sh).log"
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --log=*)
-            LOG_FILE="${1#--log=}"
-            shift
-            ;;
-        *)
-            ARGS+=("$1")
-            shift
-            ;;
+        --log=*) LOG_FILE="${1#--log=}"; shift ;;
+        *) ARGS+=("$1"); shift ;;
     esac
 done
+
 export ARGS
 
-# Переменные
+# Установка переменных
 export SAMBA_CONFIG_FILE="/etc/samba/smb.conf"
 export SAMBA_BACKUP_CONFIG="/etc/samba/smb.conf.bak"
 export SAMBA_LOG_DIR="/var/log/samba"
 export SAMBA_LOG_FILE="${SAMBA_LOG_DIR}/samba.log"
 export SAMBA_TEMP_CONFIG="/tmp/smb.conf.tmp"
-
-SAMBA_SERVICES=(
-    "smbd"
-    "nmbd"
-)
-
-SAMBA_PORTS=(
-    "137/udp"
-    "138/udp"
-    "139/tcp"
-    "445/tcp"
-)
-
-SAMBA_GLOBAL_PARAMS=(
+export SAMBA_DEPS_CACHE="${TMP_DIR}/samba_deps_checked"
+export CONFIG_HASH_FILE="${TMP_DIR}/samba_config_hash"
+export RELOAD_NEEDED_FILE="${TMP_DIR}/samba_reload_needed"
+export SETUP_CONFIG_SAMBA_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/setup_config_samba.sh"
+export SAMBA_PORTS=("137/udp" "138/udp" "139/tcp" "445/tcp")
+export SAMBA_GLOBAL_PARAMS=(
     "workgroup = WORKGROUP"
     "server string = %h server (Samba, Ubuntu)"
     "server role = standalone server"
@@ -81,9 +68,24 @@ SAMBA_GLOBAL_PARAMS=(
     "log file = ${SAMBA_LOG_FILE}"
     "max log size = 1000"
 )
-
-# Пути к скриптам
-export DELETE_USER_SAMBA="$(dirname "${BASH_SOURCE[0]}")/delete_user_samba.sh"
+export USER_SHARE=$(cat <<EOF
+[%U]
+   path = ${STUDENTS_DIR}/%U
+   valid users = %U
+   read only = no
+   browsable = yes
+   create mask = 0775
+   force create mode = 0775
+   directory mask = 2775
+   force directory mode = 2775
+   force user = %U
+   force group = ${SITE_GROUP}
+EOF
+)
+export SAMBA_REQUIRED_COMMAND=("pdbedit" "smbpasswd" "smbcontrol")
+export LOCK_SAMBA_PREF="lock_samba"
+export LOCK_SAMBA_FILE="${TMP_DIR}/${LOCK_SAMBA_PREF}_global.lock"
+export REMOVE_SAMBA_USER_FN="$(dirname "${BASH_SOURCE[0]}")/remove_samba_user.fn.sh"
 
 # Подключение логирования
 source_script "$LOGGING_SCRIPT" "$LOG_FILE" || {
@@ -91,35 +93,24 @@ source_script "$LOGGING_SCRIPT" "$LOG_FILE" || {
     exit "${EXIT_GENERAL_ERROR}"
 }
 
-# Подключение проверки зависимостей
-source_script "$CHECK_DEPS_SCRIPT" || {
-    echo "Failed to source script $CHECK_DEPS_SCRIPT" >&2
-    exit "${EXIT_GENERAL_ERROR}"
-}
+# Подключение вспомогательных скриптов/функций
+source_script "${LIB_DIR}/common.sh" || exit $?
 
-# Подключение проверки команд
-source_script "$CHECK_CMDS_SCRIPT" || {
-    echo "Failed to source script $CHECK_CMDS_SCRIPT" >&2
-    exit "${EXIT_GENERAL_ERROR}"
-}
-
-# Подключение создания директорий
-source_script "$CREATE_DIRS_SCRIPT" || {
-    echo "Failed to source script $CREATE_DIRS_SCRIPT" >&2
-    exit "${EXIT_GENERAL_ERROR}"
-}
-
-# Подключение обновления владельца и прав файлов/директорий
-source_script "$UPDATE_PERMS_SCRIPT" || {
-    echo "Failed to source script $UPDATE_PERMS_SCRIPT" >&2
-    exit "${EXIT_GENERAL_ERROR}"
-}
-
-# Подключение настройки Samba
-SETUP_SAMBA_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/setup_samba.sh"
-source_script "$SETUP_SAMBA_SCRIPT" || {
-    echo "Failed to source script $SETUP_SAMBA_SCRIPT" >&2
-    exit "${EXIT_GENERAL_ERROR}"
-}
+# Настройка конфигурации Samba
+if [[ -f "$CONFIG_HASH_FILE" ]]; then
+    current_hash=$(md5sum "$SAMBA_CONFIG_FILE" | cut -d' ' -f1)
+    saved_hash=$(cat "$CONFIG_HASH_FILE")
+    if [[ "$current_hash" != "$saved_hash" ]]; then
+        source_script "$SETUP_CONFIG_SAMBA_SCRIPT" || {
+            log_message "error" "Failed to setup Samba configuration"
+            exit ${EXIT_SAMBA_CONFIG_FAILED}
+        }
+    fi
+else
+    source_script "$SETUP_CONFIG_SAMBA_SCRIPT" || {
+        log_message "error" "Failed to setup Samba configuration"
+        exit ${EXIT_SAMBA_CONFIG_FAILED}
+    }
+fi
 
 return ${EXIT_SUCCESS}
