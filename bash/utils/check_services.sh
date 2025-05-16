@@ -6,9 +6,8 @@
 set -e
 
 # Подключение локального config.sh
-LOCAL_CONFIG="$(dirname "${BASH_SOURCE[0]}")/config.sh"
-source "$LOCAL_CONFIG" || {
-    echo "Failed to source script $LOCAL_CONFIG" >&2
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
+    echo "Failed to source local config.sh"
     exit 1
 }
 

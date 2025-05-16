@@ -1,59 +1,48 @@
 #!/bin/bash
+
 # config.sh - Локальный конфигурационный файл для скриптов утилит
-# Расположение: bash/system/config.sh
+# Расположение: bash/utils/config.sh
 
 set -euo pipefail
 
 # Проверка, что скрипт не запущен напрямую
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    echo "This script ('$0') is meant to be sourced" >&2
-    exit 1
-fi
-
-# Проверка root-прав
-if [[ $EUID -ne 0 ]]; then
-    echo "This operation requires root privileges" >&2
-    exit 1
-fi
-
-# Подключение глобального config.sh
-GLOBAL_CONFIG="$(dirname "${BASH_SOURCE[0]}")/../config.sh"
-source "$GLOBAL_CONFIG" || {
-    echo "Failed to source script $GLOBAL_CONFIG" >&2
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
+    echo "This script ('$0') is meant to be sourced"
     exit 1
 }
 
-# Коды выхода
+# Проверка root-прав
+[[ $EUID -ne 0 ]] || {
+    echo "This operation requires root privileges"
+    exit 1
+}
 
+# Подключение глобального config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
+    echo "Failed to source global config.sh"
+    exit 1
+}
 
 # Парсинг аргументов
 declare -a ARGS=()
-LOG_FILE="$(basename "${BASH_SOURCE[1]}" .sh).log"
+export LOG_FILE="utils.log"
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --log=*)
-            LOG_FILE="${1#--log=}"
-            shift
-            ;;
-        *)
-            ARGS+=("$1")
-            shift
-            ;;
+        --log=*) LOG_FILE="${1#--log=}"; shift ;;
+        *) ARGS+=("$1"); shift ;;
     esac
 done
+
 export ARGS
-
-# Переменные
-
-
-
-# Пути к скриптам
-
 
 # Подключение логирования
 source_script "$LOGGING_SCRIPT" "$LOG_FILE" || {
     echo "Failed to source script $LOGGING_SCRIPT" >&2
     exit "${EXIT_GENERAL_ERROR}"
 }
+
+# Подключение вспомогательных скриптов/функций
+source_script "${LIB_DIR}/common.sh" || exit $?
 
 return ${EXIT_SUCCESS}
