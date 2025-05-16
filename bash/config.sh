@@ -47,8 +47,20 @@ export SCRIPTS_DIR="${PROJECT_ROOT}/bash"
 export LOGS_DIR="${SCRIPTS_DIR}/logs"
 # Путь к папке lib
 export LIB_DIR="${SCRIPTS_DIR}/lib"
+# Путь к папке logging
+export LOGGING_DIR="${SCRIPTS_DIR}/logging"
 # Путь к папке utils
 export UTILS_DIR="${SCRIPTS_DIR}/utils"
+# Путь к папке временного хранения
+export TMP_DIR="/tmp"
+# Превикс к файлам блокировки
+export LOCK_PREF="lock_"
+
+export CMDS_CACHE="${TMP_DIR}/cmds_checked"
+export DEPS_CACHE="${TMP_DIR}/deps_checked"
+
+export LOG_RETENTION_DAYS=30
+export LOCK_LOG_PREF="lock_log"
 
 # Пользователь и группа сайта
 export SITE_USER="${SITE_USER:-"www-data"}"
@@ -118,11 +130,13 @@ source_script() {
 export -f source_script
 
 # Пути к скриптам
-export LOGGING_SCRIPT="${LIB_DIR}/logging.sh"
-export CHECK_DEPS_SCRIPT="${LIB_DIR}/check_deps.sh"
-export CHECK_CMDS_SCRIPT="${LIB_DIR}/check_cmds.sh"
-export CREATE_DIRS_SCRIPT="${LIB_DIR}/create_dirs.sh"
-export UPDATE_PERMS_SCRIPT="${LIB_DIR}/update_perms.sh"
+export LOGGING_SCRIPT="${LOGGING_DIR}/logging/logging.fn.sh"
+
+# Проверки наличия команд/утилит
+! command -v flock >/dev/null 2>&1 && {
+    echo "Command 'flock' not found"
+    return ${EXIT_NOT_FOUND}
+}
 
 # Успешное завершение
 return ${EXIT_SUCCESS}
