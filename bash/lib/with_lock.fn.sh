@@ -1,15 +1,16 @@
 #!/bin/bash
-
-# with_lock.fn.sh - Функция для выполнения операций с блокировкой
+# with_lock.fn.sh - Скрипт экспортирующий функцию выполнения операций с блокировкой
 # Расположение: bash/lib/with_lock.fn.sh
 
 set -euo pipefail
 
-[[ "${BASH_SOURCE[0]}" == "$0" ]] && { 
-    echo "This script ('$0') is meant to be sourced"
-    exit 1
+! command -v flock >/dev/null 2>&1 && {
+    echo "Command 'flock' not found"
+    return 1
 }
 
+# Выполнения операций с блокировкой
+# with_lock <lockfile> <action>
 with_lock() {
     local lockfile="$1" action="$2"
     shift 2

@@ -1,9 +1,13 @@
 #!/bin/bash
 
-set -euo pipefail
+LOGGING_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/logging/logging.fn.sh"
+LOG_FILE="$(basename "${BASH_SOURCE[0]}" .sh).log"
 
-source "$(dirname "${BASH_SOURCE[0]}")/lib/logging.sh" "logtest.log"
-for i in {1..50}; do
-    log_message "info" "Test message $i from $$" &
-done
-wait
+TEST_ARR=("1" "2" "3" "4" "5")
+
+asd=${TEST_ARR[@]}
+
+echo "TEST_ARR: ${TEST_ARR[*]}"
+echo "asd: ${asd[*]}"
+
+exit 0

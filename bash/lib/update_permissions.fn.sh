@@ -1,21 +1,17 @@
 #!/bin/bash
-
-# update_permissions.fn.sh - Функция для обновления владельца и прав фалов/директорий
+# update_permissions.fn.sh - Скрипт экспортирующий функцию обновления владельца и прав фалов/директорий
 # Расположение: bash/lib/update_permissions.fn.sh
 
 set -euo pipefail
 
-# Проверка, что скрипт не запущен напрямую
-[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
-    echo "This script ('$0') is meant to be sourced"
-    exit 1
-}
+: "${TMP_DIR:=/tmp}"
+: "${LOCK_PREF:="lock"}"
 
-# Функция обновления владельца и прав фалов/директорий
-# update_permissions <directories|files> [directories|files ...] <perms: 755> <owner: root:root>
+# Обновление владельца и прав фалов/директорий
+# update_permissions <directory/file> [directory/file ...] <perms: 755> <owner: root:root>
 update_permissions() {
     [[ ${#@} -lt 3 ]] || {
-        echo "Usage update_permissions: <paths> <perms> <owner>"
+        echo "Usage update_permissions: <directory/file> <perms> <owner>"
         exit 1
     }
 

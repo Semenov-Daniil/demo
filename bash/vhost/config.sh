@@ -11,12 +11,6 @@ set -euo pipefail
     exit 1
 }
 
-# Проверка root-прав
-[[ $EUID -ne 0 ]] || {
-    echo "This operation requires root privileges"
-    exit 1
-}
-
 # Подключение глобального config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
     echo "Failed to source global config.sh"

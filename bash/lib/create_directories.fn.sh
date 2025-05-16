@@ -1,17 +1,13 @@
 #!/bin/bash
-
-# create_directories.fn.sh - Функция для создания директорий
+# create_directories.fn.sh - Скрипт экспортирующий функцию создания директорий
 # Расположение: bash/lib/create_directories.fn.sh
 
 set -euo pipefail
 
-# Проверка, что скрипт не запущен напрямую
-[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
-    echo "This script ('$0') is meant to be sourced"
-    exit 1
-}
+: "${TMP_DIR:=/tmp}"
+: "${LOCK_PREF:="lock"}"
 
-# Функция создания директорий
+# Создания директорий
 # create_directories <directory> [directory ...] <perms: 755> <owner: root:root>
 create_directories() {
     [[ ${#@} -lt 3 ]] || {
