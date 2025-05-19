@@ -13,7 +13,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
 
 # Массив cron-заданий
 declare -A CRON_JOBS=(
-    ["${SCRIPTS_DIR}/samba/samba_reload.sh"]="*/10 * * * * *"
     ["${SCRIPTS_DIR}/samba/check_setup_samba.sh"]="0 * * * *"
     ["${SCRIPTS_DIR}/ssh/check_setup_ssh.sh"]="0 * * * *"
     ["${SCRIPTS_DIR}/logging/clean_logs.sh"]="0 0 * * *"

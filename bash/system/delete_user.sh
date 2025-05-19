@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # delete_user.sh - Скрипт удаления системного пользователя
 # Расположение: bash/system/delete_user.sh
 
@@ -25,19 +24,25 @@ check_and_terminate_user() {
     while pgrep -u "$username" >/dev/null; do
         [[ $(( $(date +%s) - start )) -gt $timeout ]] && {
             log_message "error" "Processes for '$username' still running after timeout"
+             ps -u "$username" -f | grep -E "$samba_processes" | log_message "error"
             return ${EXIT_GENERAL_ERROR}
         }
         sleep 0.05
     done
+
+    log_message "info" "All processes for '$username' terminated successfully"
+    return 0
 }
 
 # Функция удаления пользователя
 delete_user () {
-    check_and_terminate_user "$USERNAME" || exit $?
-    userdel "$USERNAME" || {
+    check_and_terminate_user "$USERNAME" || return $?
+    userdel -r "$USERNAME" &>/dev/null || {
         log_message "error" "Failed to delete user '$USERNAME'"
-        exit ${EXIT_FAILED_DELETE_USER}
+        return ${EXIT_FAILED_DELETE_USER}
     }
+
+    return 0
 }
 
 # Основная логика
@@ -45,7 +50,7 @@ delete_user () {
 [[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
 
 # Проверка аргументов
-[[ ${#ARGS[@]} -ge 1 ]] || { echo "Usage: $0 <username>"; exit ${EXIT_INVALID_ARG}; }
+[[ ${#ARGS[@]} -eq 1 ]] || { echo "Usage: $0 <username>"; exit ${EXIT_INVALID_ARG}; }
 
 # Установка переменных
 USERNAME="${ARGS[0]}"

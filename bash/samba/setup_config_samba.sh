@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # setup_config_samba.sh - Скрипт для настройки конфигурации Samba
 # Расположение: bash/samba/setup_config_samba.sh
 
@@ -16,7 +15,7 @@ backup_samba_config() {
     [[ -f "$SAMBA_BACKUP_CONFIG" ]] || {
         cp "$SAMBA_CONFIG_FILE" "$SAMBA_BACKUP_CONFIG" || {
             log_message "error" "Failed to backup $SAMBA_CONFIG_FILE"
-            exit ${EXIT_SAMBA_CONFIG_FAILED}
+            return ${EXIT_SAMBA_CONFIG_FAILED}
         }
     }
 }
@@ -25,18 +24,15 @@ backup_samba_config() {
 update_global_config() {
     cp "$SAMBA_CONFIG_FILE" "$SAMBA_TEMP_CONFIG" || {
         log_message "error" "Failed to copy $SAMBA_CONFIG_FILE"
-        exit ${EXIT_SAMBA_CONFIG_FAILED}
+        return ${EXIT_SAMBA_CONFIG_FAILED}
     }
-    grep -q "\[global\]" "$SAMBA_TEMP_CONFIG" || echo "[global]" >> "$SAMBA_TEMP_CONFIG"
-    for param in "${SAMBA_GLOBAL_PARAMS[@]}"; do
-        key=$(echo "$param" | cut -d'=' -f1 | xargs)
-        awk -v k="$key" '/\[global\]/,/^\[/ {if ($1 == k) exit 1}' "$SAMBA_TEMP_CONFIG" >/dev/null || {
-            sed -i "/\[global\]/a $param" "$SAMBA_TEMP_CONFIG" || {
-                log_message "error" "Failed to add $param to [global]"
-                exit ${EXIT_SAMBA_CONFIG_FAILED}
-            }
-        }
-    done
+    awk -v params="${SAMBA_GLOBAL_PARAMS[*]}" '
+        BEGIN { split(params, p, "\n"); for (i in p) { split(p[i], a, "="); keys[a[1]] = p[i] } }
+        /\[global\]/ { print; in_global=1; next }
+        /^\[/ && in_global { for (k in keys) if (!seen[k]) print keys[k]; in_global=0 }
+        { print; if (in_global && $1 in keys) { seen[$1]=1 } }
+        END { if (in_global) for (k in keys) if (!seen[k]) print keys[k] }
+    ' "$SAMBA_TEMP_CONFIG" > "$SAMBA_TEMP_CONFIG.tmp" && mv "$SAMBA_TEMP_CONFIG.tmp" "$SAMBA_TEMP_CONFIG"
 }
 
 # Добавление пользовательской шары Samba
@@ -44,8 +40,17 @@ add_user_share() {
     grep -q "\[%U\]" "$SAMBA_TEMP_CONFIG" || {
         echo -e "$USER_SHARE" >> "$SAMBA_TEMP_CONFIG" || {
             log_message "error" "Failed to add [%U] share"
-            exit ${EXIT_SAMBA_SHARE_FAILED}
+            return ${EXIT_SAMBA_SHARE_FAILED}
         }
+    }
+}
+
+# Перезагрука Samba
+reload_samba() {
+    smbcontrol smbd reload-config >/dev/null && {
+        log_message "info" "Samba configuration reloaded successfully"
+    } || {
+        log_message "warning" "Failed to reload Samba configuration"
     }
 }
 
@@ -53,22 +58,24 @@ add_user_share() {
 apply_samba_config() {
     testparm -s "$SAMBA_TEMP_CONFIG" >/dev/null 2>&1 || {
         log_message "error" "Invalid Samba configuration"
-        exit ${EXIT_SAMBA_TEST_FAILED}
+        return ${EXIT_SAMBA_CONFIG_FAILED}
     }
     cmp -s "$SAMBA_TEMP_CONFIG" "$SAMBA_CONFIG_FILE" || {
         cp "$SAMBA_TEMP_CONFIG" "$SAMBA_CONFIG_FILE" || {
             log_message "error" "Failed to update $SAMBA_CONFIG_FILE"
-            exit ${EXIT_SAMBA_UPDATE_FAILED}
+            cp "$SAMBA_BACKUP_CONFIG" "$SAMBA_CONFIG_FILE" 2>/dev/null || true
+            return ${EXIT_SAMBA_CONFIG_FAILED}
         }
-        update_permissions "$SAMBA_CONFIG_FILE" 644 root:root || {
-            log_message "error" "Failed to set permissions for $SAMBA_CONFIG_FILE"
-            exit ${EXIT_SAMBA_UPDATE_FAILED}
+        update_permissions "$SAMBA_CONFIG_FILE" "644" "root:root" || {
+            log_message "error" "Failed to set permission/ownership for '$SAMBA_CONFIG_FILE'"
+            cp "$SAMBA_BACKUP_CONFIG" "$SAMBA_CONFIG_FILE" 2>/dev/null || true
+            return ${EXIT_SAMBA_CONFIG_FAILED}
         }
-        touch ${RELOAD_NEEDED_FILE} || {
-            log_message "error" "Failed to create Samba reload flag"
-            exit ${EXIT_SAMBA_UPDATE_FAILED}
-        }
-        md5sum "$SAMBA_CONFIG_FILE" | cut -d' ' -f1 > ${CONFIG_HASH_FILE}
+        reload_samba
+    }
+    get_config_hash > "${CONFIG_HASH_FILE}" || {
+        log_message "error" "Failed to write hash to $CONFIG_HASH_FILE"
+        return ${EXIT_SAMBA_CONFIG_FAILED}
     }
 }
 
@@ -78,23 +85,14 @@ cleanup() {
 }
 
 # Основная логика
-# Создание директорий
-create_directories "$SAMBA_LOG_DIR" 755 root:root || {
-    log_message "error" "Failed to create '$SAMBA_LOG_DIR'"
-    exit ${EXIT_GENERAL_ERROR}
-}
-
 setup_config_samba () {
-    backup_samba_config
-    update_global_config
-    add_user_share
-    apply_samba_config
+    backup_samba_config || return $?
+    update_global_config || return $?
+    add_user_share || return $?
+    apply_samba_config || return $?
     cleanup
+    log_message "info" "Samba configuration applied successfully"
 }
 
 # Установка блокировки
-with_lock "${TMP_DIR}/${LOCK_SAMBA_PREF}_config.lock" setup_config_samba
-
-log_message "info" "Samba configuration applied successfully"
-
-return ${EXIT_SUCCESS}
+with_lock "${TMP_DIR}/${LOCK_SAMBA_PREF}_config.lock" setup_config_samba || return $?

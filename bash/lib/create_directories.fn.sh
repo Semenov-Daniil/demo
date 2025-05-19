@@ -4,15 +4,21 @@
 
 set -euo pipefail
 
+# Проверкa подключения скрипта
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
+    echo "This script ('$0') is meant to be sourced"
+    return 1
+}
+
 : "${TMP_DIR:=/tmp}"
 : "${LOCK_PREF:="lock"}"
 
 # Создания директорий
 # create_directories <directory> [directory ...] <perms: 755> <owner: root:root>
 create_directories() {
-    [[ ${#@} -lt 3 ]] || {
+    [[ ${#@} -lt 3 ]] && {
         echo "Usage create_directories: <directory> <perms> <owner>"
-        exit 1
+        return 1
     }
 
     local -a dirs=("${@:1:$#-2}") perms="${@: -2:1}" owner="${@: -1:1}" missing_dirs=()
@@ -32,21 +38,16 @@ create_directories() {
     id "$user" &>/dev/null || { echo "User '$user' does not exist"; return 1; }
     getent group "$group" &>/dev/null || { echo "Group '$group' does not exist"; return 1; }
 
-    local lockfile="${TMP_DIR}/${LOCK_PREF}_dirs.lock"
-    trap 'rm -f "$lockfile"' EXIT
-    (
-        flock -x 200 || { echo "Failed to acquire lock"; return 1; }
-        for dir in "${dirs[@]}"; do
-            [[ -z "$dir" ]] && continue
-            mkdir -p "$dir" 2>/dev/null || { echo "Cannot create '$dir'"; missing_dirs+=("$dir"); continue; }
-            local current_perms=$(stat -c %a "$dir" 2>/dev/null || echo "unknown")
-            local current_owner=$(stat -c %U:%G "$dir" 2>/dev/null || echo "unknown")
-            [[ "$current_owner" != "$user:$group" ]] && chown "$user:$group" "$dir" 2>/dev/null || missing_dirs+=("$dir")
-            [[ "$current_perms" != "$perms" ]] && chmod "$perms" "$dir" 2>/dev/null || missing_dirs+=("$dir")
-        done
-    ) 200>"$lockfile"
+    for dir in "${dirs[@]}"; do
+        [[ -z "$dir" ]] && continue
+        mkdir -p "$dir" 2>/dev/null || { echo "Cannot create '$dir'"; missing_dirs+=("$dir"); continue; }
+        local current_perms=$(stat -c %a "$dir" 2>/dev/null || echo "unknown")
+        local current_owner=$(stat -c %U:%G "$dir" 2>/dev/null || echo "unknown")
+        [[ "$current_owner" != "$user:$group" ]] && chown "$user:$group" "$dir" 2>/dev/null || missing_dirs+=("$dir")
+        [[ "$current_perms" != "$perms" ]] && chmod "$perms" "$dir" 2>/dev/null || missing_dirs+=("$dir")
+    done
 
-    [[ ${#missing_dirs[@]} -gt 0 ]] || {
+    [[ ${#missing_dirs[@]} -gt 0 ]] && {
         echo "Missing create or setting permissions/ownership directories: ${missing_dirs[*]}"
         return 1
     }

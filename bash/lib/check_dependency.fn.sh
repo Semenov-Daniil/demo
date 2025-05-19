@@ -4,6 +4,12 @@
 
 set -euo pipefail
 
+# Проверкa подключения скрипта
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
+    echo "This script ('$0') is meant to be sourced"
+    return 1
+}
+
 # Проверка наличия зависимостей
 # check_dependency <dependence> [dependence ...]
 check_dependency() {

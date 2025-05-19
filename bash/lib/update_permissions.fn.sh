@@ -4,15 +4,21 @@
 
 set -euo pipefail
 
+# Проверкa подключения скрипта
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
+    echo "This script ('$0') is meant to be sourced"
+    return 1
+}
+
 : "${TMP_DIR:=/tmp}"
 : "${LOCK_PREF:="lock"}"
 
 # Обновление владельца и прав фалов/директорий
 # update_permissions <directory/file> [directory/file ...] <perms: 755> <owner: root:root>
 update_permissions() {
-    [[ ${#@} -lt 3 ]] || {
+    [[ ${#@} -lt 3 ]] && {
         echo "Usage update_permissions: <directory/file> <perms> <owner>"
-        exit 1
+        return 1
     }
 
     local -a paths=("${@:1:$#-2}") perms="${@: -2:1}" owner="${@: -1:1}" missing_paths=()
@@ -32,21 +38,26 @@ update_permissions() {
     id "$user" &>/dev/null || { echo "User '$user' does not exist"; return 1; }
     getent group "$group" &>/dev/null || { echo "Group '$group' does not exist"; return 1; }
 
-    local lockfile="${TMP_DIR}/${LOCK_PREF}_perms.lock"
-    trap 'rm -f "$lockfile"' EXIT
-    (
-        flock -x 200 || { echo "Failed to acquire lock"; return 1; }
-        for path in "${paths[@]}"; do
-            [[ -z "$path" ]] && continue
-            [[ -e "$path" ]] || { echo "Path '$path' does not exist"; missing_paths+=("$path"); continue; }
-            local current_perms=$(stat -c %a "$path" 2>/dev/null || echo "unknown")
-            local current_owner=$(stat -c %U:%G "$path" 2>/dev/null || echo "unknown")
-            [[ "$current_owner" != "$user:$group" ]] && chown "$user:$group" "$path" 2>/dev/null || missing_paths+=("$path")
-            [[ "$current_perms" != "$perms" ]] && chmod "$perms" "$path" 2>/dev/null || missing_paths+=("$path")
-        done
-    ) 200>"$lockfile"
+    for path in "${paths[@]}"; do
+        [[ -z "$path" ]] && continue
+        [[ -e "$path" ]] || { echo "Path '$path' does not exist"; missing_paths+=("$path"); continue; }
+        local current_perms=$(stat -c %a "$path" 2>/dev/null || echo "unknown")
+        local current_owner=$(stat -c %U:%G "$path" 2>/dev/null || echo "unknown")
+        [[ "$current_owner" != "$user:$group" ]] && {
+            chown "$user:$group" "$path" 2>/dev/null || {
+                missing_paths+=("$path")
+                continue
+            }
+        }
+        [[ "$current_perms" != "$perms" ]] && {
+            chmod "$perms" "$path" 2>/dev/null || {
+                missing_paths+=("$path")
+                continue
+            }
+        }
+    done
 
-    [[ ${#missing_paths[@]} -gt 0 ]] || {
+    [[ ${#missing_paths[@]} -gt 0 ]] && {
         echo "Failed to update permissions/ownership for: ${missing_paths[*]}"
         return 1
     }

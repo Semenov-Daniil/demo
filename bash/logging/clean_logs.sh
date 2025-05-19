@@ -1,9 +1,10 @@
 #!/bin/bash
-# clean_logs.sh - Скрипт экспортирующий функцию очистки лог-файлов в /logs
+# clean_logs.sh - Скрипт очистки лог-файлов в /logs
 # Расположение: bash/logging/clean_logs.sh
 
 set -euo pipefail
 
+# Подключение локального config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
     echo "Failed to source local config.sh"
     exit 1
@@ -35,12 +36,12 @@ clean_logs() {
         ) 200>"$lockfile"
 
         [[ $? -eq 0 ]] || {
-            exit 1
+            return 1
         }
     done
+
+    return 0
 }
 
 # Выполнение очистки
-clean_logs
-
-exit 0
+clean_logs || exit $?

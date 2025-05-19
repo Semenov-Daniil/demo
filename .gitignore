@@ -54,3 +54,6 @@ phpunit.phar
 
 # bash script logs
 /bash/logs/
+
+# bash tmp
+/bash/tmp/

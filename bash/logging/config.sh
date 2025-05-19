@@ -4,13 +4,16 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
-    echo "Failed to source global config.sh"
+# Проверкa подключения скрипта
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
+    echo "This script ('$0') is meant to be sourced"
     exit 1
 }
 
-declare -x LOG_RETENTION_DAYS=30
-declare -x LOCK_LOG_PREF="lock_log"
-declare -ax LOG_LEVELS=("info" "warning" "error")
+# Подключение глобального config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
+    echo "Failed to source global config.sh"
+    return 1
+}
 
-return ${EXIT_SUCCESS}
+return 0

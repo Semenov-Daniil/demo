@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # remove_samba_user.fn.sh - Скрипт экспортирующий функцию удаления пользователя Samba
 # Расположение: bash/samba/remove_samba_user.fn.sh
 
@@ -13,27 +12,37 @@ set -euo pipefail
 
 # Проверка активности пользователя и завершение его сеансов
 check_and_terminate_user() {
-    local username="$1"
+    local username="$1" timeout="${2:-2}"
+    local samba_processes="smbd|smbclient|nmbd|winbindd"
 
-    # Закрытие Samba-сессий пользователя
     smbcontrol smbd close-session "$username" 2>/dev/null || {
         log_message "warning" "Failed to close Samba sessions for '$username'"
     }
 
-    # Проверка, есть ли активные Samba-процессы пользователя
-    pgrep -u "$username" -f "smbd|smbclient" >/dev/null && {
-        pkill -u "$username" -f "smbd|smbclient" 2>/dev/null || {
-            pkill -9 -u "$username" -f "smbd|smbclient" 2>/dev/null || {
-                log_message "error" "Failed to terminate Samba processes for '$username'"
-                return ${EXIT_GENERAL_ERROR}
-            }
-        }
-        sleep 1
-        pgrep -u "$username" -f "smbd|smbclient" >/dev/null && {
-            log_message "error" "Samba processes for '$username' still running"
+    pgrep -u "$username" -f "$samba_processes" >/dev/null || {
+        log_message "info" "No Samba processes found for '$username'"
+        return ${EXIT_SUCCESS}
+    }
+
+    pkill -u "$username" -f "$samba_processes" 2>/dev/null || {
+        pkill -9 -u "$username" -f "$samba_processes" 2>/dev/null || {
+            log_message "error" "Failed to terminate Samba processes for '$username'"
             return ${EXIT_GENERAL_ERROR}
         }
     }
+
+    local start=$(date +%s)
+    while pgrep -u "$username" -f "$samba_processes" >/dev/null; do
+        [[ $(( $(date +%s) - start )) -gt $timeout ]] && {
+            log_message "error" "Samba processes for '$username' still running after ${timeout}s"
+            ps -u "$username" -f | grep -E "$samba_processes" | log_message "error"
+            return ${EXIT_GENERAL_ERROR}
+        }
+        sleep 0.05
+    done
+
+    log_message "info" "All Samba processes for '$username' terminated successfully"
+    return ${EXIT_SUCCESS}
 }
 
 # Функция удаления пользователя Samba
@@ -41,7 +50,6 @@ check_and_terminate_user() {
 remove_samba_user() {
     local username="$1"
 
-    # Проверка, существует ли пользователь в базе Samba
     pdbedit -L -u "$username" | grep -q "^$username:" || {
         log_message "info" "Samba user '$username' does not exist"
         return ${EXIT_SUCCESS}
@@ -49,19 +57,11 @@ remove_samba_user() {
 
     log_message "info" "Removing Samba user '$username'"
 
-    # Завершение активных сеансов пользователя
     check_and_terminate_user "$username" || return $?
 
-    # Удаление пользователя из Samba
     smbpasswd -x "$username" >/dev/null || {
         log_message "error" "Failed to delete Samba user '$username'"
         return ${EXIT_SAMBA_USER_DELETE_FAILED}
-    }
-
-    # Создание флага для отложенной перезагрузки
-    touch "${RELOAD_NEEDED_FILE}" 2>>"$LOG_FILE" || {
-        log_message "error" "Failed to create Samba reload flag"
-        return ${EXIT_SAMBA_SERVICE_FAILED}
     }
 
     log_message "info" "Samba user '$username' removed successfully"
@@ -69,7 +69,5 @@ remove_samba_user() {
     return ${EXIT_SUCCESS}
 }
 
-# Экспорт функций
-export -f delete_user_samba check_and_terminate_user
-
+export -f remove_samba_user check_and_terminate_user
 return ${EXIT_SUCCESS}

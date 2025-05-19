@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # add_samba_user.sh - Скрипт добавления пользователя Samba
 # Расположение: bash/samba/add_samba_user.sh
 
@@ -12,10 +11,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
 }
 
 # Подключение скрипта удаления Samba-пользователя
-source "$DELETE_USER_SAMBA" || {
-    echo "Failed to source script $DELETE_USER_SAMBA"
-    exit ${EXIT_GENERAL_ERROR}
-}
+source_script "$REMOVE_SAMBA_USER_FN" || exit $?
 
 # Очистка при ошибке
 cleanup() {
@@ -30,18 +26,19 @@ cleanup() {
 # Функция добавления пользователя Samba
 add_user_samba() {
     local username="$1" password="$2"
-    pdbedit -L -u "$username" | grep -q "^$username:" && {
+    if pdbedit -L -u "$username" &>/dev/null | grep -q "^$username:" &>/dev/null; then
         log_message "warning" "Samba user '$username' already exists"
-        return ${EXIT_SUCCESS}
-    }
-    printf "%s\n" "$password" | smbpasswd -s -a "$username" >/dev/null || {
-        log_message "error" "Failed to add Samba user '$username'"
-        return ${EXIT_SAMBA_USER_ADD_FAILED}
-    }
-    touch "${RELOAD_NEEDED_FILE}" || {
-        log_message "error" "Failed to create Samba reload flag"
-        return ${EXIT_SAMBA_SERVICE_FAILED}
-    }
+        printf "%s\n%s\n" "$password" "$password" | smbpasswd -s "$username" &>/dev/null || {
+            log_message "error" "Failed to update password for Samba user '$username'"
+            return ${EXIT_SAMBA_USER_ADD_FAILED}
+        }
+    else
+        printf "%s\n%s\n" "$password" "$password" | smbpasswd -s -a "$username" &>/dev/null || {
+            log_message "error" "Failed to add Samba user '$username'"
+            return ${EXIT_SAMBA_USER_ADD_FAILED}
+        }
+    fi
+    return 0
 }
 
 # Основная логика
@@ -51,7 +48,7 @@ trap cleanup SIGINT SIGTERM EXIT
 [[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
 
 # Проверка аргументов
-[[ ${#ARGS[@]} -ge 2 ]] || { echo "Usage: $0 <username> <password>"; exit ${EXIT_INVALID_ARG}; }
+[[ ${#ARGS[@]} -eq 2 ]] || { echo "Usage: $0 <username> <password>"; exit ${EXIT_INVALID_ARG}; }
 
 # Установка переменных
 USERNAME="${ARGS[0]}"
@@ -65,19 +62,19 @@ PASSWORD="${ARGS[1]}"
 
 id "$USERNAME" &>/dev/null || {
     log_message "error" "User '$USERNAME' does not exist"
-    exit ${EXIT_INVALID_ARG}
+    exit ${EXIT_GENERAL_ERROR}
 }
 
 groups "$USERNAME" | grep -q "$STUDENT_GROUP" || {
     log_message "error" "User '$USERNAME' is not a member of the '$STUDENT_GROUP' group"
-    exit ${EXIT_INVALID_ARG}
+    exit ${EXIT_GENERAL_ERROR}
 }
 
-log_message "info" "Adding Samba user '$username'"
+log_message "info" "Adding Samba user '$USERNAME'"
 
-# Установка блокировки
+# Добавление пользователя Samba с блокировкой
 with_lock ${LOCK_SAMBA_FILE} add_user_samba "$USERNAME" "$PASSWORD" || exit $?
 
-log_message "info" "Samba user '$username' added successfully"
+log_message "info" "Samba user '$USERNAME' added successfully"
 
 exit ${EXIT_SUCCESS}

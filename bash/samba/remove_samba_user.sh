@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # remove_samba_user.sh - Скрипт исполняющий удаления пользователя Samba
 # Расположение: bash/samba/remove_samba_user.sh
 
@@ -12,23 +11,19 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
 }
 
 # Подключение скрипта удаления Samba-пользователя
-source "$REMOVE_SAMBA_USER_FN" || {
-    echo "Failed to source script: '$REMOVE_SAMBA_USER_FN'"
-    exit ${EXIT_GENERAL_ERROR}
-}
+source "$REMOVE_SAMBA_USER_FN" || exit $?
 
 # Основная логика
-
 # Проверка массива ARGS
 [[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
 
 # Проверка аргументов
-[[ ${#ARGS[@]} -ge 2 ]] || { echo "Usage: $0 <username> <password>"; exit ${EXIT_INVALID_ARG}; }
+[[ ${#ARGS[@]} -eq 1 ]] || { echo "Usage: $0 <username>"; exit ${EXIT_INVALID_ARG}; }
 
 # Установка переменных
 USERNAME="${ARGS[0]}"
 
-# Установка блокировки
+# Удаления Samba-пользователя с блокировкой
 with_lock ${LOCK_SAMBA_FILE} remove_samba_user "$USERNAME" || exit $?
 
 exit ${EXIT_SUCCESS}

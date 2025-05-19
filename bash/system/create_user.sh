@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # create_user.sh - Скрипт создания системного пользователя
 # Расположение: bash/system/create_user.sh
 
@@ -13,7 +12,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
 
 # Функция создания пользователя
 create_user () {
-    if id "$USERNAME" &>/dev/null; then
+    if id "$USERNAME" > /dev/null; then
         log_message "warning" "User '$USERNAME' already exists"
 
         current_group=$(id -gn "$USERNAME")
@@ -44,7 +43,7 @@ create_user () {
 [[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
 
 # Проверка аргументов
-[[ ${#ARGS[@]} -ge 3 ]] || { echo "Usage: $0 <username> <password> <home_dir>"; exit ${EXIT_INVALID_ARG}; }
+[[ ${#ARGS[@]} -eq 3 ]] || { echo "Usage: $0 <username> <password> <home_dir>"; exit ${EXIT_INVALID_ARG}; }
 
 # Установка переменных
 USERNAME="${ARGS[0]}"
