@@ -74,7 +74,7 @@ apply_samba_config() {
         reload_samba
     }
     get_config_hash > "${CONFIG_HASH_FILE}" || {
-        log_message "error" "Failed to write hash to $CONFIG_HASH_FILE"
+        log_message "error" "Failed to write hash to '$CONFIG_HASH_FILE'"
         return ${EXIT_SAMBA_CONFIG_FAILED}
     }
 }
@@ -84,15 +84,12 @@ cleanup() {
     rm -f "$SAMBA_TEMP_CONFIG"
 }
 
-# Основная логика
-setup_config_samba () {
-    backup_samba_config || return $?
-    update_global_config || return $?
-    add_user_share || return $?
-    apply_samba_config || return $?
-    cleanup
-    log_message "info" "Samba configuration applied successfully"
-}
+# Проверка и настройка конфигурации Samba
+backup_samba_config || return $?
+update_global_config || return $?
+add_user_share || return $?
+apply_samba_config || return $?
+cleanup
+log_message "info" "Samba configuration applied successfully"
 
-# Установка блокировки
-with_lock "${TMP_DIR}/${LOCK_SAMBA_PREF}_config.lock" setup_config_samba || return $?
+exit ${EXIT_SUCCESS}

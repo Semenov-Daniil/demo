@@ -49,7 +49,7 @@ configure_ufw() {
     return 0
 }
 
-# ПРоверка наличия зависимостей и команд Samba
+# Проверка наличия зависимостей и команд Samba
 check_samba_dependencies() {
     check_dependency ${SAMBA_REQUIRED_DEPENCY[*]} || return $?
     check_commands ${SAMBA_REQUIRED_COMMAND[*]} || return $?
