@@ -39,8 +39,7 @@ create_user () {
     return ${EXIT_SUCCESS}
 }
 
-# Проверка массива ARGS
-[[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
+# Основная логика
 
 # Проверка аргументов
 [[ ${#ARGS[@]} -eq 3 ]] || { echo "Usage: $0 <username> <password> <home_dir>"; exit ${EXIT_INVALID_ARG}; }

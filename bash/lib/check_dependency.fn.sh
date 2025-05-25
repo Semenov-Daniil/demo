@@ -11,7 +11,7 @@ set -euo pipefail
 }
 
 # Проверка наличия зависимостей
-# check_dependency <dependence> [dependence ...]
+# Usage: check_dependency [dependence ...]
 check_dependency() {
     local -a missing_deps=()
     local dep

@@ -67,7 +67,7 @@ declare -rx LOCK_SAMBA_FILE="${TMP_DIR}/${LOCK_SAMBA_PREF}_global.lock"
 declare -rx REMOVE_SAMBA_USER_FN="$(dirname "${BASH_SOURCE[0]}")/remove_samba_user.fn.sh"
 
 get_config_hash() {
-    echo "${SAMBA_CONFIG_FILE} ${SAMBA_GLOBAL_PARAMS} ${USER_SHARE}" | sha256sum | cut -d' ' -f1
+    echo "${SAMBA_CONFIG_FILE} ${SAMBA_GLOBAL_PARAMS} ${USER_SHARE}" | cksum | cut -d' ' -f1
 }
 
 # Настройка конфигурации Samba

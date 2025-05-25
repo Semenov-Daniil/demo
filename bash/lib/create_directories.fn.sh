@@ -14,15 +14,15 @@ set -euo pipefail
 : "${LOCK_PREF:="lock"}"
 
 # Создания директорий
-# create_directories <directory> [directory ...] <perms: 755> <owner: root:root>
+# Usage: create_directories [directories ...] <perms: 755> <owner: root:root>
 create_directories() {
     [[ ${#@} -lt 3 ]] && {
-        echo "Usage create_directories: <directory> <perms> <owner>"
+        echo "Usage: ${FUNCNAME[0]} [directories ...] <perms> <owner>"
         return 1
     }
 
     local -a dirs=("${@:1:$#-2}") perms="${@: -2:1}" owner="${@: -1:1}" missing_dirs=()
-    local user group
+    local user group dir
 
     [[ "$perms" =~ ^[0-7]{3}$ ]] || { echo "Invalid permissions '$perms'"; return 1; }
 
@@ -43,8 +43,8 @@ create_directories() {
         mkdir -p "$dir" 2>/dev/null || { echo "Cannot create '$dir'"; missing_dirs+=("$dir"); continue; }
         local current_perms=$(stat -c %a "$dir" 2>/dev/null || echo "unknown")
         local current_owner=$(stat -c %U:%G "$dir" 2>/dev/null || echo "unknown")
-        [[ "$current_owner" != "$user:$group" ]] && chown "$user:$group" "$dir" 2>/dev/null || missing_dirs+=("$dir")
-        [[ "$current_perms" != "$perms" ]] && chmod "$perms" "$dir" 2>/dev/null || missing_dirs+=("$dir")
+        [[ "$current_owner" != "$user:$group" ]] && { chown "$user:$group" "$dir" 2>/dev/null || missing_dirs+=("$dir"); continue; }
+        [[ "$current_perms" != "$perms" ]] && { chmod "$perms" "$dir" 2>/dev/null || missing_dirs+=("$dir"); continue; }
     done
 
     [[ ${#missing_dirs[@]} -gt 0 ]] && {

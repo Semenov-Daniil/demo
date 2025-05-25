@@ -13,109 +13,97 @@ set -euo pipefail
 
 # Проверка активности пользователя и завершение его сеансов
 check_and_terminate_user() {
-    local username="$1"
-    pgrep -u "$username" >/dev/null || return ${EXIT_SUCCESS}
-    pkill -u "$username" 2>/dev/null || pkill -9 -u "$username" 2>/dev/null || {
-        log_message "error" "Failed to terminate processes for '$username'"
-        return ${EXIT_GENERAL_ERROR}
+    local username="$1" timeout="${2:-2}"
+    local ssh_processes="ssh|sshd|ssh-agent"
+
+    pgrep -u "${username}" -f "${ssh_processes}" >/dev/null || {
+        log_message "info" "No SSH processes found for '${username}'"
+        return "${EXIT_SUCCESS}"
     }
-    local timeout=1 start=$(date +%s)
-    while pgrep -u "$username" >/dev/null; do
+
+    pkill -u "${username}" -f "${ssh_processes}" 2>/dev/null || {
+        pkill -9 -u "${username}" -f "${ssh_processes}" 2>/dev/null || {
+            log_message "error" "Failed to terminate SSH processes for '$username'"
+            return "${EXIT_GENERAL_ERROR}"
+        }
+    }
+
+    local start=$(date +%s)
+    while pgrep -u "${username}" -f "${ssh_processes}" >/dev/null; do
         [[ $(( $(date +%s) - start )) -gt $timeout ]] && {
-            log_message "error" "Processes for '$username' still running after timeout"
-            return ${EXIT_GENERAL_ERROR}
+            log_message "error" "SSH processes for '$username' still running after ${timeout}s"
+            ps -u "${username}" -f | grep -E "${ssh_processes}" | log_message "error"
+            return "${EXIT_GENERAL_ERROR}"
         }
         sleep 0.05
     done
+
+    log_message "info" "All SSH processes for '$username' terminated successfully"
+    return "${EXIT_SUCCESS}"
 }
 
-# Очистка монтирований
-cleanup_mounts() {
+# Удаление chroot
+delete_chroot() {
     local chroot="$1"
-    local failed_mounts=()
-    local paths=("${MOUNT_DIRS[@]}" "${MOUNT_FILES[@]}")
-    
-    for path in "${paths[@]}"; do
-        [[ -z "$path" ]] && continue
-        local mount_point="$chroot/${path#/}"
-        mountpoint -q "$mount_point" || continue
-        umount "$mount_point" 2>/dev/null || {
-            umount -l "$mount_point" 2>/dev/null || failed_mounts+=("$mount_point")
-        }
-    done
-    [[ ${#failed_mounts[@]} -eq 0 ]] || {
-        log_message "error" "Failed to unmount: ${failed_mounts[*]}"
-        return ${EXIT_MOUNT_FAILED}
+    rm -rf "$chroot" || {
+        log_message "error" "Failed to delete chroot directory '$chroot'"
+        return "$EXIT_GENERAL_ERROR"
     }
+    return "$EXIT_SUCCESS"
 }
 
-# Удаление записей из /etc/fstab
-clean_fstab() {
-    local chroot_dir="$1"
-
-    (
-        flock -w 1 200 || { log_message "error" "Failed to acquire fstab lock"; return ${EXIT_GENERAL_ERROR}; }
-        local temp_fstab=$(mktemp)
-        grep -v "$chroot_dir" /etc/fstab > "$temp_fstab" || {
-            log_message "error" "Failed to filter '/etc/fstab'"
-            return ${EXIT_CHROOT_INIT_FAILED}
-        }
-        mv "$temp_fstab" /etc/fstab || {
-            log_message "error" "Failed to update '/etc/fstab'"
-            return ${EXIT_CHROOT_INIT_FAILED}
-        }
-    ) 200>"$LOCK_FSTAB_FILE"
-}
-
-# Удаление chroot-директории
-remove_chroot_dir() {
-    local chroot="$1"
-
-    [[ -d "$chroot" ]] && rm -rf "$chroot" || {
-        log_message "error" "Failed to remove '$chroot'"
-        return ${EXIT_GENERAL_ERROR}
-    }
-}
-
-# Основная функция удаления chroot-окружения
-# remove_chroot <username>
+# Основная функция очистки и удаления chroot-окружения
+# Usage: remove_chroot <username>
 remove_chroot() {
     local username="$1"
+    local user_chroot="$CHROOT_STUDENTS/$username"
+    local overlay_upper="$user_chroot/upper"
+    local overlay_work="$user_chroot/work"
+    local chroot_root="$user_chroot/root"
+    local chroot_home="$chroot_root/home/$username"
+    local chroot_workspace="$chroot_home/$username"
 
-    # Проверка пользователя
-    [[ "$username" =~ ^[a-zA-Z0-9._-]+$ ]] || {
-        log_message "error" "Invalid username: $username"
-        return ${EXIT_INVALID_ARG}
+    [[ -n "$username" ]] || {
+        log_message "error" "Empty username. Usage ${FUNCNAME[0]} <username>" >&2
+        return "$EXIT_SYSTEMD_UNIT"
     }
 
-    id "$username" &>/dev/null || {
-        log_message "error" "User '$username' does not exist"
-        return ${EXIT_INVALID_ARG}
-    }
+    # Проверка существования chroot-директории
+    if [[ ! -d "$user_chroot" ]]; then
+        log_message "info" "Chroot directory '$user_chroot' does not exist, skip deletion"
+        return "$EXIT_INVALID_ARG"
+    fi
 
-    groups "$username" | grep -q "$STUDENT_GROUP" || {
-        log_message "error" "User '$username' is not a member of the '$STUDENT_GROUP' group"
-        return ${EXIT_INVALID_ARG}
-    }
+    # Размонтирование директорий root
+    remove_systemd_unit "$(title_mount_unit "$chroot_root/dev/pts")" || return $?
+    remove_systemd_unit "$(title_mount_unit "$chroot_root/dev")" || return $?
+    remove_systemd_unit "$(title_mount_unit "$chroot_root/proc")" || return $?
+    remove_systemd_unit "$(title_mount_unit "$chroot_root/sys")" || return $?
+    remove_systemd_unit "$(title_mount_unit "$chroot_root/run")" || return $?
+    remove_systemd_unit "$(title_mount_unit "$chroot_workspace")" || return $?
 
-    local student_chroot="${CHROOT_STUDENTS}/${username}"
+    # Размонтирование OverlayFS
+    local path
+    for path in "${SYSTEM_DIRS[@]}"; do
+        remove_systemd_unit "$(title_mount_unit "${chroot_root}${path}")" || return $?
+    done
+    
 
-    [[ -d "$student_chroot" ]] || { 
-        log_message "info" "Chroot '$student_chroot' does not exist"
-        return ${EXIT_SUCCESS}
-    }
+    # Попытка размонтировать оставшиеся точки
+    findmnt -l | grep "^$user_chroot" | while read -r line; do
+        mountpoint=$(echo "$line" | awk '{print $1}')
+        log_message "warning" "Some mount points in '$mountpoint' are still active. Attempting to unmount the point '$mountpoint'."
+        remove_systemd_unit "$(title_mount_unit "$mountpoint")"
+        umount -f "$mountpoint" 2>/dev/null || umount -l "$mountpoint" 2>/dev/null || true
+    done
 
-    log_message "info" "Starting chroot removal for '$username'"
+    # Удаление директорий chroot
+    with_lock "$LOCK_CHROOT_STUDENTS_FILE" delete_chroot "$user_chroot" || return $?
 
-    check_and_terminate_user "$username" || return $?
-    cleanup_mounts "$student_chroot" || return $?
-    clean_fstab "$student_chroot" || return $?
-    remove_chroot_dir "$student_chroot" || return $?
+    log_message "info" "Chroot directory '$user_chroot' was successfully deleted"
 
-    log_message "info" "Chroot for '$username' removed successfully"
-
-    return ${EXIT_SUCCESS}
+    return "$EXIT_SUCCESS"
 }
 
-export -f remove_chroot check_and_terminate_user cleanup_mounts clean_fstab remove_chroot_dir
-return ${EXIT_SUCCESS}
+export -f check_and_terminate_user delete_chroot remove_chroot
+return "$EXIT_SUCCESS"

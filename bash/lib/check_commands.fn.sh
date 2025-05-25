@@ -11,7 +11,7 @@ set -euo pipefail
 }
 
 # Проверка наличия команд
-# check_commands <command> [command ...]
+# Usage: check_commands [command ...]
 check_commands() {
     local -a missing_cmds=()
     local cmd

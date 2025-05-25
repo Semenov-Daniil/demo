@@ -92,7 +92,7 @@ declare -rax LOG_LEVELS=("info" "warning" "error")
 source_script() {
     if [ -z "$1" ]; then
         echo "Usage source_script: <script-path> [<args> ...]"
-        return ${EXIT_INVALID_ARG}
+        return "$EXIT_INVALID_ARG"
     fi
 
     local script_path="$1"
@@ -100,20 +100,15 @@ source_script() {
 
     [[ -f "$script_path" ]] || {
         echo "Script '$script_path' not found"
-        return ${EXIT_NOT_FOUND}
+        return "$EXIT_NOT_FOUND"
     }
 
-    [[ -x "$script_path" ]] || {
-        echo "Script '$script_path' is not executable"
-        return ${EXIT_GENERAL_ERROR}
-    }
-
-    source "$script_path" "$@" || {
+    source "$script_path" $@ || {
         echo "Failed to source script '$script_path'"
-        return ${EXIT_GENERAL_ERROR}
+        return "$EXIT_GENERAL_ERROR"
     }
 
-    return ${EXIT_SUCCESS}
+    return "$EXIT_SUCCESS"
 }
 
 # Подключение вспомогательных скриптов/функций

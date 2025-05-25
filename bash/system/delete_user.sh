@@ -46,8 +46,6 @@ delete_user () {
 }
 
 # Основная логика
-# Проверка массива ARGS
-[[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
 
 # Проверка аргументов
 [[ ${#ARGS[@]} -eq 1 ]] || { echo "Usage: $0 <username>"; exit ${EXIT_INVALID_ARG}; }
