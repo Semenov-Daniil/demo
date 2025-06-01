@@ -1,6 +1,6 @@
 #!/bin/bash
 # mounts.fn.sh - Скрипт вспомогательных функций монтирования
-# Расположение: bash/ssh/mounts.fn.sh
+# Расположение: bash/chroot/mounts.fn.sh
 
 set -euo pipefail
 
@@ -10,9 +10,11 @@ set -euo pipefail
     exit 1
 }
 
-: "${MOUNT_UNIT_DIR:="/etc/systemd/system"}"
-: "${UNIT_START_TIMEOUT:=15}"
-: "${LOCK_SYSTEMD_FILE:="/tmp/lock_systemd_unit.lock"}"
+: "${TMP_DIR:="/tmp"}"
+
+declare -rx MOUNT_UNIT_DIR="/etc/systemd/system"
+declare -x LOCK_SYSTEMD_FILE="$TMP_DIR/lock_systemd_unit.lock"
+declare -x UNIT_START_TIMEOUT=15
 
 if [[ ! -d "$MOUNT_UNIT_DIR" || ! -w "$MOUNT_UNIT_DIR" ]]; then
     log_message "error" "Directory '$MOUNT_UNIT_DIR' is not accessible or writable"
@@ -26,7 +28,7 @@ title_mount_unit() {
         log_message "error" "Failed to resolve real path for '$path'"
         exit "$EXIT_SYSTEMD_UNIT"
     }
-    unit_name=$(systemd-escape -p --suffix=mount "$path" 2>/dev/null) || {
+    unit_name="$(systemd-escape -p --suffix=mount "$path" 2>/dev/null)" || {
         log_message "error" "Failed to escape path '$path' for systemd unit" >&2
         exit "$EXIT_SYSTEMD_UNIT"
     }
@@ -78,7 +80,13 @@ _create_systemd_unit_locked() {
             log_message "error" "Failed to compute hash for current content '$unit_path'"
             return "$EXIT_SYSTEMD_UNIT"
         }
-        [[ "$current_hash" == "$desired_hash" ]] && return "$EXIT_SUCCESS"
+        [[ "$current_hash" == "$desired_hash" ]] && {
+            _start_systemd_unit_locked "$unit_title" || {
+                _remove_systemd_unit_locked "$unit_title" "$unit_path"
+                return "$EXIT_SYSTEMD_UNIT"
+            }
+            return 0
+        }
     }
 
     printf '%s\n' "$unit_content" > "$unit_path" 2>/dev/null || {
@@ -88,13 +96,13 @@ _create_systemd_unit_locked() {
 
     chmod 664 "$unit_path" 2>/dev/null || {
         log_message "error" "Failed to set permissions on '$unit_path'" >&2
-        delete_systemd_unit "$unit_title"
+        _remove_systemd_unit_locked "$unit_title"
         return "$EXIT_SYSTEMD_UNIT"
     }
 
     systemctl daemon-reload >/dev/null 2>&1 || {
         log_message "error" "Failed to reload systemd daemon" >&2
-        delete_systemd_unit "$unit_title"
+        _remove_systemd_unit_locked "$unit_title"
         return "$EXIT_SYSTEMD_UNIT"
     }
 
@@ -103,16 +111,14 @@ _create_systemd_unit_locked() {
         return "$EXIT_SYSTEMD_UNIT"
     }
 
-    return "$EXIT_SUCCESS"
+    return 0
 }
 
 # Запуск systemd unit
 # Usage: start_systemd_unit <unit-title>
 start_systemd_unit() {
     local unit_title="$1"
-
-    is_active_unit "$unit_title" && return "${EXIT_SUCCESS}"
-
+    is_active_unit "$unit_title" && return
     with_lock "$LOCK_SYSTEMD_FILE" _start_systemd_unit_locked "$unit_title"
     return $?
 }
@@ -139,7 +145,7 @@ _start_systemd_unit_locked() {
         sleep 0.1
     done
 
-    return "$EXIT_SUCCESS"
+    return 0
 }
 
 # Удаление systemd unit
@@ -151,32 +157,31 @@ remove_systemd_unit() {
 }
 
 _remove_systemd_unit_locked() {
-    local unit_title="$1" unit_path="$(path_to_unit "$unit_title")"
+    local unit_title="$1"
+    local related_units=($(systemctl show -p Requires -p BindsTo -p PartOf "$unit_title" | grep -o '[^= ]*\.service\|[^= ]*\.mount' | grep -v '^-' | sort -u) "$unit_title")
 
-    systemctl disable --now "$unit_title" >/dev/null 2>&1 || true
+    local unit unit_file with_reload=0
+    for unit in "${related_units[@]}"; do
+        systemctl disable --now "$unit" >/dev/null 2>&1 || true
+        unit_file="$(systemctl show -p FragmentPath "$unit" | cut -d= -f2)"
+        [ -f "$unit" ] && rm -f "$unit_file" >/dev/null 2>&1 && with_reload=1
+    done
 
-    [[ -f "$unit_path" ]] && {
-        rm -f "$unit_path" >/dev/null 2>&1
-        systemctl daemon-reload >/dev/null 2>&1
-    }
+    [[ "$with_reload" -eq 1 ]] && systemctl daemon-reload >/dev/null 2>&1
 
-    return "$EXIT_SUCCESS"
+    return 0
 }
 
 # Получение содержания mount unit
 # Usage: get_unit_content <what> <where> [<type>] [<options>] [<requires>]
 get_unit_content() {
-    local src="$1" dest="$2" type="${3:-auto}" options="${4:-}"  requires="${5:-}"
-    local after_line="" requires_line="" binds_to_line="" options_line=""
-
-    [[ -n "$options" ]]  && options_line="Options=$options" 
-    [[ -n "$requires" ]] && requires_line="Requires=$requires" && binds_to_line="BindsTo=$requires" && after_line+=" $requires"
+    local src="$1" dest="$2" type="${3:-auto}" options="${4:-"defaults"}"  requires="${5:-}"
 
     echo "[Unit]"
     echo "Description=Mount of source ${src} to destination path ${dest}"
     [[ -n "$requires" ]] && echo "Requires=$requires"
     [[ -n "$requires" ]] && echo "BindsTo=$requires"
-    echo -n "After=local-fs.target"
+    echo -n "After=local-fs-pre.target"
     [[ -n "$requires" ]] && echo " $requires" || echo
     echo "Before=local-fs.target"
     echo "AssertPathExists=${dest}"
@@ -209,7 +214,7 @@ mount_unit() {
 
     create_systemd_unit "$unit_title" "$unit_content" || return $?
 
-    return "${EXIT_SUCCESS}"
+    return 0
 }
 
 # Монтирование bind
@@ -229,38 +234,30 @@ mount_bind() {
     return $?
 }
 
-# Монтирование rbind
-# Usage: mount_rbind <what> <where> [<options>] [<requires>]
-mount_rbind() {
-    local src="$1" dest="$2" opts="${3:-}" req="${4:-}"
-    local rbind_opts="rbind"
-    
-    [[ -n "$opts" ]] && rbind_opts+=",$opts"
-
-    if [[ ! -e "${src}" ]]; then
-        log_message "error" "Source '${src}' does not exist"
-        return "${EXIT_MOUNT_FAILED}"
-    fi
-
-    mount_unit "$src" "$dest" "none" "$rbind_opts" "$req"
-    return $?
-}
-
-# Монтирование директории /dev
+# Монтирование директории devtmpfs
 # Usage: mount_devtmpfs <where> [<requires>]
 mount_devtmpfs() {
     local dest="$1" req="${2:-}"
 
-    mount_unit "devtmpfs" "$dest" "devtmpfs" "mode=0700,nosuid,noexec,gid=0" "$req"
+    mount_unit "devtmpfs" "$dest" "devtmpfs" "mode=0755,nosuid" "$req"
     return $?
 }
 
-# Монтирование директории /dev/pts
+# Монтирование директории devpts
 # Usage: mount_devpts <where> [<requires>]
 mount_devpts() {
     local dest="$1" req="${2:-}"
 
-    mount_unit "devpts" "$dest" "devpts" "nosuid,noexec,newinstance,ptmxmode=0666,mode=0620" "$req"
+    mount_unit "devpts" "$dest" "devpts" "gid=5,mode=620,ptmxmode=666" "$req"
+    return $?
+}
+
+# Монтирование tmpfs
+# Usage: mount_tmpfs <where> [<options>] [<requires>]
+mount_tmpfs() {
+    local dest="$1" opt="${2:-}" req="${3:-}"
+
+    mount_unit "tmpfs" "$dest" "tmpfs" "$opt" "$req"
     return $?
 }
 
@@ -270,24 +267,6 @@ mount_proc() {
     local dest="$1" req="${2:-}"
 
     mount_unit "proc" "$dest" "proc" "nosuid,noexec,nodev,hidepid=2,gid=0,noatime,nodiratime" "$req"
-    return $?
-}
-
-# Монтирование sys
-# Usage: mount_sys <where> [<requires>]
-mount_sys() {
-    local dest="$1" req="${2:-}"
-
-    mount_unit "sysfs" "$dest" "sysfs" "nosuid,noexec,nodev,ro,noatime,nodiratime" "$req"
-    return $?
-}
-
-# Монтирование run
-# Usage: mount_run <where> [<requires>]
-mount_run() {
-    local dest="$1" req="${2:-}"
-
-    mount_unit "tmpfs" "$dest" "tmpfs" "nosuid,noexec,nodev,mode=0755" "$req"
     return $?
 }
 
@@ -302,7 +281,7 @@ mount_overlay() {
     done
     [[ $missing -eq 1 ]] && return "$EXIT_MOUNT_FAILED"
 
-    rm -rf "$merged/*" "$workdir/*" 2>/dev/null
+    rm -rf "$workdir/*" 2>/dev/null
 
     mount_unit "overlay" "$merged" "overlay" "lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir" "$req"
     return $?
@@ -324,5 +303,5 @@ get_mount_units_in_dir() {
     echo "${unit_names[*]}"
 }
 
-export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_rbind mount_devtmpfs mount_devpts mount_proc mount_sys mount_overlay get_mount_units_in_dir
+export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_devtmpfs mount_devpts mount_tmpfs mount_proc mount_overlay get_mount_units_in_dir
 return 0
