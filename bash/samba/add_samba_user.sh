@@ -5,73 +5,69 @@
 set -euo pipefail
 
 # Подключение локального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
-    echo "Failed to source local config.sh"
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
 
-# Подключение скрипта удаления Samba-пользователя
-source_script "$REMOVE_SAMBA_USER_FN" || exit $?
+# Запуск настройки Samba
+bash "$SETUP_SAMBA" || exit $?
 
 # Очистка при ошибке
 cleanup() {
     exit_code=$?
-    [[ $exit_code -eq 0 || $exit_code -eq $EXIT_INVALID_ARG ]] && return
-
-    with_lock ${LOCK_SAMBA_FILE} remove_samba_user "$USERNAME" || {
-        log_message "error" "Failed to rollback Samba user '$USERNAME'"
-    }
+    [[ $exit_code -eq 0 || -z "${USERNAME:-}" ]] && return
+    bash "$REMOVE_USER" "$USERNAME" 2>/dev/null
 }
 
-# Функция добавления пользователя Samba
-add_user_samba() {
+trap cleanup SIGINT SIGTERM EXIT
+
+# Добавление пользователя Samba
+add_samba_user() {
     local username="$1" password="$2"
-    if pdbedit -L -u "$username" &>/dev/null | grep -q "^$username:" &>/dev/null; then
-        log_message "warning" "Samba user '$username' already exists"
-        printf "%s\n%s\n" "$password" "$password" | smbpasswd -s "$username" &>/dev/null || {
-            log_message "error" "Failed to update password for Samba user '$username'"
-            return ${EXIT_SAMBA_USER_ADD_FAILED}
+    [[ -z "$username" || -z "$password" ]] && {
+        log_message "error" "Username or password missing"
+        return "$EXIT_INVALID_ARG"
+    }
+
+    log_message "info" "Adding Samba user '$username'"
+    if pdbedit -u "$username" >/dev/null 2>&1; then
+        log_message "warning" "Samba user '$username' already exists, updating password"
+        echo -e "$password\n$password" | smbpasswd -s "$username" >/dev/null 2>&1 || {
+            log_message "error" "Failed to update password for '$username'"
+            return "$EXIT_ADD_SAMBA_USER_FAILED"
         }
     else
-        printf "%s\n%s\n" "$password" "$password" | smbpasswd -s -a "$username" &>/dev/null || {
+        echo -e "$password\n$password" | smbpasswd -s -a "$username" >/dev/null 2>&1 || {
             log_message "error" "Failed to add Samba user '$username'"
-            return ${EXIT_SAMBA_USER_ADD_FAILED}
+            return "$EXIT_ADD_SAMBA_USER_FAILED"
         }
     fi
+    log_message "OK" "Samba user '$username' added successfully"
     return 0
 }
 
-# Основная логика
-trap cleanup SIGINT SIGTERM EXIT
-
 # Проверка аргументов
-[[ ${#ARGS[@]} -eq 2 ]] || { echo "Usage: $0 <username> <password>"; exit ${EXIT_INVALID_ARG}; }
+[[ ${#ARGS[@]} -eq 2 ]] || { echo "Usage: $0 <username> <password>"; exit "$EXIT_INVALID_ARG"; }
 
-# Установка переменных
 USERNAME="${ARGS[0]}"
 PASSWORD="${ARGS[1]}"
-
-# Проверка пользователя
-[[ "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]] || {
+[[ -z "$USERNAME" ]] || [[ ! "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]] && {
     log_message "error" "Invalid username: $USERNAME"
-    exit ${EXIT_INVALID_ARG}
+    exit "$EXIT_INVALID_ARG"
 }
 
-id "$USERNAME" &>/dev/null || {
+# Проверка существования пользователя и группы
+id "$USERNAME" >/dev/null 2>&1 || {
     log_message "error" "User '$USERNAME' does not exist"
-    exit ${EXIT_GENERAL_ERROR}
+    exit "$EXIT_INVALID_ARG"
 }
-
-groups "$USERNAME" | grep -q "$STUDENT_GROUP" || {
-    log_message "error" "User '$USERNAME' is not a member of the '$STUDENT_GROUP' group"
-    exit ${EXIT_GENERAL_ERROR}
+groups "$USERNAME" 2>/dev/null | grep -qw "$STUDENT_GROUP" || {
+    log_message "error" "User '$USERNAME' is not in '$STUDENT_GROUP' group"
+    exit "$EXIT_INVALID_ARG"
 }
-
-log_message "info" "Adding Samba user '$USERNAME'"
 
 # Добавление пользователя Samba с блокировкой
-with_lock ${LOCK_SAMBA_FILE} add_user_samba "$USERNAME" "$PASSWORD" || exit $?
-
-log_message "info" "Samba user '$USERNAME' added successfully"
-
-exit ${EXIT_SUCCESS}
+with_lock "$TMP_DIR/${LOCK_SAMBA_PREF}_${USERNAME}.lock" add_samba_user "$USERNAME" "$PASSWORD"
+exit $?
