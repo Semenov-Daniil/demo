@@ -4,11 +4,13 @@
 
 set -euo pipefail
 
-# Подключение логального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
-    echo "Failed to source local config.sh" >&2
+# Подключение локального config.sh
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
+
 
 # Подключение скрипта удаления chroot-окружения
 source "$REMOVE_CHROOT_FN" || { log_message "error" "Failed to source '$REMOVE_CHROOT_FN'" >&2; return "$EXIT_GENERAL_ERROR"; }
@@ -17,7 +19,7 @@ source "$REMOVE_CHROOT_FN" || { log_message "error" "Failed to source '$REMOVE_C
 cleanup() {
     local exit_code=$?
     [[ $exit_code -eq 0 ]] && return
-    remove_chroot
+    bash "$REMOVE_CHROOT" 2>/dev/null
 }
 
 # Монтирование директории /dev
@@ -36,9 +38,6 @@ mount_dev() {
     return "$EXIT_SUCCESS"
 }
 
-# Ограничение прав доступа к командам
-
-
 # Основная логика
 trap cleanup SIGINT SIGTERM EXIT
 
@@ -47,12 +46,12 @@ declare -r CHROOT_OVERLAY="$BASE_CHROOT/overlay"
 declare -r OVERLAY_UPPER="$CHROOT_OVERLAY/upper"
 declare -r OVERLAY_WORK="$CHROOT_OVERLAY/work"
 
-log_message "info" "Starting chroot initialization '$BASE_CHROOT'"
-
 # Функция инициализации chroot-окружения
 init_chroot() {
+    log_message "info" "Starting chroot initialization '$BASE_CHROOT'"
+
     [[ -d "$BASE_CHROOT" ]] && {
-        remove_chroot || return $?
+        bash "$REMOVE_CHROOT" 2>/dev/null || return $?
     }
 
     create_directories "$BASE_CHROOT" 755 root:root || return $?

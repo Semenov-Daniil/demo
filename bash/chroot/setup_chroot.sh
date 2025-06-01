@@ -4,12 +4,16 @@
 
 set -euo pipefail
 
-# Подключение логального config.sh
+# Подключение локального config.sh
 LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
 source "$LOCAL_CONFIG" || {
-    echo "Failed to source local config.sh '$LOCAL_CONFIG'" >&2
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
+
+declare -xr BASHRC="$(dirname "${BASH_SOURCE[0]}")/.bashrc"
+declare -xr BASH_PREEXEC="$(dirname "${BASH_SOURCE[0]}")/.bash-preexec.sh"
+declare -xr BASHRC_CNT="$(envsubst '${WORKSPACE_USERS}'  < "$BASHRC")"
 
 # Checked bashrc
 check_bashrc() {
@@ -28,6 +32,8 @@ check_bashrc() {
             return "$EXIT_BASH_FAILED"
         }
     fi
+
+    update_permissions "$ETC_BASHRC" 755 root:root || return $?
 
     return 0
 }
@@ -49,6 +55,8 @@ check_bash_preexec() {
             return "$EXIT_BASH_FAILED"
         }
     fi
+
+    update_permissions "$ETC_BASH_PREEXEC" 755 root:root || return $?
 
     return 0
 }

@@ -1,11 +1,10 @@
 set -o functrace > /dev/null 2>&1
-shopt -s extdebug > /dev/null 2>&1
 
 # Checking for interactive mode
 [[ $- != *i* ]] && return
 
 # Re-execution check .bashrc
-[ -z "$BASHRC_LOADED" ] && export BASHRC_LOADED=1 || return
+[ -z "${BASHRC_LOADED:-}" ] && export BASHRC_LOADED=1 || return
 
 # Environment variables
 declare -rx HOME="/home/$USER"
@@ -64,7 +63,7 @@ last_login="$(grep "\[LOGIN\]" "$LOGFILE" | tail -n 2 | head -n 1 | sed 's/\[LOG
 [ ! -z "$last_login" ] && echo "Last login: $last_login"
 
 # Logging login
-if [ -z "$LOGIN_LOGGED" ]; then
+if [ -z "${LOGIN_LOGGED:-}" ]; then
     echo "[LOGIN] $(date '+%Y-%m-%d %H:%M:%S') | User: $USER_NAME | IP: $IP" >> "$LOGFILE"
     export LOGIN_LOGGED=1
 fi
@@ -72,25 +71,23 @@ fi
 # Logging logout
 trap 'echo "[LOGOUT] $(date "+%Y-%m-%d %H:%M:%S") | User: $USER_NAME | IP: $IP" >> "$LOGFILE"' EXIT
 
-# Logging cmd
-login_cmd() {
-    echo "[CMD] $(date "+%F %T") | $USER_NAME | PWD: $PWD | CMD: $BASH_COMMAND" >> "$LOGFILE";
-}
-
 # Clear history
 history -c
 > "$HOME/.bash_history"
 
-# Проверка команд
-BLACKLIST_CHAR=(';' '&' '|' '`' '$(' '${' '>' '<' '!' '*' '?' '\\' '"' "'" '&&' '||' '(' '{')
-BLACKLIST_COMMAND=('exec' 'bash' 'sh' 'sudo' 'su' 'mount' 'umount')
+command_not_found_handle() (
+    echo "Command not found '$1'"
+)
 
-[[ -f "~/.bash-preexec.sh" ]] || {
+[[ -f "$HOME/.bash-preexec.sh" ]] || {
     echo "Failed to source to preexec"
     exit 1
 }
 
-source "~/.bash-preexec.sh" || {
+BLACKLIST_CHAR=(';' '&' '|' '`' '$(' '${' '>' '<' '!' '*' '?' '\\' '"' "'" '&&' '||' '(' '{')
+BLACKLIST_COMMAND=('exec' 'bash' 'sh' 'sudo' 'su' 'mount' 'umount')
+
+source "$HOME/.bash-preexec.sh" || {
     echo "Failed to source to preexec"
     exit 1
 }
@@ -114,36 +111,46 @@ preexec() {
         if [[ "$cmd" =~ "$char" ]]; then
             echo "Forbidden character: $char"
             echo "[DENY] $(date "+%F %T") | $USER_NAME | PWD: $PWD | CMD: $cmd" >> "$LOGFILE";
-            return 1
+            kill -SIGINT $$
         fi
     done
 
     for black_cmd in "${BLACKLIST_COMMAND[@]}"; do
-        if [[ "$cmd_name" == "$black_cmd" || "$cmd_name" == $(command -v "$black_cmd") ]] || ! is_subpath "$cmd_name"; then
+        if [[ "$cmd_name" == "$black_cmd" || "$cmd_name" == $(command -v "$black_cmd") ]]; then
             echo "Forbidden command: $cmd_name"
             echo "[DENY] $(date "+%F %T") | $USER_NAME | PWD: $PWD | CMD: $cmd" >> "$LOGFILE";
-            return 1
+            kill -SIGINT $$
         fi
     done
 
+    is_subpath "$cmd_name" || {
+        echo "Forbidden path: $cmd_name"
+        echo "[DENY] $(date "+%F %T") | $USER_NAME | PWD: $PWD | CMD: $cmd" >> "$LOGFILE";
+        kill -SIGINT $$
+    }
+
     for arg in $args; do
+        [[ "$arg" =~ ^- ]] && continue
+
+        [[ "$arg" =~ ^~ ]] && arg="${arg/#~/$HOME}"
+        [[ "$arg" =~ "\$HOME" ]] && arg="${arg//"\$HOME"/$HOME}"
+
         if ! is_subpath "$arg"; then
             arg=$(realpath -m "$arg" 2>/dev/null)
             echo "Forbidden path: $arg"
             echo "[DENY] $(date "+%F %T") | $USER_NAME | PWD: $PWD | CMD: $cmd" >> "$LOGFILE";
-            return 1
+            kill -SIGINT $$
         fi
     done
+
+    echo "[CMD] $(date "+%F %T") | $USER_NAME | PWD: $PWD | CMD: $cmd" >> "$LOGFILE";
 
     return 0
 }
 
 # Checked pwd
 check_pwd() {
-    if ! is_subpath "$PWD"; then
-        cd "$WORKSPACE" 2>/dev/null
-    fi
+    is_subpath "$PWD" || cd "$WORKSPACE" 2>/dev/null
 }
 
-precmd_functions+=(login_cmd)
 precmd_functions+=(check_pwd)

@@ -11,23 +11,23 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
 }
 
 # Проверка активности пользователя и завершение его сеансов
-check_and_terminate_user() {
+terminate_user() {
     local username="$1"
 
-    pgrep -u "$username" >/dev/null || return ${EXIT_SUCCESS}
+    pgrep -u "$username" >/dev/null || return 0
+    
     pkill -u "$username" 2>/dev/null || pkill -9 -u "$username" 2>/dev/null || {
         log_message "error" "Failed to terminate processes for '$username'"
-        return ${EXIT_GENERAL_ERROR}
+        return "$EXIT_FAILED_DELETE_USER"
     }
 
-    local timeout=1 start=$(date +%s)
+    local start_time=$SECONDS timeout=3
     while pgrep -u "$username" >/dev/null; do
-        [[ $(( $(date +%s) - start )) -gt $timeout ]] && {
-            log_message "error" "Processes for '$username' still running after timeout"
-             ps -u "$username" -f | grep -E "$samba_processes" | log_message "error"
-            return ${EXIT_GENERAL_ERROR}
-        }
-        sleep 0.05
+        if (( SECONDS - start_time > timeout )); then
+            log_message "error" "Processes for '$username' still running after ${timeout}s"
+            return 1
+        fi
+        sleep 0.01
     done
 
     log_message "info" "All processes for '$username' terminated successfully"
@@ -36,16 +36,21 @@ check_and_terminate_user() {
 
 # Функция удаления пользователя
 delete_user () {
-    check_and_terminate_user "$USERNAME" || return $?
+    local username="$1"
+    [[ -z "$username" ]] && { log_message "error" "No username provided"; return "$EXIT_INVALID_ARG"; }
+
+    log_message "info" "Starting deletion of system user '$USERNAME'"
+
+    terminate_user "$USERNAME" || return $?
+
     userdel -r "$USERNAME" &>/dev/null || {
         log_message "error" "Failed to delete user '$USERNAME'"
-        return ${EXIT_FAILED_DELETE_USER}
+        return "$EXIT_FAILED_DELETE_USER"
     }
 
+    log_message "ok" "System user '$USERNAME' successfully deleted"
     return 0
 }
-
-# Основная логика
 
 # Проверка аргументов
 [[ ${#ARGS[@]} -eq 1 ]] || { echo "Usage: $0 <username>"; exit ${EXIT_INVALID_ARG}; }
@@ -53,22 +58,29 @@ delete_user () {
 # Установка переменных
 USERNAME="${ARGS[0]}"
 
-# Проверка существования пользователя
-id "$USERNAME" &>/dev/null || {
-    log_message "info" "User '$USERNAME' does not exist"
-    exit ${EXIT_SUCCESS}
+# Проверка пользователя
+[[ -z "$USERNAME" ]] || [[ ! "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]] && {
+    log_message "error" "Invalid username '$USERNAME'"
+    exit "$EXIT_INVALID_ARG"
 }
 
-if ! groups "$USERNAME" | grep -q "$STUDENT_GROUP"; then
-    log_message "error" "User '$USERNAME' is not a member of the '$STUDENT_GROUP' group"
-    exit ${EXIT_GENERAL_ERROR}
-fi
+# Проверка существования пользователя
+id "$USERNAME" >/dev/null 2>&1 || {
+    log_message "info" "User '$USERNAME' does not exist"
+    exit 0
+}
 
-log_message "info" "Starting deletion of system user '$USERNAME'"
+groups "$USERNAME" 2>/dev/null | grep -qw "$STUDENT_GROUP" || {
+    log_message "error" "User '$USERNAME' is not in '$STUDENT_GROUP' group"
+    exit "$EXIT_INVALID_ARG"
+}
 
-# Установка блокировки
-with_lock "${TMP_DIR}/${LOCK_USER_PREF}_${USERNAME}.lock" delete_user || exit $?
+# Удаление рабочей области в chroot
+bash "$REMOVE_WORKSPACE" "$USERNAME" 2>/dev/null
 
-log_message "info" "System user '$USERNAME' successfully deleted"
+# Удаление пользователя Samba
+bash "$REMOVE_SAMBA_USER" "$USERNAME" 2>/dev/null
 
-exit ${EXIT_SUCCESS}
+# Удаление пользователя с блокировкой
+with_lock "${TMP_DIR}/${LOCK_USER_PREF}_${USERNAME}.lock" delete_user "$USERNAME"
+exit 0

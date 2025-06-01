@@ -13,7 +13,7 @@ set -euo pipefail
 # Подключение глобального config.sh
 GLOBAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/../config.sh)"
 source "$GLOBAL_CONFIG" || {
-    echo "Failed to source global config.sh '$GLOBAL_CONFIG'"
+    echo "Failed to source global config '$GLOBAL_CONFIG'"
     return 1
 }
 
@@ -30,22 +30,18 @@ declare -rx EXIT_BASH_FAILED=13
 declare -rx MOUNTS_FN="$(dirname "${BASH_SOURCE[0]}")/mounts.fn.sh"
 declare -rx SETUP_CHROOT="$(dirname "${BASH_SOURCE[0]}")/setup_chroot.sh"
 declare -rx INIT_CHROOT="$(dirname "${BASH_SOURCE[0]}")/init_chroot.sh"
-declare -rx REMOVE_CHROOT_FN="$(dirname "${BASH_SOURCE[0]}")/remove_chroot.fn.sh"
-declare -rx REMOVE_WORKSPACE_FN="$(dirname "${BASH_SOURCE[0]}")/remove_workspace.fn.sh"
+declare -rx REMOVE_CHROOT="$(dirname "${BASH_SOURCE[0]}")/remove_chroot.sh"
+declare -rx REMOVE_WORKSPACE="$(dirname "${BASH_SOURCE[0]}")/remove_workspace.sh"
 declare -rx RESTRICT_BINARIES_FN="$(dirname "${BASH_SOURCE[0]}")/restrict_binaries.fn.sh"
 
 declare -axr SYSTEM_DIRS=("/bin" "/lib" "/lib64" "/usr" "/etc")
 declare -ar RESTRICTED_CMDS=("sudo" "su" "cron" "sshfs" "mount" "umount")
 
+declare -xr ETC_BASHRC="$ETC_STUDENTS/.bashrc"
+declare -xr ETC_BASH_PREEXEC="$ETC_STUDENTS/.bash-preexec.sh"
+
 # Lock
 declare -rx LOCK_CHROOT_PREF="lock_chroot"
-
-# Bashrc
-declare -xr BASHRC="$(dirname "${BASH_SOURCE[0]}")/.bashrc"
-declare -xr ETC_BASHRC="$ETC_STUDENTS/.bashrc"
-declare -xr BASH_PREEXEC="$(dirname "${BASH_SOURCE[0]}")/.bash-preexec.sh"
-declare -xr ETC_BASH_PREEXEC="$ETC_STUDENTS/.bash-preexec.sh"
-declare -xr BASHRC_CNT="$(envsubst '${WORKSPACE_USERS}'  < "$BASHRC")"
 
 # Подключение скрипта с функциями монтирования
 source "$MOUNTS_FN" || { log_message "error" "Failed to source '$MOUNTS_FN'" >&2; return "$EXIT_GENERAL_ERROR"; }

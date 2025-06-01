@@ -10,20 +10,29 @@ set -euo pipefail
     exit 1
 }
 
-# Файл логирования
-declare -x DEFAULT_LOG_FILE="samba.log"
-
 # Подключение глобального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
-    echo "Failed to source global config.sh" >&2
+GLOBAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/../config.sh)"
+source "$GLOBAL_CONFIG" || {
+    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
     return 1
 }
 
 # Коды выхода
-export EXIT_FAILED_CREATE_USER=30
-export EXIT_FAILED_DELETE_USER=31
+declare -rx EXIT_FAILED_CREATE_USER=30
+declare -rx EXIT_FAILED_DELETE_USER=31
 
-# Установка переменных
-export LOCK_USER_PREF="${LOCK_PREF}_user"
+# Logging
+[[ "$LOG_FILE" == "$DEFAULT_LOG_FILE" ]] && LOG_FILE="users.log"
 
-return ${EXIT_SUCCESS}
+# Scripts
+declare -rx DELETE_USER="$(realpath $(dirname "${BASH_SOURCE[0]}")/delete_user.sh)"
+declare -rx ADD_SAMBA_USER="$(realpath $(dirname "${BASH_SOURCE[0]}")/../samba/add_samba_user.sh)"
+declare -rx REMOVE_SAMBA_USER="$(realpath $(dirname "${BASH_SOURCE[0]}")/../samba/remove_samba_user.sh)"
+declare -rx CONFIG_SSH="$(realpath $(dirname "${BASH_SOURCE[0]}")/../ssh/config_ssh.sh)"
+declare -rx SETUP_WORKSPACE="$(realpath $(dirname "${BASH_SOURCE[0]}")/../chroot/setup_workspace.sh)"
+declare -rx REMOVE_WORKSPACE="$(realpath $(dirname "${BASH_SOURCE[0]}")/../chroot/remove_workspace.sh)"
+
+# Lock
+declare -rx LOCK_USER_PREF="${LOCK_PREF}_user"
+
+return 0

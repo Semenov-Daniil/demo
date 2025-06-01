@@ -13,7 +13,7 @@ set -euo pipefail
 # Подключение глобального config.sh
 GLOBAL_CONFIG="$(dirname "${BASH_SOURCE[0]}")/../config.sh"
 source "$GLOBAL_CONFIG" || {
-    echo "Failed to source '$GLOBAL_CONFIG'" >&2
+    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
     return 1
 }
 
