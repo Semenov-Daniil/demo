@@ -1,87 +1,92 @@
 #!/bin/bash
-
 # check_setup_ssh.sh - Скрипт проверки настроек SSH
 # Расположение: bash/ssh/check_setup_ssh.sh
 
 set -euo pipefail
 
-# Подключение локального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" "--log=samba.log" || {
-    echo "Failed to source local config.sh"
+# Подключение логального config.sh
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
 
+declare -rax SSH_SERVICES=("sshd")
+declare -x SERVICE_START_TIMEOUT=5
+
 # Проверка и запуск SSH-сервисов
 start_ssh_services() {
-    for service in "sshd"; do
+    local service
+    for service in "${SAMBA_SERVICES[@]}"; do
         systemctl is-active --quiet "$service" && continue
-        systemctl enable "$service" && systemctl start "$service" || {
-            log_message "error" "Failed to start $service"
-            exit ${EXIT_SAMBA_NOT_INSTALLED}
+        systemctl enable "$service" && systemctl start "$service" >/dev/null 2>&1 || {
+            log_message "error" "Failed to start service $service"
+            return "$EXIT_SSH_START_FAILED"
         }
-        sleep 1
-        systemctl is-active --quiet "$service" || {
-            log_message "error" "$service failed to start"
-            exit ${EXIT_SAMBA_NOT_INSTALLED}
-        }
+
+        local start_time=$SECONDS
+        while ! systemctl is-active --quiet "$service"; do
+            (( SECONDS - start_time > SERVICE_START_TIMEOUT )) && {
+                log_message "error" "Service '$service' failed to start within ${SERVICE_START_TIMEOUT}s"
+                return "$EXIT_SSH_START_FAILED"
+            }
+            sleep 0.01
+        done
     done
+
+    log_message "info" "All SSH services are running"
+    return 0
 }
 
 # Получение SSH-порта
 get_ssh_port() {
-    local cache_file="${TMP_DIR}/ssh_port_cache"
-    [[ -f "$cache_file" && $(( $(date +%s) - $(stat -c %Y "$cache_file") )) -lt 86400 ]] && {
-        cat "$cache_file"
-        return
+    local port=$(grep -h -E "^Port\s+[0-9]+" "$CONFIG_FILE" "$CONFIG_DIR"/*.conf 2>/dev/null | awk '{print $2}' | head -n 1) || {
+        log_message "error" "Failed to get SSH port"
+        return "$EXIT_SSH_CONFIG_FAILED"
     }
-    local port=$(grep -h -E "^Port\s+[0-9]+" "$SSH_CONFIG_FILE" "$SSH_CONFIGS_DIR"/*.conf 2>/dev/null | awk '{print $2}' | head -n 1)
     [[ -z "$port" || ! "$port" =~ ^[0-9]+$ || "$port" -lt 1 || "$port" -gt 65535 ]] && port=22
-    echo "$port" > "$cache_file" 2>/dev/null || log_message "warning" "Failed to cache SSH port"
     echo "$port"
 }
 
 # Настройка UFW для SSH-порта
 configure_ufw() {
-    local port="$1"
-    command -v ufw >/dev/null || { log_message "warning" "UFW not installed"; return; }
-    ufw status | grep -q "Status: active" || { log_message "info" "UFW is inactive"; return; }
-    ufw status numbered | grep -E "${port}/tcp.*ALLOW" >/dev/null || {
-        ufw allow "$port/tcp" || {
-            log_message "error" "Failed to configure UFW for SSH port $port"
-            return ${EXIT_GENERAL_ERROR}
+    local port="$(get_ssh_port)/tcp" || return $?
+
+    command -v ufw >/dev/null || { log_message "warning" "UFW not installed, skipping"; return 0; }
+    ufw status verbose | grep -q "Status: active" || { log_message "info" "UFW is inactive, skipping"; return 0; }
+
+    ufw status verbose | grep -qw "$port.*ALLOW" || {
+        ufw allow "$port" >/dev/null 2>&1 || {
+            log_message "error" "Failed to open port '$port' in UFW"
+            return "$EXIT_GENERAL_ERROR"
         }
     }
+
+    ufw reload || {
+        log_message "error" "Failed to restart UFW"
+        return "$EXIT_GENERAL_ERROR"
+    }
+
+    log_message "info" "UFW port '$port' for SSH are running"
+    return "$EXIT_SUCCESS"
 }
 
-# Проверка директории sshd_config.d
-check_configs_dir() {
-    if [[ ! -d "$SSH_CONFIGS_DIR" || ! -w "$SSH_CONFIGS_DIR" ]]; then
-        log_message "error" "SSH config include directory not found or not writable: $SSH_CONFIGS_DIR"
-        exit ${EXIT_GENERAL_ERROR}
-    fi
-}
-
-# Проверка зависимостей и команд
-[[ ! -f "$SSH_DEPS_CACHE" || $(( $(date +%s) - $(stat -c %Y "$SSH_DEPS_CACHE") )) -gt 86400 ]] && {
-    check_deps "openssh-server" || {
+# Проверка наличия зависимостей и команд SSH
+check_samba_dependencies() {
+    check_dependency "openssh-server" || {
         log_message "error" "Missing openssh-server"
-        exit ${EXIT_SAMBA_NOT_INSTALLED}
+        return "$EXIT_SSH_NOT_INSTALLED"
     }
     check_commands sshd || {
         log_message "error" "Failed check commands"
-        exit ${EXIT_SAMBA_NOT_INSTALLED}
+        return "$EXIT_SSH_NOT_INSTALLED"
     }
-    create_directories "$CHROOT_DIR" "$CHROOT_STUDENTS" 755 root:root || {
-        log_message "error" "Failed create directories: ${CHROOT_DIR}, ${CHROOT_STUDENTS}"
-        exit ${EXIT_CHROOT_INIT_FAILED}
-    }
-    touch "$SSH_DEPS_CACHE"
+    log_message "info" "All SSH dependencies are installed"
+    return 0
 }
 
-# Запуск SSH-сервисов
-start_ssh_services
+start_ssh_services || exit $?
+configure_ufw || exit $?
+check_samba_dependencies || exit $?
 
-# Настройка UFW для SSH-порта
-configure_ufw "$(get_ssh_port)"
-
-return ${EXIT_SUCCESS}
+exit 0

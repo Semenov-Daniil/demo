@@ -12,7 +12,7 @@ source "$LOCAL_CONFIG" || {
 }
 
 # Запуск настройки Samba
-bash "$SETUP_SAMBA" || exit $?
+bash "$CONFIG_SAMBE" || exit $?
 
 # Очистка при ошибке
 cleanup() {
@@ -44,7 +44,7 @@ add_samba_user() {
             return "$EXIT_ADD_SAMBA_USER_FAILED"
         }
     fi
-    log_message "OK" "Samba user '$username' added successfully"
+    log_message "ok" "Samba user '$username' added successfully"
     return 0
 }
 

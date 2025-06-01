@@ -56,6 +56,11 @@ configure_ufw() {
         }
     done
 
+    ufw reload || {
+        log_message "error" "Failed to restart UFW"
+        return "$EXIT_GENERAL_ERROR"
+    }
+
     log_message "info" "All UFW ports for Samba are running"
     return 0
 }

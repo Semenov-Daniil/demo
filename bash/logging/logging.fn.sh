@@ -4,9 +4,9 @@
 
 set -euo pipefail
 
-# Проверкa подключения скрипта
-[[ "${BASH_SOURCE[0]}" == "$0" ]] && {
-    echo "This script ('$0') is meant to be sourced"
+# Подключение локального config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
+    echo "Failed to source local config.sh"
     exit 1
 }
 
@@ -77,13 +77,14 @@ log_message() {
         echo "Usage log_message: <level> <message>"
         return 1
     }
-    local level="$1" message="$2" path_log_file="${LOGS_DIR}/$(echo "${LOG_FILE}" | sed 's/[\\\/]//g')"
+    local level="$1" message="$2"
+    local log_file="${LOG_FILE//\//}"
+    local path_log_file="$LOGS_DIR/$log_file"
     check_level "$level" || return $?
     make_log_dir "$path_log_file" || return $?
     local log_entry
     log_entry=$(format_log "$level" "$message")
-    with_lock "${TMP_DIR}/${LOCK_LOG_PREF}_$(echo "$path_log_file" | sha256sum | cut -d' ' -f1).lock" write_log "$path_log_file" "$log_entry" || return $?
-    # echo 'test'
+    with_lock "$TMP_DIR/${LOCK_LOG_PREF}_${log_file//./_}.lock" write_log "$path_log_file" "$log_entry" || return $?
     print_log "$level" "$message"
     return 0
 }

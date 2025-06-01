@@ -29,7 +29,7 @@ declare -rx EXIT_ADD_SAMBA_USER_FAILED=26
 [[ "$LOG_FILE" == "$DEFAULT_LOG_FILE" ]] && LOG_FILE="samba.log"
 
 # Scripts
-declare -rx SETUP_SAMBA="$(dirname "${BASH_SOURCE[0]}")/setup_samba.sh"
+declare -rx CONFIG_SAMBE="$(dirname "${BASH_SOURCE[0]}")/config_samba.sh"
 declare -rx REMOVE_USER="$(dirname "${BASH_SOURCE[0]}")/remove_samba_user.sh"
 
 # Lock

@@ -4,25 +4,26 @@
 
 set -euo pipefail
 
-# Коды выхода
-declare -rx EXIT_SUCCESS=0
+declare -rx CNT_MAIN_CONFIG=1
+
+# Code exits
 declare -rx EXIT_GENERAL_ERROR=1
 declare -rx EXIT_INVALID_ARG=2
 declare -rx EXIT_NOT_FOUND=3
 
-# Проверкa подключения скрипта
+# Check sourced
 [[ "${BASH_SOURCE[0]}" == "$0" ]] && {
     echo "This script ('$0') is meant to be sourced" >&2
-    exit ${EXIT_GENERAL_ERROR}
+    exit "$EXIT_GENERAL_ERROR"
 }
 
-# Проверкa root-прав
+# CHeck root
 [[ "$EUID" -ne 0 ]] && {
     echo "This operation requires root privileges" >&2
-    return ${EXIT_GENERAL_ERROR}
+    return "$EXIT_GENERAL_ERROR"
 }
 
-# Парсинг аргументов
+# Parsing arguments
 declare -ax ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -32,51 +33,55 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Путь к проекту
+# Path project
 declare -rx SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
 declare -rx SCRIPTS_DIR="$(dirname "$SCRIPT_PATH")"
 declare -rx PROJECT_ROOT="$(dirname "$SCRIPTS_DIR")"
 
-# Переменные из .env
-declare -rx ENV="${PROJECT_ROOT}/.env"
+# Parsing .env
+declare -rx ENV="$PROJECT_ROOT/.env"
 
-# Получение переменных из .env
-if [[ -f "${ENV}" ]]; then
-    (
-        set -a
-        if ! source "${ENV}"; then
-            echo "Failed to source '$ENV'" >&2
-            exit 1
-        fi
-        set +a
+load_env() {
+    local env_file="${1:-.env}"
 
-        while read -r var; do
-            if [[ ! "$var" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
-                echo "Invalid variable name '$var' in '$ENV', unsetting" >&2
-                unset "$var"
-            fi
-        done < <(compgen -A variable)
-    ) || {
-        echo "Failed to process '$ENV'" >&2
-        return 1
-    }
-else
-    echo "File '$ENV' not found"
-    return ${EXIT_NOT_FOUND}
-fi
+    [[ ! -f "$env_file" ]] && { echo "File '$env_file' not found"; return "$EXIT_NOT_FOUND"; }
 
-# Установка переменных
+    while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+
+        key=$(echo "$key" | tr -d '[:space:]')
+        [[ ! "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && { echo "Incorrect format of the key '$key' in '$env_file'"; continue; }
+
+        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+        declare -x "$key=$value"
+    done < "$env_file"
+
+    return 0
+}
+
+load_env "$ENV" || return $?
+
+# Directories
 declare -rx LOGS_DIR="${SCRIPTS_DIR}/logs"
 declare -rx LIB_DIR="${SCRIPTS_DIR}/lib"
 declare -rx TMP_DIR="${SCRIPTS_DIR}/tmp"
-declare -x DEFAULT_LOG_FILE="logs.log"
-declare -x LOG_FILE="${LOG_FILE:-"$DEFAULT_LOG_FILE"}"
-declare -rx LOCK_PREF="lock"
+declare -rx ETC_DIR="/etc"
+
+# Site variables
 declare -rx SITE_USER="${SITE_USER:-"www-data"}"
 declare -rx SITE_GROUP="${SITE_GROUP:-"www-data"}"
+
+# Students
 declare -rx STUDENT_GROUP="students"
 declare -rx STUDENTS_DIR="${PROJECT_ROOT}/students"
+declare -rx ETC_STUDENTS="${ETC_DIR}/students"
+
+# Scripts
 declare -rx LOGGING_SCRIPT="${SCRIPTS_DIR}/logging/logging.fn.sh"
+declare -rx COMMON_SCRIPT="$LIB_DIR/common.sh"
+
+# Services
 declare -rax REQUIRED_SERVICES=("apache2" "openssh-server" "samba" "samba-common-bin")
 declare -rAx REQUIRED_SERVICE_MAP=(
     ["apache2"]="apache2"
@@ -84,39 +89,41 @@ declare -rAx REQUIRED_SERVICE_MAP=(
     ["samba"]="smbd nmbd"
     ["samba-common-bin"]=""
 )
-declare -x LOG_RETENTION_DAYS=30
-declare -x LOCK_LOG_PREF="lock_log"
-declare -rax LOG_LEVELS=("info" "warning" "error")
 
-# Функция подключения скриптов
-source_script() {
-    if [ -z "$1" ]; then
-        echo "Usage source_script: <script-path> [<args> ...]"
-        return "$EXIT_INVALID_ARG"
-    fi
+# Chroot
+declare -rx BASE_CHROOT="/srv/chroot"
+declare -rx CHROOT_ROOT="$BASE_CHROOT/root"
+declare -rx HOME_USERS="/home"
+declare -rx CHROOT_HOME="${CHROOT_ROOT}${HOME_USERS}"
+declare -rx WORKSPACE_USERS="/workspace"
 
-    local script_path="$1"
-    shift
-
-    [[ -f "$script_path" ]] || {
-        echo "Script '$script_path' not found"
-        return "$EXIT_NOT_FOUND"
-    }
-
-    source "$script_path" $@ || {
-        echo "Failed to source script '$script_path'"
-        return "$EXIT_GENERAL_ERROR"
-    }
-
-    return "$EXIT_SUCCESS"
+chroot_workspace() {
+    local username="$1"
+    echo "$CHROOT_HOME/${username}${WORKSPACE_USERS}"
 }
 
-# Подключение вспомогательных скриптов/функций
-source_script "${LIB_DIR}/common.sh" || return $?
+export -f chroot_workspace
 
-# Подключение логирования
-source_script "$LOGGING_SCRIPT" || return $?
+# Lock
+declare -rx LOCK_PREF="lock"
 
+# Logging
+[[ -z "${LOG_FILE:-}" ]] && { declare -x DEFAULT_LOG_FILE="logs.log"; }
+declare -x LOG_FILE="${LOG_FILE:-$DEFAULT_LOG_FILE}"
+
+# Source advanced scripts
+source "$COMMON_SCRIPT" || {
+    echo "Failed to source script '$LIB_DIR/common.sh'"
+    return "$EXIT_GENERAL_ERROR"
+}
+
+# Source logging
+source "$LOGGING_SCRIPT" || {
+    echo "Failed to source script '$LOGGING_SCRIPT'"
+    return "$EXIT_GENERAL_ERROR"
+}
+
+# Main
 id "$SITE_USER" >/dev/null || {
     log_message "error" "User '$SITE_USER' does not exist"
     return ${EXIT_GENERAL_ERROR}
@@ -132,36 +139,10 @@ getent group "$STUDENT_GROUP" >/dev/null || {
     return ${EXIT_GENERAL_ERROR}
 }
 
-[[ -d "$STUDENTS_DIR" ]] || {
-    mkdir -p "$STUDENTS_DIR" || {
-        log_message "error" "Cannot create directory '$STUDENTS_DIR'"
-        return ${EXIT_GENERAL_ERROR} 
-    }
-    chown "$SITE_USER:$SITE_GROUP" "$STUDENTS_DIR" || {
-        log_message "error" "Missing set ownership directory ${STUDENTS_DIR}"
-        return ${EXIT_GENERAL_ERROR} 
-    }
-    chmod 755 "$STUDENTS_DIR" || {
-        log_message "error" "Missing set permissions directory ${STUDENTS_DIR}"
-        return ${EXIT_GENERAL_ERROR} 
-    }
-}
+[[ ! -d "$STUDENTS_DIR" ]] && { create_directories "$STUDENTS_DIR" 755 "$SITE_USER:$SITE_GROUP" || return $?; }
 
-[[ -d "$TMP_DIR" ]] || {
-    mkdir -p "$TMP_DIR" || {
-        log_message "error" "Cannot create directory '$TMP_DIR'"
-        return ${EXIT_GENERAL_ERROR} 
-    }
-    chown "root:root" "$TMP_DIR" || {
-        log_message "error" "Missing set ownership directory ${TMP_DIR}"
-        return ${EXIT_GENERAL_ERROR} 
-    }
-    chmod 1777 "$TMP_DIR" || {
-        log_message "error" "Missing set permissions directory ${TMP_DIR}"
-        return ${EXIT_GENERAL_ERROR} 
-    }
-}
+[[ ! -d "$TMP_DIR" ]] && { create_directories "$TMP_DIR" 1777 "$SITE_USER:$SITE_GROUP" || return $?; }
 
-export -f source_script
+[[ ! -d "$ETC_STUDENTS" ]] && { create_directories "$ETC_STUDENTS" 755 "root:root" || return $?; }
 
-return ${EXIT_SUCCESS}
+return 0

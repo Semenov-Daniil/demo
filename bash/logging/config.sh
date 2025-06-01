@@ -11,9 +11,15 @@ set -euo pipefail
 }
 
 # Подключение глобального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
-    echo "Failed to source global config.sh"
-    return 1
+[[ -z "$CNT_MAIN_CONFIG" || "$CNT_MAIN_CONFIG" -ne 1 ]] && {
+    source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
+        echo "Failed to source global config.sh"
+        return 1
+    }
 }
+
+declare -x LOG_RETENTION_DAYS=30
+declare -x LOCK_LOG_PREF="lock_log"
+declare -rax LOG_LEVELS=("info" "warning" "error" "ok")
 
 return 0

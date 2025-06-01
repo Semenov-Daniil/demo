@@ -12,7 +12,7 @@ set -euo pipefail
 
 : "${TMP_DIR:="/tmp"}"
 : "${LOCK_PREF:="lock"}"
-: "${LOCK_TIMEOUT:="60"}"
+: "${LOCK_TIMEOUT:=60}"
 
 ! command -v flock >/dev/null 2>&1 && {
     echo "Command 'flock' not found" >&2
@@ -29,6 +29,8 @@ with_lock() {
         return 1
     fi
 
+    echo "test pre arg"
+
     lockfile="$1"
     action="$2"
     shift 2
@@ -38,19 +40,31 @@ with_lock() {
         return 1
     }
 
+    echo "pre touch lockfile: $lockfile"
+
     ! touch "$lockfile" 2>/dev/null && {
         echo "Failed to create lockfile '$lockfile'" >&2
         return 1
     }
 
+    echo "post touch lockfile: $lockfile"
+
     local old_trap=$(trap -p EXIT | sed "s/^trap -- '\(.*\)' EXIT$/\1/" || true)
 
     exec 200>"$lockfile"
 
-    trap "$(rm -f "$lockfile" 2>/dev/null; exec 200>&-;)""$old_trap" EXIT
+    # _cleanup() {
+    #     [ -n "${lockfile-}" ] && rm -f "${lockfile}" 2>/dev/null
+    #     exec 200>&- 2>/dev/null
+    #     [ -n "${old_trap-}" ] && eval "${old_trap}" 2>/dev/null
+    # }
+
+    # trap _cleanup EXIT
+
+    trap "$(rm -f "$lockfile" 2>/dev/null; exec 200>&-; "$old_trap")" EXIT
 
     if ! flock -x -w "$LOCK_TIMEOUT" 200; then
-        echo "Failed to acquire lock for '$lockfile' within ${timeout}s" >&2
+        echo "Lock error: failed to acquire lock for '$lockfile' within ${timeout}s" >&2
         trap - EXIT
         exec 200>&-
         return 1
@@ -58,6 +72,8 @@ with_lock() {
 
     "$action" "$@"
     local ret=$?
+
+    echo "post action: $action, ret: $ret"
 
     trap - EXIT
     exec 200>&-
