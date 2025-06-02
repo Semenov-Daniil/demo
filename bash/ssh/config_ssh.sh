@@ -110,7 +110,7 @@ check_student_template() {
         return "$EXIT_SAMBA_CONFIG_FAILED"
     }
 
-    update_permissions "$STUDENT_CONF" 600 root:root || return $?
+    update_permissions "$STUDENT_CONF" 755 root:root || return $?
     return 0
 }
 

@@ -16,7 +16,7 @@ set -euo pipefail
 # Создания директорий
 create_directories() {
     [[ ${#@} -lt 3 ]] && {
-        echo "Usage: ${FUNCNAME[0]} directory [directory...] <perms> <owner>"
+        echo "Usage: ${FUNCNAME[0]} directory [directory...] <perms> <owner>" >&2
         return 1
     }
 

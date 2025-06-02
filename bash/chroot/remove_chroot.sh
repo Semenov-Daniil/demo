@@ -1,5 +1,5 @@
 #!/bin/bash
-# remove_chroot.sh - Скрипт исполняющий удаление chroot-окружения
+# remove_chroot.sh - Скрипт удаления chroot-окружения
 # Расположение: bash/chroot/remove_chroot.sh
 
 set -euo pipefail
@@ -14,15 +14,16 @@ source "$LOCAL_CONFIG" || {
 remove_chroot() {
     log_message "info" "Starting chroot removal '$BASE_CHROOT'"
 
-    if [[ ! -d "$BASE_CHROOT" ]]; then
+    [[ ! -d "$BASE_CHROOT" ]] && {
         log_message "info" "Chroot directory '$BASE_CHROOT' does not exist"
-        return
-    fi
+        return 0
+    }
 
     remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/dev/pts")" || return $?
     remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/dev/shm")" || return $?
     remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/dev")" || return $?
     remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/proc")" || return $?
+    remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/etc")" || return $?
 
     local path
     for path in "${SYSTEM_DIRS[@]}"; do
@@ -30,25 +31,28 @@ remove_chroot() {
     done
     
     local unit
-    for unit in $(get_mount_units_in_dir "$BASE_CHROOT"); do
+    for unit in $(get_mount_units "$BASE_CHROOT"); do
         remove_systemd_unit "$unit" || return $?
     done
 
-    local mountpoint
-    mount | grep "$BASE_CHROOT" | awk '{print $3}' | sort -r | while IFS= read -r mountpoint; do
-        umount "$mountpoint" 2>/dev/null || {
-            fuser -km "$mountpoint" 2>/dev/null
-            sleep 1
-            umount -f "$mountpoint" 2>/dev/null || umount -l "$mountpoint" 2>/dev/null || true
-        }
-    done
+    mount | grep -q -F "$BASE_CHROOT" && {
+        local mountpoint
+        mount | grep "$BASE_CHROOT" | awk '{print $3}' | sort -r | while IFS= read -r mountpoint; do
+            umount "$mountpoint" 2>/dev/null || {
+                fuser -v "$mountpoint" 2>/dev/null
+                fuser -km "$mountpoint" 2>/dev/null
+                sleep 1
+                umount -f "$mountpoint" 2>/dev/null || umount -l "$mountpoint" 2>/dev/null || true
+            }
+        done
+    }
 
     rm -rf "$BASE_CHROOT" || {
         log_message "error" "Failed to delete chroot directory '$BASE_CHROOT'"
         return "$EXIT_GENERAL_ERROR"
     }
 
-    log_message "info" "Chroot '$BASE_CHROOT' was successfully removed"
+    log_message "ok" "Chroot '$BASE_CHROOT' was successfully removed"
 }
 
 # Удаление chroot-окружения с временной блокировкой

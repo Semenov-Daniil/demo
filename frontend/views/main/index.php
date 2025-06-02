@@ -64,7 +64,7 @@ $this->title = 'Студент';
                 </div>
     
                 <div class="card-body">
-                    <pre class="language-markup" tabindex="0"><code class="language-markup">net use Y: \\192.168.7.191\<?= Html::encode(Yii::$app->user->identity->login); ?> <?= Html::encode(EncryptedPasswords::decryptByPassword(Yii::$app->user->identity->encryptedPassword->encrypted_password)); ?> /user:<?= Html::encode(Yii::$app->user->identity->login); ?></code></pre>
+                    <pre class="language-markup" tabindex="0"><code class="language-markup">net use Y: \\<?= $_SERVER['SERVER_ADDR'] ?>\<?= Html::encode(Yii::$app->user->identity->login); ?> <?= Html::encode(EncryptedPasswords::decryptByPassword(Yii::$app->user->identity->encryptedPassword->encrypted_password)); ?> /user:<?= Html::encode(Yii::$app->user->identity->login); ?></code></pre>
                 </div>
             </div>
         </div>
@@ -161,7 +161,7 @@ $this->title = 'Студент';
     
                 <div class="card-body list-group p-0 list-group-flush">
                     <?php foreach ($modules as $module): ?>
-                        <?= Html::a("<b>Модуль $module->number:</b> http://$student->dir_prefix-m$module->number.demo", ['#'], ['class' => 'list-group-item list-group-item-action'])?>
+                        <?= Html::a("<b>Модуль $module->number:</b> http://$student->dir_prefix-m$module->number.demo", "http://$student->dir_prefix-m$module->number.demo", ['class' => 'list-group-item list-group-item-action'])?>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -173,7 +173,7 @@ $this->title = 'Студент';
                 </div>
     
                 <div class="card-body list-group p-0 list-group-flush">
-                    <?= Html::a('<b>phpMyAdmin:</b> http://192.168.7.191/phpmyadmin/', ['#'], ['class' => 'list-group-item list-group-item-action'])?>
+                    <?= Html::a("<b>phpMyAdmin:</b> http://{$_SERVER['SERVER_ADDR']}/phpmyadmin/", "http://{$_SERVER['SERVER_ADDR']}/phpmyadmin/", ['class' => 'list-group-item list-group-item-action'])?>
                 </div>
             </div>
         </div>

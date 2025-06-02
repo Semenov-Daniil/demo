@@ -11,7 +11,7 @@ set -euo pipefail
 }
 
 # Подключение глобального config.sh
-[[ -z "$CNT_MAIN_CONFIG" || "$CNT_MAIN_CONFIG" -ne 1 ]] && {
+[[ -z "${CNT_MAIN_CONFIG:-}" || "$CNT_MAIN_CONFIG" -ne 1 ]] && {
     source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
         echo "Failed to source global config.sh"
         return 1

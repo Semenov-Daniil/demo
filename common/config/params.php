@@ -6,11 +6,12 @@ return [
     'senderName' => 'Example.com mailer',
     'user.passwordResetTokenExpire' => 3600,
     'user.passwordMinLength' => 8,
-    'encryptionKey' => getenv('ENCRYPTION_KEY') ?: 'default_encryption_key',
+    'encryptionKey' => $_ENV['ENCRYPTION_KEY'] ?: 'default_encryption_key',
     'superExpert' => [
-        'login' => getenv('SUPER_EXPERT_LOGIN') ?: 'expert',
-        'password' => getenv('SUPER_EXPERT_PASSWORD') ?: 'expert',
+        'login' => $_ENV['SUPER_EXPERT_LOGIN'] ?: 'expert',
+        'password' => $_ENV['SUPER_EXPERT_PASSWORD'] ?: 'expert',
     ],
     'siteName' => 'demo.ru',
-    'systemPassword' => getenv('SYSTEM_PASSWD') ?: '',
+    'siteUser' => $_ENV['SITE_USER'] ?: 'www-data',
+    'siteGroup' => $_ENV['SITE_GROUP'] ?: 'www-data',
 ];

@@ -90,6 +90,9 @@ declare -rAx REQUIRED_SERVICE_MAP=(
     ["samba-common-bin"]=""
 )
 
+# Lock
+declare -rx LOCK_PREF="lock"
+
 # Chroot
 declare -rx BASE_CHROOT="/srv/chroot"
 declare -rx CHROOT_ROOT="$BASE_CHROOT/root"
@@ -103,9 +106,6 @@ chroot_workspace() {
 }
 
 export -f chroot_workspace
-
-# Lock
-declare -rx LOCK_PREF="lock"
 
 # Logging
 [[ -z "${LOG_FILE:-}" ]] && { declare -x DEFAULT_LOG_FILE="logs.log"; }

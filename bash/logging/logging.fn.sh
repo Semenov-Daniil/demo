@@ -10,7 +10,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
     exit 1
 }
 
-: "${LOGS_DIR:="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/logs"}"
+: "${LOGDIR:="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/logs"}"
 : "${LOG_FILE:="common.log"}"
 : "${TMP_DIR:="/tmp"}"
 : "${LOCK_LOG_PREF:="lock_log"}"
@@ -79,7 +79,7 @@ log_message() {
     }
     local level="$1" message="$2"
     local log_file="${LOG_FILE//\//}"
-    local path_log_file="$LOGS_DIR/$log_file"
+    local path_log_file="$LOGDIR/$log_file"
     check_level "$level" || return $?
     make_log_dir "$path_log_file" || return $?
     local log_entry

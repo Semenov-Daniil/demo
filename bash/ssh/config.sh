@@ -24,7 +24,7 @@ declare -rx EXIT_SSH_SERVICE_FAILED=42
 declare -rx EXIT_SSH_START_FAILED=42
 
 # Установка переменных
-[[ "$LOG_FILE" == "$DEFAULT_LOG_FILE" ]] && LOG_FILE="ssh.log"
+[[ "$LOG_FILE" == "${DEFAULT_LOG_FILE:-}" ]] && LOG_FILE="ssh.log"
 
 declare -rx CONFIG_FILE="/etc/ssh/sshd_config"
 declare -rx CONFIG_DIR="/etc/ssh/sshd_config.d"

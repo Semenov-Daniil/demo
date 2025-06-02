@@ -5,8 +5,9 @@
 set -euo pipefail
 
 # Подключение логального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
-    echo "Failed to source local config.sh"
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
 
@@ -76,10 +77,10 @@ groups "$USERNAME" 2>/dev/null | grep -qw "$STUDENT_GROUP" || {
 }
 
 # Удаление рабочей области в chroot
-bash "$REMOVE_WORKSPACE" "$USERNAME" 2>/dev/null
+bash "$REMOVE_WORKSPACE" "$USERNAME"
 
 # Удаление пользователя Samba
-bash "$REMOVE_SAMBA_USER" "$USERNAME" 2>/dev/null
+bash "$REMOVE_SAMBA_USER" "$USERNAME"
 
 # Удаление пользователя с блокировкой
 with_lock "${TMP_DIR}/${LOCK_USER_PREF}_${USERNAME}.lock" delete_user "$USERNAME"

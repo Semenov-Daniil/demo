@@ -36,7 +36,7 @@ enable_vhost() {
         with_lock "$TMP_DIR/$LOCK_GLOBAL_VHOST.lock" _enable_vhost_lock "$domain" || return $?
     }
 
-    log_message "ok" "Virtual host '$domain' successfully disabled"
+    log_message "ok" "Virtual host '$domain' successfully enable"
     return 0
 }
 

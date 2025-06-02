@@ -11,75 +11,81 @@ source "$LOCAL_CONFIG" || {
     exit 1
 }
 
-with_lock "$TMP_DIR/${LOCK_CHROOT_PREF}_setup.log" bash "$SETUP_CHROOT" || { log_message "error" "Failed to source '$SETUP_CHROOT'" >&2; exit "$EXIT_GENERAL_ERROR"; }
-
 cleanup() {
     local exit_code=$?
     [[ $exit_code -eq 0 || -z "${USERNAME:-}" ]] && return
-    bash "$REMOVE_WORKSPACE" "$USERNAME" 2>/dev/null
+    bash "$REMOVE_WORKSPACE" "$USERNAME"
 }
+
+trap cleanup SIGINT SIGTERM EXIT
+
+[[ ${#ARGS[@]} -ge 2 ]] || { echo "Usage: $0 <username> <workspace>"; exit "$EXIT_INVALID_ARG"; }
+
+declare -rx USERNAME="${ARGS[0]}"
+declare -rx USER_WORKSPACE="${ARGS[1]}"
+
+_setup_chroot() {
+    bash "$SETUP_CHROOT" || {
+        log_message "error" "Failed to source '$SETUP_CHROOT'"
+        return "$EXIT_GENERAL_ERROR"
+    }
+    return 0
+}
+
+with_lock "$TMP_DIR/${LOCK_CHROOT_PREF}_setup.log" _setup_chroot || exit $?
 
 # Создание chroot-workspace пользователя
 setup_user_workspace() {
-    log_message "info" "Starting to create a workspace for user '$USERNAME' in chroot '$CHROOT_ROOT'"
+    local username="$1" workspace="$2"
+    [[ -z "$username" ]] && { log_message "error" "No username provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$workspace" ]] && { log_message "error" "No workspace provided"; return "$EXIT_INVALID_ARG"; }
+
+    [[ "$username" =~ ^[a-zA-Z0-9._-]+$ ]] || { log_message "error" "Invalid username $username"; exit "$EXIT_INVALID_ARG"; }
+    id "$username" >/dev/null 2>&1 || { log_message "error" "User '$username' does not exist"; exit "$EXIT_INVALID_ARG"; }
+    groups "$username" 2>/dev/null | grep -qw "$STUDENT_GROUP" || { log_message "error" "User '$username' is not in '$STUDENT_GROUP' group"; exit "$EXIT_INVALID_ARG"; }
+
+    [[ ! -d "$workspace" ]] && { log_message "error" "User workspace '$workspace' not found"; return "$EXIT_CHROOT_WORKSPACE_FAILED"; }
+
+    chroot_workspace="$(chroot_workspace "$username")"
+
+    [[ -d "$chroot_workspace" ]] && {
+        log_message "warning" "Workspace '$chroot_workspace' already exists"
+        bash "$REMOVE_WORKSPACE" "$username" || return $?
+    }
+
+    log_message "info" "Starting to create a workspace for user '$username' in chroot '$CHROOT_ROOT'"
 
     [[ ! -d "$BASE_CHROOT" || ! -d "$CHROOT_ROOT" ]] && {
         log_message "warning" "Chroot '$BASE_CHROOT' not found. Attempting to initialize chroot '$BASE_CHROOT'"
         bash "$INIT_CHROOT" || { log_message "error" "Failed to initialize chroot '$BASE_CHROOT'"; return "$EXIT_CHROOT_INIT_FAILED"; }
     }
 
-    with_lock "$TMP_DIR/$LOCK_CHROOT_PREF.lock" create_directories "$CHROOT_HOME/$USERNAME" 700 "$USERNAME:$STUDENT_GROUP" || return $?
-
-    ln -sf "$ETC_BASHRC" "$CHROOT_HOME/$USERNAME/.bashrc" || {
-        log_message "error" "Failed to create .bashrc in '$CHROOT_HOME/$USERNAME'"
-        return $?
+    create_directories "$CHROOT_HOME/$username" 700 "$username:$STUDENT_GROUP" || return "$EXIT_CHROOT_WORKSPACE_FAILED"
+    usermod -d "$HOME_USERS/$username" "$username" &>/dev/null || {
+        log_message "error" "Failed to set the home directory for user '$username'"
+        return "$EXIT_CHROOT_WORKSPACE_FAILED"
     }
 
-    ln -sf "$ETC_BASH_PREEXEC" "$CHROOT_HOME/$USERNAME/.bash-preexec.sh" || {
-        log_message "error" "Failed to create .bash-preexec.sh in '$CHROOT_HOME/$USERNAME'"
-        return $?
+    ln -sf "$ETC_BASHRC" "$CHROOT_HOME/$username/.bashrc" || {
+        log_message "error" "Failed to create .bashrc in '$CHROOT_HOME/$username'"
+        return "$EXIT_CHROOT_WORKSPACE_FAILED"
     }
 
-    update_permissions "$CHROOT_HOME/$USERNAME/.bashrc" "$CHROOT_HOME/$USERNAME/.bash-preexec.sh" 755 root:root || return $?
+    ln -sf "$ETC_BASH_PREEXEC" "$CHROOT_HOME/$username/.bash-preexec.sh" || {
+        log_message "error" "Failed to create .bash-preexec.sh in '$CHROOT_HOME/$username'"
+        return "$EXIT_CHROOT_WORKSPACE_FAILED"
+    }
 
-    create_directories "$CHROOT_WORKSPACE" 755 root:root || return $?
-    [[ ! -d "$USER_WORKSPACE" ]] && { log_message "error" "User workspace '$USER_WORKSPACE' not found"; return "$EXIT_CHROOT_INIT_FAILED"; }
-    mount_bind "$USER_WORKSPACE" "$CHROOT_WORKSPACE" || return $?
+    update_permissions "$CHROOT_HOME/$username/.bashrc" "$CHROOT_HOME/$username/.bash-preexec.sh" 755 root:root || return $?
 
-    log_message "ok" "Workspace of user '$USERNAME' was successfully created in chroot '$CHROOT_ROOT'"
+    create_directories "$chroot_workspace" 755 root:root || return "$EXIT_CHROOT_WORKSPACE_FAILED"
+    
+    mount_rbind "$workspace" "$chroot_workspace" || return $?
 
+    log_message "ok" "Workspace of user '$username' was successfully created in chroot '$CHROOT_ROOT'"
     return 0
 }
 
-# Основная логика
-trap cleanup SIGINT SIGTERM EXIT
-
-# Проверка аргументов
-[[ ${#ARGS[@]} -ge 2 ]] || { echo "Usage: $0 <username> <workspace>"; exit "$EXIT_INVALID_ARG"; }
-
-# Установка переменных
-declare -rx USERNAME="${ARGS[0]}"
-declare -rx USER_WORKSPACE="${ARGS[1]}"
-declare -rx CHROOT_WORKSPACE="$(chroot_workspace "$USERNAME")"
-
-# Проверка имени пользователя
-[[ "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]] || { log_message "error" "Invalid USERNAME: $USERNAME"; exit "$EXIT_INVALID_ARG"; }
-
-# Проверка существования пользователя и группы
-id "$USERNAME" >/dev/null 2>&1 || {
-    log_message "error" "User '$USERNAME' does not exist"
-    exit "$EXIT_INVALID_ARG"
-}
-groups "$USERNAME" 2>/dev/null | grep -qw "$STUDENT_GROUP" || {
-    log_message "error" "User '$USERNAME' is not in '$STUDENT_GROUP' group"
-    exit "$EXIT_INVALID_ARG"
-}
-
-[[ -d "$CHROOT_WORKSPACE" ]] && {
-    log_message "warning" "Workspace '$CHROOT_WORKSPACE' already exists"
-    bash "$REMOVE_WORKSPACE" "$USERNAME" 2>/dev/null || return $?
-}
-
 # Создание chroot-workspace пользователя с временной блокировкой
-with_lock "$TMP_DIR/${LOCK_CHROOT_PREF}_${USERNAME}.lock" setup_user_workspace
+with_lock "$TMP_DIR/${LOCK_CHROOT_PREF}_${USERNAME}.lock" setup_user_workspace "$USERNAME" "$USER_WORKSPACE"
 exit $?

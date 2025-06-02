@@ -160,14 +160,14 @@ _remove_systemd_unit_locked() {
     local unit_title="$1"
     local related_units=($(systemctl show -p Requires -p BindsTo -p PartOf "$unit_title" | grep -o '[^= ]*\.service\|[^= ]*\.mount' | grep -v '^-' | sort -u) "$unit_title")
 
-    local unit unit_file with_reload=0
+    local unit unit_file
     for unit in "${related_units[@]}"; do
-        systemctl disable --now "$unit" >/dev/null 2>&1 || true
+        systemctl disable --now "$unit" >/dev/null || true
         unit_file="$(systemctl show -p FragmentPath "$unit" | cut -d= -f2)"
-        [ -f "$unit" ] && rm -f "$unit_file" >/dev/null 2>&1 && with_reload=1
+        [ -f "$unit_file" ] && rm -f "$unit_file" >/dev/null
     done
 
-    [[ "$with_reload" -eq 1 ]] && systemctl daemon-reload >/dev/null 2>&1
+    systemctl daemon-reload >/dev/null
 
     return 0
 }
@@ -234,6 +234,23 @@ mount_bind() {
     return $?
 }
 
+# Монтирование rbind
+# Usage: mount_rbind <what> <where> [<options>] [<requires>]
+mount_rbind() {
+    local src="$1" dest="$2" opts="${3:-}" req="${4:-}"
+    local rbind_opts="rbind"
+
+    [[ -n "$opts" ]] && rbind_opts+=",$opts"
+
+    if [[ ! -e "${src}" ]]; then
+        log_message "error" "Source '${src}' does not exist"
+        return "${EXIT_MOUNT_FAILED}"
+    fi
+
+    mount_unit "$src" "$dest" "none" "$rbind_opts" "$req"
+    return $?
+}
+
 # Монтирование директории devtmpfs
 # Usage: mount_devtmpfs <where> [<requires>]
 mount_devtmpfs() {
@@ -288,7 +305,7 @@ mount_overlay() {
 }
 
 # Генерация списка mount unit внутри директории
-get_mount_units_in_dir() {
+get_mount_units() {
     local dir="$1" mounts unit unit_names=()
 
     mapfile -t mounts < <(systemctl list-units --type=mount --no-legend --no-pager | awk '{print $1}' | grep -v '^-')
@@ -303,5 +320,5 @@ get_mount_units_in_dir() {
     echo "${unit_names[*]}"
 }
 
-export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_devtmpfs mount_devpts mount_tmpfs mount_proc mount_overlay get_mount_units_in_dir
+export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_rbind mount_devtmpfs mount_devpts mount_tmpfs mount_proc mount_overlay get_mount_units
 return 0

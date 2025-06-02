@@ -110,7 +110,7 @@ class StudentService
 
     public function deleteStudentsByEvent(int $eventId): bool
     {
-        $studentIds = Students::find()->select('students_id')->where(['events_id' => $eventId])->asArray()->all();
+        $studentIds = Students::find()->select('students_id')->where(['events_id' => $eventId])->column();
         return $this->deleteStudents($studentIds);
     }
 
@@ -143,8 +143,6 @@ class StudentService
         $login = $student->user->login;
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $this->deleteStudentSamba($login);
-
             $this->deleteSystemUser($login);
 
             foreach ($student->modules as $module) {
@@ -187,8 +185,6 @@ class StudentService
         }
 
         $this->createSystemUser($login, $password);
-
-        $this->addStudentSamba($login, $password);
 
         foreach ($student->modules as $module) {
             $this->moduleService->createStudentModuleEnvironment($student, $module);
@@ -251,25 +247,7 @@ class StudentService
     {
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/delete_user.sh'), [$login, "--log={$this->logFile}"]);
         if ($output['returnCode']) {
-            throw new Exception("Failed to delete user {$login}: {$output['stderr']}");
-        }
-        return true;
-    }
-
-    private function addStudentSamba(string $login, string $password): bool
-    {
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/samba/add_student_samba.sh'), [$login, $password, "--log={$this->logFile}"]);
-        if ($output['returnCode']) {
-            throw new Exception("Failed to add student Samba {$login}: {$output['stderr']}");
-        }
-        return true;
-    }
-
-    private function deleteStudentSamba(string $login): bool
-    {
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/samba/delete_student_samba.sh'), [$login, "--log={$this->logFile}"]);
-        if ($output['returnCode']) {
-            throw new Exception("Failed to delete student Samba {$login}: {$output['stderr']}");
+            throw new Exception("Failed to delete user {$login}: {$output['stderr']}\n{$output['stdout']}");
         }
         return true;
     }

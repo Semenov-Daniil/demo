@@ -61,6 +61,20 @@ class VirtualHostService
         return true;
     }
 
+    public function enableVirtualHost(string $path)
+    {
+        $path = rtrim($path, '/');
+        $titleDir = basename($path);
+
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/enable_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
+
+        if ($output['returnCode']) {
+            throw new Exception("Failed to enabled virtual host {$titleDir}: {$output['stderr']}");
+        }
+
+        return true;
+    }
+
     public function deleteVirtualHost(string $path)
     {
         $path = rtrim($path, '/');

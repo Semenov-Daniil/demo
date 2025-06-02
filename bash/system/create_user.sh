@@ -5,8 +5,9 @@
 set -euo pipefail
 
 # Подключение логального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
-    echo "Failed to source local config.sh"
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
 
@@ -20,14 +21,14 @@ cleanup() {
 create_user () {
     log_message "info" "Starting creation of system user '$USERNAME'"
 
-    if id "$USERNAME" > /dev/null; then
+    if id "$USERNAME" &>/dev/null; then
         log_message "warning" "User '$USERNAME' already exists"
-        usermod -d "$HOME_DIR" -s /bin/bash -g "$STUDENT_GROUP" "$USERNAME" >/dev/null || {
+        usermod -s /bin/bash -g "$STUDENT_GROUP" "$USERNAME" >/dev/null || {
             log_message "error" "Failed to update user '$USERNAME'"
             exit "$EXIT_FAILED_CREATE_USER"
         }
     else
-        useradd -d "$HOME_DIR" -s /bin/bash -g "$STUDENT_GROUP" "$USERNAME" || {
+        useradd -M -s /bin/bash -g "$STUDENT_GROUP" "$USERNAME" || {
             log_message "error" "Failed to create user '$USERNAME'"
             exit "$EXIT_FAILED_CREATE_USER"
         }
@@ -66,7 +67,6 @@ WORKSPACE="${ARGS[2]}"
 }
 
 # Создание пользователя
-HOME_DIR="$HOME_USERS/$USERNAME"
 with_lock "$TMP_DIR/${LOCK_USER_PREF}_${USERNAME}.lock" create_user || exit $?
 
 # Создание рабочей области в chroot

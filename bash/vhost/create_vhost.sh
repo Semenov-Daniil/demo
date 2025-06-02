@@ -14,7 +14,7 @@ source "$LOCAL_CONFIG" || {
 cleanup() {
     exit_code=$?
     [[ $exit_code -eq 0 || -z "${DOMAIN:-}" ]] && return 0
-    (source "$REMOVE_VHOST" "$DOMAIN" 2>/dev/null) || true
+    bash "$REMOVE_VHOST" "$DOMAIN"
 }
 
 trap cleanup SIGINT SIGTERM EXIT
@@ -88,7 +88,7 @@ configtest() {
         return "$EXIT_GENERAL_ERROR"
     }
 
-    apache2ctl -t -f "$tmpconfig" 2>/dev/null || {
+    apache2ctl -t -f "$tmpconfig" || {
         log_message "error" "Invalid Apache2 configuration syntax in '$vhostfile'"
         rm -f "$tmpconfig" >/dev/null || true
         return "$EXIT_VHOST_INVALID_CONFIG"

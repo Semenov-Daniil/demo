@@ -15,7 +15,7 @@ clean_logs() {
     local log_file lockfile temp_file cutoff_date
     cutoff_date=$(date -d "${LOG_RETENTION_DAYS} days ago" +%Y-%m-%d 2>/dev/null || date -v -${LOG_RETENTION_DAYS}d +%Y-%m-%d)
 
-    for log_file in "$LOGS_DIR"/*.log; do
+    for log_file in "$LOGDIR"/*.log; do
         [[ -f "$log_file" ]] || continue
         lockfile="${TMP_DIR}/${LOCK_LOG_PREF}_$(echo "$log_file" | sha256sum | cut -d' ' -f1).lock"
         (

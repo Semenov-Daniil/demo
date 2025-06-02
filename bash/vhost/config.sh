@@ -29,7 +29,7 @@ declare -rx EXIT_APACHE_SERVICE_FAILED=46
 declare -rx EXIT_RELOAD_APACHE_FAILED=47
 
 # Logging
-[[ "$LOG_FILE" == "$DEFAULT_LOG_FILE" ]] && LOG_FILE="vhost.log"
+[[ "$LOG_FILE" == "${DEFAULT_LOG_FILE:-}" ]] && LOG_FILE="vhost.log"
 
 # Установка переменных
 declare -rx VHOST_AVAILABLE="/etc/apache2/sites-available"

@@ -22,7 +22,7 @@ declare -rx EXIT_FAILED_CREATE_USER=30
 declare -rx EXIT_FAILED_DELETE_USER=31
 
 # Logging
-[[ "$LOG_FILE" == "$DEFAULT_LOG_FILE" ]] && LOG_FILE="users.log"
+[[ "$LOG_FILE" == "${DEFAULT_LOG_FILE:-}" ]] && LOG_FILE="users.log"
 
 # Scripts
 declare -rx DELETE_USER="$(realpath $(dirname "${BASH_SOURCE[0]}")/delete_user.sh)"

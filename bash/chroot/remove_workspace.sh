@@ -11,43 +11,47 @@ source "$LOCAL_CONFIG" || {
     exit 1
 }
 
-_remove_home_lock() {
-    rm -rf "$CHROOT_HOME/$USERNAME" || {
-        log_message "error" "Failed to delete the home directory '$CHROOT_HOME/$USERNAME'"
-        return "$EXIT_GENERAL_ERROR"
-    }
-}
-
-remove_chroot_workspace() {
-    [[ $# -ne 1 || -z "${1:-}" ]] && {
-        log_message "error" "Usage: ${FUNCNAME[0]} <username>"
-        return "$EXIT_INVALID_ARG"
-    }
-
-    local username="$1"
-    local chroot_workspace="$(chroot_workspace "$username")"
-
-    log_message "info" "Starting to remove user '$username' workspace from chroot '$CHROOT_ROOT'"
-
-    [[ ! -d "$CHROOT_WORKSPACE" ]] && { log_message "warning" "Failed to find the '$CHROOT_WORKSPACE' workspace"; return 0; }
-
-    remove_systemd_unit "$(title_mount_unit "$CHROOT_WORKSPACE")" || return $?
-
-    with_lock "$TMP_DIR/$LOCK_CHROOT_PREF.lock" _remove_home_lock || return $?
-
-    log_message "info" "Successful removal of user '$username' workspace from chroot '$CHROOT_ROOT'"
-
-    return 0
-}
-
 # Проверка аргументов
 [[ ${#ARGS[@]} -ge 1 ]] || { echo "Usage: $0 <username>"; exit "$EXIT_INVALID_ARG"; }
 
 # Установка переменных
 declare -rx USERNAME="${ARGS[0]}"
 
-# Проверка имени пользователя
-[[ "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]] || { log_message "error" "Invalid username '$USERNAME'"; exit "$EXIT_INVALID_ARG"; }
+# Удаление chroot-workspace
+remove_chroot_workspace() {
+    local username="$1"
+    [[ -z "$username" ]] && { log_message "error" "No username provided"; return "$EXIT_INVALID_ARG"; }
+
+    [[ "$username" =~ ^[a-zA-Z0-9._-]+$ ]] || { log_message "error" "Invalid username '$username'"; exit "$EXIT_INVALID_ARG"; }
+
+    local chroot_workspace="$(chroot_workspace "$username")"
+
+    log_message "info" "Starting to remove user '$username' workspace from chroot '$CHROOT_ROOT'"
+
+    [[ ! -d "$chroot_workspace" ]] && { log_message "warning" "Failed to find the '$chroot_workspace' workspace"; return 0; }
+
+    remove_systemd_unit "$(title_mount_unit "$chroot_workspace")" || return $?
+
+    mount | grep -q -F "$CHROOT_HOME/$username" && {
+        local mountpoint
+        mount | grep "$CHROOT_HOME/$username" | awk '{print $3}' | sort -r | while IFS= read -r mountpoint; do
+            umount "$mountpoint" 2>/dev/null || {
+                fuser -v "$mountpoint" 2>/dev/null
+                fuser -km "$mountpoint" 2>/dev/null
+                sleep 1
+                umount -f "$mountpoint" 2>/dev/null || umount -l "$mountpoint" 2>/dev/null || true
+            }
+        done
+    }
+
+    rm -rf "$CHROOT_HOME/$username" || {
+        log_message "error" "Failed to delete the home directory '$CHROOT_HOME/$username'"
+        return "$EXIT_GENERAL_ERROR"
+    }
+
+    log_message "ok" "Successful removal of user '$username' workspace from chroot '$CHROOT_ROOT'"
+    return 0
+}
 
 # Удаление chroot-workspace пользователя с блокировкой
 with_lock "$TMP_DIR/${LOCK_CHROOT_PREF}_${USERNAME}.lock" remove_chroot_workspace "$USERNAME"

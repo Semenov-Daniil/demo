@@ -27,6 +27,11 @@ remove_vhost() {
 
     log_message "info" "Starting to remove the virtual host '$domain'"
 
+    [[ ! -f "$vhostfile" ]] && {
+        log_message "warning" "Failed to find the virtual host '$domain'"
+        return 0
+    }
+
     bash "$DISABLE_VHOST" "$domain" || return $?
 
     local tmpfile=$(mktemp -u "$TMP_DIR/$domain.XXXXX.conf.del") || return $?

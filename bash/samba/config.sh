@@ -26,7 +26,7 @@ declare -rx EXIT_SAMBA_START_FAILED=26
 declare -rx EXIT_ADD_SAMBA_USER_FAILED=26
 
 # Logging
-[[ "$LOG_FILE" == "$DEFAULT_LOG_FILE" ]] && LOG_FILE="samba.log"
+[[ "$LOG_FILE" == "${DEFAULT_LOG_FILE:-}" ]] && LOG_FILE="samba.log"
 
 # Scripts
 declare -rx CONFIG_SAMBE="$(dirname "${BASH_SOURCE[0]}")/config_samba.sh"

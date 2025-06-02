@@ -8,14 +8,7 @@ source "$GLOBAL_CONFIG" || {
 }
 
 fn_source() {
-    local script="$(realpath $(dirname "${BASH_SOURCE[0]}")/srcipt.sh)"
-
-    echo "pre source scripts"
-
-    bash "$script" || return $?
-
-    echo "post source script"
-
+    echo "scripts"
     return 0
 }
 

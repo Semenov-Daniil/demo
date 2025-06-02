@@ -17,7 +17,7 @@ set -euo pipefail
 # Usage: update_permissions [directory/file ...] <perms: 755> <owner: root:root>
 update_permissions() {
     [[ ${#@} -lt 3 ]] && {
-        echo "Usage: ${FUNCNAME[0]} <directory/file> <perms> <owner>"
+        echo "Usage: ${FUNCNAME[0]} <directory/file> <perms> <owner>" >&2
         return 1
     }
 

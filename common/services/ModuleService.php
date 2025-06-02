@@ -98,7 +98,7 @@ class ModuleService
             throw new Exception("Failed to create module folders: {$login}/{$studentModuleDir}");
         }
 
-        if (!$this->addFilesToModule(Yii::getAlias("@students/{$login}/{$studentModuleDir}"))) {
+        if (!$this->addFilesToModule($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"))) {
             throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
         }
 
@@ -109,10 +109,14 @@ class ModuleService
         return true;
     }
 
-    private function addFilesToModule(string $path): bool
+    private function addFilesToModule(string $login, string $path): bool
     {
         foreach ($this->filesModule as $filename => $content) {
             file_put_contents("$path/$filename", $content);
+
+            if ($filename == 'index.php') {
+                $this->setupFile("$path/$filename", 755, "$login:" . Yii::$app->params['siteGroup']);
+            }
         }
 
         return true;
@@ -120,8 +124,19 @@ class ModuleService
 
     private function setupModuleDir(string $login, string $path)
     {
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/setup_module_dirs.sh'), [$login, $path, "--log={$this->logFile}"]);
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/update_permissions.sh'), [$path, "755", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}"]);
+
+        if ($output['returnCode']) {
+            throw new Exception("Failed to setup module directory '{$path}': {$output['stderr']}");
+        }
         
+        return true;
+    }
+
+    private function setupFile(string $path, string $rule, string $owner)
+    {
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/update_permissions.sh'), [$path, $rule, $owner, "--log={$this->logFile}"]);
+
         if ($output['returnCode']) {
             throw new Exception("Failed to setup module directory '{$path}': {$output['stderr']}");
         }
@@ -255,7 +270,7 @@ class ModuleService
             $dbName = $this->getTitleDb($login, $module->number);
             $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
     
-            $this->vhostService->disableVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+            $this->vhostService->deleteVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
     
             Yii::$app->dbComponent->deleteDb($dbName);
     
