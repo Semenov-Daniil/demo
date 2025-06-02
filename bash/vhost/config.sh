@@ -12,59 +12,41 @@ set -euo pipefail
 }
 
 # Подключение глобального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
-    echo "Failed to source global config.sh"
-    exit 1
+GLOBAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/../config.sh)"
+source "$GLOBAL_CONFIG" || {
+    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
+    return 1
 }
+
 # Коды выхода
-export EXIT_VHOST_NOT_INSTALLED=40
-export EXIT_VHOST_CONFIG_FAILED=41
-export EXIT_VHOST_ENABLE_FAILED=42
-export EXIT_VHOST_DISABLE_FAILED=43
-export EXIT_VHOST_DELETE_FAILED=44
-export EXIT_VHOST_INVALID_CONFIG=45
-export EXIT_APACHE_SERVICE_FAILED=46
+declare -rx EXIT_VHOST_NOT_INSTALLED=40
+declare -rx EXIT_VHOST_CONFIG_FAILED=41
+declare -rx EXIT_VHOST_ENABLE_FAILED=42
+declare -rx EXIT_VHOST_DISABLE_FAILED=43
+declare -rx EXIT_VHOST_DELETE_FAILED=44
+declare -rx EXIT_VHOST_INVALID_CONFIG=45
+declare -rx EXIT_APACHE_SERVICE_FAILED=46
+declare -rx EXIT_RELOAD_APACHE_FAILED=47
 
-# Парсинг аргументов
-declare -a ARGS=()
-export LOG_FILE="virtual_host.log"
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --log=*) LOG_FILE="${1#--log=}"; shift ;;
-        *) ARGS+=("$1"); shift ;;
-    esac
-done
-
-export ARGS
+# Logging
+[[ "$LOG_FILE" == "$DEFAULT_LOG_FILE" ]] && LOG_FILE="vhost.log"
 
 # Установка переменных
-export VHOST_AVAILABLE_DIR="/etc/apache2/sites-available"
-export VHOST_ENABLED_DIR="/etc/apache2/sites-enabled"
-export VHOST_LOG_DIR="/var/log/apache2"
-export VHOST_LOG_FILE="${VHOST_LOG_DIR}/vhost.log"
-export APACHE_PORTS=("80/tcp" "443/tcp")
-export RELOAD_NEEDED_FILE="${TMP_DIR}/apache_reload_needed"
-export LOCK_VHOST_PREF="lock_vhost"
-export APACHE_DEPS=("apache2")
-export APACHE_CMDS=("a2ensite" "a2dissite" "apache2ctl")
+declare -rx VHOST_AVAILABLE="/etc/apache2/sites-available"
+declare -rx VHOST_ENABLED="/etc/apache2/sites-enabled"
+declare -rx VHOST_LOG_DIR="/var/log/apache2"
+declare -rx VHOST_LOG_FILE="$VHOST_LOG_DIR/vhost.log"
 
-# Пути к скриптам
-export REMOVE_VHOST="$(dirname "${BASH_SOURCE[0]}")/remove_vhost.fn.sh"
+# Lock
+declare -rx LOCK_VHOST_PREF="lock_vhost"
+declare -rx LOCK_GLOBAL_VHOST="lock_vhost_global"
 
-# Подключение логирования
-source_script "$LOGGING_SCRIPT" "$LOG_FILE" || {
-    echo "Failed to source script $LOGGING_SCRIPT" >&2
-    exit "${EXIT_GENERAL_ERROR}"
-}
-
-# Подключение вспомогательных скриптов/функций
-source_script "${LIB_DIR}/common.sh" || exit $?
+# Scripts
+declare -rx REMOVE_VHOST="$(dirname "${BASH_SOURCE[0]}")/remove_vhost.sh"
+declare -rx ENABLE_VHOST="$(dirname "${BASH_SOURCE[0]}")/enable_vhost.sh"
+declare -rx DISABLE_VHOST="$(dirname "${BASH_SOURCE[0]}")/disable_vhost.sh"
 
 # Создание директории логирования apache
-create_directories "$VHOST_LOG_DIR" "755" "root:root" || {
-    log_message "error" "Failed to create directory: ${VHOST_LOG_DIR}"
-    exit ${EXIT_GENERAL_ERROR}
-}
+create_directories "$VHOST_LOG_DIR" "755" "root:root" || return $?
 
-return ${EXIT_SUCCESS}
+return 0

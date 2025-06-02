@@ -5,33 +5,40 @@
 set -euo pipefail
 
 # Подключение логального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
-    echo "Failed to source local config.sh"
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
 
-# Подключение скрипта удаления виртуального хоста
-source "$REMOVE_VHOST" || {
-    echo "Failed to source script '$REMOVE_VHOST'"
-    exit ${EXIT_GENERAL_ERROR}
+# Проверка аргументов
+[[ ${#ARGS[@]} -ge 1 ]] || { echo "Usage: $0 <domain>"; exit "$EXIT_INVALID_ARG"; }
+
+DOMAIN="${ARGS[0]}"
+
+remove_vhost() {
+    local domain="$1"
+    [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
+
+    [[ ! "$domain" =~ ^[a-zA-Z0-9._-]+$ ]] && { log_message "error" "Invalid virtual host domain '$domain'"; return "$EXIT_INVALID_ARG"; }
+
+    local vhostfile="$VHOST_AVAILABLE/$domain.conf"
+    local vhost_enabled="$VHOST_ENABLED/$domain.conf"
+
+    log_message "info" "Starting to remove the virtual host '$domain'"
+
+    bash "$DISABLE_VHOST" "$domain" || return $?
+
+    local tmpfile=$(mktemp -u "$TMP_DIR/$domain.XXXXX.conf.del") || return $?
+    mv "$vhostfile" "$tmpfile" && rm -f "$tmpfile" || {
+        log_message "error" "Failed to delete virtual host configuration file '$tmpfile'"
+        exit 1
+    }
+
+    log_message "ok" "Virtual host '$domain' was successfully deleted"
+    return 0
 }
 
-# Основная логика
-# Проверка массива ARGS
-[[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
-
-# Проверка аргументов
-[[ ${#ARGS[@]} -ge 1 ]] || { echo "Usage: $0 <vhost-name> <vhost-config>"; exit ${EXIT_INVALID_ARG}; }
-
-# Установка переменных
-VHOST_NAME="${ARGS[0]}"
-
-# Валидация имени виртуального хоста
-if [[ ! "$VHOST_NAME" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    log_message "error" "Invalid virtual host name $VHOST_NAME"
-    exit ${EXIT_INVALID_ARG}
-fi
-
-with_lock "${TMP_DIR}/${LOCK_VHOST_PREF}_${VHOST_NAME}.lock" remove_vhost "$VHOST_NAME" || exit $?
-
-exit ${EXIT_SUCCESS}
+# Удаление виртуального хоста с блокировкой
+with_lock "$TMP_DIR/${LOCK_VHOST_PREF}_${DOMAIN}.lock" remove_vhost "$DOMAIN"
+exit $?

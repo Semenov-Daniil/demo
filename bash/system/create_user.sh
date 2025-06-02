@@ -10,64 +10,72 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
     exit 1
 }
 
+cleanup() {
+    exit_code=$?
+    [[ $exit_code -eq 0 || -z "${USERNAME:-}" ]] && return
+    bash "$DELETE_USER" "$USERNAME" 2>/dev/null
+}
+
 # Функция создания пользователя
 create_user () {
+    log_message "info" "Starting creation of system user '$USERNAME'"
+
     if id "$USERNAME" > /dev/null; then
         log_message "warning" "User '$USERNAME' already exists"
-
-        current_group=$(id -gn "$USERNAME")
-        if [[ "$current_group" != "$STUDENT_GROUP" ]]; then
-            usermod -g "$STUDENT_GROUP" "$USERNAME" || {
-                userdel "$USERNAME" || true
-                log_message "error" "Failed to change the master group of user '$USERNAME'"
-                exit ${EXIT_FAILED_CREATE_USER}
-            }
-        fi
+        usermod -d "$HOME_DIR" -s /bin/bash -g "$STUDENT_GROUP" "$USERNAME" >/dev/null || {
+            log_message "error" "Failed to update user '$USERNAME'"
+            exit "$EXIT_FAILED_CREATE_USER"
+        }
     else
         useradd -d "$HOME_DIR" -s /bin/bash -g "$STUDENT_GROUP" "$USERNAME" || {
             log_message "error" "Failed to create user '$USERNAME'"
-            exit ${EXIT_FAILED_CREATE_USER}
+            exit "$EXIT_FAILED_CREATE_USER"
         }
     fi
 
-    printf "%s:%s\n" "$USERNAME:$PASSWORD" | chpasswd || {
-        userdel "$USERNAME" || true
+    echo "$USERNAME:$PASSWORD" | chpasswd || {
         log_message "error" "Failed to set password for '$USERNAME'"
-        exit ${EXIT_FAILED_CREATE_USER}
+        exit "$EXIT_FAILED_CREATE_USER"
     }
 
-    return ${EXIT_SUCCESS}
+    log_message "ok" "System user '$USERNAME' successfully created"
+    return 0
 }
 
 # Основная логика
+trap cleanup SIGINT SIGTERM EXIT
 
 # Проверка аргументов
-[[ ${#ARGS[@]} -eq 3 ]] || { echo "Usage: $0 <username> <password> <home_dir>"; exit ${EXIT_INVALID_ARG}; }
+[[ ${#ARGS[@]} -eq 3 ]] || { echo "Usage: $0 <username> <password> <home_dir>"; exit "$EXIT_INVALID_ARG"; }
 
 # Установка переменных
 USERNAME="${ARGS[0]}"
 PASSWORD="${ARGS[1]}"
-HOME_DIR="${ARGS[2]}"
+WORKSPACE="${ARGS[2]}"
 
 # Проверка имени пользователя
 [[ "$USERNAME" =~ ^[a-zA-Z0-9._-]+$ ]] || {
-    log_message "error" "Invalid username: $USERNAME"
-    exit ${EXIT_INVALID_ARG}
+    log_message "error" "Invalid username $USERNAME"
+    exit "$EXIT_INVALID_ARG"
 }
 
 # Проверка домашней директории
-[[ -d "$HOME_DIR" ]] || {
-    log_message "error" "Home directory '$HOME_DIR' does not exist"
-    exit ${EXIT_NOT_FOUND}
+[[ -d "$WORKSPACE" ]] || {
+    log_message "error" "Directory '$WORKSPACE' does not exist"
+    exit "$EXIT_NOT_FOUND"
 }
 
-update_permissions "$HOME_DIR" 755 ${SITE_USER}:${SITE_GROUP} || exit $?
+# Создание пользователя
+HOME_DIR="$HOME_USERS/$USERNAME"
+with_lock "$TMP_DIR/${LOCK_USER_PREF}_${USERNAME}.lock" create_user || exit $?
 
-log_message "info" "Starting creation of system user '$USERNAME'"
+# Создание рабочей области в chroot
+bash "$SETUP_WORKSPACE" "$USERNAME" "$WORKSPACE" || exit $?
 
-# Установка блокировки
-with_lock "${TMP_DIR}/${LOCK_USER_PREF}_${USERNAME}.lock" create_user || exit $?
+# Добавление пользователя Samba
+bash "$ADD_SAMBA_USER" "$USERNAME" "$PASSWORD" || exit $?
 
-log_message "info" "System user '$USERNAME' successfully created"
+# Настройка SSH
+bash "$CONFIG_SSH" || exit $?
 
-exit ${EXIT_SUCCESS}
+exit 0

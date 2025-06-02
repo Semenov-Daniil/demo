@@ -1,7 +1,6 @@
 #!/bin/bash
-
-# disable_vhost.sh - Скрипт отключения виртуального хоста Apache2
-# Расположение: bash/vhost/disable_vhost.sh
+# enable_vhost.sh - Скрипт включения виртуального хоста Apache2
+# Расположение: bash/vhost/enable_vhost.sh
 
 set -euo pipefail
 
@@ -16,14 +15,14 @@ source "$LOCAL_CONFIG" || {
 
 DOMAIN="${ARGS[0]}"
 
-# Отключение виртулального хоста
-disable_vhost() {
+# Включение виртулального хоста
+enable_vhost() {
     local domain="$1"
     [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
 
     [[ ! "$domain" =~ ^[a-zA-Z0-9._-]+$ ]] && { log_message "error" "Invalid virtual host domain '$domain'"; return "$EXIT_INVALID_ARG"; }
 
-    log_message "info" "Disabling virtual host '$domain'"
+    log_message "info" "Enabling virtual host '$domain'"
 
     local vhostfile="$VHOST_AVAILABLE/$domain.conf"
     local vhost_enabled="$VHOST_ENABLED/$domain.conf"
@@ -33,21 +32,21 @@ disable_vhost() {
         return "$EXIT_NOT_FOUND"
     }
 
-    [[ -L "$vhost_enabled" ]] && {
-        with_lock "$TMP_DIR/$LOCK_GLOBAL_VHOST.lock" _disable_vhost_lock "$domain" || return $?
+    [[ ! -L "$vhost_enabled" ]] && {
+        with_lock "$TMP_DIR/$LOCK_GLOBAL_VHOST.lock" _enable_vhost_lock "$domain" || return $?
     }
 
     log_message "ok" "Virtual host '$domain' successfully disabled"
     return 0
 }
 
-_disable_vhost_lock() {
+_enable_vhost_lock() {
     local domain="$1"
-    [[ -z "$domain"  ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
 
-    a2dissite --quiet "$domain" >/dev/null || {
-        log_message "error" "Failed to disable virtual host '$domain'"
-        return "$EXIT_VHOST_DISABLE_FAILED"
+    a2ensite --quiet "$domain" >/dev/null || {
+        log_message "error" "Failed to enable virtual host '$domain'"
+        return "$EXIT_VHOST_CONFIG_FAILED"
     }
 
     _reload_apache_lock "$domain" || return $?
@@ -61,24 +60,24 @@ _reload_apache_lock() {
 
     systemctl reload apache2 >/dev/null 2>&1 || {
         log_message "error" "Failed to reload Apache"
-        _enable_vhost_lock "$domain" || true
+        _disable_vhost_lock "$domain" || true
         return $EXIT_RELOAD_APACHE_FAILED
     }
     return 0
 }
 
-_enable_vhost_lock() {
+_disable_vhost_lock() {
     local domain="$1"
-    [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$domain"  ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
 
-    a2ensite --quiet "$domain" >/dev/null || {
-        log_message "error" "Failed to enable virtual host '$domain'"
-        return "$EXIT_VHOST_CONFIG_FAILED"
+    a2dissite --quiet "$domain" >/dev/null || {
+        log_message "error" "Failed to disable virtual host '$domain'"
+        return "$EXIT_VHOST_DISABLE_FAILED"
     }
 
     return 0
 }
 
 # Отключение виртуального хоста с блокировкой
-with_lock "${TMP_DIR}/${LOCK_VHOST_PREF}_${DOMAIN}.lock" disable_vhost "$DOMAIN"
+with_lock "${TMP_DIR}/${LOCK_VHOST_PREF}_${DOMAIN}.lock" enable_vhost "$DOMAIN"
 exit $?

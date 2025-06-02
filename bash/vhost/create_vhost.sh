@@ -5,91 +5,99 @@
 set -euo pipefail
 
 # Подключение логального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
-    echo "Failed to source local config.sh"
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
 
-# Подключение скрипта удаления виртуального хоста
-source "$REMOVE_VHOST" || {
-    echo "Failed to source script '$REMOVE_VHOST'"
-    exit ${EXIT_GENERAL_ERROR}
-}
-
-# Очистка при ошибке
 cleanup() {
     exit_code=$?
-    [[ $exit_code -eq 0 || $exit_code -eq $EXIT_INVALID_ARG ]] && return
-
-    with_lock "${TMP_DIR}/${LOCK_VHOST_PREF}_${VHOST_NAME}.lock" remove_vhost "$VHOST_NAME" || {
-        log_message "error" "Failed to rollback virtual host $VHOST_NAME"
-    }
+    [[ $exit_code -eq 0 || -z "${DOMAIN:-}" ]] && return 0
+    (source "$REMOVE_VHOST" "$DOMAIN" 2>/dev/null) || true
 }
 
-create_vhost () {
-    # Создание и настройка файла конфигурации
-    printf "%s" "$VHOST_CONFIG" > "$VHOST_FILE" || {
-        log_message "error" "Failed to create or setting configuration file '$VHOST_FILE'"
-        exit ${EXIT_VHOST_CONFIG_FAILED}
-    }
-
-    # Установка прав и владельца
-    update_permissions "$VHOST_FILE" 644 root:root || {
-        log_message "error" "Failed to set permissions or owner for '$VHOST_FILE'"
-        exit ${EXIT_VHOST_CONFIG_FAILED}
-    }
-
-    # Проверка синтаксиса конфигураций виртуальных хостов
-    apache2ctl configtest >/dev/null || {
-        log_message "error" "Invalid Apache2 configuration syntax in '$VHOST_FILE'"
-        exit ${EXIT_VHOST_INVALID_CONFIG}
-    }
-
-    # Активация виртуального хоста
-    a2ensite "$VHOST_NAME" >/dev/null || {
-        log_message "error" "Failed to enable virtual host '$VHOST_NAME'"
-        exit ${EXIT_GENERAL_ERROR}
-    }
-
-    touch "${RELOAD_NEEDED_FILE}" || {
-        log_message "error" "Failed to create Apache reload flag"
-        return ${EXIT_APACHE_SERVICE_FAILED}
-    }
-
-    return ${EXIT_SUCCESS}
-}
-
-# Основная логика
 trap cleanup SIGINT SIGTERM EXIT
 
-# Проверка массива ARGS
-[[ -n "${ARGS+x}" ]] || { echo "ARGS array is not defined"; exit ${EXIT_INVALID_ARG}; }
+[[ ${#ARGS[@]} -ge 2 ]] || { echo "Usage: $0 <domain> <config>"; exit "$EXIT_INVALID_ARG"; }
 
-# Проверка аргументов
-[[ ${#ARGS[@]} -ge 2 ]] || { echo "Usage: $0 <vhost-name> <vhost-config>"; exit ${EXIT_INVALID_ARG}; }
+DOMAIN="${ARGS[0]}"
+CONFIG="${ARGS[1]}"
 
-# Установка переменных
-VHOST_NAME="${ARGS[0]}"
-VHOST_CONFIG="${ARGS[1]}"
+setup_vhost() {
+    local domain="$1" config="$2"
+    [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$config" ]] && { log_message "error" "No virtual host config provided"; return "$EXIT_INVALID_ARG"; }
 
-# Валидация имени виртуального хоста
-if [[ ! "$VHOST_NAME" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    log_message "error" "Invalid virtual host name $VHOST_NAME"
-    exit ${EXIT_INVALID_ARG}
-fi
+    [[ ! "$domain" =~ ^[a-zA-Z0-9._-]+$ ]] && { log_message "error" "Invalid virtual host domain '$domain'"; return "$EXIT_INVALID_ARG"; }
 
-VHOST_FILE="${VHOST_AVAILABLE_DIR}/${VHOST_NAME}.conf"
+    local vhostfile="$VHOST_AVAILABLE/$domain.conf"
 
-# Проверка существующего виртуального хоста
-[[ -f "$VHOST_FILE" ]] && {
-    log_message "warning" "Virtual host '$VHOST_FILE' exists"
+    [[ -f "$vhostfile" ]] && {
+        log_message "warning" "Virtual host '$domain' exists"
+        bash "$REMOVE_VHOST" "$domain" || return $?
+    }
+
+    log_message "info" "Starting to configure the virtual host '$domain'"
+
+    create_vhost "$vhostfile" || return $?
+
+    printf "%s" "$config" > "$vhostfile" || {
+        log_message "error" "Failed to write configurations to the file '$vhostfile'"
+        exit "$EXIT_VHOST_CONFIG_FAILED"
+    }
+
+    configtest "$domain" "$vhostfile" || return $?
+
+    bash "$ENABLE_VHOST" "$domain" || return $?
+
+    log_message "info" "Virtual host '$domain' created and enabled successfully"
+    return 0
 }
 
-log_message "info" "Starting virtual host creation for '$VHOST_NAME'"
+create_vhost() {
+    local vhostfile="$1"
+    [[ -z "$vhostfile" ]] && { log_message "error" "No virtual host filename provided"; return "$EXIT_INVALID_ARG"; }
 
-# Создание вритуального хоста с блокировкой
-with_lock "${TMP_DIR}/${LOCK_VHOST_PREF}_${VHOST_NAME}.lock" create_vhost || exit $?
+    touch "$vhostfile" >/dev/null || {
+        log_message "error" "Failed to create configuration file '$vhostfile'"
+        return "$EXIT_VHOST_CONFIG_FAILED"
+    }
 
-log_message "info" "Virtual host $VHOST_NAME created and enabled successfully"
+    update_permissions "$vhostfile" 644 root:root || return $?
+    return 0
+}
 
-exit ${EXIT_SUCCESS}
+configtest() {
+    local domain="$1" vhostfile="$2" 
+    [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$vhostfile" || ! -f "$vhostfile" ]] && { log_message "error" "No virtual host filename provided"; return "$EXIT_INVALID_ARG"; }
+
+    local tmpconfig=$(mktemp -u "$TMP_DIR/$domain.XXXXX.conf") || return $?
+    touch "$tmpconfig" >/dev/null || {
+        log_message "error" "Failed to create a configuration validation file '$tmpconfig'"
+    }
+
+    local config_main="/etc/apache2/apache2.conf"
+    {
+        echo "Include $config_main"
+        echo "Include $vhostfile"
+    } > "$tmpconfig" || {
+        log_message "error" "Failed to write test configuration file '$tmpconfig'"
+        rm -f "$tmpconfig" >/dev/null || true
+        return "$EXIT_GENERAL_ERROR"
+    }
+
+    apache2ctl -t -f "$tmpconfig" 2>/dev/null || {
+        log_message "error" "Invalid Apache2 configuration syntax in '$vhostfile'"
+        rm -f "$tmpconfig" >/dev/null || true
+        return "$EXIT_VHOST_INVALID_CONFIG"
+    }
+
+    rm -f "$tmpconfig" >/dev/null || true
+    return 0
+}
+
+# Настройка вритуального хоста с блокировкой
+with_lock "$TMP_DIR/${LOCK_VHOST_PREF}_${DOMAIN}.lock" setup_vhost "$DOMAIN" "$CONFIG"
+exit $?

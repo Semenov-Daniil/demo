@@ -23,11 +23,6 @@ cleanup() {
 setup_user_workspace() {
     log_message "info" "Starting to create a workspace for user '$USERNAME' in chroot '$CHROOT_ROOT'"
 
-    [[ -d "$CHROOT_WORKSPACE" ]] && {
-        log_message "warning" "Workspace '$CHROOT_WORKSPACE' already exists"
-        bash "$REMOVE_WORKSPACE" "$USERNAME" 2>/dev/null || return $?
-    }
-
     [[ ! -d "$BASE_CHROOT" || ! -d "$CHROOT_ROOT" ]] && {
         log_message "warning" "Chroot '$BASE_CHROOT' not found. Attempting to initialize chroot '$BASE_CHROOT'"
         bash "$INIT_CHROOT" || { log_message "error" "Failed to initialize chroot '$BASE_CHROOT'"; return "$EXIT_CHROOT_INIT_FAILED"; }
@@ -78,6 +73,11 @@ id "$USERNAME" >/dev/null 2>&1 || {
 groups "$USERNAME" 2>/dev/null | grep -qw "$STUDENT_GROUP" || {
     log_message "error" "User '$USERNAME' is not in '$STUDENT_GROUP' group"
     exit "$EXIT_INVALID_ARG"
+}
+
+[[ -d "$CHROOT_WORKSPACE" ]] && {
+    log_message "warning" "Workspace '$CHROOT_WORKSPACE' already exists"
+    bash "$REMOVE_WORKSPACE" "$USERNAME" 2>/dev/null || return $?
 }
 
 # Создание chroot-workspace пользователя с временной блокировкой

@@ -11,6 +11,5 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
     exit 1
 }
 
-update_permissions "$@" || exit $?
-
-exit ${EXIT_SUCCESS}
+update_permissions $@
+exit $?

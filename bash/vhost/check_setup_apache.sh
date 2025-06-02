@@ -5,77 +5,76 @@
 
 set -euo pipefail
 
-# Подключение локального config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
-    echo "Failed to source local config.sh"
+# Подключение логального config.sh
+LOCAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
+source "$LOCAL_CONFIG" || {
+    echo "Failed to source local config '$LOCAL_CONFIG'" >&2
     exit 1
 }
 
+declare -rax APACHE_SERVICES=("apache2")
+declare -rax APACHE_COMMAND=("a2ensite" "a2dissite" "apache2ctl")
+declare -rax APACHE_PORTS=("80/tcp" "443/tcp")
+declare -rx SERVICE_START_TIMEOUT=5
+
 # Проверка и запуск Apache2
 start_apache_service() {
-    for service in "${APACHE_DEPS[@]}"; do
+    local service
+    for service in "${APACHE_SERVICES[@]}"; do
         systemctl is-active --quiet "$service" && continue
-        systemctl enable "$service" && systemctl start "$service" || {
-            log_message "error" "Failed to start $service"
-            exit ${EXIT_VHOST_NOT_INSTALLED}
+        systemctl enable "$service" && systemctl start "$service" >/dev/null 2>&1 || {
+            log_message "error" "Failed to start service $service"
+            return "$EXIT_APACHE_SERVICE_FAILED"
         }
-        sleep 1
-        systemctl is-active --quiet "$service" || {
-            log_message "error" "$service failed to start"
-            exit ${EXIT_VHOST_NOT_INSTALLED}
-        }
+
+        local start_time=$SECONDS
+        while ! systemctl is-active --quiet "$service"; do
+            (( SECONDS - start_time > SERVICE_START_TIMEOUT )) && {
+                log_message "error" "Service '$service' failed to start within ${SERVICE_START_TIMEOUT}s"
+                return "$EXIT_APACHE_SERVICE_FAILED"
+            }
+            sleep 0.01
+        done
     done
+
+    log_message "info" "All Apache services are running"
+    return 0
 }
 
 # Настройка UFW для Apache2-портов
 configure_ufw() {
-    command -v ufw >/dev/null || { log_message "warning" "UFW not installed"; return; }
-    ufw status | grep -q "Status: active" || { log_message "info" "UFW is inactive"; return; }
+    command -v ufw >/dev/null || { log_message "warning" "UFW not installed, skipping"; return 0; }
+    ufw status verbose | grep -q "Status: active" || { log_message "info" "UFW is inactive, skipping"; return 0; }
 
-    local cache_file="${TMP_DIR}/ufw_apache_hash"
-    local port_hash=$(echo "${APACHE_PORTS[*]}" | md5sum | cut -d' ' -f1)
-    [[ -f "$cache_file" && "$(cat "$cache_file")" == "$port_hash" ]] && return
-
+    local port
     for port in "${APACHE_PORTS[@]}"; do
-        ufw status numbered | grep -E "${port}\s+ALLOW" >/dev/null || {
-            ufw allow "$port" || {
-                log_message "error" "Failed to open port $port in UFW"
-                return ${EXIT_GENERAL_ERROR}
+        ufw status verbose | grep -qw "$port.*ALLOW" || {
+            ufw allow "$port" >/dev/null 2>&1 || {
+                log_message "error" "Failed to open port '$port' in UFW"
+                return "$EXIT_GENERAL_ERROR"
             }
         }
     done
 
-    echo "$port_hash" > "$cache_file" 2>/dev/null || log_message "warning" "Failed to cache UFW config for Apache: ${APACHE_PORTS[*]}"
+    ufw reload || {
+        log_message "error" "Failed to restart UFW"
+        return "$EXIT_GENERAL_ERROR"
+    }
+
+    log_message "info" "All UFW ports for Apache are running"
+    return 0
 }
 
 # Проверка зависимостей и команд с кэшированием
-check_apache_deps() {
-    local cache_file="${TMP_DIR}/apache_deps_hash"
-    local deps_hash=$(echo "${APACHE_DEPS[*]} ${APACHE_CMDS[*]}" | md5sum | cut -d' ' -f1)
-    [[ -f "$cache_file" && "$(cat "$cache_file")" == "$deps_hash" && $(( $(date +%s) - $(stat -c %Y "$cache_file") )) -lt 86400 ]] && return
-
-    check_deps "${APACHE_DEPS[@]}" || {
-        log_message "error" "Missing apache2 dependency"
-        return ${EXIT_VHOST_NOT_INSTALLED}
-    }
-
-    check_commands "${APACHE_CMDS[@]}" || {
-        log_message "error" "Missing required commands"
-        return ${EXIT_VHOST_NOT_INSTALLED}
-    }
-
-    echo "$deps_hash" > "$cache_file" 2>/dev/null || log_message "warning" "Failed to cache deps"
+check_apache_dependencies() {
+    check_dependency "${APACHE_SERVICES[@]}" || return $?
+    check_commands "${APACHE_COMMAND[@]}" || return $?
+    log_message "info" "All Apache dependencies are installed"
+    return 0
 }
 
-# Основная логика
-log_message "info" "Checking Apache settings"
+start_apache_service || exit $?
+configure_ufw || exit $?
+check_apache_dependencies || exit $?
 
-check_apache_deps || return $?
-
-start_apache_service || return $?
-
-configure_ufw || return $?
-
-log_message "info" "Apache is configured and running"
-
-return ${EXIT_SUCCESS}
+exit 0

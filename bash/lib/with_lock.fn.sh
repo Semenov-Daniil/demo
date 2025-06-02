@@ -47,10 +47,8 @@ with_lock() {
 
     exec 200>"$lockfile"
 
-    trap "$(rm -f "$lockfile" 2>/dev/null; exec 200>&-;)""$old_trap" EXIT
-
     if ! flock -x -w "$LOCK_TIMEOUT" 200; then
-        echo "Failed to acquire lock for '$lockfile' within ${timeout}s" >&2
+        echo "Failed to acquire lock for '$lockfile' within ${LOCK_TIMEOUT}s" >&2
         trap - EXIT
         exec 200>&-
         return 1
