@@ -139,6 +139,10 @@ getent group "$STUDENT_GROUP" >/dev/null || {
     return ${EXIT_GENERAL_ERROR}
 }
 
+groups "$SITE_USER" | grep -q "$STUDENT_GROUP" || {
+    usermod -aG "$STUDENT_GROUP" "$SITE_USER" >/dev/null
+}
+
 [[ ! -d "$STUDENTS_DIR" ]] && { create_directories "$STUDENTS_DIR" 755 "$SITE_USER:$SITE_GROUP" || return $?; }
 
 [[ ! -d "$TMP_DIR" ]] && { create_directories "$TMP_DIR" 1777 "$SITE_USER:$SITE_GROUP" || return $?; }

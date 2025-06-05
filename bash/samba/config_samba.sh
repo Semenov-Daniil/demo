@@ -60,12 +60,9 @@ restart_smbd() {
         return 0
     }
 
-    smbcontrol smbd reload-config >/dev/null 2>&1 || {
-        log_message "warning" "Failed to reload configuration Samba, attempting restart"
-        systemctl restart smbd >/dev/null 2>&1 || {
-            log_message "error" "Failed to restart Samba"
-            return "$EXIT_SAMBA_SERVICE_FAILED"
-        }
+    systemctl restart smbd >/dev/null 2>&1 || {
+        log_message "error" "Failed to restart Samba"
+        return "$EXIT_SAMBA_SERVICE_FAILED"
     }
 
     log_message "info" "Samba configuration reloaded successfully"

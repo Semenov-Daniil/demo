@@ -101,3 +101,4 @@ configtest() {
 # Настройка вритуального хоста с блокировкой
 with_lock "$TMP_DIR/${LOCK_VHOST_PREF}_${DOMAIN}.lock" setup_vhost "$DOMAIN" "$CONFIG"
 exit $?
+

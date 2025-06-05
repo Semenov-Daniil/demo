@@ -186,6 +186,7 @@ class DbComponent extends Component
     {
         try {
             if (self::hasDatabase($db)) {
+                if (!self::hasPrivileges($login, $db)) return true;
                 $db = Yii::$app->db->quoteTableName($db);
                 Yii::$app->db->createCommand("
                     REVOKE ALL PRIVILEGES ON $db.* FROM :login@:host;
@@ -256,6 +257,15 @@ class DbComponent extends Component
     {
         try {
             return Yii::$app->db->createCommand('SHOW DATABASES LIKE :dbName', [':dbName' => $dbName])->execute();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    public static function hasPrivileges(string $username, string $dbName)
+    {
+        try {
+            return Yii::$app->db->createCommand("SELECT * FROM mysql.db WHERE User = :username AND Host = :host AND Db = :dbName", [':username' => $username, ':dbName' => $dbName, ':host' => self::getHost()])->execute();
         } catch (\Exception $e) {
             throw $e;
         }

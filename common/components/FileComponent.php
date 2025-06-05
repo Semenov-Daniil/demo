@@ -2,6 +2,7 @@
 
 namespace common\components;
 
+use Exception;
 use Yii;
 use yii\base\BootstrapInterface;
 use yii\base\Component;
@@ -93,6 +94,17 @@ class FileComponent extends Component implements BootstrapInterface
         }
 
         return false;
+    }
+
+    public static function updatePermission(string $path, string $rule, string $owner, string $logFile = "")
+    {
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/update_permissions.sh'), [$path, $rule, $owner, "--log={$logFile}"]);
+
+        if ($output['returnCode']) {
+            throw new Exception("Failed to update permissions for directory '{$path}': {$output['stderr']}");
+        }
+        
+        return true;
     }
 
     /**

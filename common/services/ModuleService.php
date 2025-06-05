@@ -31,9 +31,9 @@ class ModuleService
         return "module-{$moduleNumber}";
     }
 
-    public static function getTitleDirectoryModule(string $prefix, int $moduleNumber): string
+    public static function getTitleDirectoryModule(string $prefix, int $moduleNumber, bool $show = true): string
     {
-        return "{$prefix}-m{$moduleNumber}";
+        return $show ? "{$prefix}-m{$moduleNumber}" : ".{$prefix}-m{$moduleNumber}";
     }
 
     public function getTitleDb(string $login, int $moduleNumber): string
@@ -160,7 +160,7 @@ class ModuleService
                 throw new Exception('Failed to update module status');
             }
 
-            if (!$this->changePrivilegesDbStudents($module)) {
+            if (!$this->changePrivilegesStudents($module)) {
                 throw new Exception('Failed to update student privileges');
             }
 
@@ -173,17 +173,27 @@ class ModuleService
         }
     }
 
-    public function changePrivilegesDbStudents(Modules $module): bool
+    public function changePrivilegesStudents(Modules $module): bool
     {
         $students = Students::findAll(['events_id' => $module->events_id]);
 
         foreach ($students as $student) {
             $login = $student->user->login;
+
             $dbName = $this->getTitleDb($login, $module->number);
-            
             if (!Yii::$app->dbComponent->changePrivileges($login, $dbName, $module->status)) {
                 return false;
             }
+
+            $moduleOldDir = Yii::getAlias("@students/{$login}/" . $this->getTitleDirectoryModule($student->dir_prefix, $module->number, !$module->status));
+            $moduleNewDir = Yii::getAlias("@students/{$login}/" . $this->getTitleDirectoryModule($student->dir_prefix, $module->number, $module->status));
+            if (file_exists($moduleOldDir)) {
+                if (!rename($moduleOldDir, $moduleNewDir)) {
+                    return false;
+                }
+            }
+
+            Yii::$app->fileComponent->updatePermission($moduleNewDir, $module->status ? "770" : "070", "{$login}:{$_ENV['SITE_GROUP']}");
         }
         return true;
     }

@@ -18,7 +18,7 @@ class m241023_122101_create_modules_table extends Migration
         $this->createTable(self::TABLE_NAME, [
             'id' => $this->primaryKey(),
             'events_id' => $this->integer()->notNull(),
-            'status' => $this->tinyInteger(1)->defaultValue(1)->notNull(),
+            'status' => $this->boolean()->defaultValue(1)->notNull(),
             'number' => $this->integer()->notNull(),
             'created_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
