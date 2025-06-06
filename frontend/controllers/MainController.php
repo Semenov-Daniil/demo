@@ -6,11 +6,13 @@ use common\models\EncryptedPasswords;
 use common\models\Events;
 use common\models\Files;
 use common\models\LoginForm;
+use common\models\Modules;
 use common\models\Roles;
 use common\models\Students;
 use common\models\Users;
 use Yii;
 use yii\filters\AccessControl;
+use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
@@ -63,7 +65,7 @@ class MainController extends Controller
     {
         $student = Students::findOne(['students_id' => Yii::$app->user->id]);
         $files = Files::getDataProviderFiles($student->event->id);
-        $modules = Events::findOne(['id' => $student->event->id])->modules;
+        $modules = Modules::getModulesStudent($student);
 
         return $this->render('index', [
             'student' => $student,

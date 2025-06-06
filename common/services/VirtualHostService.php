@@ -10,16 +10,17 @@ use Yii;
 class VirtualHostService
 {
     public string $logFile = '';
-    private string $domainSuffix = '.demo.ru';
+
+    const DOMAIN_SUFFIX = '.demo.ru';
 
     public function __construct()
     {
         $this->logFile = 'vhost.log';
     }
 
-    public function getDomain(string $main): string
+    public static function getDomain(string $main): string
     {
-        return "$main{$this->domainSuffix}";
+        return "$main" . self::DOMAIN_SUFFIX;
     }
 
     public function createVirtualHost(string $login, string $module, string $path): bool

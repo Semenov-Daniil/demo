@@ -161,7 +161,7 @@ $this->title = 'Студент';
     
                 <div class="card-body list-group p-0 list-group-flush">
                     <?php foreach ($modules as $module): ?>
-                        <?= Html::a("<b>Модуль $module->number:</b> http://$student->dir_prefix-m$module->number.demo", "http://$student->dir_prefix-m$module->number.demo", ['class' => 'list-group-item list-group-item-action'])?>
+                        <?= Html::a("<b>Модуль {$module['number']}:</b> http://{$module['domain']}", "http://{$module['domain']}", ['class' => 'list-group-item list-group-item-action'])?>
                     <?php endforeach; ?>
                 </div>
             </div>

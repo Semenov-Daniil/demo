@@ -4,6 +4,8 @@ namespace common\models;
 
 use app\components\DbComponent;
 use common\modules\flash\Module;
+use common\services\ModuleService;
+use common\services\VirtualHostService;
 use Exception;
 use Yii;
 use yii\base\Model;
@@ -109,4 +111,28 @@ class Modules extends \yii\db\ActiveRecord
             ],
         ]);
     }
+    
+    /**
+     * Get modules for student
+     * 
+     * @return array
+     */
+    public static function getModulesStudent(object $student): array
+    {
+        $modules = self::find()
+            ->select(['number'])    
+            ->where(['events_id' => $student->event->id, 'status' => true])
+            ->asArray()
+            ->all()
+        ;
+
+        foreach ($modules as &$module) {
+            $module['domain'] = VirtualHostService::getDomain(ModuleService::getTitleDirectoryModule($student->dir_prefix, $module['number']));
+        }
+        unset($module);
+
+        return $modules;
+    }
+
+
 }
