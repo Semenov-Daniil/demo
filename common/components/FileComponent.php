@@ -46,13 +46,16 @@ class FileComponent extends Component implements BootstrapInterface
      */
     public static function removeDirectory(string $path): bool
     {
-        if (!file_exists($path) || !is_dir($path)) {
-            return false;
+        try {
+            if (!file_exists($path) || !is_dir($path)) {
+                return false;
+            }
+            FileHelper::removeDirectory($path);
+            return true;
+        } catch (\Exception $e) {
+            throw new \Exception("\nFailed remove '$path':\n$e\n");
         }
-        
-        FileHelper::removeDirectory($path);
-        
-        return true;
+        return false;
     }
 
     /**
@@ -101,9 +104,9 @@ class FileComponent extends Component implements BootstrapInterface
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/update_permissions.sh'), [$path, $rule, $owner, "--log={$logFile}"]);
 
         if ($output['returnCode']) {
-            throw new Exception("Failed to update permissions for directory '{$path}': {$output['stderr']}");
+            throw new Exception("\nFailed to update permissions for directory '{$path}':\n{$output['stderr']}\n");
         }
-        
+
         return true;
     }
 

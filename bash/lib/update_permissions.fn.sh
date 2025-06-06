@@ -35,20 +35,27 @@ update_permissions() {
         return 1
     fi
 
-    id "$user" &>/dev/null || { echo "User '$user' does not exist"; return 1; }
-    getent group "$group" &>/dev/null || { echo "Group '$group' does not exist"; return 1; }
+    id "$user" &>/dev/null || { echo "User '$user' does not exist" >&2; return 1; }
+    getent group "$group" &>/dev/null || { echo "Group '$group' does not exist" >&2; return 1; }
 
     for path in "${paths[@]}"; do
         [[ -z "$path" ]] && continue
+        echo ""
         [[ -e "$path" ]] || { echo "Path '$path' does not exist"; missing_paths+=("$path"); continue; }
         local current_perms=$(stat -c %a "$path" 2>/dev/null || echo "unknown")
         local current_owner=$(stat -c %U:%G "$path" 2>/dev/null || echo "unknown")
-        [[ "$current_owner" != "$user:$group" ]] && { chown "$user:$group" "$path" 2>/dev/null || missing_paths+=("$path"); continue; }
-        [[ "$current_perms" != "$perms" ]] && { chmod "$perms" "$path" 2>/dev/null || missing_paths+=("$path"); continue; }
+        [[ "$current_owner" != "$user:$group" ]] && {
+            chown "$user:$group" "$path" 2>/dev/null || { missing_paths+=("$path"); continue; }
+            echo "Successful update of '$path' owner from '$current_owner' to '$user:$group'"
+        }
+        [[ "$current_perms" != "$perms" ]] && {
+            chmod "$perms" "$path" 2>/dev/null || { missing_paths+=("$path"); continue; }
+            echo "Successful update of '$path' perms from '$current_perms' to '$perms'"
+        }
     done
 
     [[ "${#missing_paths[@]}" -gt 0 ]] && {
-        echo "Failed to update permissions/ownership for: ${missing_paths[*]}"
+        echo "Failed to update permissions/ownership for: ${missing_paths[*]}" >&2
         return 1
     }
 

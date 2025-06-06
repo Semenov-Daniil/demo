@@ -12,7 +12,7 @@ set -euo pipefail
 
 : "${TMP_DIR:="/tmp"}"
 : "${LOCK_PREF:="lock"}"
-: "${LOCK_TIMEOUT:="60"}"
+: "${LOCK_TIMEOUT:="15"}"
 
 ! command -v flock >/dev/null 2>&1 && {
     echo "Command 'flock' not found" >&2

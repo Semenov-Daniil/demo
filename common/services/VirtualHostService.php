@@ -10,80 +10,71 @@ use Yii;
 class VirtualHostService
 {
     public string $logFile = '';
+    private string $domainSuffix = '.demo.ru';
 
     public function __construct()
     {
         $this->logFile = 'vhost.log';
     }
 
-    private function getVhostConfig(string $path, string $title): string
+    public function getDomain(string $main): string
     {
-        return 
-        "<VirtualHost *:80>
-            ServerName {$title}.".Yii::$app->params['siteName']."
-            DocumentRoot {$path}
-            <Directory {$path}>
-                Options Indexes FollowSymLinks
-                AllowOverride All
-                Require all granted
-            </Directory>
-            ErrorLog {$path}/error.log
-            CustomLog {$path}/access.log combined
-        </VirtualHost>";
+        return "$main{$this->domainSuffix}";
     }
 
-    public function createVirtualHost(string $path): bool
+    public function createVirtualHost(string $login, string $module, string $path): bool
     {
-        $path = rtrim($path, '/');
-        $titleDir = basename($path);
-        $vhostConfig = $this->getVhostConfig($path, $titleDir);
-
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/create_vhost.sh'), [$titleDir, $vhostConfig, "--log={$this->logFile}"]);
+        $domain = $this->getDomain($module);
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/create_vhost.sh'), [$login, $domain, $path, "--log={$this->logFile}"]);
 
         if ($output['returnCode']) {
-            throw new Exception("Failed to create virtual host {$titleDir}: {$output['stderr']}");
+            throw new Exception("Failed to create virtual host {$domain}: {$output['stderr']}");
         }
 
         return true;
     }
 
-    public function disableVirtualHost(string $path)
+    public function disableVirtualHost(string $module): bool
     {
-        $path = rtrim($path, '/');
-        $titleDir = basename($path);
+        $domain = $this->getDomain($module);
 
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/disable_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/disable_vhost.sh'), [$domain, "--log={$this->logFile}"]);
 
         if ($output['returnCode']) {
-            throw new Exception("Failed to disabled virtual host {$titleDir}: {$output['stderr']}");
+            throw new Exception("Failed to disabled virtual host {$domain}: {$output['stderr']}");
         }
 
         return true;
     }
 
-    public function enableVirtualHost(string $path)
+    public function enableVirtualHost(string $module): bool
     {
-        $path = rtrim($path, '/');
-        $titleDir = basename($path);
+        $domain = $this->getDomain($module);
 
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/enable_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/enable_vhost.sh'), [$domain, "--log={$this->logFile}"]);
 
         if ($output['returnCode']) {
-            throw new Exception("Failed to enabled virtual host {$titleDir}: {$output['stderr']}");
+            throw new Exception("Failed to enabled virtual host {$domain}: {$output['stderr']}");
         }
 
         return true;
     }
 
-    public function deleteVirtualHost(string $path)
+    public function changeStatusVirtualHost (string $module, bool $status): bool
     {
-        $path = rtrim($path, '/');
-        $titleDir = basename($path);
+        return $status
+                        ? $this->enableVirtualHost($module)
+                        : $this->disableVirtualHost($module);
+    }
 
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/remove_vhost.sh'), [$titleDir, "--log={$this->logFile}"]);
+    public function deleteVirtualHost(string $module): bool
+    {
+        $domain = $this->getDomain($module);
+
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/vhost/remove_vhost.sh'), [$domain, "--log={$this->logFile}"]);
 
         if ($output['returnCode']) {
-            throw new Exception("Failed to delete virtual host {$titleDir}: {$output['stderr']}");
+            throw new Exception("Failed to delete virtual host {$domain}:\n{$output['stderr']}\n");
         }
 
         return true;

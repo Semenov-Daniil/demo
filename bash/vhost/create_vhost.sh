@@ -19,15 +19,23 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM EXIT
 
-[[ ${#ARGS[@]} -ge 2 ]] || { echo "Usage: $0 <domain> <config>"; exit "$EXIT_INVALID_ARG"; }
+[[ ${#ARGS[@]} -ge 3 ]] || { echo "Usage: $0 <username> <domain> <directory>"; exit "$EXIT_INVALID_ARG"; }
 
-DOMAIN="${ARGS[0]}"
-CONFIG="${ARGS[1]}"
+VHOST_USER="${ARGS[0]}"
+DOMAIN="${ARGS[1]}"
+VHOST_DIR="${ARGS[2]}"
+
+TEMPLATE_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/vhost.conf)"
+[[ ! -f "$TEMPLATE_CONFIG" ]] && {
+    log_message "error" "Failed to find the virtual host template '$TEMPLATE_CONFIG'"
+    exit "$EXIT_NOT_FOUND"
+}
 
 setup_vhost() {
-    local domain="$1" config="$2"
+    local user="$1" domain="$2" directory="$3"
+    [[ -z "$user" ]] && { log_message "error" "No virtual host username provided"; return "$EXIT_INVALID_ARG"; }
     [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
-    [[ -z "$config" ]] && { log_message "error" "No virtual host config provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$directory" || ! -d "$directory" ]] && { log_message "error" "No virtual host directory provided"; return "$EXIT_INVALID_ARG"; }
 
     [[ ! "$domain" =~ ^[a-zA-Z0-9._-]+$ ]] && { log_message "error" "Invalid virtual host domain '$domain'"; return "$EXIT_INVALID_ARG"; }
 
@@ -40,24 +48,22 @@ setup_vhost() {
 
     log_message "info" "Starting to configure the virtual host '$domain'"
 
-    create_vhost "$vhostfile" || return $?
-
-    printf "%s" "$config" > "$vhostfile" || {
-        log_message "error" "Failed to write configurations to the file '$vhostfile'"
-        exit "$EXIT_VHOST_CONFIG_FAILED"
-    }
+    create_vhost "$vhostfile" "$user" "$domain" "$directory" || return $?
 
     configtest "$domain" "$vhostfile" || return $?
 
     bash "$ENABLE_VHOST" "$domain" || return $?
 
-    log_message "info" "Virtual host '$domain' created and enabled successfully"
+    log_message "ok" "Virtual host '$domain' created successfully"
     return 0
 }
 
 create_vhost() {
-    local vhostfile="$1"
+    local vhostfile="$1" user="$2" domain="$3" directory="$4"
     [[ -z "$vhostfile" ]] && { log_message "error" "No virtual host filename provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$user" ]] && { log_message "error" "No virtual host username provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$directory" || ! -d "$directory" ]] && { log_message "error" "No virtual host directory provided"; return "$EXIT_INVALID_ARG"; }
 
     touch "$vhostfile" >/dev/null || {
         log_message "error" "Failed to create configuration file '$vhostfile'"
@@ -65,6 +71,23 @@ create_vhost() {
     }
 
     update_permissions "$vhostfile" 644 root:root || return $?
+
+    declare -x DOMAIN="$domain"
+    declare -x VHOST_DIR="$directory"
+    declare -x VHOST_USER="$user"
+    declare -x VHOST_GROUP=$(id -gn $user 2>/dev/null || echo "$SITE_GROUP")
+
+    local template_content
+    template_content=$(envsubst '${DOMAIN} ${VHOST_DIR} ${VHOST_USER} ${VHOST_GROUP}' < "$TEMPLATE_CONFIG") || {
+        log_message "error" "Failed to process template '$TEMPLATE_CONFIG'"
+        return "$EXIT_GENERAL_ERROR"
+    }
+
+    printf '%s\n' "$template_content" > "$vhostfile" || {
+        log_message "error" "Failed to write to '$vhostfile'"
+        return "$EXIT_VHOST_CONFIG_FAILED"
+    }
+
     return 0
 }
 
@@ -88,7 +111,7 @@ configtest() {
         return "$EXIT_GENERAL_ERROR"
     }
 
-    apache2ctl -t -f "$tmpconfig" || {
+    apache2ctl -t -f "$tmpconfig" 2>/dev/null || {
         log_message "error" "Invalid Apache2 configuration syntax in '$vhostfile'"
         rm -f "$tmpconfig" >/dev/null || true
         return "$EXIT_VHOST_INVALID_CONFIG"
@@ -99,6 +122,5 @@ configtest() {
 }
 
 # Настройка вритуального хоста с блокировкой
-with_lock "$TMP_DIR/${LOCK_VHOST_PREF}_${DOMAIN}.lock" setup_vhost "$DOMAIN" "$CONFIG"
+with_lock "$TMP_DIR/${LOCK_VHOST_PREF}_${DOMAIN}.lock" setup_vhost "$VHOST_USER" "$DOMAIN" "$VHOST_DIR"
 exit $?
-

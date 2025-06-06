@@ -19,7 +19,7 @@ source "$GLOBAL_CONFIG" || {
 }
 
 # Коды выхода
-declare -rx EXIT_VHOST_NOT_INSTALLED=40
+declare -rx EXIT_APACHE_NOT_INSTALLED=40
 declare -rx EXIT_VHOST_CONFIG_FAILED=41
 declare -rx EXIT_VHOST_ENABLE_FAILED=42
 declare -rx EXIT_VHOST_DISABLE_FAILED=43
@@ -34,8 +34,6 @@ declare -rx EXIT_RELOAD_APACHE_FAILED=47
 # Установка переменных
 declare -rx VHOST_AVAILABLE="/etc/apache2/sites-available"
 declare -rx VHOST_ENABLED="/etc/apache2/sites-enabled"
-declare -rx VHOST_LOG_DIR="/var/log/apache2"
-declare -rx VHOST_LOG_FILE="$VHOST_LOG_DIR/vhost.log"
 
 # Lock
 declare -rx LOCK_VHOST_PREF="lock_vhost"
@@ -45,8 +43,5 @@ declare -rx LOCK_GLOBAL_VHOST="lock_vhost_global"
 declare -rx REMOVE_VHOST="$(dirname "${BASH_SOURCE[0]}")/remove_vhost.sh"
 declare -rx ENABLE_VHOST="$(dirname "${BASH_SOURCE[0]}")/enable_vhost.sh"
 declare -rx DISABLE_VHOST="$(dirname "${BASH_SOURCE[0]}")/disable_vhost.sh"
-
-# Создание директории логирования apache
-create_directories "$VHOST_LOG_DIR" "755" "root:root" || return $?
 
 return 0

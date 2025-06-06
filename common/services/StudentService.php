@@ -143,11 +143,11 @@ class StudentService
         $login = $student->user->login;
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $this->deleteSystemUser($login);
-
             foreach ($student->modules as $module) {
                 $this->moduleService->deleteModuleStudent($student, $module);
             }
+            
+            $this->deleteSystemUser($login);
 
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$login"));
 

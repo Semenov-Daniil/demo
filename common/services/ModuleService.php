@@ -33,7 +33,7 @@ class ModuleService
 
     public static function getTitleDirectoryModule(string $prefix, int $moduleNumber, bool $show = true): string
     {
-        return $show ? "{$prefix}-m{$moduleNumber}" : ".{$prefix}-m{$moduleNumber}";
+        return ($show ? '' : '.') . "{$prefix}-m{$moduleNumber}";
     }
 
     public function getTitleDb(string $login, int $moduleNumber): string
@@ -102,9 +102,9 @@ class ModuleService
             throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
         }
 
-        $this->vhostService->createVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+        Yii::$app->fileComponent->updatePermission(Yii::getAlias("@students/{$login}/{$studentModuleDir}"), "775", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
 
-        $this->setupModuleDir($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+        $this->vhostService->createVirtualHost($login, $studentModuleDir, Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
         return true;
     }
@@ -115,32 +115,10 @@ class ModuleService
             file_put_contents("$path/$filename", $content);
 
             if ($filename == 'index.php') {
-                $this->setupFile("$path/$filename", 755, "$login:" . Yii::$app->params['siteGroup']);
+                Yii::$app->fileComponent->updatePermission("$path/$filename", "775", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
             }
         }
 
-        return true;
-    } 
-
-    private function setupModuleDir(string $login, string $path)
-    {
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/update_permissions.sh'), [$path, "755", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}"]);
-
-        if ($output['returnCode']) {
-            throw new Exception("Failed to setup module directory '{$path}': {$output['stderr']}");
-        }
-        
-        return true;
-    }
-
-    private function setupFile(string $path, string $rule, string $owner)
-    {
-        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/update_permissions.sh'), [$path, $rule, $owner, "--log={$this->logFile}"]);
-
-        if ($output['returnCode']) {
-            throw new Exception("Failed to setup module directory '{$path}': {$output['stderr']}");
-        }
-        
         return true;
     }
 
@@ -193,7 +171,10 @@ class ModuleService
                 }
             }
 
-            Yii::$app->fileComponent->updatePermission($moduleNewDir, $module->status ? "770" : "070", "{$login}:{$_ENV['SITE_GROUP']}");
+            Yii::$app->fileComponent->updatePermission($moduleNewDir, $module->status ? "770" : "070", "$login:" . Yii::$app->params['siteGroup']);
+
+            $moduleName = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
+            $this->vhostService->changeStatusVirtualHost($moduleName, $module->status);
         }
         return true;
     }
@@ -280,7 +261,7 @@ class ModuleService
             $dbName = $this->getTitleDb($login, $module->number);
             $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
     
-            $this->vhostService->deleteVirtualHost(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+            $this->vhostService->deleteVirtualHost($studentModuleDir);
     
             Yii::$app->dbComponent->deleteDb($dbName);
     

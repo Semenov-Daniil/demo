@@ -25,12 +25,12 @@ remove_vhost() {
     local vhostfile="$VHOST_AVAILABLE/$domain.conf"
     local vhost_enabled="$VHOST_ENABLED/$domain.conf"
 
-    log_message "info" "Starting to remove the virtual host '$domain'"
-
     [[ ! -f "$vhostfile" ]] && {
         log_message "warning" "Failed to find the virtual host '$domain'"
         return 0
     }
+
+    log_message "info" "Starting to remove the virtual host '$domain'"
 
     bash "$DISABLE_VHOST" "$domain" || return $?
 
