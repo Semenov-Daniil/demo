@@ -35,7 +35,12 @@ class FileComponent extends Component implements BootstrapInterface
      */
     public static function createDirectory(string $path, int $mode = 0755): bool
     {
-        return !empty($path) && !is_dir($path) && FileHelper::createDirectory($path, $mode, true);
+        try {
+            return !empty($path) && !is_dir($path) && FileHelper::createDirectory($path, $mode, true);
+        } catch (Exception $e) {
+            throw new Exception("\nFailed create directory '$path':\n$e\n");
+        }
+        return false;
     }
 
     /**

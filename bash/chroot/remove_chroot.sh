@@ -19,19 +19,8 @@ remove_chroot() {
         return 0
     }
 
-    remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/dev/pts")" || return $?
-    remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/dev/shm")" || return $?
-    remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/dev")" || return $?
-    remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/proc")" || return $?
-    remove_systemd_unit "$(title_mount_unit "$CHROOT_ROOT/etc")" || return $?
-
-    local path
-    for path in "${SYSTEM_DIRS[@]}"; do
-        remove_systemd_unit "$(title_mount_unit "${CHROOT_ROOT}${path}")" || return $?
-    done
-    
-    local unit
-    for unit in $(get_mount_units "$BASE_CHROOT"); do
+    local units=$(get_mount_units "$BASE_CHROOT") unit
+    for unit in $units; do
         remove_systemd_unit "$unit" || return $?
     done
 

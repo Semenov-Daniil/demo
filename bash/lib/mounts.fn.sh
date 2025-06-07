@@ -158,7 +158,8 @@ remove_systemd_unit() {
 
 _remove_systemd_unit_locked() {
     local unit_title="$1"
-    local related_units=($(systemctl show -p Requires -p BindsTo -p PartOf "$unit_title" | grep -o '[^= ]*\.service\|[^= ]*\.mount' | grep -v '^-' | sort -u) "$unit_title")
+
+    local related_units=($(systemctl list-dependencies --reverse --plain --no-pager "$unit_title" | grep -o '[^= ]*\.service\|[^= ]*\.mount' | grep -v '^-' | sort -u))
 
     local unit unit_file
     for unit in "${related_units[@]}"; do
@@ -304,9 +305,53 @@ mount_overlay() {
     return $?
 }
 
+# Монтирование rslave
+# Usage: mount_rslave <target> <requires>
+mount_rslave() {
+    local target="$1" requires="$2"
+    [[ -z "$target" ]] && { log_message "error" "No systemd unit mount rslave service target provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$requires" ]] && { log_message "error" "No systemd unit mount rslave requires provided"; return "$EXIT_INVALID_ARG"; }
+
+    if [[ ! -e "$target" ]]; then
+        log_message "error" "Destination '$target' does not exist"
+        return "$EXIT_MOUNT_FAILED"
+    fi
+
+    local unit_title="rslave-$(systemd-escape -p --suffix=service "$target" 2>/dev/null)" || {
+        log_message "error" "Failed to escape path '$target' for systemd unit" >&2
+        exit "$EXIT_SYSTEMD_UNIT"
+    }
+
+    local unit_content=$(cat << EOF
+[Unit]
+Description=Rslave Mount Service for $target
+Requires=$requires
+BindsTo=$requires
+After=network.target
+Before=local-fs.target
+AssertPathExists=$target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/bin/mount --make-rslave $target
+RemainAfterExit=yes
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+)
+
+    create_systemd_unit "$unit_title" "$unit_content" || return $?
+
+    return 0
+}
+
 # Генерация списка mount unit внутри директории
 get_mount_units() {
-    local dir="$1" mounts unit unit_names=()
+    local dir="$1"
+    local mounts unit unit_names=()
 
     mapfile -t mounts < <(systemctl list-units --type=mount --no-legend --no-pager | awk '{print $1}' | grep -v '^-')
 
@@ -320,5 +365,5 @@ get_mount_units() {
     echo "${unit_names[*]}"
 }
 
-export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_rbind mount_devtmpfs mount_devpts mount_tmpfs mount_proc mount_overlay get_mount_units
+export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_rbind mount_devtmpfs mount_devpts mount_tmpfs mount_proc mount_overlay get_mount_units mount_rslave
 return 0

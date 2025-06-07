@@ -15,6 +15,7 @@ class StudentService
 {
     use RandomStringTrait;
 
+    public string $files_dir = '';
     public string $logFile = '';
 
     private $userService;
@@ -22,9 +23,10 @@ class StudentService
 
     public function __construct()
     {
+        $this->logFile = 'students.log';
+        $this->files_dir = (new FileService())::FILES_DIR;
         $this->userService = new UserService();
         $this->moduleService = new ModuleService();
-        $this->logFile = 'students.log';
     }
 
     public function getTitleDb(string $login, int $numberModule): string
@@ -51,6 +53,11 @@ class StudentService
         return $folders;
     }
 
+    public function getFilesDirectory(string $login): string
+    {
+        return Yii::getAlias("@students/$login/{$this->files_dir}");
+    }
+
     public function createStudent(StudentForm $form): bool
     {
         if (!$form->validate()) {
@@ -70,9 +77,7 @@ class StudentService
             $student->events_id = $form->events_id;
             $student->dir_prefix = $this->generateRandomString(8, ['lowercase']);
 
-            if (!$student->save()) {
-                throw new Exception('Failed to create student');
-            }
+            if (!$student->save()) throw new Exception('Failed to create student');
 
             $this->setupStudentEnvironment($student, $user->login, $user->temp_password);
 
@@ -80,8 +85,14 @@ class StudentService
             return true;
         } catch (Exception $e) {
             $transaction->rollBack();
-            $this->cleanupFailedStudent($user->id ?? null, $user->login ?? '');
             Yii::error("Error create student: " . $e->getMessage(), __METHOD__);
+
+            if ($student->students_id) {
+                $this->deleteStudent($student->students_id);
+            } else if ($user->id) {
+                $this->userService->deleteUser($user->id);
+            }
+
             return false;
         }
     }
@@ -147,6 +158,9 @@ class StudentService
                 $this->moduleService->deleteModuleStudent($student, $module);
             }
             
+            $studentDir = Yii::getAlias("@students/$login/{$this->files_dir}");
+            $this->removeFilesEvent($studentDir);
+            
             $this->deleteSystemUser($login);
 
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$login"));
@@ -190,47 +204,17 @@ class StudentService
             $this->moduleService->createStudentModuleEnvironment($student, $module);
         }
 
-        $event = $student->event;
-        if (!empty($event->files)) {
-            $eventPath = Yii::getAlias("@events/{$event->dir_title}");
-            $studentPath = Yii::getAlias("@students/$login/public");
-            foreach ($event->files as $file) {
-                $fileCopyDirectory = $file->modules_id ? ($this->moduleService->getDirectoryModuleFileTitle($file->module->number) . '/') : '';
-                if (!copy("$eventPath/{$fileCopyDirectory}{$file->save_name}.{$file->extension}", "{$studentPath}/{$fileCopyDirectory}{$file->save_name}.{$file->extension}")) {
-                    throw new Exception("Failed to copy the {$file->save_name}.{$file->extension} file to the {$studentPath}/{$fileCopyDirectory} directory.");
-                }
-            }
-        }
-
+        $eventDir = Yii::getAlias("@events/{$student->event->dir_title}");
+        $studentDir = Yii::getAlias("@students/$login/{$this->files_dir}");
+        $this->setupFilesEvent($eventDir, $studentDir);
+        
         return true;
     }
 
     public function createStudentDirectory(string $login): bool
     {
         return Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login")) &&
-                Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/$login/public"));
-    }
-
-    /**
-     * Cleans up failed student creation.
-     * @param ?int $userId
-     * @param string $login
-     */
-    private function cleanupFailedStudent(?int $userId, string $login): void
-    {
-        if ($login) {
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/$login"));
-            $student = Students::findOne(['students_id' => $userId]);
-            if ($student) {
-                foreach ($student->modules as $module) {
-                    Yii::$app->dbComponent->deleteDb($this->getTitleDb($login, $module->number));
-                }
-                Yii::$app->dbComponent->deleteUser($login);
-            }
-        }
-        if ($userId) {
-            $this->userService->deleteUser($userId);
-        }
+                Yii::$app->fileComponent->createDirectory($this->getFilesDirectory($login));
     }
 
     private function createSystemUser(string $login, string $password): bool
@@ -239,6 +223,24 @@ class StudentService
         $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/system/create_user.sh'), [$login, $password, $studentDir, "--log={$this->logFile}"]);
         if ($output['returnCode']) {
             throw new Exception("Failed to create user {$login}: {$output['stderr']}");
+        }
+        return true;
+    }
+
+    private function setupFilesEvent(string $event_dir, string $student_dir): bool
+    {
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/mount.sh'), [$event_dir, $student_dir, "ro", "--log={$this->logFile}"]);
+        if ($output['returnCode']) {
+            throw new Exception("\nFailed to set up student file directory '$student_dir':\n{$output['stderr']}");
+        }
+        return true;
+    }
+
+    private function removeFilesEvent(string $student_dir): bool
+    {
+        $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/umount.sh'), [$student_dir, "--log={$this->logFile}"]);
+        if ($output['returnCode']) {
+            throw new Exception("\nFailed to remove student file directory '$student_dir':\n{$output['stderr']}");
         }
         return true;
     }

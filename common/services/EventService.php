@@ -18,19 +18,15 @@ class EventService
 {
     use RandomStringTrait;
 
+    public string $public_dir = '';
     private $studentService;
     private $moduleService;
 
     public function __construct()
     {
+        $this->public_dir = (new FileService())::PUBLIC_DIR;
         $this->studentService = new StudentService();
         $this->moduleService = new ModuleService();
-    }
-
-    //TODO вынести в moduleService
-    public static function getDirectoryModuleFileTitle(int|string $moduleNumber): string
-    {
-        return "module-{$moduleNumber}";
     }
 
     /**
@@ -42,6 +38,7 @@ class EventService
     public function createEvent(EventForm $eventModel): bool
     {
         if (!$eventModel->validate()) {
+            Yii::error("Error create event: incorrect event validation", __METHOD__);
             return false;
         }
 
@@ -52,32 +49,34 @@ class EventService
             $event->experts_id = $eventModel->expert ?: Yii::$app->user->id;
             $event->dir_title = $this->generateUniqueDirectoryTitle(8, ['lowercase']);
 
-            if ($event->save()
-                    && Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$event->dir_title}"))
-                    && $this->createModulesForEvent($event, $eventModel->countModules)) {
-                $transaction->commit();
-                return true;
-            }
+            if (!$event->save()) throw new Exception('Failed to save the event record to the database');
+
+            $this->createEventDirectories($event->dir_title);
+
+            $this->createModulesEvent($event, $eventModel->countModules);
             
-            $transaction->rollBack();
+            $transaction->commit();
+            return true;
         } catch (Exception $e) {
             $transaction->rollBack();
-            var_dump($e);die;
+            $this->deleteEvent($event->id ?? null);
+            Yii::error("Error create event: " . $e->getMessage(), __METHOD__);
+            return false;
         }
-
-        $this->deleteEvent($event?->id);
-        return false;
     }
 
-    public function createModulesForEvent(Events $event, int $countModules): bool
+    public function createEventDirectories(string $event_dir): bool
+    {
+        return Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$event_dir}"))
+                && Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$event_dir}/{$this->public_dir}"));
+    }
+
+    public function createModulesEvent(Events $event, int $countModules): bool
     {
         for ($i = 0; $i < $countModules; $i++) {
             $module = new Modules(['events_id' => $event->id]);
-            if (!$this->moduleService->createModule($module)) {
-                return false;
-            }
+            if (!$this->moduleService->createModule($module)) return false;
         }
-
         return true;
     }
 

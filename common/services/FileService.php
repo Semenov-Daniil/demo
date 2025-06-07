@@ -8,15 +8,18 @@ use common\models\Students;
 use Yii;
 use yii\web\UploadedFile;
 use yii\db\Exception;
+use yii\helpers\VarDumper;
 use yii\validators\FileValidator;
 
 class FileService
 {
-    const PUBLIC_DIR = 'public';
+    const FILES_DIR = '_assets';
+    const PUBLIC_DIR = '_public';
     const EVENTS_DIR = '@events';
     const STUDENTS_DIR = '@students';
 
     private $moduleService;
+    private int|null $currentFileId = null;
 
     public function __construct()
     {
@@ -44,24 +47,31 @@ class FileService
         }
 
         $model->modules_id = $model->modules_id == '0' ? null : $model->modules_id;
-        $studentPaths = $this->getStudentPaths($model->events_id);
 
         $allSuccess = true;
         foreach ($model->files as $file) {
             $transaction = Yii::$app->db->beginTransaction();
             try {
-                $fileInfo = $this->processFile($model, $file, $studentPaths);
-                if (!empty($fileInfo['errors'])) {
-                    $model->addError('files', ['filename' => $file->name, 'errors' => $fileInfo['errors']]);
-                    $allSuccess = false;
-                    $transaction->rollBack();
-                } else {
+                $fileInfo = $this->processFile($model, $file);
+                if (empty($fileInfo['errors'])) {
                     $transaction->commit();
+                    $this->currentFileId = null;
+                } else {
+                    $model->addError('files', ['filename' => $file->name, 'errors' => $fileInfo['errors']]);
+                    throw new Exception("Не удалось загрузить файл.");
                 }
             } catch (Exception $e) {
                 $transaction->rollBack();
+
                 $model->addError('files', ['filename' => $file->name, 'errors' => [$e->getMessage()]]);
-                $this->deleteFailedFile($model, $this->getFilePath($model), $studentPaths);
+
+                Yii::error("currentFileId: {$this->currentFileId}");
+                if ($this->currentFileId) {
+                     Yii::error("currentFileId: {$this->currentFileId}");
+                    $this->deleteFileEvent($this->currentFileId);
+                    $this->currentFileId = null;
+                }
+                
                 $allSuccess = false;
                 Yii::error([
                     'message' => "Error processing file: " . $e->getMessage(),
@@ -74,7 +84,7 @@ class FileService
         return $allSuccess;
     }
 
-    public function processFile(Files $model, UploadedFile $file, array $studentPaths): array
+    public function processFile(Files $model, UploadedFile $file): array
     {
         $model->scenario = Files::SCENARIO_DEFAULT;
         $fileInfo = ['filename' => $file->name, 'errors' => []];
@@ -84,83 +94,40 @@ class FileService
             return array_merge($fileInfo, ['errors' => $fileValidate['errors']]);
         }
 
-        $uniqueFilename = $this->getUniqueFilename($model, $file->baseName, $file->extension);
-        $filePath = $this->getFilePath($model, "{$uniqueFilename}.{$file->extension}");
+        $model->extension = $file->extension;
+        $model->name = $this->getUniqueFilename($model, $file->baseName, $file->extension);
+        if (!$model->save()) {
+            $fileInfo['errors'][] = "Не удалось сохранить запись файла {$file->name} в базе данных.";
+            return $fileInfo;
+        }
 
+        $this->currentFileId = $model->id;
+        Yii::info("Current file id: {$this->currentFileId}");
+        
+        $filePath = $this->getFilePath($model);
         if (!$file->saveAs($filePath)) {
             $fileInfo['errors'][] = "Не удалось сохранить файл {$file->name}.";
             return $fileInfo;
         }
 
-        $model->extension = $file->extension;
-        $model->name = $uniqueFilename;
-        if (!$model->save()) {
-            $fileInfo['errors'][] = "Не удалось сохранить запись файла {$file->name} в базе данных.";
-            Yii::$app->fileComponent->deleteFile($filePath);
-            return $fileInfo;
-        }
-
-        $copyErrors = $this->copyFileToStudents($filePath, "{$model->name}.{$model->extension}", $studentPaths, $model);
-        if (!empty($copyErrors)) {
-            $fileInfo['errors'] = array_merge($fileInfo['errors'], $copyErrors);
-            $this->deleteFailedFile($model, $filePath, $studentPaths);
-            return $fileInfo;
-        }
+        throw new Exception("Test error");
 
         return $fileInfo;
     }
 
-    public function copyFileToStudents(string $filePath, string $filename, array $studentPaths, Files $model): array
-    {
-        $errors = [];
-
-        $moduleSubDir = $model->modules_id ? '/' . $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : '';
-
-        foreach ($studentPaths as $studentPath) {
-            $basePath = Yii::getAlias($studentPath['alias']);
-            $destPath = $basePath . $moduleSubDir;
-            $destFile = "$destPath/$filename";
-
-            if (!copy($filePath, $destFile)) {
-                $errors[] = "Не удалось скопировать файл в {$destPath}.";
-                Yii::error([
-                    'message' => "Failed to copy file from {$filePath} to {$destFile}",
-                    'event_id' => $model->events_id,
-                    'filename' => $filename,
-                ], __METHOD__);
-            }
-        }
-
-        return $errors;
-    }
-
-    private function deleteFailedFile(Files $model, string $filePath, array $studentPaths): void
-    {
-        if ($model->name) {
-            Yii::$app->fileComponent->deleteFile($filePath);
-            foreach ($studentPaths as $studentPath) {
-                $studentFilePath = Yii::getAlias($studentPath['alias'] . ($model->modules_id ? '/' . $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : '')) . "/{$model->name}.{$model->extension}";
-                Yii::$app->fileComponent->deleteFile($studentFilePath);
-            }
-        }
-    }
-
-    public function deleteFileEvent(string $id): bool
+    public function deleteFileEvent(string|int $id): bool
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $model = Files::findOne($id);
+            $model = Files::findOne(['id' => $id]);
             if (!$model) {
                 return false;
             }
 
             $filePath = $this->getFilePath($model);
+            Yii::error("file path: {$filePath}");
             if (!Yii::$app->fileComponent->deleteFile($filePath)) {
                 throw new Exception("Не удалось удалить файл {$filePath}.");
-            }
-
-            if (!$this->deleteFilesStudents($model)) {
-                throw new Exception("Не удалось удалить файлы у студентов.");
             }
 
             if (!$model->delete()) {
@@ -193,27 +160,19 @@ class FileService
     }
 
     /**
-     * Удаляет файлы у студентов.
+     * Возвращает полный путь к файлу события.
      */
-    private function deleteFilesStudents(Files $model): bool
+    private function getFileDirectory(Files $model): string
     {
-        $students = Students::findAll(['events_id' => $model->events_id]);
-        foreach ($students as $student) {
-            $studentFile = $this->getStudentBasePath($student->user->login) . ($model->modules_id ? '/' . $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : '') . "/{$model->name}.{$model->extension}";
-            if (file_exists($studentFile) && !Yii::$app->fileComponent->deleteFile($studentFile)) {
-                return false;
-            }
-        }
-        return true;
+        return $this->getEventBasePath($model) . '/' . ($model->modules_id ? $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : self::PUBLIC_DIR);
     }
 
     /**
      * Возвращает полный путь к файлу события.
      */
-    private function getFilePath(Files $model, ?string $filename = null): string
+    private function getFilePath(Files $model): string
     {
-        $name = $filename ?? "{$model->name}.{$model->extension}";
-        return $this->getEventBasePath($model) . ($model->modules_id ? '/' . $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : '') . "/{$name}";
+        return $this->getFileDirectory($model) . "/{$model->name}.{$model->extension}";
     }
 
     /**
@@ -221,14 +180,15 @@ class FileService
      */
     private function getUniqueFilename(Files $model, string $baseName, string $extension): string
     {
-        $filePath = $this->getEventBasePath($model) . ($model->modules_id ? '/' . $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : '') . "/{$baseName}.{$extension}";
+        $fileDir = $this->getFileDirectory($model);
+        $filePath = "{$fileDir}/{$baseName}.{$extension}";
         $counter = 1;
         $uniqueName = $baseName;
 
         while (file_exists($filePath) || Files::find()->where(['events_id' => $model->events_id, 'modules_id' => $model->modules_id, 'name' => $uniqueName, 'extension' => $extension])->exists()) {
             $counter++;
             $uniqueName = "{$baseName}({$counter})";
-            $filePath = $this->getEventBasePath($model) . ($model->modules_id ? '/' . $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : '') . "/{$uniqueName}.{$extension}";
+            $filePath = "{$fileDir}/{$uniqueName}.{$extension}";
         }
 
         return $uniqueName;
@@ -241,13 +201,13 @@ class FileService
 
     private function getStudentBasePath(string $login): string
     {
-        return Yii::getAlias(self::STUDENTS_DIR . '/' . $login . '/' . self::PUBLIC_DIR);
+        return Yii::getAlias(self::STUDENTS_DIR . '/' . $login . '/' . self::FILES_DIR);
     }
 
     private function getStudentPaths(int $eventId): array
     {
         return Students::find()
-            ->select(['CONCAT("' . self::STUDENTS_DIR . '/", login, "/' . self::PUBLIC_DIR . '") as alias'])
+            ->select(['CONCAT("' . self::STUDENTS_DIR . '/", login, "/' . self::FILES_DIR . '") as alias'])
             ->where(['events_id' => $eventId])
             ->joinWith('user', false)
             ->asArray()

@@ -30,7 +30,10 @@ remove_chroot_workspace() {
 
     [[ ! -d "$chroot_workspace" ]] && { log_message "warning" "Failed to find the '$chroot_workspace' workspace"; return 0; }
 
-    remove_systemd_unit "$(title_mount_unit "$chroot_workspace")" || return $?
+    local units=$(get_mount_units "$chroot_workspace") unit
+    for unit in $units; do
+        remove_systemd_unit "$unit" || return $?
+    done
 
     mount | grep -q -F "$CHROOT_HOME/$username" && {
         local mountpoint

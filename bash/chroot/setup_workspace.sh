@@ -80,7 +80,8 @@ setup_user_workspace() {
 
     create_directories "$chroot_workspace" 755 root:root || return "$EXIT_CHROOT_WORKSPACE_FAILED"
     
-    mount_rbind "$workspace" "$chroot_workspace" || return $?
+    mount_rbind "$workspace" "$chroot_workspace" "" $(get_mount_units "$workspace") || return $?
+    mount_rslave "$chroot_workspace" $(title_mount_unit "$chroot_workspace") || return $?
 
     log_message "ok" "Workspace of user '$username' was successfully created in chroot '$CHROOT_ROOT'"
     return 0

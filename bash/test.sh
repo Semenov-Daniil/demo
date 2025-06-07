@@ -1,24 +1,32 @@
 #!/bin/bash
 
 # Подключение глобального config.sh
-GLOBAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/config.sh)"
-source "$GLOBAL_CONFIG" || {
+GLOBAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/logging/logging.fn.sh)"
+source "$(realpath $(dirname "${BASH_SOURCE[0]}")/lib/with_lock.fn.sh)" || {
+    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
+    return 1
+}
+source "$(realpath $(dirname "${BASH_SOURCE[0]}")/lib/update_permissions.fn.sh)" || {
+    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
+    return 1
+}
+source "$(realpath $(dirname "${BASH_SOURCE[0]}")/logging/logging.fn.sh)" || {
     echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
     return 1
 }
 
-fn_source() {
-    local script="$(realpath $(dirname "${BASH_SOURCE[0]}")/srcipt.sh)"
+log_message "info" "Test1"
+log_message "info" "Test1"
+log_message "info" "Test1"
+log_message "info" "Test1"
+log_message "info" "Test1"
+log_message "info" "Test1"
+log_message "info" "Test1"
+log_message "info" "Test1"
 
-    echo "pre source scripts"
-
-    bash "$script" || return $?
-
-    echo "post source script"
-
-    return 0
-}
-
-with_lock "$TMP_DIR/tmp_lock_test.lock" fn_source
+echo "test"
+echo "test"
+echo "test"
+echo "test"
 
 exit 0

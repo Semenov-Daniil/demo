@@ -44,18 +44,15 @@ class ModuleService
     public function createModule(Modules $model)
     {
         if (!$model->validate()) {
+            Yii::error("Error creating module: incorrect module validation", __METHOD__);
             return false;
         }
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            if (!$model->save()) {
-                throw new Exception('Failed to save module');
-            }
+            if (!$model->save()) throw new Exception('Failed to save the module record to the database');
 
-            if (!$this->createEventModuleDirectory($model->event->dir_title, $model->number)) {
-                throw new Exception('Failed to create event module directory');
-            }
+            Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$model->event->dir_title}/" . $this->getDirectoryModuleFileTitle($model->number)));
 
             $students = Students::findAll(['events_id' => $model->events_id]);
             foreach ($students as $student) {
@@ -92,11 +89,7 @@ class ModuleService
             throw new Exception("Failed to create and configure the module database: {$dbName}");
         }
 
-        if (!Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}")) ||
-            !Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/{$login}/public/{$publicModuleDir}"))
-        ) {
-            throw new Exception("Failed to create module folders: {$login}/{$studentModuleDir}");
-        }
+        Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
         if (!$this->addFilesToModule($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"))) {
             throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
@@ -256,6 +249,7 @@ class ModuleService
      */
     public function deleteModuleStudent(Students $student, Modules $module): bool
     {
+        $studentModuleDir = '';
         try {
             $login = $student->user->login;
             $dbName = $this->getTitleDb($login, $module->number);
