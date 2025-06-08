@@ -44,3 +44,44 @@
     transform: scale(0.8);
   }
 }
+
+[data-bs-theme="light"] {
+  --logo-color: rgb(56, 42, 134);
+}
+
+[data-bs-theme="dark"] {
+  --logo-color: rgb(251, 251, 251);
+}
+
+.logo-wrap {
+  min-width: 60px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.logo-svg {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.logo-svg > * {
+  fill: var(--logo-color);
+}
+
+.logo-svg-menu {
+  width: 100%;
+  max-width: 40px;
+  aspect-ratio: 1;
+}
+
+.logo-svg-menu > * {
+  fill: var(--logo-color);
+}
+
+.logo-text {
+  text-align: center;
+  margin: 0;
+  min-width: 100px;
+  color: var(--logo-color);
+}
+

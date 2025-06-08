@@ -19,12 +19,12 @@ $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
 $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1, shrink-to-fit=no']);
 $this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? '']);
 $this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
-$this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/favicon.ico')]);
+$this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/favicon.png')]);
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>" data-layout="semibox" data-topbar="light" data-layout-position="fixed" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg"
-data-sidebar-image="none" data-preloader="disable" data-theme="material" data-theme-colors="blue" class="h-100">
+<html lang="<?= Yii::$app->language ?>" data-theme="material" data-theme-colors="default" data-layout="semibox" data-topbar="light" data-layout-position="fixed" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg"
+data-sidebar-image="none" data-preloader="disable" data-bs-theme="light" class="h-100">
 
 <head>
     <title><?= Html::encode($this->title) ?></title>

@@ -70,6 +70,17 @@ $this->title = 'Студент';
         </div>
         <div class="col">
             <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0 flex-grow-1">Подключение SSH</h4>
+                </div>
+    
+                <div class="card-body">
+                    <pre class="language-markup" tabindex="0"><code class="language-markup">ssh <?= Html::encode(Yii::$app->user->identity->login); ?>@<?= $_SERVER['SERVER_ADDR'] ?></code></pre>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card">
                 <div class="card-header align-items-center d-flex position-relative border-bottom-0">
                     <h4 class="card-title mb-0 flex-grow-1">Файлы</h4>
                 </div>
@@ -136,6 +147,15 @@ $this->title = 'Студент';
                                 'value' => function ($model) {
                                     return $model->moduleTitle;
                                 },
+                                'options' => [
+                                    'class' => 'col-4'
+                                ],
+                                // 'headerOptions' => [
+                                //     'class' => 'text-center'
+                                // ],
+                                'contentOptions' => [
+                                    'class' => 'text-center'
+                                ],
                                 'visible' => $files->totalCount,
                             ],
                             [

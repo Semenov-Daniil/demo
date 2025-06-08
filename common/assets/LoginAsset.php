@@ -18,6 +18,10 @@ class LoginAsset extends AssetBundle
         'css/custom.min.css',
     ];
     public $js = [
+        [
+            'js/layout.js',
+            'position' => \yii\web\View::POS_HEAD
+        ],
         'libs/bootstrap/js/bootstrap.bundle.min.js',
     ];
     public $depends = [
