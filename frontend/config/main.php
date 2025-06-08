@@ -45,10 +45,8 @@ return [
             'showScriptName' => false,
             'rules' => [
                 '/<action>' => '/main/<action>',
-
-                '/toast/<action>' => '/toast/base/<action>',
-
-                '/file/download/<filePath:.*>' => '/file/download',
+                '/download/<id>' => '/main/download',
+                // '/toast/<action>' => '/toast/base/<action>',
             ],
         ],
         

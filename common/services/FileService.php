@@ -61,18 +61,17 @@ class FileService
                     throw new Exception("Не удалось загрузить файл.");
                 }
             } catch (Exception $e) {
-                $transaction->rollBack();
-
                 $model->addError('files', ['filename' => $file->name, 'errors' => [$e->getMessage()]]);
 
                 Yii::error("currentFileId: {$this->currentFileId}");
                 if ($this->currentFileId) {
-                     Yii::error("currentFileId: {$this->currentFileId}");
+                    Yii::error("currentFileId: {$this->currentFileId}");
                     $this->deleteFileEvent($this->currentFileId);
                     $this->currentFileId = null;
                 }
                 
                 $allSuccess = false;
+                $transaction->rollBack();
                 Yii::error([
                     'message' => "Error processing file: " . $e->getMessage(),
                     'event_id' => $model->events_id,
@@ -109,8 +108,6 @@ class FileService
             $fileInfo['errors'][] = "Не удалось сохранить файл {$file->name}.";
             return $fileInfo;
         }
-
-        throw new Exception("Test error");
 
         return $fileInfo;
     }
@@ -162,7 +159,7 @@ class FileService
     /**
      * Возвращает полный путь к файлу события.
      */
-    private function getFileDirectory(Files $model): string
+    public function getFileDirectory(Files $model): string
     {
         return $this->getEventBasePath($model) . '/' . ($model->modules_id ? $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : self::PUBLIC_DIR);
     }
@@ -170,7 +167,7 @@ class FileService
     /**
      * Возвращает полный путь к файлу события.
      */
-    private function getFilePath(Files $model): string
+    public function getFilePath(Files $model): string
     {
         return $this->getFileDirectory($model) . "/{$model->name}.{$model->extension}";
     }
@@ -194,7 +191,7 @@ class FileService
         return $uniqueName;
     }
 
-    private function getEventBasePath(Files $model): string
+    public static function getEventBasePath(Files $model): string
     {
         return Yii::getAlias(self::EVENTS_DIR . '/' . $model->event->dir_title);
     }

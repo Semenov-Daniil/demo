@@ -4,6 +4,7 @@ namespace common\models;
 
 use app\components\FileComponent;
 use app\controllers\StudentController;
+use common\services\FileService;
 use common\services\ModuleService;
 use Exception;
 use Yii;
@@ -26,9 +27,11 @@ use yii\validators\FileValidator;
 class Files extends \yii\db\ActiveRecord
 {
     const SCENARIO_UPLOAD_FILE = "upload-file";
-    const PUBLIC_DIR = 'public';
+    const PUBLIC_DIR = 'Общие';
 
     public array $files = [];
+    public string $path = '';
+    public string $moduleTitle = '';
 
     /**
      * {@inheritdoc}
@@ -137,15 +140,13 @@ class Files extends \yii\db\ActiveRecord
         $query = self::find()
             ->select([
                 self::tableName() . '.id',
-                'module' => 'number',
                 'name',
                 'extension',
-                'dir_title',
+                'modules_id',
+                'events_id',
             ])
             ->where([self::tableName() . '.events_id' => $eventId])
-            ->joinWith('event', false)
-            ->joinWith('module', false)
-            ->asArray()
+            ->with('event', 'module')
         ;
 
         $dataProvider = new ActiveDataProvider([
@@ -157,11 +158,51 @@ class Files extends \yii\db\ActiveRecord
         ]);
 
         $models = $dataProvider->getModels();
-        foreach ($models as &$model) {
-            $model['path'] = ($model['module'] ? ModuleService::getDirectoryModuleFileTitle($model['module']) . '/' : '') . "{$model['name']}.{$model['extension']}";
-            $model['module'] = (is_null($model['module']) ? ucfirst(self::PUBLIC_DIR) : "Модуль {$model['module']}");
+        $fileService = new FileService();
+        foreach ($models as $model) {
+            $model->path = $fileService->getFilePath($model);
+            $model->moduleTitle = ($model->modules_id ? "Модуль {$model->module->number}" : ucfirst(self::PUBLIC_DIR));
         }
-        unset($model);
+        $dataProvider->setModels($models);
+
+        return $dataProvider;
+    }
+
+    public static function getDataProviderFilesStudent(?int $eventId = null, int $records = 10): ActiveDataProvider
+    {
+        $query = self::find()
+            ->select([
+                self::tableName() . '.id',
+                'name',
+                'extension',
+                'modules_id',
+                self::tableName() . '.events_id',
+            ])
+            ->joinWith('event')
+            ->joinWith(['module' => function($query) {
+                $query->andWhere(['OR', ['status' => true], ['status' => null]]);
+            }])
+            ->where([self::tableName() . '.events_id' => $eventId])
+            ->andWhere(['OR', 
+                ['modules_id' => null],
+                ['IS NOT', 'modules_id', null]
+            ])
+        ;
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => [
+                'pageSize' => $records,
+                'route' => 'file',
+            ],
+        ]);
+
+        $models = $dataProvider->getModels();
+        $fileService = new FileService();
+        foreach ($models as $model) {
+            $model->path = $fileService->getFilePath($model);
+            $model->moduleTitle = ($model->modules_id ? "Модуль {$model->module->number}" : ucfirst(self::PUBLIC_DIR));
+        }
         $dataProvider->setModels($models);
 
         return $dataProvider;

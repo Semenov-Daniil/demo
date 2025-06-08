@@ -95,9 +95,9 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
                     'label' => 'Файл',
                     'format' => 'raw',
                     'content' => function ($model) {
-                        $file = Yii::getAlias("@events/{$model['dir_title']}/{$model['path']}");
+                        $file = $model->path;
                         $fileSize = file_exists($file) ? filesize($file) : null;
-                        return '<span class="fs-14 mb-1 h5">'. $model['name'] . '.' . $model['extension'] .'</span>' 
+                        return '<span class="fs-14 mb-1 h5">'. "{$model->name}.{$model->extension}" .'</span>' 
                                 . (is_null($fileSize) ? '' : '<p class="fs-13 text-muted mb-0">' . Yii::$app->fileComponent->formatSizeUnits($fileSize)) . '</p>';
                     },
                     'options' => [
@@ -108,7 +108,7 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
                 [
                     'label' => 'Расположение',
                     'value' => function ($model) {
-                        return $model['module'];
+                        return $model->moduleTitle;
                     },
                     'visible' => $dataProvider->totalCount,
                 ],
@@ -120,10 +120,10 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
                     </div>',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']]]);
+                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model->id]]);
                         },
                         'download' => function ($url, $model, $key) use ($event) {
-                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ["file/download/{$model['dir_title']}/{$model['path']}"], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0]]);
+                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ["file/download/{$model->id}"], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0]]);
                         },
                     ],
                     'visible' => $dataProvider->totalCount,

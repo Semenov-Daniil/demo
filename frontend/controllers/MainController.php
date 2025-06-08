@@ -10,6 +10,7 @@ use common\models\Modules;
 use common\models\Roles;
 use common\models\Students;
 use common\models\Users;
+use common\services\FileService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\helpers\VarDumper;
@@ -64,7 +65,7 @@ class MainController extends Controller
     public function actionIndex()
     {
         $student = Students::findOne(['students_id' => Yii::$app->user->id]);
-        $files = Files::getDataProviderFiles($student->event->id);
+        $files = Files::getDataProviderFilesStudent($student->event->id);
         $modules = Modules::getModulesStudent($student);
 
         return $this->render('index', [
@@ -72,6 +73,31 @@ class MainController extends Controller
             'files' => $files,
             'modules' => $modules,
         ]);
+    }
+
+    /**
+     * File download
+     * 
+     * @param string $filename file name.
+     */
+    public function actionDownload(string|int $id)
+    {
+        $model = $this->findFile($id);
+        $path = (new FileService())->getFilePath($model);
+
+        if (file_exists($path)) {
+            $pathArray = explode('/', $path);
+            return Yii::$app->response
+                ->sendStreamAsFile(fopen($path, 'r'), end($pathArray), [
+                    'mimeType' => mime_content_type($path),
+                    'inline' => false,
+                ])
+                ->send();
+        }
+
+        $this->addToastMessage('Файл не найден.', 'error');
+
+        return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
     }
 
     /**
@@ -116,5 +142,16 @@ class MainController extends Controller
     {
         Yii::$app->user->logout();
         return $this->goHome();
+    }
+
+    protected function findFile(int|string $id): Files
+    {
+        if ($id && ($model = Files::findOne(['id' => $id])) !== null) {
+            return $model;
+        }
+
+        $this->addToastMessage('Файл не найден.', 'error');
+
+        throw new NotFoundHttpException('Файл не найден.');
     }
 }

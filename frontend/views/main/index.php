@@ -118,19 +118,24 @@ $this->title = 'Студент';
                         ",
                         'columns' => [
                             [
-                                // 'label' => 'Файл',
+                                'label' => 'Файл',
                                 'format' => 'raw',
                                 'content' => function ($model) {
-                                    $file = Yii::getAlias('@students/' . Yii::$app->user->identity->login . '/public/' . $model['save_name'] . '.' . $model['extension']);
+                                    $file = $model->path;
                                     $fileSize = file_exists($file) ? filesize($file) : null;
-                                    return "
-                                        <h5 class=\"fs-14 mb-1\">". $model['origin_name'] . '.' . $model['extension'] ."</h5>
-                                        <p class=\"fs-13 text-muted mb-0\">". (is_null($fileSize) ? '' : Yii::$app->fileComponent->formatSizeUnits($fileSize)) ."</p>
-                                    ";
+                                    return '<span class="fs-14 mb-1 h5">'. "{$model->name}.{$model->extension}" .'</span>' 
+                                            . (is_null($fileSize) ? '' : '<p class="fs-13 text-muted mb-0">' . Yii::$app->fileComponent->formatSizeUnits($fileSize)) . '</p>';
                                 },
                                 'options' => [
-                                    'class' => 'col-6'
+                                    'class' => 'col-4'
                                 ],
+                                'visible' => $files->totalCount,
+                            ],
+                            [
+                                'label' => 'Расположение',
+                                'value' => function ($model) {
+                                    return $model->moduleTitle;
+                                },
                                 'visible' => $files->totalCount,
                             ],
                             [
@@ -138,10 +143,7 @@ $this->title = 'Студент';
                                 'template' => '<div class="d-flex flex-wrap gap-2 justify-content-end">{download}</div>',
                                 'buttons' => [
                                     'download' => function ($url, $model, $key) {
-                                        return Html::a('<i class="ri-download-2-line"></i>', ['/download', 'filename' => $model['save_name']], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['id' => $model['save_name'], 'pjax' => 0]]);
-                                    },
-                                    'download-btn' => function ($url, $model, $key) {
-                                        return Html::button('<i class="ri-download-2-line"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-download', 'data' => ['filename' => $model['save_name']]]);
+                                        return Html::a('<i class="ri-download-2-line"></i>', ["download/{$model->id}"], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0]]);
                                     },
                                 ],
                                 'visible' => $files->totalCount,

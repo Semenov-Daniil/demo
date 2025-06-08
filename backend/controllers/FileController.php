@@ -165,14 +165,16 @@ class FileController extends BaseController
      * 
      * @param string $filename file name.
      */
-    public function actionDownload(string $filePath)
+    public function actionDownload(string|int $id)
     {
-        $file = Yii::getAlias("@events/{$filePath}");
+        $model = $this->findFile($id);
+        $path = $this->fileService->getFilePath($model);
 
-        if (file_exists($file)) {
+        if (file_exists($path)) {
+            $pathArray = explode('/', $path);
             return Yii::$app->response
-                ->sendStreamAsFile(fopen($file, 'r'), end(explode('/', $filePath)), [
-                    'mimeType' => mime_content_type($file),
+                ->sendStreamAsFile(fopen($path, 'r'), end($pathArray), [
+                    'mimeType' => mime_content_type($path),
                     'inline' => false,
                 ])
                 ->send();
@@ -183,9 +185,9 @@ class FileController extends BaseController
         return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
     }
 
-    protected function findFile(int $event, string $filename): array
+    protected function findFile(int|string $id): Files
     {
-        if ($event && $filename && ($model = Files::findFile($event, $filename)) !== null) {
+        if ($id && ($model = Files::findOne(['id' => $id])) !== null) {
             return $model;
         }
 

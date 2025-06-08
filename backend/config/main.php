@@ -69,7 +69,7 @@ return [
 
                 '/toast/<action>' => '/toast/base/<action>',
 
-                '/file/download/<filePath:.*>' => '/file/download',
+                '/file/download/<id>' => '/file/download',
             ],
         ],
     ],
