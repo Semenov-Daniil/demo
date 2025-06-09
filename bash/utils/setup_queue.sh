@@ -14,10 +14,8 @@ source "$LOCAL_CONFIG" || {
 declare -xr SERVICE_NAME="yii-queue-worker"
 declare -xr SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME.service"
 declare -xr YII_PATH="$PROJECT_ROOT/yii"
-declare -xr PHP_BIN=$(command -v php)
-
-systemctl list-units --type=service --all | grep -q "$SERVICE_NAME.service" || {
-    cat > "$SERVICE_PATH" <<EOF
+declare -xr PHP_BIN=$(command -v php) || exit 1
+declare -xr SERVICE_CNT=$(cat <<EOF
 [Unit]
 Description=Yii2 Queue Worker
 After=network.target
@@ -34,11 +32,14 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
-EOF || {
-    log_message "error" "Failed to write systemd unit file '$SERVICE_NAME.service'"
-    exit "$EXIT_GENERAL_ERROR"
-}
+EOF
+)
 
+systemctl list-units --type=service --all | grep -q "$SERVICE_NAME.service" || {
+    printf '%s' "$SERVICE_CNT" > "$SERVICE_PATH" || {
+        log_message "error" "Failed to write to '$SERVICE_PATH'"
+        exit "$EXIT_GENERAL_ERROR"
+    }
 }
 
 systemctl is-active --quiet "$SERVICE_NAME.service" || {
@@ -52,8 +53,9 @@ systemctl is-active --quiet "$SERVICE_NAME.service" || {
         exit "$EXIT_GENERAL_ERROR"
     }
 
-    local start_time=$(date +%s) timeout="15"
-    while ! $(is_active_unit "$SERVICE_NAME.service"); do
+    start_time=$(date +%s)
+    timeout="15"
+    while ! $(systemctl is-active --quiet "$SERVICE_NAME.service"); do
         [[ $(( $(date +%s) - start_time )) -gt "$timeout" ]] && {
             log_message "error" "Timeout waiting for systemd unit '$SERVICE_NAME.service' to become active"
             exit "$EXIT_GENERAL_ERROR"

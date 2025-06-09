@@ -82,12 +82,13 @@ declare -rx LOGGING_SCRIPT="${SCRIPTS_DIR}/logging/logging.fn.sh"
 declare -rx COMMON_SCRIPT="$LIB_DIR/common.sh"
 
 # Services
-declare -rax REQUIRED_SERVICES=("apache2" "openssh-server" "samba" "samba-common-bin")
+declare -rax REQUIRED_SERVICES=("apache2" "openssh-server" "samba" "samba-common-bin" "redis-server")
 declare -rAx REQUIRED_SERVICE_MAP=(
     ["apache2"]="apache2"
     ["openssh-server"]="ssh"
     ["samba"]="smbd nmbd"
     ["samba-common-bin"]=""
+    ["redis-server"]="redis-server"
 )
 
 # Lock
