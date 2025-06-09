@@ -2,6 +2,7 @@
 
 namespace common\services;
 
+use common\jobs\students\SetupStudentEvironment;
 use common\models\EncryptedPasswords;
 use common\models\Files;
 use common\models\StudentForm;
@@ -79,7 +80,11 @@ class StudentService
 
             if (!$student->save()) throw new Exception('Failed to create student');
 
-            $this->setupStudentEnvironment($student, $user->login, $user->temp_password);
+            Yii::$app->queue->push(new SetupStudentEvironment([
+                'student' => $student,
+                'login' => $user->login,
+                'password' => $user->temp_password
+            ]));
 
             $transaction->commit();
             return true;
@@ -188,7 +193,7 @@ class StudentService
      * @param string $password
      * @return bool
      */
-    private function setupStudentEnvironment(Students $student, string $login, string $password): bool
+    public function setupStudentEnvironment(Students $student, string $login, string $password): bool
     {
         if (!Yii::$app->dbComponent->createUser($login, $password)) {
             throw new Exception('Failed to create mysql account.');

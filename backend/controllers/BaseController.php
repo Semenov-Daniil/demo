@@ -14,7 +14,6 @@ class BaseController extends Controller
 
     protected function renderAjaxIfRequested(string $view, array $params): string
     {
-        session_write_close();
         return $this->request->isAjax ? $this->renderAjax($view, $params) : $this->render($view, $params);
     }
 }

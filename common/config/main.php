@@ -19,10 +19,12 @@ return [
                 '@events',
             ],
         ],
+        'queue',
     ],
     'components' => [
         'cache' => [
-            'class' => \yii\caching\FileCache::class,
+            // 'class' => \yii\caching\FileCache::class,
+            'class' => 'yii\redis\Cache',
         ],
         'view' => [
             'theme' => [
@@ -30,12 +32,6 @@ return [
                     '@frontend/views' => '@common/views',
                     '@backend/views' => '@common/views',
                 ],
-            ],
-        ],
-        'session' => [
-            'class' => 'yii\web\Session',
-            'cookieParams' => [
-                'lifetime' => 0,
             ],
         ],
         'authManager' => [
@@ -61,12 +57,29 @@ return [
                     'js'=>[]
                 ],
             ],
+        ],
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 0,
+        ],
+        'queue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'queue',
+            'as log' => \yii\queue\LogBehavior::class,
+            'ttr' => 5 * 60,
+            'attempts' => 3,
         ]
     ],
     'modules' => [
         'debug' => [
             'class' => 'yii\debug\Module',
             'allowedIPs' => ['*'],
+            'panels' => [
+                'queue' => \yii\queue\debug\Panel::class
+            ]
         ],
         'gii' => [
             'class' => 'yii\gii\Module',

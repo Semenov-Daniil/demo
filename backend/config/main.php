@@ -42,6 +42,10 @@ return [
             'loginUrl' => ['login'],
         ],
         'session' => [
+            'class' => 'yii\redis\Session',
+            // 'as sessionBehavior' => [
+            //     'class' => 'yii\base\Behavior'
+            // ],
             'name' => 'advanced-backend',
             'cookieParams' => [
                 'lifetime' => 0,

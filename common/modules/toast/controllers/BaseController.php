@@ -12,8 +12,8 @@ class BaseController extends Controller
 {
     public function actionMessages()
     {
-        $messages = Yii::$app->session->getFlash('toastify', []);
-        Yii::$app->session->close();
+        $messages = Yii::$app->session->getFlash('toastify', [], true);
+        Yii::$app->session->removeFlash('toastify');
         return $this->asJson($messages);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace common\services;
 
+use common\jobs\events\SetupEventEvironment;
 use common\models\EventForm;
 use common\models\Events;
 use common\models\ExpertForm;
@@ -51,9 +52,11 @@ class EventService
 
             if (!$event->save()) throw new Exception('Failed to save the event record to the database');
 
-            $this->createEventDirectories($event->dir_title);
-
-            $this->createModulesEvent($event, $eventModel->countModules);
+            Yii::$app->queue->push(new SetupEventEvironment([
+                'eventId' => $event->id,
+                'eventDir' => $event->dir_title,
+                'countModules' => $eventModel->countModules
+            ]));
             
             $transaction->commit();
             return true;
@@ -71,18 +74,13 @@ class EventService
                 && Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$event_dir}/{$this->public_dir}"));
     }
 
-    public function createModulesEvent(Events $event, int $countModules): bool
+    public function createModulesEvent(int $eventId, int $countModules): bool
     {
         for ($i = 0; $i < $countModules; $i++) {
-            $module = new Modules(['events_id' => $event->id]);
+            $module = new Modules(['events_id' => $eventId]);
             if (!$this->moduleService->createModule($module)) return false;
         }
         return true;
-    }
-
-    private function deleteEventDirectory(string $dirTitle): void
-    {
-        Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$dirTitle}"));
     }
 
     /**
@@ -98,21 +96,20 @@ class EventService
         }
 
         $transaction = Yii::$app->db->beginTransaction();
-
         try {
-            if ($this->studentService->deleteStudentsByEvent($event->id)
-                && $event->delete()
-            ) {
-                $this->deleteEventDirectory($event->dir_title);
-                $transaction->commit();
-                return true;
-            }
-        } catch (\Exception $e) {
-            Yii::error("Ошибка удаления события $id: " . $e->getMessage(), __METHOD__);
-        }
+            if (!$this->studentService->deleteStudentsByEvent($event->id)) throw new Exception("Failed to delete event students");
+            
+            if ($event->delete()) throw new Exception("Failed to delete event record from the database");
 
-        $transaction->rollBack();
-        return false;
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$event->dir_title}"));
+            
+            $transaction->commit();
+            return true;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::error("\nFailed delete event $id:\n" . $e->getMessage(), __METHOD__);
+            return false;
+        }
     }
 
     /**

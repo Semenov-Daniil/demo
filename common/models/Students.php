@@ -126,7 +126,8 @@ class Students extends ActiveRecord
             ->joinWith('encryptedPassword', false)
             ->joinWith('user', false)
             ->where([self::tableName() . '.events_id' => $eventId])
-            ->asArray();
+            ->asArray()
+        ;
 
         if ($withDirectories) {
             $query->joinWith('modules');
@@ -134,8 +135,9 @@ class Students extends ActiveRecord
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'totalCount' => $query->distinct()->count(),
             'pagination' => [
-                'pageSize' => $records,
+                'pageSize' => 10,
                 'route' => 'students',
             ],
         ]);

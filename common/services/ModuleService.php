@@ -2,6 +2,8 @@
 
 namespace common\services;
 
+use common\jobs\modules\ChangePrivilegesStudents;
+use common\jobs\modules\SetupModuleEvironment;
 use common\models\Events;
 use common\models\Modules;
 use common\models\Students;
@@ -52,14 +54,9 @@ class ModuleService
         try {
             if (!$model->save()) throw new Exception('Failed to save the module record to the database');
 
-            Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$model->event->dir_title}/" . $this->getDirectoryModuleFileTitle($model->number)));
-
-            $students = Students::findAll(['events_id' => $model->events_id]);
-            foreach ($students as $student) {
-                if (!$this->createStudentModuleEnvironment($student, $model)) {
-                    throw new Exception("Failed to create environment for student {$student->user->login}");
-                }
-            }
+            Yii::$app->queue->push(new SetupModuleEvironment([
+                'module' => $model,
+            ]));
 
             $transaction->commit();
             return true;
@@ -69,6 +66,19 @@ class ModuleService
             Yii::error("Error creating module: " . $e->getMessage(), __METHOD__);
             return false;
         }
+    }
+
+    public function setupModuleEnvironment(Modules $model): bool
+    {
+        Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$model->event->dir_title}/" . $this->getDirectoryModuleFileTitle($model->number)));
+
+        $students = Students::findAll(['events_id' => $model->events_id]);
+        foreach ($students as $student) {
+            if (!$this->createStudentModuleEnvironment($student, $model)) {
+                throw new Exception("Failed to create environment for student {$student->user->login}");
+            }
+        }
+        return true;
     }
 
     public function createEventModuleDirectory(string $eventDirTitle, int $moduleNumber): bool
@@ -131,9 +141,9 @@ class ModuleService
                 throw new Exception('Failed to update module status');
             }
 
-            if (!$this->changePrivilegesStudents($module)) {
-                throw new Exception('Failed to update student privileges');
-            }
+            Yii::$app->queue->push(new ChangePrivilegesStudents([
+                'module' => $module,
+            ]));
 
             $transaction->commit();
             return true;
@@ -209,9 +219,7 @@ class ModuleService
             $moduleDirTitle = $this->getDirectoryModuleFileTitle($module->number);
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$event->dir_title}/{$moduleDirTitle}"));
 
-            if (!$module->delete()) {
-                throw new Exception('Failed to delete module');
-            }
+            if (!$module->delete()) throw new Exception('Failed to delete module');
 
             $transaction->commit();
             return true;
@@ -266,6 +274,11 @@ class ModuleService
             throw new Exception("Failed to delete module {$studentModuleDir} student {$login}: {$e}");
             return false;
         }
+    }
+
+    public function removeModuleEnironment()
+    {
+
     }
 
     public function clearModules(array $moduleIds): bool

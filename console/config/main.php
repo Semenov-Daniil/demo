@@ -12,8 +12,7 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => [
         'log',
-        // 'queue',
-        // 'redis',
+        'queue',
     ],
     'controllerNamespace' => 'console\controllers',
     'aliases' => [

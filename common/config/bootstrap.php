@@ -1,6 +1,6 @@
 <?php
 
-(Dotenv\Dotenv::createImmutable(__DIR__ . '/../../'))->safeLoad();
+(Dotenv\Dotenv::createUnsafeImmutable(__DIR__ . '/../../'))->load();
 
 Yii::setAlias('@common', dirname(__DIR__));
 Yii::setAlias('@frontend', dirname(dirname(__DIR__)) . '/frontend');
