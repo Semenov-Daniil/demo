@@ -31,7 +31,6 @@ return [
                 '@yii/rbac/migrations',
             ],
         ],
-        // 'clear' => 'console\controllers\ClearController',
     ],
     'components' => [
         'log' => [
@@ -42,17 +41,18 @@ return [
                 ],
             ],
         ],
-        // 'redis' => [
-        //     'class' => 'yii\redis\Connection',
-        //     'hostname' => 'localhost',
-        //     'port' => 6379,
-        //     'database' => 0,
-        // ],
-        // 'queue' => [
-        //     'class' => 'yii\queue\redis\Queue',
-        //     'redis' => 'redis',
-        //     'channel' => 'queue',
-        // ],
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 0,
+        ],
+        'queue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'queue',
+            'as log' => \yii\queue\LogBehavior::class,
+        ]
     ],
     'params' => $params,
 ];

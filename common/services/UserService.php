@@ -50,15 +50,22 @@ class UserService
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            if ($user->id !== Yii::$app->user->id && $user->delete()) {
+            if (Yii::$app instanceof \yii\web\Application) {
+                $userId = Yii::$app->user->id;
+            } else {
+                $userId = null;
+            }
+
+            if ($user->id !== $userId && $user->delete()) {
                 $transaction->commit();
                 return true;
             }
-            $transaction->rollBack();
-            return false;
+
+            throw new Exception("Failed delete user {$user->id}");
         } catch (Exception $e) {
             $transaction->rollBack();
-            throw $e;
+            Yii::error("Error delete user: " . $e->getMessage(), __METHOD__);
+            return false;
         }
     }
 

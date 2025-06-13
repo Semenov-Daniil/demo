@@ -11,6 +11,8 @@ use Exception;
 use Yii;
 use yii\helpers\VarDumper;
 
+use function PHPUnit\Framework\returnSelf;
+
 class ModuleService
 {
     public string $logFile = '';
@@ -28,9 +30,9 @@ class ModuleService
         $this->logFile ='modules.log';
     }
 
-    public static function getDirectoryModuleFileTitle(int $moduleNumber): string
+    public static function getDirectoryModuleFileTitle(int $moduleNumber, bool $show = true): string
     {
-        return "module-{$moduleNumber}";
+        return ($show ? '' : '.') . "module-{$moduleNumber}";
     }
 
     public static function getTitleDirectoryModule(string $prefix, int $moduleNumber, bool $show = true): string
@@ -70,7 +72,8 @@ class ModuleService
 
     public function setupModuleEnvironment(Modules $model): bool
     {
-        Yii::$app->fileComponent->createDirectory(Yii::getAlias("@events/{$model->event->dir_title}/" . $this->getDirectoryModuleFileTitle($model->number)));
+        $moduleEventPath = Yii::getAlias("@events/{$model->event->dir_title}/" . $this->getDirectoryModuleFileTitle($model->number, $model->status));
+        Yii::$app->fileComponent->createDirectory($moduleEventPath);
 
         $students = Students::findAll(['events_id' => $model->events_id]);
         foreach ($students as $student) {
@@ -78,7 +81,15 @@ class ModuleService
                 throw new Exception("Failed to create environment for student {$student->user->login}");
             }
         }
+
+        $this->updatePermissionModuleEvent($moduleEventPath, $model->status);
+
         return true;
+    }
+
+    private function updatePermissionModuleEvent(string $path, bool $status): bool
+    {
+        return Yii::$app->fileComponent->updatePermission($path, $status ? "775" : "770", Yii::$app->params['siteUser'] . ':' . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
     }
 
     public function createEventModuleDirectory(string $eventDirTitle, int $moduleNumber): bool
@@ -91,7 +102,6 @@ class ModuleService
         $login = $student->user->login;
         $dbName = $this->getTitleDb($login, $module->number);
         $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
-        $publicModuleDir = $this->getDirectoryModuleFileTitle($module->number);
 
         if (!Yii::$app->dbComponent->createDb($dbName) ||
             !Yii::$app->dbComponent->changePrivileges($login, $dbName, $module->status)
@@ -105,11 +115,16 @@ class ModuleService
             throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
         }
 
-        Yii::$app->fileComponent->updatePermission(Yii::getAlias("@students/{$login}/{$studentModuleDir}"), "775", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
-
         $this->vhostService->createVirtualHost($login, $studentModuleDir, Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
+        $this->changePrivilegesStudent($module, $student);
+
         return true;
+    }
+
+    private function updatePermissionModule(Modules $module, string $moduleDirectory, string $login): bool
+    {
+        return Yii::$app->fileComponent->updatePermission($moduleDirectory, $module->status ? "770" : "070", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
     }
 
     private function addFilesToModule(string $login, string $path): bool
@@ -159,26 +174,45 @@ class ModuleService
         $students = Students::findAll(['events_id' => $module->events_id]);
 
         foreach ($students as $student) {
-            $login = $student->user->login;
+            if (!$this->changePrivilegesStudent($module, $student)) return false;
+        }
 
-            $dbName = $this->getTitleDb($login, $module->number);
-            if (!Yii::$app->dbComponent->changePrivileges($login, $dbName, $module->status)) {
+
+        $moduleOldDir = Yii::getAlias("@events/{$module->event->dir_title}/" . $this->getDirectoryModuleFileTitle($module->number, !$module->status));
+        $moduleNewDir = Yii::getAlias("@events/{$module->event->dir_title}/" . $this->getDirectoryModuleFileTitle($module->number, $module->status));
+        if (file_exists($moduleOldDir)) {
+            if (!rename($moduleOldDir, $moduleNewDir)) {
                 return false;
             }
-
-            $moduleOldDir = Yii::getAlias("@students/{$login}/" . $this->getTitleDirectoryModule($student->dir_prefix, $module->number, !$module->status));
-            $moduleNewDir = Yii::getAlias("@students/{$login}/" . $this->getTitleDirectoryModule($student->dir_prefix, $module->number, $module->status));
-            if (file_exists($moduleOldDir)) {
-                if (!rename($moduleOldDir, $moduleNewDir)) {
-                    return false;
-                }
-            }
-
-            Yii::$app->fileComponent->updatePermission($moduleNewDir, $module->status ? "770" : "070", "$login:" . Yii::$app->params['siteGroup']);
-
-            $moduleName = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
-            $this->vhostService->changeStatusVirtualHost($moduleName, $module->status);
         }
+
+        $this->updatePermissionModuleEvent($moduleNewDir, $module->status);
+
+        return true;
+    }
+
+    private function changePrivilegesStudent(Modules $module, Students $student): bool
+    {
+        $login = $student->user->login;
+
+        $dbName = $this->getTitleDb($login, $module->number);
+        if (!Yii::$app->dbComponent->changePrivileges($login, $dbName, $module->status)) {
+            return false;
+        }
+
+        $moduleOldDir = Yii::getAlias("@students/{$login}/" . $this->getTitleDirectoryModule($student->dir_prefix, $module->number, !$module->status));
+        $moduleNewDir = Yii::getAlias("@students/{$login}/" . $this->getTitleDirectoryModule($student->dir_prefix, $module->number, $module->status));
+        if (file_exists($moduleOldDir)) {
+            if (!rename($moduleOldDir, $moduleNewDir)) {
+                return false;
+            }
+        }
+
+        $this->updatePermissionModule($module, $moduleNewDir, $login);
+
+        $moduleName = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
+        $this->vhostService->changeStatusVirtualHost($moduleName, $module->status);
+
         return true;
     }
 
@@ -276,11 +310,6 @@ class ModuleService
         }
     }
 
-    public function removeModuleEnironment()
-    {
-
-    }
-
     public function clearModules(array $moduleIds): bool
     {
         foreach ($moduleIds as $id) {
@@ -324,7 +353,7 @@ class ModuleService
         foreach ($students as $student) {
             $login = $student->user->login;
             $dbName = $this->getTitleDb($login, $module->number);
-            $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number);
+            $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number, $module->status);
 
             if (!Yii::$app->dbComponent->clearDatabaseByName($dbName) ||
                 !Yii::$app->fileComponent->clearDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}"), false))

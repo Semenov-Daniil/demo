@@ -20,11 +20,19 @@ return [
             ],
         ],
         'queue',
+        'redis',
+        'redisSubscriber',
     ],
     'components' => [
         'cache' => [
             // 'class' => \yii\caching\FileCache::class,
             'class' => 'yii\redis\Cache',
+        ],
+        'session' => [
+            'class' => 'yii\redis\Session',
+            'redis' => 'redis', // указывает на компонент выше
+            'keyPrefix' => 'session:',
+            'timeout' => 3600,
         ],
         'view' => [
             'theme' => [
@@ -47,6 +55,9 @@ return [
         'commandComponent' => [
             'class' => 'common\components\CommandComponent'
         ],
+        'toast' => [
+            'class' => 'common\components\ToastComponent'
+        ],
         'assetManager' => [
             'forceCopy' => true,
             'bundles' => [
@@ -64,13 +75,17 @@ return [
             'port' => 6379,
             'database' => 0,
         ],
+        'redisSubscriber' => [
+            'class' => \Gevman\Yii2RedisSubscriber\Connection::class,
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 0,
+        ],
         'queue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'channel' => 'queue',
             'as log' => \yii\queue\LogBehavior::class,
-            'ttr' => 5 * 60,
-            'attempts' => 3,
         ]
     ],
     'modules' => [

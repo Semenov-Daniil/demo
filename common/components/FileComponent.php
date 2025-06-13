@@ -79,29 +79,35 @@ class FileComponent extends Component implements BootstrapInterface
         return true;
     }
 
-    public static function clearDirectory(string $path, bool $delete = true): bool
+    public static function clearDirectory(string $path): bool
     {
-        $realPath = realpath($path);
-        if (!$realPath || strpos($realPath, Yii::getAlias('@common')) !== 0) {
-            return false;
-        }
+        try {
+            if (!is_dir($path)) throw new \InvalidArgumentException("Directory does not exist: $path");
 
-        if (!empty($path) && is_dir($path)) {
-            $files = array_diff(scandir($path), array('.', '..'));
+            $items = scandir($path);
+            if ($items === false) {
+                return false;
+            }
 
-            
-            foreach ($files as $file) {
-                if (!self::clearDirectory(realpath($path) . '/' . $file)) {
-                    return false;
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+
+                $fullPath = $path . DIRECTORY_SEPARATOR . $item;
+
+                if (is_dir($fullPath)) {
+                    if (!self::clearDirectory($fullPath) || !rmdir($fullPath)) return false;
+                } else {
+                    if (!unlink($fullPath)) return false;
                 }
             }
 
-            return $delete ? rmdir($path) : true;
-        } else if (is_file($path) === true) {
-            return $delete ? unlink($path) : true;
+            return true;
+        } catch (Exception $e) {
+            Yii::error("\nFailed to clear the path '$path':\n{$e->getMessage()}", __METHOD__);
+            return false;
         }
-
-        return false;
     }
 
     public static function updatePermission(string $path, string $rule, string $owner, string $logFile = "")

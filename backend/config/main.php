@@ -28,10 +28,10 @@ return [
             'on beforeSend' => function ($event) {
                 $response = $event->sender;
                 if ($response->statusCode == 500) {
-                    Yii::$app->session->addFlash('toastify', [
-                        'text' => 'Произошла внутренняя ошибка сервера.',
-                        'type' => 'error'
-                    ]);
+                    // Yii::$app->session->addFlash('toastify', [
+                    //     'text' => 'Произошла внутренняя ошибка сервера.',
+                    //     'type' => 'error'
+                    // ]);
                 }
             },
         ],
@@ -42,10 +42,6 @@ return [
             'loginUrl' => ['login'],
         ],
         'session' => [
-            'class' => 'yii\redis\Session',
-            // 'as sessionBehavior' => [
-            //     'class' => 'yii\base\Behavior'
-            // ],
             'name' => 'advanced-backend',
             'cookieParams' => [
                 'lifetime' => 0,
@@ -58,6 +54,12 @@ return [
                     'class' => \yii\log\FileTarget::class,
                     'levels' => ['error', 'warning'],
                 ],
+                [
+                    'class' => \yii\log\FileTarget::class,
+                    'levels' => ['info'],
+                    'categories' => ['toast'],
+                    'logFile' => '@runtime/logs/toast.log',
+                ]
             ],
         ],
         'errorHandler' => [
@@ -70,9 +72,7 @@ return [
             'enableStrictParsing' => false,
             'rules' => [
                 '/<action:(login|logout)>' => '/main/<action>',
-
                 '/toast/<action>' => '/toast/base/<action>',
-
                 '/file/download/<id>' => '/file/download',
             ],
         ],

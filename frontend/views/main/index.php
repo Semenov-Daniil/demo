@@ -24,7 +24,7 @@ $this->title = 'Студент';
                             <h5 class="text-muted text-uppercase fs-13">ФИО</h5>
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h2 class="mb-0 cfs-22"><?= Html::encode(Yii::$app->user->identity->fullName); ?></h2>
+                                    <h2 class="mb-0 text-break"><?= Html::encode(Yii::$app->user->identity->fullName); ?></h2>
                                 </div>
                             </div>
                         </div>
@@ -62,9 +62,9 @@ $this->title = 'Студент';
                 <div class="card-header">
                     <h4 class="card-title mb-0 flex-grow-1">Подключение диска</h4>
                 </div>
-    
                 <div class="card-body">
-                    <pre class="language-markup" tabindex="0"><code class="language-markup">net use Y: \\<?= $_SERVER['SERVER_ADDR'] ?>\<?= Html::encode(Yii::$app->user->identity->login); ?> <?= Html::encode(EncryptedPasswords::decryptByPassword(Yii::$app->user->identity->encryptedPassword->encrypted_password)); ?> /user:<?= Html::encode(Yii::$app->user->identity->login); ?></code></pre>
+                    <!-- <pre class="language-markup" tabindex="0"><code class="language-markup"></code></pre> -->
+                    <pre class="language-markup"><code class="language-markup"><span>net use Y: \\<?= $_SERVER['SERVER_ADDR'] ?>\<?= Html::encode(Yii::$app->user->identity->login); ?> <?= Html::encode(EncryptedPasswords::decryptByPassword(Yii::$app->user->identity->encryptedPassword->encrypted_password)); ?> /user:<?= Html::encode(Yii::$app->user->identity->login); ?></span></code></pre>
                 </div>
             </div>
         </div>
@@ -73,9 +73,10 @@ $this->title = 'Студент';
                 <div class="card-header">
                     <h4 class="card-title mb-0 flex-grow-1">Подключение SSH</h4>
                 </div>
-    
+                
                 <div class="card-body">
-                    <pre class="language-markup" tabindex="0"><code class="language-markup">ssh <?= Html::encode(Yii::$app->user->identity->login); ?>@<?= $_SERVER['SERVER_ADDR'] ?></code></pre>
+                    <!-- <pre class="language-markup" tabindex="0"><code class="language-markup"></code></pre> -->
+                    <pre class="language-markup"><code class="language-markup">ssh <?= Html::encode(Yii::$app->user->identity->login); ?>@<?= $_SERVER['SERVER_ADDR'] ?></code></pre>
                 </div>
             </div>
         </div>
@@ -195,7 +196,7 @@ $this->title = 'Студент';
                 </div>
     
                 <div class="card-body list-group p-0 list-group-flush">
-                    <?= Html::a("<b>phpMyAdmin:</b> http://{$_SERVER['SERVER_ADDR']}/phpmyadmin/", "http://{$_SERVER['SERVER_ADDR']}/phpmyadmin/", ['class' => 'list-group-item list-group-item-action'])?>
+                    <?= Html::a("<b>phpMyAdmin:</b> http://{$_SERVER['SERVER_ADDR']}/phpmyadmin", "http://{$_SERVER['SERVER_ADDR']}/phpmyadmin/index.php?pma_username=".Yii::$app->user->identity->login."&pma_password=".EncryptedPasswords::decryptByPassword(Yii::$app->user->identity->encryptedPassword->encrypted_password), ['class' => 'list-group-item list-group-item-action'])?>
                 </div>
             </div>
         </div>

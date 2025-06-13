@@ -97,7 +97,7 @@ check_global_section() {
 # Проверка и обновление student.conf
 check_student_template() {
     local template_content
-    template_content=$(envsubst '${WORKSPACE_USER} ${SITE_GROUP}' < "$TEMPLATE_CONF") || {
+    template_content=$(envsubst '${WORKSPACE_USER} ${STUDENT_GROUP}' < "$TEMPLATE_CONF") || {
         log_message "error" "Failed to process template '$TEMPLATE_CONF'"
         return "$EXIT_GENERAL_ERROR"
     }

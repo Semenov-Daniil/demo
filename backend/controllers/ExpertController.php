@@ -61,6 +61,13 @@ class ExpertController extends BaseController
      */
     public function actionExperts(): string
     {
+        Yii::$app->toast->addToast("Welcome 1!", 'success');
+        Yii::$app->toast->addToast("Welcome 2!", 'success');
+        Yii::$app->toast->addToast("Welcome 3!", 'success');
+
+        // var_dump(Yii::$app->toast->getNextMessage(Yii::$app->user->id,10));
+        // die;
+
         return $this->render('experts', [
             'model' => new ExpertForm(),
             'dataProvider' => Experts::getExpertsDataProvider(),

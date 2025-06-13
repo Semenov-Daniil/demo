@@ -161,7 +161,7 @@ class FileService
      */
     public function getFileDirectory(Files $model): string
     {
-        return $this->getEventBasePath($model) . '/' . ($model->modules_id ? $this->moduleService->getDirectoryModuleFileTitle($model->module->number) : self::PUBLIC_DIR);
+        return $this->getEventBasePath($model) . '/' . ($model->modules_id ? $this->moduleService->getDirectoryModuleFileTitle($model->module->number, $model->module->number) : self::PUBLIC_DIR);
     }
 
     /**

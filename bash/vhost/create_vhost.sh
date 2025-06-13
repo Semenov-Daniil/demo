@@ -35,7 +35,7 @@ setup_vhost() {
     local user="$1" domain="$2" directory="$3"
     [[ -z "$user" ]] && { log_message "error" "No virtual host username provided"; return "$EXIT_INVALID_ARG"; }
     [[ -z "$domain" ]] && { log_message "error" "No virtual host domain provided"; return "$EXIT_INVALID_ARG"; }
-    [[ -z "$directory" || ! -d "$directory" ]] && { log_message "error" "No virtual host directory provided"; return "$EXIT_INVALID_ARG"; }
+    [[ -z "$directory" || ! -d "$directory" ]] && { log_message "error" "No virtual host directory '$directory' provided"; return "$EXIT_INVALID_ARG"; }
 
     [[ ! "$domain" =~ ^[a-zA-Z0-9._-]+$ ]] && { log_message "error" "Invalid virtual host domain '$domain'"; return "$EXIT_INVALID_ARG"; }
 

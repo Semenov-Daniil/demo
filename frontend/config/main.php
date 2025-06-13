@@ -24,8 +24,11 @@ return [
             'loginUrl' => ['login'],
         ],
         'session' => [
-            // this is the name of the session cookie used for login on the frontend
+            'class' => 'yii\redis\Session',
             'name' => 'advanced-frontend',
+            'cookieParams' => [
+                'lifetime' => 0,
+            ],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
@@ -46,7 +49,7 @@ return [
             'rules' => [
                 '/<action>' => '/main/<action>',
                 '/download/<id>' => '/main/download',
-                // '/toast/<action>' => '/toast/base/<action>',
+                '/toast/<action>' => '/toast/base/<action>',
             ],
         ],
         
