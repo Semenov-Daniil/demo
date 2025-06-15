@@ -13,7 +13,7 @@ use common\assets\ChoicesAsset;
 use yii\helpers\Html;
 use yii\widgets\Pjax;
 
-$this->title = 'Участники';
+$this->title = 'Данные студентов';
 
 BackendAppAsset::register($this);
 ChoicesAsset::register($this);
@@ -24,10 +24,10 @@ $this->registerJsFile('@web/js/modules/student-data/student-data.js', ['depends'
 
 <div class="row mb-4">
     <div class="col-12 field-choices">
-        <?= Html::label('Чемпионат', 'events-select'); ?>
+        <?= Html::label('Событие', 'events-select'); ?>
         <?= Html::dropDownList('events-select', $event?->id, $events, [
             'id' => 'events-select',
-            'prompt' => 'Выберите чемпионат', 
+            'prompt' => 'Выберите событие', 
             'data' => [
                 'choices' => true, 
                 'choices-group' => true, 

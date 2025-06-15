@@ -61,16 +61,11 @@ class ExpertController extends BaseController
      */
     public function actionExperts(): string
     {
-        Yii::$app->toast->addToast("Welcome 1!", 'success');
-        Yii::$app->toast->addToast("Welcome 2!", 'success');
-        Yii::$app->toast->addToast("Welcome 3!", 'success');
-
-        // var_dump(Yii::$app->toast->getNextMessage(Yii::$app->user->id,10));
-        // die;
+        $dataProvider = Experts::getExpertsDataProvider(Yii::$app->request->get('page', 0));
 
         return $this->render('experts', [
             'model' => new ExpertForm(),
-            'dataProvider' => Experts::getExpertsDataProvider(),
+            'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -81,13 +76,14 @@ class ExpertController extends BaseController
         if ($this->request->isPost && $model->load(Yii::$app->request->post())) {
             $success = $this->expertService->createExpert($model);
 
-            $this->addToastMessage(
+            Yii::$app->toast->addToast(
                 $success ? 'Эксперт успешно добавлен.' : 'Не удалось добавить эксперта.',
                 $success ? 'success' : 'error'
             );
 
             if ($success) {
                 $model = new ExpertForm();
+                Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
             }
         }
 
@@ -96,8 +92,10 @@ class ExpertController extends BaseController
 
     public function actionListExperts(): string
     {
+        $dataProvider = Experts::getExpertsDataProvider(Yii::$app->request->get('page', 0));
+
         return $this->renderAjaxIfRequested('_experts-list', [
-            'dataProvider' => Experts::getExpertsDataProvider(),
+            'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -109,7 +107,7 @@ class ExpertController extends BaseController
         if ($this->request->isPatch && $model->load($this->request->post())) {
             $result['success'] = $this->expertService->updateExpert($id, $model);
 
-            $this->addToastMessage(
+            Yii::$app->toast->addToast(
                 $result['success'] ? 'Эксперт успешно обновлен.' : 'Не удалось обновить эксперта.',
                 $result['success'] ? 'success' : 'error'
             );
@@ -118,6 +116,8 @@ class ExpertController extends BaseController
             foreach ($model->getErrors() as $attribute => $errors) {
                 $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
+
+            if ($result['success']) Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
 
             return $this->asJson($result);
         }
@@ -141,15 +141,22 @@ class ExpertController extends BaseController
         $result['success'] = $count && $this->expertService->deleteExperts($experts);
         $result['message'] = $result['success'] ? 'Experts deleted.' : 'Experts not deleted.';
 
-        $this->addToastMessage(
+        Yii::$app->toast->addToast(
             $result['success'] 
                 ? ($count > 1 ? 'Эксперты успешно удалены.' : 'Эксперт успешно удален.') 
                 : ($count > 1 ? 'Не удалось удалить экспертов.' : 'Не удалось удалить эксперта.'),
             $result['success'] ? 'success' : 'error'
         );
 
+        if ($result['success']) Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
+
         $result['code'] = Yii::$app->response->statusCode;
         return $this->asJson($result);
+    }
+
+    public function actionSseDataUpdates()
+    {
+        Yii::$app->sse->subscriber(Yii::$app->sse::EXPERT_CHANNEL);
     }
 
     protected function findExpertForm(?string $id): ExpertForm

@@ -14,6 +14,8 @@ class BaseController extends Controller
 {
     use SseTrait;
 
+    public $enableCsrfValidation = false;
+
     public function behaviors()
     {
         return [
@@ -30,9 +32,6 @@ class BaseController extends Controller
         ];
     }
 
-    /**
-     * SSE-поток для toast-уведомлений
-     */
     public function actionNotifications()
     {
         Yii::$app->response->format = Response::FORMAT_RAW;
@@ -45,7 +44,7 @@ class BaseController extends Controller
         echo ": ready\n\n";
         flush();
 
-        $subscriber = Yii::$app->redisSubscriber;
+        $subscriber = Yii::$app->redisNotifications;
         $subscriber->listen(
             $channel, 
             function($type, $channel, $message) {
@@ -74,8 +73,7 @@ class BaseController extends Controller
 
     public function sendEvent($data)
     {
-        echo 'data: ' . $data . "\n\n";
-        @ob_flush();
-        @flush();
+        echo "data: $data\n\n";
+        return @ob_flush() && @flush();
     }
 }

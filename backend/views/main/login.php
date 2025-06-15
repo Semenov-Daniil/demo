@@ -85,7 +85,7 @@ $this->title = 'Авторизация';
 
                     <?php ActiveForm::end(); ?>
                 <?php Pjax::end(); ?>
-                <p class="mb-0 mt-3">Expert: <?= empty($expert) ? (Yii::$app->params['superExpert']['login'] . '/' . Yii::$app->params['superExpert']['password']) : $expert['login'] . '/' . EncryptedPasswords::decryptByPassword($expert['encrypted_password']) ?></p>
+                <!-- <p class="mb-0 mt-3">Expert: <?= empty($expert) ? (Yii::$app->params['superExpert']['login'] . '/' . Yii::$app->params['superExpert']['password']) : $expert['login'] . '/' . EncryptedPasswords::decryptByPassword($expert['encrypted_password']) ?></p> -->
             </div>
         </div>
         <!-- end card body -->

@@ -46,9 +46,28 @@ else
 fi
 IP=${IP:-"unknown"}
 
+command_not_found_handle() (
+    echo "Command not found '$1'"
+)
+
+# Welcome message
+cat << 'INNER_EOF'
+
+██╗  ██╗███████╗██╗██████╗ ████████╗██████╗ ██╗   ██╗
+██║ ██╔╝██╔════╝██║██╔══██╗╚══██╔══╝██╔══██╗██║   ██║
+█████╔╝ ███████╗██║██████╔╝   ██║   ██████╔╝██║   ██║
+██╔═██╗ ╚════██║██║██╔═══╝    ██║   ██╔══██╗██║   ██║
+██║  ██╗███████║██║██║        ██║██╗██║  ██║╚██████╔╝
+╚═╝  ╚═╝╚══════╝╚═╝╚═╝        ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝ 
+                                                     
+INNER_EOF
+
 # Last login
 last_login="$(grep "\[LOGIN\]" "$LOGFILE" | tail -n 2 | head -n 1 | sed 's/\[LOGIN\] //g')"
 [ ! -z "$last_login" ] && echo "Last login: $last_login"
+
+echo "Welcome $USER!"
+echo "Your work directory ~$WORKSPACE_USERS"
 
 # Logging login
 if [ -z "${LOGIN_LOGGED:-}" ]; then
@@ -62,25 +81,6 @@ trap 'echo "[LOGOUT] $(date "+%Y-%m-%d %H:%M:%S") | User: $USER_NAME | IP: $IP" 
 # Clear history
 history -c
 > "$HOME/.bash_history"
-
-command_not_found_handle() (
-    echo "Command not found '$1'"
-)
-
-# Welcome message
-cat << 'INNER_EOF'
-
-██████╗ ███████╗███╗   ███╗ ██████╗    ██████╗ ██╗   ██╗
-██╔══██╗██╔════╝████╗ ████║██╔═══██╗   ██╔══██╗██║   ██║
-██║  ██║█████╗  ██╔████╔██║██║   ██║   ██████╔╝██║   ██║
-██║  ██║██╔══╝  ██║╚██╔╝██║██║   ██║   ██╔══██╗██║   ██║
-██████╔╝███████╗██║ ╚═╝ ██║╚██████╔╝██╗██║  ██║╚██████╔╝
-╚═════╝ ╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═╝╚═╝  ╚═╝ ╚═════╝
-
-INNER_EOF
-
-echo "Welcome $USER!"
-echo "Your work directory ~$WORKSPACE_USERS"
 
 [[ -f "$HOME/.bash-preexec.sh" ]] || {
     echo "Failed to source to preexec"

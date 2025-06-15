@@ -63,7 +63,7 @@ class StudentDataController extends BaseController
     public function actionStudents(?int $event = null): string
     {
         return $this->render('students', [
-            'dataProvider' => Students::getDataProviderStudents($event, true),
+            'dataProvider' => Students::getDataProviderStudents($event, true, 'student-data', 9),
             'events' => $this->getEvents(),
             'event' => $this->findEvent($event),
         ]);
@@ -72,7 +72,7 @@ class StudentDataController extends BaseController
     public function actionListStudents(?string $event = null): string
     {
         return $this->renderAjaxIfRequested('_students-list', [
-            'dataProvider' => Students::getDataProviderStudents($event, true), 
+            'dataProvider' => Students::getDataProviderStudents($event, true, 'student-data', 9), 
             'event' => $this->findEvent($event),
         ]);
     }
@@ -131,7 +131,7 @@ class StudentDataController extends BaseController
                     unlink($zipFilePath);
                 });
         } catch (\Exception $e) {
-            $this->addToastMessage('Не удалось скачать архив.', 'error');
+            Yii::$app->toast->addToast('Не удалось скачать архив.', 'error');
     
             return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
         }
@@ -143,7 +143,7 @@ class StudentDataController extends BaseController
             return $model;
         }
 
-        $this->addToastMessage('Студент не найден.', 'error');
+        Yii::$app->toast->addToast('Студент не найден.', 'error');
 
         throw new NotFoundHttpException('Студент не найден.');
     }

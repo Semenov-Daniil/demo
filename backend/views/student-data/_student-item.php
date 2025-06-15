@@ -32,6 +32,14 @@ use yii\widgets\ListView;
         <ul class="list-group list-group-flush">
             <li class="list-group-item"><b>Логин:</b> <?= Html::encode($model['login']); ?></li>
             <li class="list-group-item"><b>Пароль:</b> <?= Html::encode($model['password']); ?></li>
+            <li class="list-group-item">
+                <b>Модули</b>
+                <ul class="list-group list-group-flush">
+                    <?php foreach ($model['modules'] as $module): ?>
+                        <?= Html::a("Модуль {$module['number']}: http://{$module['domain']}", "http://{$module['domain']}", ['class' => 'list-group-item'])?>
+                    <?php endforeach; ?>
+                </ul>
+            </li>
         </ul>
     </div>
 </div>

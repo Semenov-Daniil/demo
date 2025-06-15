@@ -40,7 +40,7 @@ $this->registerJsFile('@web/js/modules/student/studentsList.js', ['depends' => [
                 'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
                 'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>',
             ],
-            'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. Добавьте студентов.'),
+            'emptyText' => (is_null($event) ? 'Выберите событие.' : 'Ничего не найдено. Добавьте студентов.'),
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],

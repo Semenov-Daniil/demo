@@ -76,7 +76,7 @@ class Files extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'events_id' => 'Чемпионат',
+            'events_id' => 'Событие',
             'modules_id' => 'Расположение',
             'name' => 'Название',
             'extension' => 'Расширение',

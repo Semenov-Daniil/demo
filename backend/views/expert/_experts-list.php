@@ -17,11 +17,15 @@ $this->registerJsFile('@web/js/modules/expert/expertsList.js', ['depends' => Yii
 <?php if ($dataProvider->totalCount): ?> 
 <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
     <?= Html::button('
-        <span>
-            <i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все
-        </span>
+        <span><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>
     ', ['class' => 'btn btn-primary btn-select-all-experts']) ?>
-    <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-experts', 'disabled' => true]) ?>
+    <?= Html::button('
+        <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</div>
+        <div class="d-flex align-items-center d-none cnt-load">
+            <span class="spinner-border flex-shrink-0" role="status"></span>
+            <span class="flex-grow-1 ms-2">Удаление...</span>
+        </div>
+    ', ['class' => 'btn btn-danger btn-load btn-delete-selected-experts', 'disabled' => true]) ?>
 </div>
 <?php endif; ?>
 
@@ -119,6 +123,12 @@ $this->registerJsFile('@web/js/modules/expert/expertsList.js', ['depends' => Yii
                     'options' => [
                         'class' => 'col-4'
                     ],
+                    // 'headerOptions' => [
+                    //     'class' => 'text-center'
+                    // ],
+                    // 'contentOptions' => [
+                    //     'class' => 'text-center'
+                    // ],
                     'visible' => $dataProvider->totalCount
                 ],
                 [
@@ -130,10 +140,13 @@ $this->registerJsFile('@web/js/modules/expert/expertsList.js', ['depends' => Yii
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']], 'title' => 'Удалить']);
+                            return Html::button('
+                                <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line ri-lg"></i></div>
+                                <div class="d-flex align-items-center d-none cnt-load"><span class="spinner-border flex-shrink-0" role="status"></span></div>
+                            ', ['class' => 'btn btn-icon btn-danger btn-soft-danger btn-load btn-delete', 'data' => ['id' => $model['id']], 'title' => 'Удалить']);
                         },
                         'update' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-pencil-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-info btn-update', 'data' => ['id' => $model['id']], 'title' => 'Редактировать']);
+                            return Html::button('<i class="ri-pencil-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-info  btn-update', 'data' => ['id' => $model['id']], 'title' => 'Редактировать']);
                         },
                     ],
                     'visibleButtons' => [

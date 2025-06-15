@@ -11,29 +11,54 @@ class CommonUtils
     static performAjax(options) {
         const defauls = {
             method: 'POST',
-            complete: () => this.getFlashMessages(),
             error: (jqXHR) => jqXHR.status == 500 ?? location.reload(),
         };
         return $.ajax({...defauls, ...options});
     }
 
-    static async reloadPjax(container, url, options = []) {
-        const pjaxOptions = {
-            container: container,
-            url: url,
-            pushState: false,
-            replace: false,
-            scrollTo: false,
-            timeout: 5000,
-            ...options,
-        };
-        await $.pjax.reload(pjaxOptions);
+    pjaxStatusMap = {};
+
+    static setupPjaxTrackingFor(containerSelector) {
+        this.pjaxStatusMap[containerSelector] = false;
+
+        $(document)
+            .on('pjax:start', function (event, xhr, options) {
+                if (options.container === containerSelector) {
+                    this.pjaxStatusMap[containerSelector] = true;
+                }
+            })
+            .on('pjax:end', function (event, xhr, options) {
+                if (options.container === containerSelector) {
+                    this.pjaxStatusMap[containerSelector] = false;
+                }
+            });
     }
 
-    static async getFlashMessages() {
-        if (typeof fetchFlashMessages === 'function') {
-            await fetchFlashMessages();
-        }
+    static isPjaxActiveFor(containerSelector) {
+        return this.pjaxStatusMap[containerSelector] === true;
+    }
+
+    static async reloadPjax(container, url, options = {}) {
+        return new Promise((resolve, reject) => {
+            const pjaxOptions = {
+                container: container,
+                url: url,
+                pushState: false,
+                replace: false,
+                scrollTo: false,
+                timeout: 5000,
+                ...options,
+            };
+            $.pjax.reload(pjaxOptions)
+                .done(resolve)
+                .fail((xhr, textStatus, errorThrown) => {
+                    if (textStatus !== 'abort') {
+                        reject(errorThrown || xhr);
+                    } else {
+                        resolve();
+                    }
+                });
+        });
     }
 
     static inputStepInit(input) {
@@ -112,40 +137,79 @@ class CommonUtils
     }
 
     static debounceWithPjax(fn, delay, pjaxContainer) {
-        let timeoutId = null;
-        let isPjaxPending = false;
-    
-        const checkPjaxStatus = () => {
-            return $(pjaxContainer).data('pjax-active') === true;
-        };
-    
-        const execute = async (...args) => {
-            if (!isPjaxPending) {
-                try {
-                    await fn(...args);
-                } catch (error) {
-                    console.error('Error in debounced PJAX execution:', error);
+        let isProcessing = false;
+        let queue = [];
+        let currentXhr = null;
+
+        const execute = async () => {
+            if (isProcessing || queue.length === 0) return;
+
+            isProcessing = true;
+            const { args, resolve, reject } = queue[0];
+
+            try {
+                await fn(...args, {
+                    beforeSend: (xhr) => {
+                        currentXhr = xhr;
+                    },
+                    complete: () => {
+                        currentXhr = null;
+                    }
+                });
+                resolve();
+            } catch (error) {
+                console.error('Error in debounced PJAX execution:', error);
+                reject(error);
+            } finally {
+                isProcessing = false;
+                queue.shift();
+                if (queue.length > 0) {
+                    setTimeout(execute, delay);
                 }
             }
         };
-    
+
         return function (...args) {
-            clearTimeout(timeoutId);
-    
-            isPjaxPending = checkPjaxStatus();
-    
-            if (isPjaxPending) {
-                const onPjaxComplete = async () => {
-                    isPjaxPending = false;
-                    $(pjaxContainer).off('pjax:complete', onPjaxComplete);
-                    await execute(...args);
-                };
-                $(pjaxContainer).off('pjax:complete').on('pjax:complete', onPjaxComplete);
-            } else {
-                timeoutId = setTimeout(async () => {
-                    await execute(...args);
-                }, delay);
+            return new Promise((resolve, reject) => {
+                if (currentXhr && currentXhr.readyState !== 4) {
+                    currentXhr.abort();
+                    currentXhr = null;
+                }
+
+                queue.push({ args, resolve, reject });
+
+                if (queue.length > 1) {
+                    queue = [queue[queue.length - 1]];
+                }
+
+                if (!isProcessing) {
+                    setTimeout(execute, delay);
+                }
+            });
+        };
+    }
+
+    static connectDataSSE(url, fn, pjax, urlPjax) {
+        const source = new EventSource(url);
+        this.closeSSE(source);
+        source.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.hasUpdates) {
+                fn(pjax, urlPjax);
             }
         };
+        source.onerror = function() {
+            source.close();
+            setTimeout(CommonUtils.connectDataSSE, 5000);
+        };
+    }
+
+    static closeSSE(source) {
+        const sourceSSE = source;
+        window.addEventListener('beforeunload', function() {
+            if (sourceSSE) {
+                sourceSSE.close();
+            }
+        });
     }
 };

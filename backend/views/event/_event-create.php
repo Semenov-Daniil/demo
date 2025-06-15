@@ -44,7 +44,7 @@ $this->registerJsFile('@web/js/modules/event/eventCreate.js', ['depends' => [Yii
                     <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3 field-choices']])->dropDownList($experts, ['prompt' => 'Выберите эксперта',  'data' => ['choices' => true, 'choices-removeItem' => true]])?>
                 <?php endif;?>
 
-                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-4' : '')]])->textInput(['placeholder' => 'Введите название чемпионата']) ?>
+                <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-4' : '')]])->textInput(['placeholder' => 'Введите название события']) ?>
             
                 <?= $form->field($model, 'countModules', ['options' => ['class' => 'col-md-4 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-3' : '')]])->textInput(['type' => 'number', 'class' => 'form-control cleave-number', 'min' => 1, 'value' => ($model->countModules ? $model->countModules : 1), 'placeholder' => 'Введите кол-во модулей', 'data' => ['step' => true]]) ?>
 

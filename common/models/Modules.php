@@ -39,7 +39,7 @@ class Modules extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['events_id'], 'required', 'message' => 'Необходимо выбрать чемпионат.'],
+            [['events_id'], 'required', 'message' => 'Необходимо выбрать событие.'],
             [['events_id', 'number'], 'integer'],
             ['status', 'boolean'],
             ['status', 'default', 'value' => true],
@@ -55,7 +55,7 @@ class Modules extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'events_id' => 'Чемпионат',
+            'events_id' => 'Событие',
             'status' => 'Статус',
             'number' => 'Номер модуля',
         ];

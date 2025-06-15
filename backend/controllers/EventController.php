@@ -78,7 +78,7 @@ class EventController extends BaseController
         if ($this->request->isPost && $form->load(Yii::$app->request->post())) {
             $success = $this->eventService->createEvent($form);
 
-            $this->addToastMessage(
+            Yii::$app->toast->addToast(
                 $success ? 'Чемпионат успешно создан.' : 'Не удалось создать чемпионат.',
                 $success ? 'success' : 'error'
             );
@@ -107,7 +107,7 @@ class EventController extends BaseController
         if ($this->request->isPatch && $model->load($this->request->post())) {
             $result['success'] = $model->save();
 
-            $this->addToastMessage(
+            Yii::$app->toast->addToast(
                 $result['success'] ? 'Чемпионат успешно обновлен.' : 'Не удалось обновить чемпионат.',
                 $result['success'] ? 'success' : 'error'
             );
@@ -142,7 +142,7 @@ class EventController extends BaseController
         $result['success'] = $count && $this->eventService->deleteEvents($events);
         $result['message'] = $result['success'] ? 'Events deleted.' : 'Experts not deleted.';
 
-        $this->addToastMessage(
+        Yii::$app->toast->addToast(
             $result['success'] 
                 ? ($count > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.') 
                 : ($count > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.'),
@@ -166,7 +166,7 @@ class EventController extends BaseController
             return $model;
         }
 
-        $this->addToastMessage('Чемпионат не найден.', 'error');
+        Yii::$app->toast->addToast('Чемпионат не найден.', 'error');
 
         throw new NotFoundHttpException('Чемпионат не найден.');
     }

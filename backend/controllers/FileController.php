@@ -110,7 +110,7 @@ class FileController extends BaseController
                     }
                 }
 
-                $this->addToastMessage(
+                Yii::$app->toast->addToast(
                     $result['success'] 
                         ? ($count > 1 ? 'Файлы успешно сохранены.' : 'Файл успешно сохранен.') 
                         : ($count > 1 ? 'Не удалось сохранить файлы.' : 'Не удалось сохранить файл.'),
@@ -149,7 +149,7 @@ class FileController extends BaseController
         $result['success'] = $count && $this->fileService->deleteFilesEvent($files);
         $result['message'] = $result['success'] ? 'Files deleted.' : 'Files not deleted.';
 
-        $this->addToastMessage(
+        Yii::$app->toast->addToast(
             $result['success'] 
                 ? ($count > 1 ? 'Файлы успешно удалены.' : 'Файл успешно удален.') 
                 : ($count > 1 ? 'Не удалось удалить файлы.' : 'Не удалось удалить файл.'),
@@ -180,7 +180,7 @@ class FileController extends BaseController
                 ->send();
         }
 
-        $this->addToastMessage('Файл не найден.', 'error');
+        Yii::$app->toast->addToast('Файл не найден.', 'error');
 
         return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
     }
@@ -191,7 +191,7 @@ class FileController extends BaseController
             return $model;
         }
 
-        $this->addToastMessage('Файл не найден.', 'error');
+        Yii::$app->toast->addToast('Файл не найден.', 'error');
 
         throw new NotFoundHttpException('Файл не найден.');
     }

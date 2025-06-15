@@ -79,3 +79,10 @@ bash "$ADD_SAMBA_USER" "$USERNAME" "$PASSWORD" || exit $?
 bash "$CONFIG_SSH" || exit $?
 
 exit 0
+
+
+
+
+
+
+

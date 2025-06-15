@@ -62,7 +62,6 @@ $(() => {
         .off('pjax:complete')
         .on('pjax:complete', () => {
             CommonUtils.toggleButtonState($('.btn-create-student'), false);
-            CommonUtils.getFlashMessages();
             CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${paramQueryEvent()}`);
         });
 

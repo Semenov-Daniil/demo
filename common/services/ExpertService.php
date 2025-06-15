@@ -94,27 +94,21 @@ class ExpertService
     private function deleteExpert(?int $id): bool
     {
         $user = Users::findOne($id);
-        if (!$user || $user->id === Yii::$app->user->id) {
-            return false;
-        }
+        if (!$user) return true;
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
             $eventIds = array_column($user->events, 'id');
-            
-            if ($this->eventService->deleteEvents($eventIds)
-                && $this->userService->deleteUser($id)
-            ) {
-                $transaction->commit();
-                return true;
-            }
+            $this->eventService->deleteEvents($eventIds);
+
+            if (!$this->userService->deleteUser($id)) throw new Exception("Failed to delete user ($id)");
     
-            $transaction->rollBack();
+            $transaction->commit();
+            return true;
         } catch (Exception $e) {
             $transaction->rollBack();
-            var_dump($e);die;
+            Yii::error("\nFailed to remove the expert ($id):\n{$e->getMessage()}", __METHOD__);
+            return false;
         }
-
-        return false;
     }
 }

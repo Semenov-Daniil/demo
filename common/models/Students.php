@@ -7,6 +7,7 @@ use app\components\DbComponent;
 use app\components\FileComponent;
 use common\services\ModuleService;
 use common\services\StudentService;
+use common\services\VirtualHostService;
 use common\traits\RandomStringTrait;
 use Exception;
 use Yii;
@@ -60,7 +61,7 @@ class Students extends ActiveRecord
     {
         return [
             'students_id' => 'Студент',
-            'events_id' => 'Чемпионат',
+            'events_id' => 'Событие',
             'dir_prefix' => 'Директория',
         ];
     }
@@ -112,7 +113,7 @@ class Students extends ActiveRecord
      * 
      * @return ActiveDataProvider
      */
-    public static function getDataProviderStudents(string|int|null $eventId = null, bool $withDirectories = false, int $records = 10): ActiveDataProvider
+    public static function getDataProviderStudents(string|int|null $eventId = null, bool $withDirectories = false, string $route = 'student', int $records = 10): ActiveDataProvider
     {
         $query = self::find()
             ->select([
@@ -137,8 +138,8 @@ class Students extends ActiveRecord
             'query' => $query,
             'totalCount' => $query->distinct()->count(),
             'pagination' => [
-                'pageSize' => 10,
-                'route' => 'students',
+                'pageSize' => $records,
+                'route' => $route,
             ],
         ]);
     
@@ -146,9 +147,10 @@ class Students extends ActiveRecord
         foreach ($models as &$model) {
             $model['password'] = EncryptedPasswords::decryptByPassword($model['password']);
             if ($withDirectories && !empty($model['modules'])) {
-                $model['modules'] = array_map(function ($directory) use ($model) {
-                    $directory['title'] = ModuleService::getTitleDirectoryModule($model['dir_prefix'], $directory['number']);
-                    return $directory;
+                $model['modules'] = array_map(function ($module) use ($model) {
+                    $module['title'] = ModuleService::getTitleDirectoryModule($model['dir_prefix'], $module['number']);
+                    $module['domain'] = VirtualHostService::getDomain(ModuleService::getTitleDirectoryModule($model['dir_prefix'], $module['number']));
+                    return $module;
                 }, $model['modules']);
             }
         }

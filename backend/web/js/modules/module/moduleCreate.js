@@ -62,7 +62,6 @@ $(() => {
         .off('pjax:complete')
         .on('pjax:complete', () => {
             CommonUtils.toggleButtonState($('.btn-create-module'), false);
-            CommonUtils.getFlashMessages();
             CommonUtils.reloadPjax(pjaxModules, `${url}/list-modules${paramQueryEvent()}`);
         });
 

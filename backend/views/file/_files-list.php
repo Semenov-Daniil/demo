@@ -38,7 +38,7 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
                 'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
                 'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>'
             ],
-            'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. Добавьте файлы.'),
+            'emptyText' => (is_null($event) ? 'Выберите событие.' : 'Ничего не найдено. Добавьте файлы.'),
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],

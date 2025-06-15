@@ -12,7 +12,7 @@ use yii\widgets\ListView;
 ?>
 
 <div class="">
-    <h4 class="card-title m-0">Данные участников<?= (!is_null($event) ? ". {$event?->expert->fullName}. {$event?->title}" : ''); ?></h4>
+    <h4 class="card-title m-0">Данные студентов<?= (!is_null($event) ? ". {$event?->expert->fullName}. {$event?->title}" : ''); ?></h4>
 </div>
 
 <?= ListView::widget([
@@ -48,7 +48,7 @@ use yii\widgets\ListView;
             'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
             'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>',
         ],
-        'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. ' . Html::a('Добавить студентов <i class="ri-arrow-right-s-line align-middle lh-1"></i>', ['/student', 'event' => $event?->id], ['class' => 'card-link link-secondary', 'data-pjax' => 0])),
+        'emptyText' => (is_null($event) ? 'Выберите событие.' : 'Ничего не найдено. ' . Html::a('Добавить студентов <i class="ri-arrow-right-s-line align-middle lh-1"></i>', ['/student', 'event' => $event?->id], ['class' => 'card-link link-secondary', 'data-pjax' => 0])),
         'emptyTextOptions' => [
             'class' => 'text-center pt-3',
         ],

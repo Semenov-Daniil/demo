@@ -43,7 +43,7 @@ $this->registerJsFile('@web/js/modules/expert/experts.js', ['depends' => Backend
 <div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-experts',
-        'enablePushState' => false,
+        // 'enablePushState' => false,
         'timeout' => 5000,
         'clientOptions' => ['cache' => true],
     ]); ?>

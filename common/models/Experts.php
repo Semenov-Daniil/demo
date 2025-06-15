@@ -32,7 +32,7 @@ class Experts extends Model
      * 
      * @return ActiveDataProvider
      */
-    public static function getExpertsDataProvider(int $records = 10): ActiveDataProvider
+    public static function getExpertsDataProvider(int $page = 0, int $records = 10): ActiveDataProvider
     {
         $query = Users::find()
             ->select([
@@ -44,7 +44,8 @@ class Experts extends Model
             ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
             ->joinWith('encryptedPassword', false)
             ->orderBy([
-                new Expression('CASE WHEN ' . Users::tableName() . '.id = ' . Yii::$app->user->id . ' THEN 0 ELSE 1 END')
+                new Expression('CASE WHEN ' . Users::tableName() . '.id = ' . Yii::$app->user->id . ' THEN 0 ELSE 1 END'),
+                'id' => SORT_ASC,
             ])
             ->asArray()
         ;
@@ -53,7 +54,8 @@ class Experts extends Model
             'query' => $query,
             'pagination' => [
                 'pageSize' => $records,
-                'route' => 'experts',
+                // 'page' => ($page > 0 ? ($page - 1) : 0),
+                'route' => 'expert',
             ],
         ]);
 

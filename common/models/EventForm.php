@@ -43,7 +43,7 @@ class EventForm extends Model
     {
         return [
             'expert' => 'Эксперт',
-            'title' => 'Название чемпионата',
+            'title' => 'Название события',
             'countModules' => 'Кол-во модулей',
         ];
     }

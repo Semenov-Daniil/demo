@@ -22,7 +22,7 @@ class ToastComponent extends Component
             'text' => $message,
             'type' => $type
         ]);
-        Yii::$app->redis->publish($channel, $content);
+        $this->redis->publish($channel, $content);
     }
 
     public static function getСhannel(): string

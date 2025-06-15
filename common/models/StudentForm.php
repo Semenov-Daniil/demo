@@ -41,7 +41,7 @@ class StudentForm extends Model
             'surname' => 'Фамилия',
             'name' => 'Имя',
             'patronymic' => 'Отчество',
-            'events_id' => 'Чемпионат',
+            'events_id' => 'Событие',
         ];
     }
 }

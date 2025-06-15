@@ -1,6 +1,8 @@
 $(() => {
     const $pjaxCreateExpert = $('#pjax-create-expert');
-    const pjaxExperts = '#pjax-experts';
+    // const pjaxExperts = '#pjax-experts';
+
+    // const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500, pjaxExperts);
 
     $pjaxCreateExpert
         .off('beforeSubmit')
@@ -10,7 +12,6 @@ $(() => {
         .off('pjax:complete')
         .on('pjax:complete', () => {
             CommonUtils.toggleButtonState($('.btn-create-expert'), false);
-            CommonUtils.getFlashMessages();
-            CommonUtils.reloadPjax(pjaxExperts, `${url}/list-experts`);
+            reloadPjaxDebounced(pjaxExperts, updateUrl());
         });
 });

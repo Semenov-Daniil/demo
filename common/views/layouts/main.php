@@ -470,7 +470,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                                                 Yii::$app->request->getPathInfo() == 'expert/experts')
                             ],
                             [
-                                'label' => '<i class="ri-function-add-line"></i><span data-key="t-events">Чемпионаты</span>', 
+                                'label' => '<i class="ri-function-add-line"></i><span data-key="t-events">События</span>', 
                                 'encode' => false, 
                                 'url' => ['/event'], 
                                 'linkOptions' => [

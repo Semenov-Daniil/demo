@@ -27,7 +27,7 @@ $this->registerJsFile('@web/js/modules/event/eventsList.js', ['depends' => [Choi
 
 <div class="card">
     <div class="card-header align-items-center d-flex position-relative border-bottom-0">
-        <h4 class="card-title mb-0 flex-grow-1">Чемпионаты</h4>
+        <h4 class="card-title mb-0 flex-grow-1">События</h4>
     </div>
 
     <div class="card-body">
@@ -42,7 +42,7 @@ $this->registerJsFile('@web/js/modules/event/eventsList.js', ['depends' => [Choi
                 'prevPageLabel' => '<i class="ri-arrow-left-double-line"></i>',
                 'nextPageLabel' => '<i class="ri-arrow-right-double-line"></i>'
             ],
-            'emptyText' => 'Ничего не найдено. Добавьте чемпионат.',
+            'emptyText' => 'Ничего не найдено. Добавьте событие.',
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],

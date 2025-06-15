@@ -25,10 +25,8 @@ $(() => {
             }
 
             try {
-                await CommonUtils.getFlashMessages();
                 await reloadPjaxDebounced();
             } catch (error) {
-
             }
 
             if (dropzone.getQueuedFiles().length === 0) {

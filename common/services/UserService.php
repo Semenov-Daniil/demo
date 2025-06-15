@@ -56,15 +56,17 @@ class UserService
                 $userId = null;
             }
 
-            if ($user->id !== $userId && $user->delete()) {
-                $transaction->commit();
-                return true;
+            if ($user->id === $userId) {
+                throw new Exception("Attempting to delete the current user ($id)");
             }
 
-            throw new Exception("Failed delete user {$user->id}");
+            if (!$user->delete()) throw new Exception("Failed delete user {$user->id}");
+            
+            $transaction->commit();
+            return true;
         } catch (Exception $e) {
             $transaction->rollBack();
-            Yii::error("Error delete user: " . $e->getMessage(), __METHOD__);
+            Yii::error("\nError delete user:\n{$e->getMessage()}", __METHOD__);
             return false;
         }
     }

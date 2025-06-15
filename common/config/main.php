@@ -22,6 +22,7 @@ return [
         'queue',
         'redis',
         'redisSubscriber',
+        'redisNotifications',
     ],
     'components' => [
         'cache' => [
@@ -58,6 +59,9 @@ return [
         'toast' => [
             'class' => 'common\components\ToastComponent'
         ],
+        'sse' => [
+            'class' => 'common\components\SseComponent'
+        ],
         'assetManager' => [
             'forceCopy' => true,
             'bundles' => [
@@ -71,6 +75,12 @@ return [
         ],
         'redis' => [
             'class' => 'yii\redis\Connection',
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 0,
+        ],
+        'redisNotifications' => [
+            'class' => \Gevman\Yii2RedisSubscriber\Connection::class,
             'hostname' => 'localhost',
             'port' => 6379,
             'database' => 0,
@@ -89,13 +99,13 @@ return [
         ]
     ],
     'modules' => [
-        'debug' => [
-            'class' => 'yii\debug\Module',
-            'allowedIPs' => ['*'],
-            'panels' => [
-                'queue' => \yii\queue\debug\Panel::class
-            ]
-        ],
+        // 'debug' => [
+        //     'class' => 'yii\debug\Module',
+        //     'allowedIPs' => ['*'],
+        //     'panels' => [
+        //         'queue' => \yii\queue\debug\Panel::class
+        //     ]
+        // ],
         'gii' => [
             'class' => 'yii\gii\Module',
             'allowedIPs' => ['*'],

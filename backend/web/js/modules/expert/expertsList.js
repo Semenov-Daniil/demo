@@ -1,7 +1,7 @@
 $(() => {
     const checkboxManager = new GridCheckboxManager('pjax-experts', 'expertsCheckedItems');
 
-    const pjaxExperts = '#pjax-experts';
+    
     const $pjaxExperts = $('#pjax-experts');
     const $modalUpdateExpert = $('#modal-update-expert');
 
@@ -9,7 +9,7 @@ $(() => {
 
     const updateCheckboxState = () => CommonUtils.updateCheckboxState('experts_all', 'experts[]', actionButtonClasses);
 
-    const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500, pjaxExperts);
+    CommonUtils.connectDataSSE(`${url}/sse-data-updates`, reloadPjaxDebounced, pjaxExperts, updateUrl());
 
     $pjaxExperts
         .off('click', '.btn-select-all-experts')
@@ -40,15 +40,13 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateExpert.modal('hide');
-                        // CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
-                        reloadPjaxDebounced(pjaxExperts, `${url}/list-experts`);
+                        reloadPjaxDebounced(pjaxExperts, updateUrl());
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
                 },
                 complete: () => {
                     CommonUtils.toggleButtonState($('.btn-update-expert'), false);
-                    CommonUtils.getFlashMessages();
                 },
             });
 
@@ -58,34 +56,60 @@ $(() => {
     $pjaxExperts
         .off('click', '.btn-delete')
         .on('click', '.btn-delete', function() {
+            const $button = $(this);
             CommonUtils.performAjax({
-                url: `${url}/delete-experts?id=${$(this).data('id')}`,
+                url: `${url}/delete-experts?id=${$button.data('id')}`,
                 method: 'DELETE',
+                beforeSend() {
+                    CommonUtils.toggleButtonState($button, true);
+                },
                 success(data) {
                     if (data.success) {
-                        // CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
-                        reloadPjaxDebounced(pjaxExperts, `${url}/list-experts`);
+                        reloadPjaxDebounced(pjaxExperts, updateUrl());
                     }
                 },
+                complete() {
+                    if ($button) {
+                        CommonUtils.toggleButtonState($button, false);
+                    }
+                }
             });
         });
 
     $pjaxExperts
         .off('click', '.btn-delete-selected-experts')
-        .on('click', '.btn-delete-selected-experts', () => {
+        .on('click', '.btn-delete-selected-experts', function() {
             const experts = CommonUtils.getSelectedCheckboxes('experts[]');
+            const $button = $(this);
+
+            experts.forEach(el => {
+                CommonUtils.toggleButtonState($(`.btn-delete[data-id="${el}"]`), true);
+            });
 
             if (experts.length) {
                 CommonUtils.performAjax({
                     url: `${url}/delete-experts`,
                     method: 'DELETE',
                     data: { experts },
+                    beforeSend() {
+                        CommonUtils.toggleButtonState($button, true);
+                    },
                     success(data) {
                         if (data.success) {
-                            // CommonUtils.reloadPjax('#pjax-experts', `${url}/list-experts`);
-                            reloadPjaxDebounced(pjaxExperts, `${url}/list-experts`);
+                            reloadPjaxDebounced(pjaxExperts, updateUrl());
                         }
                     },
+                    complete() {
+                        if ($button) {
+                            CommonUtils.toggleButtonState($button, false);
+                        }
+                        experts.forEach(el => {
+                            let $btnDelete = $(`.btn-delete[data-id="${el}"]`)
+                            if ($btnDelete) {
+                                CommonUtils.toggleButtonState($btnDelete, false);
+                            }
+                        });
+                    }
                 });
             }
         });

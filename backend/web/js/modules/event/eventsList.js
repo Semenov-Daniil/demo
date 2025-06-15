@@ -45,7 +45,6 @@ $(() => {
                 },
                 complete: () => {
                     CommonUtils.toggleButtonState($('.btn-update-event'), false)
-                    CommonUtils.getFlashMessages();
                 },
             });
 

@@ -30,7 +30,7 @@ $this->registerJsFile('@web/js/modules/module/moduleCreate.js', ['depends' => [B
     ],
 ]); ?>
     <div class="row">
-        <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите чемпионат', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
+        <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите событие', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
     </div>
 <?php ActiveForm::end(); ?>
 

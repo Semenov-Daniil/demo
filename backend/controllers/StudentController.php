@@ -83,7 +83,7 @@ class StudentController extends BaseController
         if ($this->request->isPost && $form->load(Yii::$app->request->post())) {
             $success = $this->studentService->createStudent($form);
 
-            $this->addToastMessage(
+            Yii::$app->toast->addToast(
                 $success ? 'Студент успешно добавлен.' : 'Не удалось добавить студента.',
                 $success ? 'success' : 'error'
             );
@@ -113,7 +113,7 @@ class StudentController extends BaseController
         if ($this->request->isPatch && $form->load($this->request->post())) {
             $result['success'] = $this->studentService->updateStudent($id, $form);
 
-            $this->addToastMessage(
+            Yii::$app->toast->addToast(
                 $result['success'] ? 'Студент успешно обновлен.' : 'Не удалось обновить студента.',
                 $result['success'] ? 'success' : 'error'
             );
@@ -145,7 +145,7 @@ class StudentController extends BaseController
         $result['success'] = $count && $this->studentService->deleteStudents($students);
         $result['message'] = $result['success'] ? 'Students deleted.' : 'Students not deleted.';
 
-        $this->addToastMessage(
+        Yii::$app->toast->addToast(
             $result['success'] 
                 ? ($count > 1 ? 'Студенты успешно удалены.' : 'Студент успешно удален.') 
                 : ($count > 1 ? 'Не удалось удалить студентов.' : 'Не удалось удалить студента.'),
@@ -186,7 +186,7 @@ class StudentController extends BaseController
             $templateProcessor->saveAs('php://output');
         } catch (\Exception $e) {
             Yii::error('Ошибка при экспорте студентов: ' . $e->getMessage());
-            $this->addToastMessage('Не удалось экспортировать студентов', 'error');
+            Yii::$app->toast->addToast('Не удалось экспортировать студентов', 'error');
         }
 
         exit;

@@ -56,7 +56,7 @@ $this->registerJsFile('@web/js/modules/module/modulesList.js', ['depends' => [Ba
             'tableOptions' => [
                 'class' => 'table align-middle table-nowrap table-hover table-borderless mb-0 border-bottom',
             ],
-            'emptyText' => (is_null($event) ? 'Выберите чемпионат.' : 'Ничего не найдено. Добавьте модуль.'),
+            'emptyText' => (is_null($event) ? 'Выберите событие.' : 'Ничего не найдено. Добавьте модуль.'),
             'emptyTextOptions' => [
                 'class' => 'text-center',
             ],

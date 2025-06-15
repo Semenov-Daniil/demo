@@ -35,7 +35,7 @@ $this->registerJsFile('@web/js/modules/student/studentCreate.js', ['depends' => 
             ]
         ]); ?>
             <div class="row">
-                <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 mb-3 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите чемпионат', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
+                <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 mb-3 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите событие', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
                 
                 <?= $form->field($model, 'surname', ['options' => ['class' => 'col-lg-4 mb-3']])->textInput(['placeholder' => 'Введите фамилию']) ?>
 

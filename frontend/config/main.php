@@ -55,7 +55,7 @@ return [
         
     ],
     'modules' => [
-        'flash' => [
+        'toast' => [
             'class' => 'common\modules\toast\Module',
             'defaultRoute' => 'base'
         ],

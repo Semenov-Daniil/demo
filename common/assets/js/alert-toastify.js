@@ -1,4 +1,5 @@
 $(() => {
+    let toastSource = null;
 
     function renderFlashMessages(toastAlerts) {
         for (let alert of toastAlerts) {
@@ -81,18 +82,31 @@ $(() => {
         }
     }
 
+    function isExpertPath(url) {
+        try {
+            const parsedUrl = new URL(url);
+            const path = parsedUrl.pathname;
+            return path.startsWith('/expert/');
+        } catch (e) {
+            console.error('Invalid URL:', e);
+            return false;
+        }
+    }
+
     // SSE для toast
     function connectToastSSE() {
-        const source = new EventSource('/expert/toast/notifications');
-        source.onmessage = function(event) {
+        let toastUrl = (isExpertPath(window.location.href) ? '/expert' : '') + '/toast/notifications';
+
+        toastSource = new EventSource(toastUrl);
+        toastSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            console.log(data);
             if (data && data.length) {
                 renderFlashMessages(data);
             }
         };
-        source.onerror = function() {
-            source.close();
+        toastSource.onerror = function() {
+            toastSource.close();
+            toastSource = null;
             setTimeout(connectToastSSE, 5000);
         };
     }
@@ -120,8 +134,15 @@ $(() => {
         connectToastSSE();
     } else {
         console.warn('SSE not supported, falling back to Long Polling');
-        fetchToastMessages();
+        // fetchToastMessages();
     }
+
+    window.addEventListener('beforeunload', function() {
+        if (toastSource) {
+            toastSource.close();
+            toastSource = null;
+        }
+    });
 });
 
 
