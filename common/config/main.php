@@ -99,13 +99,13 @@ return [
         ]
     ],
     'modules' => [
-        // 'debug' => [
-        //     'class' => 'yii\debug\Module',
-        //     'allowedIPs' => ['*'],
-        //     'panels' => [
-        //         'queue' => \yii\queue\debug\Panel::class
-        //     ]
-        // ],
+        'debug' => [
+            'class' => 'yii\debug\Module',
+            'allowedIPs' => ['*'],
+            'panels' => [
+                'queue' => \yii\queue\debug\Panel::class
+            ]
+        ],
         'gii' => [
             'class' => 'yii\gii\Module',
             'allowedIPs' => ['*'],

@@ -1,32 +1,16 @@
 #!/bin/bash
 
-# Подключение глобального config.sh
-GLOBAL_CONFIG="$(realpath $(dirname "${BASH_SOURCE[0]}")/logging/logging.fn.sh)"
-source "$(realpath $(dirname "${BASH_SOURCE[0]}")/lib/with_lock.fn.sh)" || {
-    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
-    return 1
-}
-source "$(realpath $(dirname "${BASH_SOURCE[0]}")/lib/update_permissions.fn.sh)" || {
-    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
-    return 1
-}
-source "$(realpath $(dirname "${BASH_SOURCE[0]}")/logging/logging.fn.sh)" || {
-    echo "Failed to source global config '$GLOBAL_CONFIG'" >&2
-    return 1
-}
+STUDENTS=('tzldyady' 'xedlocux' 'yuanwvun')
 
-log_message "info" "Test1"
-log_message "info" "Test1"
-log_message "info" "Test1"
-log_message "info" "Test1"
-log_message "info" "Test1"
-log_message "info" "Test1"
-log_message "info" "Test1"
-log_message "info" "Test1"
+for student in "${STUDENTS[@]}"; do
+        # bash "/var/www/demo/bash/system/delete_user.sh" "$student" &
+        # bash "/var/www/demo/bash/utils/umount.sh" "/var/www/demo/students/$student/_assets" &
+        # rm -rf "/var/www/demo/students/$student/" &
+        # sleep 1
+        rm /etc/apache2/sites-available/$student-*
+    # (
+    # ) &
+done
 
-echo "test"
-echo "test"
-echo "test"
-echo "test"
-
-exit 0
+# for i in {1..50}; do ./script.sh & done
+wait

@@ -22,11 +22,16 @@ use yii\web\IdentityInterface;
  * @property string|null $patronymic
  * @property string|null $auth_key
  * @property int $roles_id
+ * @property string|null $created_at
+ * @property string|null $updated_at
+ * @property int $statuses_id
  *
  * @property Events $event
  * @property array $events
  * @property EncryptedPasswords $encryptedPassword
  * @property Roles $role
+ * @property Statuses $statuses
+ * @property Students $students
  */
 class Users extends ActiveRecord implements IdentityInterface
 {
@@ -75,6 +80,8 @@ class Users extends ActiveRecord implements IdentityInterface
             ['auth_key', 'string', 'max' => 32],
             [['surname', 'name', 'patronymic', 'login', 'password', 'auth_key'], 'trim'],
             ['patronymic', 'default', 'value' => null],
+            [['statuses_id'], 'exist', 'skipOnError' => true, 'targetClass' => Statuses::class, 'targetAttribute' => ['statuses_id' => 'id']],
+            ['statuses_id', 'default', 'value' => Statuses::getStatusId(Statuses::CONFIGURING)],
             [['roles_id'], 'exist', 'skipOnError' => true, 'targetClass' => Roles::class, 'targetAttribute' => ['roles_id' => 'id']],
         ];
     }
@@ -93,6 +100,7 @@ class Users extends ActiveRecord implements IdentityInterface
             'patronymic' => 'Отчество',
             'auth_key' => 'Auth Key',
             'roles_id' => 'Роль',
+            'statuses_id' => 'Статус'
         ];
     }
 
@@ -134,6 +142,16 @@ class Users extends ActiveRecord implements IdentityInterface
     public function getEvents(): object
     {
         return $this->hasMany(Events::class, ['experts_id' => 'id'])->inverseOf('expert');
+    }
+
+    /**
+     * Gets query for [[Statuses]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getStatuses()
+    {
+        return $this->hasOne(Statuses::class, ['id' => 'statuses_id']);
     }
 
     /**

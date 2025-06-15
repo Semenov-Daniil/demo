@@ -16,7 +16,7 @@ class m241030_122531_create_files_table extends Migration
      */
     public function safeUp()
     {
-        $this->createTable('{{%files}}', [
+        $this->createTable(self::TABLE_NAME, [
             'id' => $this->primaryKey(),
             'events_id' => $this->integer()->notNull(),
             'modules_id' => $this->integer()->null()->defaultValue(null),

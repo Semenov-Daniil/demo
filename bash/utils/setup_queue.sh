@@ -25,10 +25,13 @@ User=$SITE_USER
 Group=$SITE_GROUP
 ExecStart=$PHP_BIN $YII_PATH queue/listen --verbose=1 --isolate=1
 Restart=always
-RestartSec=5s
+RestartSec=5
 WorkingDirectory=$(dirname $YII_PATH)
 StandardOutput=journal
 StandardError=journal
+StartLimitIntervalSec=60
+StartLimitBurst=5
+SyslogIdentifier=yii-queue-worker
 
 [Install]
 WantedBy=multi-user.target
