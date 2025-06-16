@@ -13,6 +13,7 @@ class ExpertForm extends Model
     public string $surname = '';
     public string $name = '';
     public ?string $patronymic = '';
+    public string $updated_at = '';
 
     const TITLE_ROLE_EXPERT = "expert";
 
@@ -26,6 +27,7 @@ class ExpertForm extends Model
             [['surname', 'name', 'patronymic'], 'string', 'max' => 255],
             [['surname', 'name', 'patronymic'], 'trim'],
             ['patronymic', 'default', 'value' => null],
+            ['updated_at', 'safe'],
         ];
     }
 
@@ -38,6 +40,7 @@ class ExpertForm extends Model
             'surname' => 'Фамилия',
             'name' => 'Имя',
             'patronymic' => 'Отчество',
+            'updated_at' => 'Последнее обновление',
         ];
     }
 }

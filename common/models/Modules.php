@@ -63,24 +63,32 @@ class Modules extends \yii\db\ActiveRecord
 
     public function beforeSave($insert)
     {
-        if (parent::beforeSave($insert)) {
-            if ($insert) {
-                if (empty($this->number)) {
-                    $this->number = $this->getNextNumber();
-                }
-            }
-            return true;
+        if (!parent::beforeSave($insert)) {
+            return false;
         }
-        return false;
+
+        if ($this->isNewRecord) {
+            $this->number = $this->getNextNumber();
+        }
+
+        return true;
     }
 
     private function getNextNumber()
     {
-        $maxNumber = static::find()
-            ->where(['events_id' => $this->events_id])
-            ->max('number');
-
-        return $maxNumber ? $maxNumber + 1 : 1;
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $maxNumber = static::find()
+                ->where(['events_id' => $this->events_id])
+                ->max('number')
+            ;
+    
+            $transaction->commit();
+            return $maxNumber ? $maxNumber + 1 : 1;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
     }
 
     /**

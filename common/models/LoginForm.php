@@ -71,7 +71,7 @@ class LoginForm extends Model
         if (!$this->hasErrors()) {
             $user = $this->getUser();
 
-            if ($user->role->title == $role) {
+            if ($user->role->title == $role && ($user->statuses_id == Statuses::getStatusId(Statuses::CONFIGURING) || $user->statuses_id == Statuses::getStatusId(Statuses::READY))) {
                 return Yii::$app->user->login($this->getUser());
             }
 

@@ -86,7 +86,7 @@ $(() => {
         try {
             const parsedUrl = new URL(url);
             const path = parsedUrl.pathname;
-            return path.startsWith('/expert/');
+            return path.startsWith('/expert/') || path.startsWith('/expert');
         } catch (e) {
             console.error('Invalid URL:', e);
             return false;

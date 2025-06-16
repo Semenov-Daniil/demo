@@ -2,13 +2,17 @@
 
 namespace common\services;
 
+use common\jobs\experts\DeleteExpert;
+use common\jobs\experts\DeleteExpertEnvironment;
 use common\models\Events;
 use common\models\ExpertForm;
 use common\models\Experts;
+use common\models\Statuses;
 use common\models\Students;
 use common\models\Users;
 use Exception;
 use Yii;
+use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
 class ExpertService
@@ -44,14 +48,17 @@ class ExpertService
                 'patronymic' => $expertModel->patronymic,
             ]);
 
+            $user->statuses_id = Statuses::getStatusId(Statuses::READY);
+            if ($user->update() === false) throw "Failed to update the status of the expert";
+
             $transaction->commit();
             return true;
         } catch (Exception $e) {
             $transaction->rollBack();
-            $this->userService->deleteUser($user->id ?? null);
+            Yii::error("Error create expert: " . $e->getMessage(), __METHOD__);
+            if (isset($user)) $this->userService->deleteUser($user?->id);
+            return false;
         }
-
-        return false;
     }
 
     /**
@@ -66,14 +73,12 @@ class ExpertService
             return false;
         }
 
-        $user = Users::findOne($id);
-        if ($user) {
-            $user->surname = $expertModel->surname;
-            $user->name = $expertModel->name;
-            $user->patronymic = $expertModel->patronymic;
-            return $user->save();
-        }
-        return false;
+        return $this->userService->updateUser($id, [
+            'surname' => $expertModel->surname, 
+            'name' => $expertModel->name, 
+            'patronymic' => $expertModel->patronymic,
+            'updated_at' => $expertModel->updated_at,
+        ]);
     }
 
     /**
@@ -83,30 +88,25 @@ class ExpertService
      */
     public function deleteExperts(array $expertIds): bool
     {
+        if (in_array(Yii::$app->user->id, $expertIds)) return false;
+
+        Users::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $expertIds]);
         foreach ($expertIds as $id) {
-            if (!$this->deleteExpert($id)) {
-                return false;
-            }
+            Yii::$app->queue->push(new DeleteExpertEnvironment(['id' => $id]));
         }
         return true;
     }
 
-    private function deleteExpert(?int $id): bool
+    public function deleteExpertEnvironment(?int $id): bool
     {
-        $user = Users::findOne($id);
+        $user = Users::findOne(['id' => $id]);
         if (!$user) return true;
 
-        $transaction = Yii::$app->db->beginTransaction();
         try {
             $eventIds = array_column($user->events, 'id');
             $this->eventService->deleteEvents($eventIds);
-
-            if (!$this->userService->deleteUser($id)) throw new Exception("Failed to delete user ($id)");
-    
-            $transaction->commit();
             return true;
         } catch (Exception $e) {
-            $transaction->rollBack();
             Yii::error("\nFailed to remove the expert ($id):\n{$e->getMessage()}", __METHOD__);
             return false;
         }

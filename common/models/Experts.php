@@ -41,7 +41,13 @@ class Experts extends Model
                 'login',
                 'encrypted_password AS password'
             ])
-            ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
+            ->where([
+                'roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT), 
+                'statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
             ->joinWith('encryptedPassword', false)
             ->orderBy([
                 new Expression('CASE WHEN ' . Users::tableName() . '.id = ' . Yii::$app->user->id . ' THEN 0 ELSE 1 END'),

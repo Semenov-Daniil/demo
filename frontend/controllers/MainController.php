@@ -121,15 +121,7 @@ class MainController extends Controller
         $model->password = '';
 
         return $this->render('login', [
-            'model' => $model,
-            'student' => Users::find()
-                ->select([
-                    'login', EncryptedPasswords::tableName() . '.encrypted_password'
-                ])
-                ->where(['roles_id' => Roles::getRoleId('student')])
-                ->joinWith('encryptedPassword', false)
-                ->asArray()
-                ->one(),
+            'model' => $model
         ]);
     }
 

@@ -166,6 +166,7 @@ class ExpertController extends BaseController
             $model->surname = $user->surname;
             $model->name = $user->name;
             $model->patronymic = $user->patronymic;
+            $model->updated_at = $user->updated_at;
             return $model;
         }
 

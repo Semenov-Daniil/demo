@@ -73,14 +73,6 @@ class MainController extends Controller
 
         return $this->render('login', [
             'model' => $model,
-            'expert' => Users::find()
-                ->select([
-                    'login', EncryptedPasswords::tableName() . '.encrypted_password'
-                ])
-                ->where(['roles_id' => Roles::getRoleId('expert')])
-                ->joinWith('encryptedPassword', false)
-                ->asArray()
-                ->one(),
         ]);
     }
 

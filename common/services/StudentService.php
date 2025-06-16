@@ -5,6 +5,7 @@ namespace common\services;
 use common\jobs\students\SetupStudentEvironment;
 use common\models\EncryptedPasswords;
 use common\models\Files;
+use common\models\Statuses;
 use common\models\StudentForm;
 use common\models\Students;
 use common\models\Users;
@@ -212,6 +213,9 @@ class StudentService
         $eventDir = Yii::getAlias("@events/{$student->event->dir_title}");
         $studentDir = Yii::getAlias("@students/$login/{$this->files_dir}");
         $this->setupFilesEvent($eventDir, $studentDir);
+
+        $student->user->statuses_id = Statuses::getStatusId(Statuses::READY);
+        if ($student->user->update() === false) throw "Failed to update the student's status to ready";
         
         return true;
     }

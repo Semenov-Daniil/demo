@@ -29,10 +29,38 @@ class UserService
         $user->login = $this->generateUniqueLogin(8, ['lowercase']);
         $user->auth_key = Yii::$app->security->generateRandomString();
 
-        if (!$user->save()) {
-            throw new Exception('Failed to save user');
-        }
+        if (!$user->save()) throw new Exception('Failed to save user');
+
         return $user;
+    }
+
+    public function updateUser(int $id, array $attributes): bool
+    {
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $user = Users::findOne(['id' => $id]);
+            $lastUpdate = $user->updated_at;
+
+            $user->attributes = $attributes;
+
+            if (strtotime($lastUpdate) > strtotime($user->updated_at)) throw new \yii\db\StaleObjectException("Attempt to update old data");
+
+            if (!$user->update()) throw new Exception("Failed to save the user");
+            $transaction->commit();
+            return true;
+        } catch (\yii\db\StaleObjectException $e) {
+            $transaction->rollBack();
+            Yii::warning("Attempt to update old data user '$user->id'");
+            Yii::$app->toast->addToast(
+                'Устаревшие данные эксперта. Пожалуйста, обновите форму.',
+                'info'
+            );
+            return false;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::error("\nFailed to update the user '$user->id':\n{$e->getMessage()}", __METHOD__);
+            return false;
+        }
     }
 
     /**
@@ -50,18 +78,9 @@ class UserService
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            if (Yii::$app instanceof \yii\web\Application) {
-                $userId = Yii::$app->user->id;
-            } else {
-                $userId = null;
-            }
-
-            if ($user->id === $userId) {
-                throw new Exception("Attempting to delete the current user ($id)");
-            }
-
+            $userId = (Yii::$app instanceof \yii\web\Application ? Yii::$app->user->id : null);
+            if ($user->id === $userId) throw new Exception("Attempting to delete the current user ($id)");
             if (!$user->delete()) throw new Exception("Failed delete user {$user->id}");
-            
             $transaction->commit();
             return true;
         } catch (Exception $e) {

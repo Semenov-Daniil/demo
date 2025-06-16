@@ -37,6 +37,8 @@ use yii\widgets\Pjax;
 
             <?= $form->field($model, 'patronymic')->textInput(['placeholder' => 'Введите отчество']) ?>
 
+            <?= Html::hiddenInput(Html::getInputName($model, 'updated_at'), $model->updated_at, ['id' => Html::getInputId($model, 'updated_at')])?>
+
             <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
                 <?= Html::submitButton('
                     <div class="cnt-text d-flex align-items-center">Сохранить</div>
