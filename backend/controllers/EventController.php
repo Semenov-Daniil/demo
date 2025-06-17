@@ -118,15 +118,16 @@ class EventController extends BaseController
 
     public function actionUpdateEvent(?int $id = null): Response|string
     {
-        $model = $this->findEvent($id);
-        $model->scenario = Events::SCENARIO_UPDATE;
+        $model = $this->findEventForm($id);
+        $model->scenario = $model::SCENARIO_UPDATE;
         $result = ['success' => false];
+        $expert = $model->expertUpdate;
 
         if ($this->request->isPatch && $model->load($this->request->post())) {
-            $result['success'] = $model->save();
+            $result['success'] = $this->eventService->updateEvent($id, $model);
 
             Yii::$app->toast->addToast(
-                $result['success'] ? 'Событие успешно обновлен.' : 'Не удалось обновить событие.',
+                $result['success'] ? 'Событие успешно обновлено.' : 'Не удалось обновить событие.',
                 $result['success'] ? 'success' : 'error'
             );
 
@@ -135,7 +136,10 @@ class EventController extends BaseController
                 $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
 
-            if ($result['success']) $this->publishEvent($model->experts_id, 'update-event');
+            if ($result['success']) {
+                if ($expert != $model->expertUpdate) $this->publishEvent($expert, 'update-event');
+                $this->publishEvent($model->expert ?: $model->expertUpdate, 'update-event');
+            }
 
             return $this->asJson($result);
         }
@@ -158,7 +162,6 @@ class EventController extends BaseController
         $events = $id ? [$id] : (array) $this->request->post('events', []);
         $count = count($events);
         $result = [];
-        $expertIds = Events::getExpertsEvents($events);
 
         $result['success'] = $count && $this->eventService->deleteEvents($events);
         $result['message'] = $result['success'] ? 'Events deleted.' : 'Experts not deleted.';
@@ -169,8 +172,6 @@ class EventController extends BaseController
                 : ($count > 1 ? 'Не удалось удалить события.' : 'Не удалось удалить событие.'),
             $result['success'] ? 'success' : 'error'
         );
-
-        if ($result['success']) $this->publishEvent($expertIds, 'delete-event');
 
         $result['code'] = Yii::$app->response->statusCode;
         return $this->asJson($result);
@@ -188,7 +189,7 @@ class EventController extends BaseController
     protected function publishEvent(int|array $expertIds, string $message = ''): void
     {
         $channels = [Yii::$app->sse::EVENT_CHANNEL];
-        $expertIds = is_array($expertIds) ? $expertIds : [$expertIds];
+        $expertIds = (is_array($expertIds) ? $expertIds : [$expertIds]);
         foreach($expertIds as $id) { $channels[] = $this->eventService->getExpertChannel($id); }
         Yii::$app->sse->publishAll($channels, $message);
     }
@@ -209,5 +210,20 @@ class EventController extends BaseController
         Yii::$app->toast->addToast('Событие не найдено.', 'error');
 
         throw new NotFoundHttpException('Событие не найдено.');
+    }
+
+    protected function findEventForm(?string $id): EventForm
+    {
+        if ($event = $this->findEvent($id)) {
+            $model = new EventForm();
+            $model->title = $event->title;
+            $model->expertUpdate = $event->experts_id;
+            $model->updated_at = $event->updated_at;
+            return $model;
+        }
+
+        Yii::$app->toast->addToast('Событие не найдено.', 'error');
+
+        throw new NotFoundHttpException('Эксперт не найден.');
     }
 }

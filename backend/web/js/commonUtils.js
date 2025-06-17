@@ -26,7 +26,7 @@ class CommonUtils
             },
             error: (jqXHR) => {
                 console.error('AJAX error:', jqXHR.status, jqXHR);
-                if (jqXHR.status == 500) location.reload();
+                // if (jqXHR.status == 500) location.reload();
             },
         };
         return $.ajax({...defauls, ...options});

@@ -14,8 +14,20 @@ use yii\helpers\VarDumper;
 class EventForm extends Model
 {
     public int|null $expert = null;
+    public int|null $expertUpdate = null;
     public string $title = '';
     public int $countModules = 1;
+    public string $updated_at = '';
+
+    const SCENARIO_UPDATE = 'update';
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'expert', 'countModules'];
+        $scenarios[self::SCENARIO_UPDATE] = ['title', 'expertUpdate', 'updated_at'];
+        return $scenarios;
+    }
 
     /**
      * {@inheritdoc}
@@ -25,15 +37,17 @@ class EventForm extends Model
         return [
             [['title', 'countModules'], 'required'],
             [['countModules'], 'integer', 'min' => 1],
-            [['expert'], 'integer'],
+            [['expert', 'expertUpdate'], 'integer'],
+            ['updated_at', 'safe'],
             [['title'], 'string', 'max' => 255],
             ['countModules', 'default', 'value' => 1],
             [['title'], 'trim'],
             [['expert'], 'exist', 'targetClass' => Users::class, 'targetAttribute' => ['expert' => 'id']],
-            ['expert', 'required', 'when' => function($model) {
+            [['expertUpdate'], 'exist', 'targetClass' => Users::class, 'targetAttribute' => ['expertUpdate' => 'id']],
+            [['expert', 'expertUpdate'], 'required', 'when' => function($model) {
                 return Yii::$app->user->can('sExpert');
             }, 'message' => 'Необходимо выбрать эксперта.'],
-            ['expert', 'expertValidate'],
+            [['expert', 'expertUpdate'], 'expertValidate'],
         ];
     }
 
@@ -44,6 +58,7 @@ class EventForm extends Model
     {
         return [
             'expert' => 'Эксперт',
+            'expertUpdate' => 'Эксперт',
             'title' => 'Название события',
             'countModules' => 'Кол-во модулей',
         ];
@@ -52,7 +67,8 @@ class EventForm extends Model
     public function expertValidate($attribute, $params)
     {
         if (!$this->hasErrors()) {
-            $user = Users::findOne($this->expert);
+            $expert_id = $this->expert ?: $this->expertUpdate;
+            $user = Users::findOne($expert_id);
 
             if (!$user || !($user->statuses_id == Statuses::getStatusId(Statuses::READY) || $user->statuses_id == Statuses::getStatusId(Statuses::CONFIGURING))) {
                 $this->addError($attribute, 'Обновите выбор эксперта');

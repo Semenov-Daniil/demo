@@ -7,11 +7,13 @@ $(() => {
             url: url,
             method: 'GET',
             success(data) {
-                const choices = choicesMap.get('eventform-expert');
-                if (choices) {
-                    choices.clearChoices();
-                    choices.setChoices(data, 'value', 'label', true);
-                }
+                const choices = [choicesMap.get('eventform-expert'), choicesMap.get('eventform-expertupdate')];
+                choices.forEach((el) => {
+                    if (el) {
+                        el.clearChoices();
+                        el.setChoices(data, 'value', 'label', true);
+                    }
+                })
             },
         });
     }

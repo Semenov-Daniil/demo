@@ -92,7 +92,7 @@ class ExpertService
 
         Users::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $expertIds]);
         foreach ($expertIds as $id) {
-            Yii::$app->queue->push(new DeleteExpertEnvironment(['id' => $id]));
+            Yii::$app->queue->push(new DeleteExpertEnvironment(['expertId' => $id]));
         }
         return true;
     }

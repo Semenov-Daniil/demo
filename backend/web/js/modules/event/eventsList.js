@@ -31,12 +31,13 @@ $(() => {
         .on('beforeSubmit', '#form-update-event', function (e) {
             e.preventDefault();
             const $form = $(this);
+            const $button = $('.btn-update-event');
 
             CommonUtils.performAjax({
                 url: $form.attr('action'),
                 method: 'PATCH',
                 data: $form.serialize(),
-                beforeSend: () => CommonUtils.toggleButtonState($('.btn-update-event'), true),
+                beforeSend: () => CommonUtils.toggleButtonState($button, true),
                 success(data) {
                     if (data.success) {
                         $modalUpdateEvent.modal('hide');
@@ -46,7 +47,7 @@ $(() => {
                     }
                 },
                 complete: () => {
-                    CommonUtils.toggleButtonState($('.btn-update-event'), false)
+                    CommonUtils.toggleButtonState($button, false)
                 },
             });
 
@@ -56,14 +57,23 @@ $(() => {
     $pjaxEvents
         .off('click', '.btn-delete')
         .on('click', '.btn-delete', function() {
+            const $button = $(this);
             CommonUtils.performAjax({
-                url: `${url}/delete-events?id=${$(this).data('id')}`,
+                url: `${url}/delete-events?id=${$button.data('id')}`,
                 method: 'DELETE',
+                beforeSend() {
+                    CommonUtils.toggleButtonState($button, true);
+                },
                 success(data) {
                     if (data.success) {
                         reloadPjaxDebounced(pjaxEvents, updateUrl());
                     }
                 },
+                complete() {
+                    if ($button) {
+                        CommonUtils.toggleButtonState($button, false);
+                    }
+                }
             });
         });
 
@@ -71,17 +81,36 @@ $(() => {
         .off('click', '.btn-delete-selected-events')
         .on('click', '.btn-delete-selected-events', () => {
             const events = CommonUtils.getSelectedCheckboxes('events[]');
+            const $button = $(this);
+
+            events.forEach(el => {
+                CommonUtils.toggleButtonState($(`.btn-delete[data-id="${el}"]`), true);
+            });
 
             if (events.length) {
                 CommonUtils.performAjax({
                     url: `${url}/delete-events`,
                     method: 'DELETE',
                     data: { events },
+                    beforeSend() {
+                        CommonUtils.toggleButtonState($button, true);
+                    },
                     success(data) {
                         if (data.success) {
                             reloadPjaxDebounced(pjaxEvents, updateUrl());
                         }
                     },
+                    complete() {
+                        if ($button) {
+                            CommonUtils.toggleButtonState($button, false);
+                        }
+                        events.forEach(el => {
+                            let $btnDelete = $(`.btn-delete[data-id="${el}"]`)
+                            if ($btnDelete) {
+                                CommonUtils.toggleButtonState($btnDelete, false);
+                            }
+                        });
+                    }
                 });
             }
         });

@@ -23,7 +23,7 @@ ChoicesAsset::register($this);
 CleaveAsset::register($this);
 InputStepAsset::register($this);
 
-$this->title = 'Чемпионаты';
+$this->title = 'События';
 
 $this->registerJsFile('@web/js/modules/event/events.js', ['depends' => BackendAppAsset::class]);
 

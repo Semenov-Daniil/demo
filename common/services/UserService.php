@@ -45,7 +45,7 @@ class UserService
 
             if (strtotime($lastUpdate) > strtotime($user->updated_at)) throw new \yii\db\StaleObjectException("Attempt to update old data");
 
-            if (!$user->update()) throw new Exception("Failed to save the user");
+            if ($user->update() === false) throw new Exception("Failed to save the user");
             $transaction->commit();
             return true;
         } catch (\yii\db\StaleObjectException $e) {

@@ -174,10 +174,8 @@ class ExpertController extends BaseController
             return $model;
         }
 
-        Yii::$app->session->addFlash('toastify', [
-            'text' => "Эксперт не найден.",
-            'type' => 'error'
-        ]);
+        Yii::$app->toast->addToast('Эксперт не найден.', 'error');
+
         throw new NotFoundHttpException('Эксперт не найден.');
     }
 }

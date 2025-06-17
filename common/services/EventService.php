@@ -2,12 +2,14 @@
 
 namespace common\services;
 
+use common\jobs\events\DeleteEventEnvironment;
 use common\jobs\events\SetupEventEvironment;
 use common\models\EventForm;
 use common\models\Events;
 use common\models\ExpertForm;
 use common\models\Experts;
 use common\models\Modules;
+use common\models\Statuses;
 use common\models\Students;
 use common\models\Users;
 use common\traits\RandomStringTrait;
@@ -88,6 +90,71 @@ class EventService
         return true;
     }
 
+    public function updateEvent(int $id, EventForm $eventModel): bool
+    {
+        if (!$eventModel->validate()) {
+            Yii::error("Error update event: incorrect event validation", __METHOD__);
+            return false;
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $event = Events::findOne(['id' => $id]);
+            $event->scenario = $event::SCENARIO_UPDATE;
+            $lastUpdate = $event->updated_at;
+
+            $event->attributes = $eventModel->attributes;
+            $event->experts_id = $eventModel->expertUpdate;
+
+            if (strtotime($lastUpdate) > strtotime($event->updated_at)) throw new \yii\db\StaleObjectException("Attempt to update old data");
+
+            if ($event->update() === false) throw new Exception("Failed to update the event");
+            $transaction->commit();
+            return true;
+        } catch (\yii\db\StaleObjectException $e) {
+            $transaction->rollBack();
+            Yii::warning("Attempt to update old data event '$event->id'");
+            Yii::$app->toast->addToast(
+                'Устаревшие данные события. Пожалуйста, обновите форму.',
+                'info'
+            );
+            return false;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::error("\nFailed to update the event '$event->id':\n{$e->getMessage()}", __METHOD__);
+            return false;
+        }
+    }
+
+    /**
+     * Deletes multiple events.
+     * @param array $eventIds
+     * @return bool
+     */
+    public function deleteEvents(array $eventIds): bool
+    {
+        Events::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $eventIds]);
+        $this->publishEvent(Events::getExpertsEvents($eventIds), 'event-delete');
+        foreach ($eventIds as $id) {
+            Yii::$app->queue->push(new DeleteEventEnvironment(['eventId' => $id]));
+        }
+        return true;
+    }
+
+    public function deleteEventEnvironment(?int $id): bool
+    {
+        $event = Events::findOne(['id' => $id]);
+        if (!$event) return true;
+
+        try {
+            if (!$this->studentService->deleteStudentsByEvent($event->id)) throw new Exception("Failed to delete event students");
+            return true;
+        } catch (Exception $e) {
+            Yii::error("\nFailed delete event ($id):\n{$e->getMessage()}", __METHOD__);
+            return false;
+        }
+    }
+
     /**
      * Deletes a single event with transaction.
      * @param int|string $id
@@ -102,34 +169,16 @@ class EventService
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            if (!$this->studentService->deleteStudentsByEvent($event->id)) throw new Exception("Failed to delete event students");
-            
             if (!$event->delete()) throw new Exception("Failed to delete event record from the database");
-
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$event->dir_title}"));
-            
             $transaction->commit();
             return true;
         } catch (\Exception $e) {
             $transaction->rollBack();
             Yii::error("\nFailed delete event $id:\n" . $e->getMessage(), __METHOD__);
+            Events::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::ERROR)], ['id' => $event->id]);
             return false;
         }
-    }
-
-    /**
-     * Deletes multiple events.
-     * @param array $eventIds
-     * @return bool
-     */
-    public function deleteEvents(array $eventIds): bool
-    {
-        foreach ($eventIds as $id) {
-            if (!$this->deleteEvent($id)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -149,5 +198,13 @@ class EventService
         }
 
         return $attr;
+    }
+
+    public function publishEvent(int|array $expertIds, string $message = ''): void
+    {
+        $channels = [Yii::$app->sse::EVENT_CHANNEL];
+        $expertIds = (is_array($expertIds) ? $expertIds : [$expertIds]);
+        foreach($expertIds as $id) { $channels[] = $this->getExpertChannel($id); }
+        Yii::$app->sse->publishAll($channels, $message);
     }
 }
