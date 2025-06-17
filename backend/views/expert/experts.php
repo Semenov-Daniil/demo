@@ -26,24 +26,14 @@ $this->registerJsFile('@web/js/modules/expert/experts.js', ['depends' => Backend
 ?>
 
 <div class="row">
-    <?php Pjax::begin([
-        'id' => 'pjax-create-expert',
-        'enablePushState' => false,
-        'timeout' => 5000,
-        'clientOptions' => ['cache' => true],
+    <?= $this->render('_expert-create', [
+        'model' => $model
     ]); ?>
-    
-        <?= $this->render('_expert-create', [
-            'model' => $model
-        ]); ?>
-    
-    <?php Pjax::end(); ?>
 </div>
 
 <div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-experts',
-        // 'enablePushState' => false,
         'timeout' => 5000,
         'clientOptions' => ['cache' => true],
     ]); ?>

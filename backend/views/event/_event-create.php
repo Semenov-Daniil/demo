@@ -23,7 +23,7 @@ $this->registerJsFile('@web/js/modules/event/eventCreate.js', ['depends' => [Yii
 
     <div class="card-body">
         <?php $form = ActiveForm::begin([
-            'id' => 'form-event-create',
+            'id' => 'form-create-event',
             'action' => ['create-event'],
             'options' => [
                 'data' => [

@@ -1,7 +1,6 @@
 $(() => {
     const checkboxManager = new GridCheckboxManager('pjax-experts', 'expertsCheckedItems');
 
-    
     const $pjaxExperts = $('#pjax-experts');
     const $modalUpdateExpert = $('#modal-update-expert');
 

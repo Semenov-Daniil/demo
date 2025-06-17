@@ -95,6 +95,9 @@ function watchInputStep (input) {
         for (let mutation of mutationsList) {
             if (mutation.type === 'attributes') {
                 if (mutation.attributeName === 'class') {
+                    mutation.target.closest('.input-step').classList.remove('is-valid');
+                    mutation.target.closest('.input-step').classList.remove('is-invalid');
+
                     if (mutation.target.classList.contains('is-invalid')) {
                         mutation.target.closest('.input-step').classList.remove('is-valid');
                         mutation.target.closest('.input-step').classList.add('is-invalid');

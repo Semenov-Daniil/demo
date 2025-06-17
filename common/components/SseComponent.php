@@ -36,6 +36,13 @@ class SseComponent extends Component
         ]));
     }
 
+    public function publishAll(array $channels, string $message): void
+    {
+        foreach ($channels as $channel) {
+            $this->publish($channel, $message);
+        }
+    }
+
     public function subscriber(string $channel)
     {
         Yii::$app->response->format = Response::FORMAT_RAW;

@@ -22,11 +22,6 @@ $this->registerJsFile('@web/js/modules/expert/expertCreate.js', ['depends' => Yi
         <?php $form = ActiveForm::begin([
             'id' => 'form-create-expert',
             'action' => ['create-expert'],
-            'options' => [
-                'data' => [
-                    'pjax' => true
-                ],
-            ],
             'fieldConfig' => [
                 'template' => "{label}\n{input}\n{error}",
                 'labelOptions' => ['class' => 'col-12 col-form-label mr-lg-3'],

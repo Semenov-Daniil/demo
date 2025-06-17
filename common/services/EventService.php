@@ -30,6 +30,11 @@ class EventService
         $this->moduleService = new ModuleService();
     }
 
+    public function getExpertChannel($id)
+    {
+        return Yii::$app->sse::EXPERT_CHANNEL . "_expert_$id";
+    }
+
     /**
      * Creates a new event from Events model data.
      * @param Experts $eventModel
@@ -99,7 +104,7 @@ class EventService
         try {
             if (!$this->studentService->deleteStudentsByEvent($event->id)) throw new Exception("Failed to delete event students");
             
-            if ($event->delete()) throw new Exception("Failed to delete event record from the database");
+            if (!$event->delete()) throw new Exception("Failed to delete event record from the database");
 
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$event->dir_title}"));
             

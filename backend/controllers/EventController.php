@@ -44,6 +44,7 @@ class EventController extends BaseController
                 'actions' => [
                     'events' => ['GET'],
                     'create-event' => ['POST'],
+                    'all-experts' => ['GET'],
                     'list-events' => ['GET'],
                     'update-event' => ['GET', 'PATCH'],
                     'delete-events' => ['DELETE'],
@@ -71,24 +72,41 @@ class EventController extends BaseController
         ]);
     }
 
-    public function actionCreateEvent(): string
+    public function actionCreateEvent(): string|Response
     {
         $form = new EventForm();
+        $result = ['success' => false];
 
         if ($this->request->isPost && $form->load(Yii::$app->request->post())) {
-            $success = $this->eventService->createEvent($form);
+            $result['success'] = $this->eventService->createEvent($form);
 
             Yii::$app->toast->addToast(
-                $success ? 'Чемпионат успешно создан.' : 'Не удалось создать чемпионат.',
-                $success ? 'success' : 'error'
+                $result['success'] ? 'Событие успешно создан.' : 'Не удалось создать событие.',
+                $result['success'] ? 'success' : 'error'
             );
 
-            if ($success) {
-                $form = new EventForm();
+            if ($result['success']) {
+                $expertId = (Yii::$app->user->can('sExpert') ? $form->expert : Yii::$app->user->id);
+                $this->publishEvent($expertId, 'create-event');
             }
+
+            $result['errors'] = [];
+            foreach ($form->getErrors() as $attribute => $errors) {
+                $result['errors'][Html::getInputId($form, $attribute)] = $errors;
+            }
+
+            return $this->asJson($result);
         }
 
         return $this->renderAjaxIfRequested('_event-create', ['model' => $form, 'experts' => $this->getExperts()]);
+    }
+
+    public function actionAllExperts()
+    {
+        $expertList = $this->getExperts();
+        return $this->asJson(array_map(function($id, $name) {
+            return ['value' => $id, 'label' => $name];
+        }, array_keys($expertList), $expertList));
     }
 
     public function actionListEvents(): string
@@ -108,7 +126,7 @@ class EventController extends BaseController
             $result['success'] = $model->save();
 
             Yii::$app->toast->addToast(
-                $result['success'] ? 'Чемпионат успешно обновлен.' : 'Не удалось обновить чемпионат.',
+                $result['success'] ? 'Событие успешно обновлен.' : 'Не удалось обновить событие.',
                 $result['success'] ? 'success' : 'error'
             );
 
@@ -116,6 +134,8 @@ class EventController extends BaseController
             foreach ($model->getErrors() as $attribute => $errors) {
                 $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
+
+            if ($result['success']) $this->publishEvent($model->experts_id, 'update-event');
 
             return $this->asJson($result);
         }
@@ -138,19 +158,39 @@ class EventController extends BaseController
         $events = $id ? [$id] : (array) $this->request->post('events', []);
         $count = count($events);
         $result = [];
+        $expertIds = Events::getExpertsEvents($events);
 
         $result['success'] = $count && $this->eventService->deleteEvents($events);
         $result['message'] = $result['success'] ? 'Events deleted.' : 'Experts not deleted.';
 
         Yii::$app->toast->addToast(
             $result['success'] 
-                ? ($count > 1 ? 'Чемпионаты успешно удалены.' : 'Чемпионат успешно удален.') 
-                : ($count > 1 ? 'Не удалось удалить чемпионаты.' : 'Не удалось удалить чемпионат.'),
+                ? ($count > 1 ? 'События успешно удалены.' : 'Событие успешно удалено.') 
+                : ($count > 1 ? 'Не удалось удалить события.' : 'Не удалось удалить событие.'),
             $result['success'] ? 'success' : 'error'
         );
 
+        if ($result['success']) $this->publishEvent($expertIds, 'delete-event');
+
         $result['code'] = Yii::$app->response->statusCode;
         return $this->asJson($result);
+    }
+
+    public function actionSseDataUpdates()
+    {
+        if (Yii::$app->user->can('sExpert')) {
+            Yii::$app->sse->subscriber(Yii::$app->sse::EVENT_CHANNEL);
+        } else {
+            Yii::$app->sse->subscriber($this->eventService->getExpertChannel(Yii::$app->user->id));
+        }
+    }
+
+    protected function publishEvent(int|array $expertIds, string $message = ''): void
+    {
+        $channels = [Yii::$app->sse::EVENT_CHANNEL];
+        $expertIds = is_array($expertIds) ? $expertIds : [$expertIds];
+        foreach($expertIds as $id) { $channels[] = $this->eventService->getExpertChannel($id); }
+        Yii::$app->sse->publishAll($channels, $message);
     }
 
     /**
@@ -166,8 +206,8 @@ class EventController extends BaseController
             return $model;
         }
 
-        Yii::$app->toast->addToast('Чемпионат не найден.', 'error');
+        Yii::$app->toast->addToast('Событие не найдено.', 'error');
 
-        throw new NotFoundHttpException('Чемпионат не найден.');
+        throw new NotFoundHttpException('Событие не найдено.');
     }
 }

@@ -1,10 +1,9 @@
 "use strict";
 
 const url = '/expert/expert';
-
 const pjaxExperts = '#pjax-experts';
 
-const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500, pjaxExperts);
+const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500);
 
 const updateUrl = () => {
     let local = new URL(window.location.href);

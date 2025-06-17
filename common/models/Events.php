@@ -14,17 +14,21 @@ use yii\db\Expression;
 use yii\helpers\VarDumper;
 
 /**
- * This is the model class for table "dm_events".
+ * This is the model class for table "{{%events}}".
  *
  * @property int $id
  * @property int $experts_id
  * @property string $title
  * @property string $dir_title
+ * @property string|null $created_at
+ * @property string|null $updated_at
+ * @property int $statuses_id
  *
  * @property Users $expert
  * @property Modules[] $modules
  * @property StudentsEvents[] $students
  * @property FilesEvents[] $files
+ * @property Statuses $statuses
  */
 class Events extends ActiveRecord
 {
@@ -33,8 +37,8 @@ class Events extends ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'experts_id', '!dir_title'];
-        $scenarios[self::SCENARIO_UPDATE] = ['title', 'experts_id'];
+        $scenarios[self::SCENARIO_DEFAULT] = ['title', 'experts_id', '!dir_title', '!statuses_id'];
+        $scenarios[self::SCENARIO_UPDATE] = ['title', 'experts_id', 'updated_at'];
         return $scenarios;
     }
     
@@ -59,7 +63,9 @@ class Events extends ActiveRecord
             [['title', 'dir_title'], 'trim'],
             ['experts_id', 'required', 'when' => function($model) {
                 return Yii::$app->user->can('sExpert');
-            }, 'message' => 'Необходимо выбрать эксперта.']
+            }, 'message' => 'Необходимо выбрать эксперта.'],
+            [['statuses_id'], 'exist', 'skipOnError' => true, 'targetClass' => Statuses::class, 'targetAttribute' => ['statuses_id' => 'id']],
+            ['statuses_id', 'default', 'value' => Statuses::getStatusId(Statuses::CONFIGURING)],
         ];
     }
 
@@ -72,7 +78,8 @@ class Events extends ActiveRecord
             'id' => 'ID',
             'experts_id' => 'Эксперт',
             'title' => 'Название события',
-            'dir_title' => 'Название директории'
+            'dir_title' => 'Название директории',
+            'statuses_id' => 'Статус'
         ];
     }
 
@@ -117,6 +124,16 @@ class Events extends ActiveRecord
     }
 
     /**
+     * Gets query for [[Statuses]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getStatuses()
+    {
+        return $this->hasOne(Statuses::class, ['id' => 'statuses_id']);
+    }
+
+    /**
      * Get DataProvider events
      * 
      * @param int $records number of records.
@@ -134,6 +151,12 @@ class Events extends ActiveRecord
                     ->select('COUNT(*)')
                     ->where(['events_id' => new Expression(self::tableName() . '.id')]),
             ])
+            ->where([
+                self::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
             ->joinWith('expert', false)
             ->andFilterWhere(['experts_id' => Yii::$app->user->can('sExpert') ? null : $expertId])
         ;
@@ -142,7 +165,7 @@ class Events extends ActiveRecord
             'query' => $query->asArray(),
             'pagination' => [
                 'pageSize' => $records,
-                'route' => 'events',
+                'route' => 'event',
             ],
         ]);
     }
@@ -182,5 +205,15 @@ class Events extends ActiveRecord
         }
 
         return $result;
+    }
+
+    public static function getExpertsEvents(int|array|null $ids = null)
+    {
+        return self::find()
+            ->select('experts_id')
+            ->where(['id' => $ids])
+            ->distinct()
+            ->column()
+        ;
     }
 }

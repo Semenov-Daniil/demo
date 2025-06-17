@@ -69,22 +69,27 @@ class ExpertController extends BaseController
         ]);
     }
 
-    public function actionCreateExpert(): string
+    public function actionCreateExpert(): string|Response
     {
         $model = new ExpertForm();
+        $result = ['success' => false];
 
         if ($this->request->isPost && $model->load(Yii::$app->request->post())) {
-            $success = $this->expertService->createExpert($model);
+            $result['success'] = $this->expertService->createExpert($model);
 
             Yii::$app->toast->addToast(
-                $success ? 'Эксперт успешно добавлен.' : 'Не удалось добавить эксперта.',
-                $success ? 'success' : 'error'
+                $result['success'] ? 'Эксперт успешно добавлен.' : 'Не удалось добавить эксперта.',
+                $result['success'] ? 'success' : 'error'
             );
 
-            if ($success) {
-                $model = new ExpertForm();
-                Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
+            if ($result['success']) Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'create-expert');
+
+            $result['errors'] = [];
+            foreach ($model->getErrors() as $attribute => $errors) {
+                $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
+
+            return $this->asJson($result);
         }
 
         return $this->renderAjaxIfRequested('_expert-create', ['model' => $model]);
@@ -93,7 +98,6 @@ class ExpertController extends BaseController
     public function actionListExperts(): string
     {
         $dataProvider = Experts::getExpertsDataProvider(Yii::$app->request->get('page', 0));
-
         return $this->renderAjaxIfRequested('_experts-list', [
             'dataProvider' => $dataProvider,
         ]);

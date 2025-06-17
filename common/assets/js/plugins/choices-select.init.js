@@ -1,5 +1,7 @@
 "use strict";
 
+const choicesMap = new Map();
+
 function customSearch(term, choices, groups) {
     if (!term || term.length < 1) {
         return buildInitialStructure(choices, groups);
@@ -60,6 +62,11 @@ function watchSelectExpert(select) {
         for (let mutation of mutationsList) {
             if (mutation.type === 'attributes') {
                 if (mutation.attributeName === 'class') {
+                    mutation.target.closest('.choices__inner').classList.remove('is-invalid');
+                    mutation.target.closest('.choices__inner').classList.remove('is-valid');
+                    mutation.target.closest('.choices').classList.remove('is-invalid');
+                    mutation.target.closest('.choices').classList.remove('is-valid');
+
                     if (mutation.target.classList.contains('is-invalid')) {
                         mutation.target.closest('.choices__inner').classList.remove('is-valid');
                         mutation.target.closest('.choices').classList.remove('is-valid');
@@ -107,6 +114,8 @@ const choiceInit = function (select) {
 
     let choices = isChoicesVal["data-choices-text-disabled-true"] ? new Choices(select, choiceData).disable() : new Choices(select, choiceData);
     
+    choicesMap.set(select.id, choices);
+
     if (isChoicesVal["data-choices-group"]) {
         const availableChoices = choices._store._state.choices;
         const allGroups = choices._store._state.groups;

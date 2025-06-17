@@ -245,6 +245,7 @@ class Users extends ActiveRecord implements IdentityInterface
         $user->password = Yii::$app->security->generatePasswordHash($superExpert['password']);
         $user->auth_key = 'super-auth-key';
         $user->roles_id = Roles::getRoleId('expert');
+        $user->statuses_id = Statuses::getStatusId(Statuses::READY);
 
         $auth = Yii::$app->authManager;
         $cacheKey = 'super_expert_role_assigned';

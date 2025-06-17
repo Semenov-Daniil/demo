@@ -16,7 +16,13 @@ class Experts extends Model
     {
         return Users::find()
             ->select(['CONCAT(surname, \' \', name, COALESCE(CONCAT(\' \', patronymic), \'\')) AS fullName'])
-            ->where(['roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT)])
+            ->where([
+                'roles_id' => Roles::getRoleId(self::TITLE_ROLE_EXPERT),
+                'statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ],
+            ])
             ->orderBy([
                 'fullName' => SORT_ASC,
             ])

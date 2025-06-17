@@ -25,35 +25,22 @@ InputStepAsset::register($this);
 
 $this->title = 'Чемпионаты';
 
-$this->registerJsFile('@web/js/modules/event/events.js');
+$this->registerJsFile('@web/js/modules/event/events.js', ['depends' => BackendAppAsset::class]);
 
 ?>
 
 <div class="row">
-    <?php Pjax::begin([
-        'id' => 'pjax-create-event',
-        'enablePushState' => false,
-        'timeout' => 100000,
+    <?= $this->render('_event-create', [
+        'model' => $model,
+        'experts' => $experts 
     ]); ?>
-    
-        <?= $this->render('_event-create', [
-            'model' => $model,
-            'experts' => $experts 
-        ]); ?>
-    
-    <?php Pjax::end(); ?>
 </div>
 
 <div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-events',
-        'enablePushState' => false,
         'timeout' => 100000,
-        'options' => [
-            'data' => [
-                'pjax-grid' => true
-            ]
-        ]
+        'clientOptions' => ['cache' => true],
     ]); ?>
 
         <?= $this->render('_events-list', [

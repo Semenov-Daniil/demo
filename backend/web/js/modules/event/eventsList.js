@@ -1,12 +1,14 @@
 $(() => {
     const checkboxManager = new GridCheckboxManager('pjax-events', 'eventsCheckedItems');
 
-    const $pjaxEvents = $('#pjax-events');
+    const $pjaxEvents = $(pjaxEvents);
     const $modalUpdateEvent = $('#modal-update-event');
 
     const actionButtonClasses = ['.btn-delete-selected-events'];
 
     const updateCheckboxState = () => CommonUtils.updateCheckboxState('events_all', 'events[]', actionButtonClasses);
+
+    CommonUtils.connectDataSSE(`${url}/sse-data-updates`, reloadPjaxDebounced, pjaxEvents, updateUrl());
 
     $pjaxEvents
         .off('click', '.btn-select-all-events')
@@ -38,7 +40,7 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateEvent.modal('hide');
-                        CommonUtils.reloadPjax('#pjax-events', `${url}/list-events`);
+                        reloadPjaxDebounced(pjaxEvents, updateUrl());
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -59,7 +61,7 @@ $(() => {
                 method: 'DELETE',
                 success(data) {
                     if (data.success) {
-                        CommonUtils.reloadPjax('#pjax-events', `${url}/list-events`);
+                        reloadPjaxDebounced(pjaxEvents, updateUrl());
                     }
                 },
             });
@@ -77,7 +79,7 @@ $(() => {
                     data: { events },
                     success(data) {
                         if (data.success) {
-                            CommonUtils.reloadPjax('#pjax-events', `${url}/list-events`);
+                            reloadPjaxDebounced(pjaxEvents, updateUrl());
                         }
                     },
                 });

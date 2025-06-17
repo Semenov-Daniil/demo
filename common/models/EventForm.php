@@ -32,7 +32,8 @@ class EventForm extends Model
             [['expert'], 'exist', 'targetClass' => Users::class, 'targetAttribute' => ['expert' => 'id']],
             ['expert', 'required', 'when' => function($model) {
                 return Yii::$app->user->can('sExpert');
-            }, 'message' => 'Необходимо выбрать эксперта.']
+            }, 'message' => 'Необходимо выбрать эксперта.'],
+            ['expert', 'expertValidate'],
         ];
     }
 
@@ -46,5 +47,16 @@ class EventForm extends Model
             'title' => 'Название события',
             'countModules' => 'Кол-во модулей',
         ];
+    }
+
+    public function expertValidate($attribute, $params)
+    {
+        if (!$this->hasErrors()) {
+            $user = Users::findOne($this->expert);
+
+            if (!$user || !($user->statuses_id == Statuses::getStatusId(Statuses::READY) || $user->statuses_id == Statuses::getStatusId(Statuses::CONFIGURING))) {
+                $this->addError($attribute, 'Обновите выбор эксперта');
+            }
+        }
     }
 }

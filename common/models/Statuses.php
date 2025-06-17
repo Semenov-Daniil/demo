@@ -11,6 +11,7 @@ use Yii;
  * @property string $title
  *
  * @property Users[] $users
+ * @property Events[] $events
  */
 class Statuses extends \yii\db\ActiveRecord
 {
@@ -59,8 +60,21 @@ class Statuses extends \yii\db\ActiveRecord
         return $this->hasMany(Users::class, ['statuses_id' => 'id']);
     }
 
+    /**
+     * Gets query for [[Events]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getEvents()
+    {
+        return $this->hasMany(Events::class, ['statuses_id' => 'id']);
+    }
+
     public static function getStatusId(string $title): ?int
     {
-        return self::findOne(['title' => $title])?->id;
+        $cacheKey = 'status_id_' . $title;
+        return Yii::$app->cache->getOrSet($cacheKey, function () use ($title) {
+            return self::findOne(['title' => $title])?->id;
+        }, 3600);
     }
 }
