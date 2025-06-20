@@ -1,6 +1,9 @@
 $(() => {
     const url = '/expert/student-data';
+    const urlStudent = '/expert/student';
+    const urlEvent = '/expert/event';
     const pjaxStudents = '#pjax-students';
+    const $pjaxStudents = $(pjaxStudents);
     const eventSelect = '#events-select';
     const placeholderData = `
         <div class="mb-3">
@@ -45,21 +48,119 @@ $(() => {
         </div>
     `;
 
+    let sourceSSE = null;
+
+    const getEventParam = (url) => {
+        try {
+            const urlObj = new URL(url);
+            const eventValue = urlObj.searchParams.get('event');
+            return eventValue;
+        } catch (error) {
+            console.error('Invalid URL:', error);
+            return null;
+        }
+    }
+
+    const setEventParam = (url, eventValue = null) => {
+        try {
+            const urlObj = new URL(url);
+            eventValue = eventValue ?? '';
+            urlObj.searchParams.set('event', eventValue);
+            return urlObj.toString();
+        } catch (error) {
+            console.error('Invalid URL:', error);
+            return url;
+        }
+    }
+
+    const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500);
+
+    const updateStudentsList = () => {
+        return reloadPjaxDebounced(pjaxStudents, CommonUtils.updateUrl(`${url}/list-students`));
+    }
+
+    if ($(eventSelect).val()) {
+        if (sourceSSE) sourceSSE.close();
+        sourceSSE = CommonUtils.connectDataSSE(setEventParam(`${window.location.origin}${urlStudent}/sse-data-updates`, $(eventSelect).val()), updateStudentsList);
+    }
+
     $(eventSelect)
         .off('change')
         .on('change', () => {
-            const $select = $(eventSelect);
-            const paramQuery = $select.val() ? `?event=${$select.val()}` : '';
+            window.history.pushState({}, '', setEventParam(window.location.href, $(eventSelect).val()));
 
-            $(pjaxStudents)
+            $pjaxStudents
                 .off('pjax:beforeSend')
-                .on('pjax:beforeSend', () => $(pjaxStudents).html(placeholderData))
-                .off('pjax:end')
-                .on('pjax:end', () => window.history.pushState({}, '', `student-data${paramQuery}`));
+                .on('pjax:beforeSend', () => $pjaxStudents.html(placeholderData));
+            
+            updateStudentsList().then(() => {
+                $pjaxStudents.off('pjax:beforeSend');
+            });
 
-            CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${paramQuery}`);
+            if (sourceSSE) sourceSSE.close();
+            if ($(eventSelect).val()) sourceSSE = CommonUtils.connectDataSSE(setEventParam(`${window.location.origin}${urlStudent}/sse-data-updates`, $(eventSelect).val()), updateStudentsList);
 
-            $(pjaxStudents)
-                .off('pjax:beforeSend');
+            $(eventSelect).removeClass('is-valid is-invalid');
         });
+
+    const loadChoicesDate = (url) => {
+        CommonUtils.performAjax({
+            url: url,
+            method: 'GET',
+            success(data) {
+                const hasGroup = data.hasGroup;
+                const events = data.events;
+                const choices = [choicesMap.get('events-select')];
+                choices.forEach((el) => {
+                    if (el) {
+                        const $select = $(el.passedElement.element);
+                        const storeChoices = el._store._state.choices;
+                        const currentValue = $select.val() ?? '';
+
+                        storeChoices.forEach(option => {
+                            if (option.value !== '') el.removeChoice(option.value);
+                        });
+                        $select.find('option').not('[value=""]').remove();
+
+                        if (hasGroup) {
+                            const groupChoices = events.map((group, index) => ({
+                                label: group.group,
+                                id: index,
+                                choices: group.items.map(item => ({
+                                    value: item.value + '',
+                                    label: item.label
+                                }))
+                            }));
+
+                            el.setChoices(groupChoices, 'value', 'label', false);
+                        } else {
+                            const flatChoices = events.map(item => ({
+                                value: item.value + '',
+                                label: item.label
+                            }));
+
+                            el.setChoices(flatChoices, 'value', 'label', false);
+                        }
+
+                        const allValues = hasGroup
+                            ? events.flatMap(g => g.items.map(i => i.value + ''))
+                            : events.map(i => i.value + '');
+
+                        if (allValues.includes(currentValue)) {
+                            el.setChoiceByValue(currentValue);
+                            $select.val(currentValue);
+                        } else {
+                            el.setChoiceByValue('');
+                            $select.val('');
+                            $select.removeClass('is-valid is-invalid');
+                        }
+                        window.history.pushState({}, '', setEventParam(window.location.href, $select.val()));
+                    }
+                })
+            },
+        });
+        updateStudentsList();
+    }
+
+    CommonUtils.connectDataSSE(`${urlEvent}/sse-data-updates`, loadChoicesDate, `${url}/all-events`);
 });

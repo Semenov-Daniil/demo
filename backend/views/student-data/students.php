@@ -11,6 +11,7 @@ use backend\assets\AppAsset as BackendAppAsset;
 use common\assets\AppAsset;
 use common\assets\ChoicesAsset;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\widgets\Pjax;
 
 $this->title = 'Данные студентов';
@@ -41,7 +42,6 @@ $this->registerJsFile('@web/js/modules/student-data/student-data.js', ['depends'
 <div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-students',
-        'enablePushState' => false,
         'timeout' => 10000,
     ]); ?>
         <?= $this->render('_students-list', [

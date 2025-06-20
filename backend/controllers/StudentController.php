@@ -242,7 +242,18 @@ class StudentController extends BaseController
 
     protected function findStudentForm(?string $id): StudentForm
     {
-        if ($student = Students::findOne(['students_id' => $id])) {
+        $student = Students::find()
+            ->joinWith('user', false)
+            ->where([
+                'students_id' => $id, 
+                'statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY)
+                ]
+            ])
+            ->one()
+        ;
+        if ($student) {
             $form = new StudentForm();
             $form->surname = $student->user->surname;
             $form->name = $student->user->name;

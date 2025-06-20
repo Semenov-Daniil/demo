@@ -17,7 +17,7 @@ $this->registerJsFile('@web/js/modules/student/studentsList.js', ['depends' => [
 
 <?php if ($dataProvider->totalCount): ?> 
     <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
-        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['export-students', 'event' => $event->id], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
+        <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['export-students', 'event' => $event->id], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0], 'target' => '_blank', 'download' => true]) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-students']) ?>
         <?= Html::button('
             <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</div>

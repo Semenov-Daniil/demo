@@ -42,23 +42,46 @@ class StudentService
         return "{$login}_m{$numberModule}";
     }
 
-    public function getFolders(int $studentId, string $dirTitle): array
+    public function getDirectories(int $studentId, int|null $module = null): array
     {
-        $folders = [];
+        $dirs = [];
 
         if (!$studentId || !($student = Students::findOne(['students_id' => $studentId]))) {
-            return $folders;
+            return $dirs;
         }
 
-        if ($dirTitle == 'all') {
-            foreach ($student->modules as $module) {
-                $folders[] = Yii::getAlias("@students/{$student->user->login}/" . $this->moduleService->getTitleDirectoryModule($student->dir_prefix, $module->number));
-            }
-        } else {
-            $folders[] = Yii::getAlias("@students/{$student->user->login}/{$dirTitle}");
+        $login = $student->user->login;
+
+        if ($module) {
+            return [Yii::getAlias("@students/$login/" . $this->moduleService->getTitleDirectoryModule($student->dir_prefix, $module))];
         }
 
-        return $folders;
+        foreach ($student->modules as $module) {
+            $dirs[] = Yii::getAlias("@students/$login/" . $this->moduleService->getTitleDirectoryModule($student->dir_prefix, $module->number));
+        }
+
+        return $dirs;
+    }
+
+    public function getDatabases(int $id, int|null $module = null): array
+    {
+        $databeses = [];
+
+        if (!$id || !($student = Students::findOne(['students_id' => $id]))) {
+            return $databeses;
+        }
+
+        $login = $student->user->login;
+
+        if ($module) {
+            return [$this->moduleService->getTitleDb($login, $module)];
+        }
+
+        foreach ($student->modules as $module) {
+            $databeses[] = $this->moduleService->getTitleDb($login, $module->number);
+        }
+
+        return $databeses;
     }
 
     public function getFilesDirectory(string $login): string

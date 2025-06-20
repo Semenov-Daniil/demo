@@ -18,13 +18,13 @@ use yii\widgets\ListView;
             <?= Html::button('<i class="ri-more-fill align-middle"></i>', ['class' => 'btn btn-soft-secondary btn-sm col-auto', 'data' => ['bs-toggle' => 'dropdown'], 'aria' => ['expanded' => 'false']]); ?>
             <?= Html::ul([
                 Html::tag('span', 'Скачать архив:', ['class' => 'dropdown-header']),
-                Html::a('Все модули', ['download-archive', 'student' => $model['students_id']], ['class' => 'dropdown-item', 'data' => ['pjax' => 0]]),
+                Html::a('Все модули', ['download-archive', 'student' => $model['students_id']], ['class' => 'dropdown-item link-export', 'data' => ['pjax' => 0], 'target' => '_blank', 'download' => true]),
                 ...array_map(
-                    fn($modules) => 
+                    fn($module) => 
                         Html::a(
-                                'Модуль ' . $modules['number'], 
-                                ['download-archive', 'student' => $model['students_id'], 'folderTitle' => $modules['title']], 
-                                ['class' => 'dropdown-item', 'data' => ['pjax' => 0]]), 
+                                'Модуль ' . $module['number'], 
+                                ['download-archive', 'student' => $model['students_id'], 'module' => $module['number']], 
+                                ['class' => 'dropdown-item link-export', 'data' => ['pjax' => 0], 'target' => '_blank', 'download' => true]), 
                     $model['modules']
                 )
             ], ['class' => 'dropdown-menu', 'encode' => false]); ?>
