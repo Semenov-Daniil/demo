@@ -1,7 +1,4 @@
 $(() => {
-    const $pjaxCreateStudent = $('#pjax-create-student');
-    const pjaxStudents = '#pjax-students';
-    const eventSelect = '#events-select';
     const placeholderData = `
         <div class="row">
             <div>
@@ -37,37 +34,122 @@ $(() => {
             </div>
         </div>    
     `;
-    const paramQueryEvent = () => ($(eventSelect).val() ? `?event=${$(eventSelect).val()}` : '');
+    const eventSelect = '#events-select';
+    const $pjaxStudents = $(pjaxStudents);
 
-    $pjaxCreateStudent
+    const $form = $('#add-student-form');
+    const $button = $('.btn-create-student');
+
+    $form
         .off('change', eventSelect)
         .on('change', eventSelect, () => {
-            $(pjaxStudents)
+            window.history.pushState({}, '', setEventParam(window.location.href, $(eventSelect).val()));
+
+            $pjaxStudents
                 .off('pjax:beforeSend')
-                .on('pjax:beforeSend', () => $(pjaxStudents).html(placeholderData))
-                .off('pjax:end')
-                .on('pjax:end', () => window.history.pushState({}, '', `student${paramQueryEvent()}`));
+                .on('pjax:beforeSend', () => $pjaxStudents.html(placeholderData));
 
-            CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${paramQueryEvent()}`);
+            updateStudentsList().then(() => {
+                $pjaxStudents.off('pjax:beforeSend');
+            });
 
-            $(pjaxStudents)
-                .off('pjax:beforeSend');
+            if (sourceSSE) sourceSSE.close();
+            if ($(eventSelect).val()) sourceSSE = CommonUtils.connectDataSSE(setEventParam(`${window.location.origin}${url}/sse-data-updates`, $(eventSelect).val()), updateStudentsList);
+
+            $(eventSelect).removeClass('is-valid is-invalid');
+
+            // $pjaxStudents.off('pjax:beforeSend');
         });
 
-    $pjaxCreateStudent
-        .off('beforeSubmit')
-        .on('beforeSubmit', () => {
-            CommonUtils.toggleButtonState($('.btn-create-student'), true);
-        })
-        .off('pjax:complete')
-        .on('pjax:complete', () => {
-            CommonUtils.toggleButtonState($('.btn-create-student'), false);
-            CommonUtils.reloadPjax(pjaxStudents, `${url}/list-students${paramQueryEvent()}`);
+    const loadChoicesDate = (url) => {
+        CommonUtils.performAjax({
+            url: url,
+            method: 'GET',
+            success(data) {
+                const hasGroup = data.hasGroup;
+                const events = data.events;
+                const choices = [choicesMap.get('events-select')];
+                choices.forEach((el) => {
+                    if (el) {
+                        const $select = $(el.passedElement.element);
+                        const storeChoices = el._store._state.choices;
+                        const currentValue = $select.val() ?? '';
+
+                        storeChoices.forEach(option => {
+                            if (option.value !== '') el.removeChoice(option.value);
+                        });
+                        $select.find('option').not('[value=""]').remove();
+
+                        if (hasGroup) {
+                            const groupChoices = events.map((group, index) => ({
+                                label: group.group,
+                                id: index,
+                                choices: group.items.map(item => ({
+                                    value: item.value + '',
+                                    label: item.label
+                                }))
+                            }));
+
+                            el.setChoices(groupChoices, 'value', 'label', false);
+                        } else {
+                            const flatChoices = events.map(item => ({
+                                value: item.value + '',
+                                label: item.label
+                            }));
+
+                            el.setChoices(flatChoices, 'value', 'label', false);
+                        }
+
+                        const allValues = hasGroup
+                            ? events.flatMap(g => g.items.map(i => i.value + ''))
+                            : events.map(i => i.value + '');
+
+                        if (allValues.includes(currentValue)) {
+                            el.setChoiceByValue(currentValue);
+                            $select.val(currentValue);
+                        } else {
+                            el.setChoiceByValue('');
+                            $select.val('');
+                            $select.removeClass('is-valid is-invalid');
+                        }
+                        window.history.pushState({}, '', setEventParam(window.location.href, $select.val()));
+                    }
+                })
+            },
+        });
+        updateStudentsList();
+    }
+
+    CommonUtils.connectDataSSE(`${urlEvent}/sse-data-updates`, loadChoicesDate, `${url}/all-events`);
+
+    $form.on('beforeSubmit', function(e) {
+        e.preventDefault();
+
+        CommonUtils.performAjax({
+            url: $form.prop('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            beforeSend: () => {
+                CommonUtils.toggleButtonState($button, true);
+            },
+            success: (data) => {
+                if (data.success) {
+                    $form.trigger("reset");
+                    $form.yiiActiveForm('resetForm');
+                    document.activeElement.blur();
+                    let currentEvent = getEventParam(window.location.href);
+                    $(eventSelect).val(currentEvent);
+                    choicesMap.get('events-select').setChoiceByValue(currentEvent);
+                    updateStudentsList();
+                } else if (data.errors) {
+                    $form.yiiActiveForm('updateMessages', data.errors, true);
+                }
+            },
+            complete: () => {
+                CommonUtils.toggleButtonState($button, false);
+            }
         });
 
-    $pjaxCreateStudent
-        .off('pjax:end')
-        .on('pjax:end', () => {
-            CommonUtils.inputChoiceInit($pjaxCreateStudent.find('select[data-choices]')[0]);
-        })
+        return false;
+    });
 });

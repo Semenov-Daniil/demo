@@ -2,6 +2,7 @@
 
 namespace common\services;
 
+use common\jobs\students\DeleteStudentEnvironment;
 use common\jobs\students\SetupStudentEvironment;
 use common\models\EncryptedPasswords;
 use common\models\Files;
@@ -29,6 +30,11 @@ class StudentService
         $this->files_dir = (new FileService())::FILES_DIR;
         $this->userService = new UserService();
         $this->moduleService = new ModuleService();
+    }
+
+    public function getEventChannel($id)
+    {
+        return Yii::$app->sse::STUDENT_CHANNEL . "_event_$id";
     }
 
     public function getTitleDb(string $login, int $numberModule): string
@@ -115,14 +121,12 @@ class StudentService
             return false;
         }
 
-        $user = Users::findOne($id);
-        if ($user) {
-            $user->surname = $form->surname;
-            $user->name = $form->name;
-            $user->patronymic = $form->patronymic;
-            return $user->save();
-        }
-        return false;
+        return $this->userService->updateUser($id, [
+            'surname' => $form->surname, 
+            'name' => $form->name, 
+            'patronymic' => $form->patronymic,
+            'updated_at' => $form->updated_at,
+        ]);
     }
 
     public function deleteStudentsByEvent(int $eventId): bool
@@ -138,10 +142,10 @@ class StudentService
      */
     public function deleteStudents(array $studentIds): bool
     {
+        Users::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $studentIds]);
+        Yii::$app->sse->publish($this->getEventChannel(Students::findOne(['students_id' => $studentIds[0]])?->events_id), 'student-delete');
         foreach ($studentIds as $id) {
-            if (!$this->deleteStudent($id)) {
-                return false;
-            }
+            Yii::$app->queue->push(new DeleteStudentEnvironment(['studentId' => $id]));
         }
         return true;
     }
@@ -151,10 +155,11 @@ class StudentService
      * @param int $id
      * @return bool
      */
-    public function deleteStudent(int $id): bool
+    public function deleteStudent(int|null $id = null): bool
     {
         if (!$id || !($student = Students::findOne(['students_id' => $id]))) {
-            return false;
+            Yii::warning("Failed to find user ($id)", __METHOD__);
+            return true;
         }
 
         $login = $student->user->login;
@@ -173,16 +178,13 @@ class StudentService
 
             Yii::$app->dbComponent->deleteUser($login);
 
-            if ($this->userService->deleteUser($id)) {
-                $transaction->commit();
-                return true;
-            }
-
-            $transaction->rollBack();
-            return false;
+            if (!$this->userService->deleteUser($id)) throw new \Exception("Failed to delete user ($id)");
+            
+            $transaction->commit();
+            return true;
         } catch (Exception $e) {
             $transaction->rollBack();
-            Yii::error("Error delete student: " . $e->getMessage(), __METHOD__);
+            Yii::error("\nError delete student:\n{$e->getMessage()}", __METHOD__);
             return false;
         }
     }

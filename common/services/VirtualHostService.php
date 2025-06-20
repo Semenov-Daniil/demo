@@ -11,8 +11,6 @@ class VirtualHostService
 {
     public string $logFile = '';
 
-    const DOMAIN_SUFFIX = '.demo.ru';
-
     public function __construct()
     {
         $this->logFile = 'vhost.log';
@@ -20,7 +18,7 @@ class VirtualHostService
 
     public static function getDomain(string $main): string
     {
-        return "$main" . self::DOMAIN_SUFFIX;
+        return "$main" . Yii::$app->params['vhSuffix'];
     }
 
     public function createVirtualHost(string $login, string $module, string $path): bool

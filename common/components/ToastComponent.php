@@ -20,7 +20,8 @@ class ToastComponent extends Component
         $channel = self::getСhannel();
         $content = json_encode([
             'text' => $message,
-            'type' => $type
+            'type' => $type,
+            'timeout' => time(),
         ]);
         $this->redis->publish($channel, $content);
     }

@@ -8,7 +8,7 @@ $(() => {
 
     const updateCheckboxState = () => CommonUtils.updateCheckboxState('experts_all', 'experts[]', actionButtonClasses);
 
-    CommonUtils.connectDataSSE(`${url}/sse-data-updates`, reloadPjaxDebounced, pjaxExperts, updateUrl());
+    CommonUtils.connectDataSSE(`${url}/sse-data-updates`, updateExpertsList);
 
     $pjaxExperts
         .off('click', '.btn-select-all-experts')
@@ -39,7 +39,7 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateExpert.modal('hide');
-                        reloadPjaxDebounced(pjaxExperts, updateUrl());
+                        updateExpertsList();
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -64,7 +64,7 @@ $(() => {
                 },
                 success(data) {
                     if (data.success) {
-                        reloadPjaxDebounced(pjaxExperts, updateUrl());
+                        updateExpertsList();
                     }
                 },
                 complete() {
@@ -95,7 +95,7 @@ $(() => {
                     },
                     success(data) {
                         if (data.success) {
-                            reloadPjaxDebounced(pjaxExperts, updateUrl());
+                            updateExpertsList();
                         }
                     },
                     complete() {

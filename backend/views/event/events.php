@@ -30,10 +30,12 @@ $this->registerJsFile('@web/js/modules/event/events.js', ['depends' => BackendAp
 ?>
 
 <div class="row">
-    <?= $this->render('_event-create', [
-        'model' => $model,
-        'experts' => $experts 
-    ]); ?>
+    <div>
+        <?= $this->render('_event-create', [
+            'model' => $model,
+            'experts' => $experts 
+        ]); ?>
+    </div>
 </div>
 
 <div class="row">

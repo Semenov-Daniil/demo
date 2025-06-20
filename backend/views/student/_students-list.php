@@ -19,7 +19,13 @@ $this->registerJsFile('@web/js/modules/student/studentsList.js', ['depends' => [
     <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
         <?= Html::a('<span class="d-flex align-items-center"><i class="ri-export-fill align-middle fs-16 me-2"></i> Экспорт</span>', ['export-students', 'event' => $event->id], ['class' => 'btn btn-secondary btn-export', 'data' => ['pjax' => 0]]) ?>
         <?= Html::button('<span class="d-flex align-items-center"><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-students']) ?>
-        <?= Html::button('<span class="d-flex align-items-center"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</span>', ['class' => 'btn btn-danger btn-delete-selected-students', 'disabled' => true]) ?>
+        <?= Html::button('
+            <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</div>
+            <div class="d-flex align-items-center d-none cnt-load">
+                <span class="spinner-border flex-shrink-0" role="status"></span>
+                <span class="flex-grow-1 ms-2">Удаление...</span>
+            </div>
+        ', ['class' => 'btn btn-danger btn-load btn-delete-selected-students', 'disabled' => true]) ?>
     </div>
 <?php endif; ?>
 
@@ -127,7 +133,10 @@ $this->registerJsFile('@web/js/modules/student/studentsList.js', ['depends' => [
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['students_id']], 'title' => 'Удалить']);
+                            return Html::button('
+                                <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line ri-lg"></i></div>
+                                <div class="d-flex align-items-center d-none cnt-load"><span class="spinner-border flex-shrink-0" role="status"></span></div>
+                            ', ['class' => 'btn btn-icon btn-danger btn-soft-danger btn-load btn-delete', 'data' => ['id' => $model['students_id']], 'title' => 'Удалить']);
                         },
                         'update' => function ($url, $model, $key) {
                             return Html::button('<i class="ri-pencil-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-info btn-update', 'data' => ['id' => $model['students_id']], 'title' => 'Редактировать']);

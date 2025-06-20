@@ -21,6 +21,8 @@ use yii\helpers\VarDumper;
  * @property int $students_id
  * @property int $events_id
  * @property string $dir_prefix
+ * @property string $created_at
+ * @property string $updated_at
  *
  * @property Events $event
  * @property Modules[] $modules
@@ -48,6 +50,7 @@ class Students extends ActiveRecord
             [['students_id', 'events_id', 'dir_prefix'], 'required'],
             [['dir_prefix'], 'string', 'max' => 255],
             [['dir_prefix'], 'trim'],
+            [['created_at', 'updated_at'], 'safe'],
             [['students_id', 'events_id'], 'integer'],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
             [['students_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::class, 'targetAttribute' => ['students_id' => 'id']],
@@ -126,7 +129,18 @@ class Students extends ActiveRecord
             ])
             ->joinWith('encryptedPassword', false)
             ->joinWith('user', false)
-            ->where([self::tableName() . '.events_id' => $eventId])
+            ->joinWith('event', false)
+            ->where([
+                self::tableName() . '.events_id' => $eventId,
+                Events::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ], 
+                Users::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]    
+            ])
             ->asArray()
         ;
 

@@ -103,10 +103,12 @@ class EventController extends BaseController
 
     public function actionAllExperts()
     {
+        $result = ['hasGroup' => false, 'experts' => []];
         $expertList = $this->getExperts();
-        return $this->asJson(array_map(function($id, $name) {
+        $result['experts'] = array_map(function($id, $name) {
             return ['value' => $id, 'label' => $name];
-        }, array_keys($expertList), $expertList));
+        }, array_keys($expertList), $expertList);
+        return $this->asJson($result);
     }
 
     public function actionListEvents(): string

@@ -163,14 +163,15 @@ class EventService
      */
     public function deleteEvent(int|string|null $id): bool
     {
-        if (!$id || !($event = Events::findOne($id))) {
-            return false;
+        if (!$id || !($event = Events::findOne(['id' => $id]))) {
+            Yii::warning("Failed to find event ($id)", __METHOD__);
+            return true;
         }
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            if (!$event->delete()) throw new Exception("Failed to delete event record from the database");
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$event->dir_title}"));
+            if (!$event->delete()) throw new Exception("Failed to delete event record from the database");
             $transaction->commit();
             return true;
         } catch (\Exception $e) {

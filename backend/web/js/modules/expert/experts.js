@@ -5,17 +5,8 @@ const pjaxExperts = '#pjax-experts';
 
 const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500);
 
-const updateUrl = () => {
-    let local = new URL(window.location.href);
-    let pjaxUrl;
-    try {
-        pjaxUrl = new URL(`${url}/list-experts`);
-    } catch {
-        pjaxUrl = new URL(`${url}/list-experts`, local.origin);
-    }
-
-    let currentPage = local.searchParams.get('page');
-    if (currentPage !== null) pjaxUrl.searchParams.set('page', currentPage);
-
-    return pjaxUrl.pathname + pjaxUrl.search + pjaxUrl.hash;
+const updateExpertsList = () => {
+    return reloadPjaxDebounced(pjaxExperts, CommonUtils.updateUrl(`${url}/list-experts`));
 }
+
+

@@ -213,13 +213,25 @@ class CommonUtils
         };
     }
 
+    static updateUrl(pjaxUrl) {
+        let local = new URL(window.location.href);
+        let updateUrl;
+        try {
+            updateUrl = new URL(pjaxUrl);
+        } catch {
+            updateUrl = new URL(pjaxUrl, local.origin);
+        }
+
+        return updateUrl.pathname + local.search;
+    }
+
     static workerSSE() {
         return typeof EventSource !== "undefined";
     }
 
     static connectDataSSE(url, fn, ...args) {
         const source = new EventSource(url);
-        this.closeSSE(source);
+        CommonUtils.closeSSE(source);
         source.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.hasUpdates) {
@@ -230,6 +242,7 @@ class CommonUtils
             source.close();
             setTimeout(CommonUtils.connectDataSSE, 5000, url, fn, ...args);
         };
+        return source;
     }
 
     static closeSSE(source) {

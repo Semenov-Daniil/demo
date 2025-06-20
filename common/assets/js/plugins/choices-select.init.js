@@ -115,8 +115,6 @@ const choiceInit = function (select) {
     let choices = isChoicesVal["data-choices-text-disabled-true"] ? new Choices(select, choiceData).disable() : new Choices(select, choiceData);
     
     choicesMap.set(select.id, choices);
-    console.log(select.id);
-    console.log(choicesMap);
 
     if (isChoicesVal["data-choices-group"]) {
         const availableChoices = choices._store._state.choices;

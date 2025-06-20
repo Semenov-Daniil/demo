@@ -9,7 +9,7 @@ use yii\web\YiiAsset;
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
-/** @var app\models\EventForm $model */
+/** @var common\models\EventForm $model */
 /** @var array $experts */
 
 $this->registerJsFile('@web/js/modules/event/eventCreate.js', ['depends' => [YiiAsset::class, InputStepAsset::class, ChoicesAsset::class]], 'eventCreate');
@@ -41,7 +41,7 @@ $this->registerJsFile('@web/js/modules/event/eventCreate.js', ['depends' => [Yii
             <div class="row">
 
                 <?php if (Yii::$app->user->can('sExpert')): ?>
-                    <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3 field-choices']])->dropDownList($experts, ['prompt' => 'Выберите эксперта',  'data' => ['choices' => true, 'choices-removeItem' => true]])?>
+                    <?= $form->field($model, 'expert', ['options' => ['class' => 'col-xl-5 mb-3 field-choices']])->dropDownList($experts, ['prompt' => 'Выберите эксперта', 'data' => ['choices' => true, 'choices-removeItem' => true]])?>
                 <?php endif;?>
 
                 <?= $form->field($model, 'title', ['options' => ['class' => 'col-md-8 mb-3' . (Yii::$app->user->can('sExpert') ? ' col-xl-4' : '')]])->textInput(['placeholder' => 'Введите название события']) ?>

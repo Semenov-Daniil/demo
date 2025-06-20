@@ -26,9 +26,11 @@ $this->registerJsFile('@web/js/modules/expert/experts.js', ['depends' => Backend
 ?>
 
 <div class="row">
-    <?= $this->render('_expert-create', [
-        'model' => $model
-    ]); ?>
+    <div>
+        <?= $this->render('_expert-create', [
+            'model' => $model
+        ]); ?>
+    </div>
 </div>
 
 <div class="row">

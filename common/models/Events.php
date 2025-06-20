@@ -174,7 +174,13 @@ class Events extends ActiveRecord
     {
         return self::find()
             ->select('title')
-            ->where(['experts_id' => $expertId])
+            ->where([
+                'experts_id' => $expertId,
+                self::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ] 
+            ])
             ->orderBy([
                 'id' => SORT_ASC
             ])
@@ -194,6 +200,12 @@ class Events extends ActiveRecord
             ->orderBy([
                 'expert_name' => SORT_ASC,
                 'event_title' => SORT_ASC
+            ])
+            ->where([
+                self::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
             ])
             ->asArray()
             ->all()

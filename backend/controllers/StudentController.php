@@ -4,6 +4,7 @@ namespace backend\controllers;
 
 use common\models\EncryptedPasswords;
 use common\models\Events;
+use common\models\Statuses;
 use common\models\StudentForm;
 use common\models\Students;
 use common\models\Users;
@@ -76,24 +77,52 @@ class StudentController extends BaseController
         ]);
     }
 
-    public function actionCreateStudent(): string
+    public function actionCreateStudent(): string|Response
     {
         $form = new StudentForm(['scenario' => StudentForm::SCENARIO_CREATE]);
+        $result = ['success' => false];
 
         if ($this->request->isPost && $form->load(Yii::$app->request->post())) {
-            $success = $this->studentService->createStudent($form);
+            $result['success'] = $this->studentService->createStudent($form);
 
             Yii::$app->toast->addToast(
-                $success ? 'Студент успешно добавлен.' : 'Не удалось добавить студента.',
-                $success ? 'success' : 'error'
+                $result['success'] ? 'Студент успешно добавлен.' : 'Не удалось добавить студента.',
+                $result['success'] ? 'success' : 'error'
             );
 
-            if ($success) {
-                $form = new StudentForm(['scenario' => StudentForm::SCENARIO_CREATE, 'events_id' => $form->events_id]);
+            if ($result['success']) {
+                $this->publishStudents($form->events_id, 'create-student');
             }
+
+            $result['errors'] = [];
+            foreach ($form->getErrors() as $attribute => $errors) {
+                $result['errors'][Html::getInputId($form, $attribute)] = $errors;
+            }
+
+            return $this->asJson($result);
         }
 
         return $this->renderAjaxIfRequested('_student-create', ['model' => $form, 'events' => $this->getEvents()]);
+    }
+
+    public function actionAllEvents()
+    {
+        $result = ['hasGroup' => false, 'events' => []];
+        $eventsList = $this->getEvents();
+        if (Yii::$app->user->can('sExpert')) {
+            $result['hasGroup'] = true;
+            $result['events'] = array_map(function($groupLabel, $group) {
+                return ['group' => $groupLabel, 'items' => array_map(function($id, $name) {
+                    return ['value' => $id, 'label' => $name];
+                }, array_keys($group), $group)];
+            }, array_keys($eventsList), $eventsList);
+        } else {
+            $result['events'] = array_map(function($id, $name) {
+                return ['value' => $id, 'label' => $name];
+            }, array_keys($eventsList), $eventsList);
+        }
+
+        return $this->asJson($result);
     }
 
     public function actionListStudents(?int $event = null): string
@@ -107,7 +136,7 @@ class StudentController extends BaseController
     public function actionUpdateStudent(?int $id = null): Response|string
     {
         $form = $this->findStudentForm($id);
-        $form->scenario = StudentForm::SCENARIO_UPDATE;
+        $form->scenario = $form::SCENARIO_UPDATE;
         $result = ['success' => false];
 
         if ($this->request->isPatch && $form->load($this->request->post())) {
@@ -117,6 +146,10 @@ class StudentController extends BaseController
                 $result['success'] ? 'Студент успешно обновлен.' : 'Не удалось обновить студента.',
                 $result['success'] ? 'success' : 'error'
             );
+
+            if ($result['success']) {
+                $this->publishStudents($form->events_id, 'update-student');
+            }
 
             $result['errors'] = [];
             foreach ($form->getErrors() as $attribute => $errors) {
@@ -192,25 +225,48 @@ class StudentController extends BaseController
         exit;
     }
 
+    public function actionSseDataUpdates(int $event)
+    {
+        if ($event) {
+            Yii::$app->sse->subscriber($this->studentService->getEventChannel($event));
+        }
+        exit;
+    }
+
+    protected function publishStudents(int $eventId, string $message = ''): void
+    {
+        if ($eventId) {
+            Yii::$app->sse->publish($this->studentService->getEventChannel($eventId), $message);
+        }
+    }
+
     protected function findStudentForm(?string $id): StudentForm
     {
-        if ($user = Users::findOne($id)) {
+        if ($student = Students::findOne(['students_id' => $id])) {
             $form = new StudentForm();
-            $form->surname = $user->surname;
-            $form->name = $user->name;
-            $form->patronymic = $user->patronymic;
+            $form->surname = $student->user->surname;
+            $form->name = $student->user->name;
+            $form->patronymic = $student->user->patronymic;
+            $form->updated_at = $student->user->updated_at;
+            $form->events_id = $student->events_id;
             return $form;
         }
 
-        Yii::$app->session->addFlash('toastify', [
-            'text' => "Студент не найден.",
-            'type' => 'error'
-        ]);
+        Yii::$app->toast->addToast('Студент не найден.', 'error');
         throw new NotFoundHttpException('Студент не найден.');
     }
 
     protected function findEvent(?int $id): ?Events
     {
-        return Events::findOne(['id' => $id]);
+        return Events::find()
+            ->where([
+                'id' => $id,
+                'statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
+            ->one()
+        ;
     }
 }

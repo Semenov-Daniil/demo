@@ -5,6 +5,7 @@ namespace backend\controllers;
 use common\models\ExpertForm;
 use common\models\Experts;
 use common\models\Users;
+use common\services\EventService;
 use common\services\ExpertService;
 use Yii;
 use yii\filters\AccessControl;
@@ -20,11 +21,13 @@ use function PHPUnit\Framework\isNull;
 class ExpertController extends BaseController
 {
     private ExpertService $expertService;
+    private EventService $eventServices;
 
     public function __construct($id, $module, $config = [])
     {
         parent::__construct($id, $module, $config);
         $this->expertService = new ExpertService();
+        $this->eventServices = new EventService();
     }
 
     public $defaultAction = 'experts';
@@ -121,7 +124,10 @@ class ExpertController extends BaseController
                 $result['errors'][Html::getInputId($model, $attribute)] = $errors;
             }
 
-            if ($result['success']) Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
+            if ($result['success']) {
+                Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
+                $this->eventServices->publishEvent($id, 'update-expert');
+            }
 
             return $this->asJson($result);
         }
@@ -152,7 +158,10 @@ class ExpertController extends BaseController
             $result['success'] ? 'success' : 'error'
         );
 
-        if ($result['success']) Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
+        if ($result['success']) {
+            Yii::$app->sse->publish(Yii::$app->sse::EXPERT_CHANNEL, 'update');
+            $this->eventServices->publishEvent($experts, 'delete-expert');
+        }
 
         $result['code'] = Yii::$app->response->statusCode;
         return $this->asJson($result);

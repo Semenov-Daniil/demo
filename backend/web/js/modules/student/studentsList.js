@@ -1,14 +1,18 @@
 $(() => {
     const checkboxManager = new GridCheckboxManager('pjax-students', 'studentsCheckedItems');
 
-    const $pjaxStudents = $('#pjax-students');
+    const $pjaxStudents = $(pjaxStudents);
     const $modalUpdateStudent = $('#modal-update-student');
     const eventSelect = '#events-select';
-    const paramQueryEvent = () => ($(eventSelect).val() ? `?event=${$(eventSelect).val()}` : '');
 
     const actionButtonClasses = ['.btn-delete-selected-students'];
 
     const updateCheckboxState = () => CommonUtils.updateCheckboxState('students_all', 'students[]', actionButtonClasses);
+
+    if ($(eventSelect).val()) {
+        if (sourceSSE) sourceSSE.close();
+        sourceSSE = CommonUtils.connectDataSSE(setEventParam(`${window.location.origin}${url}/sse-data-updates`, $(eventSelect).val()), updateStudentsList);
+    }
 
     $pjaxStudents
         .off('click', '.btn-select-all-students')
@@ -39,7 +43,7 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateStudent.modal('hide');
-                        CommonUtils.reloadPjax('#pjax-students', `${url}/list-students${paramQueryEvent()}`);
+                        updateStudentsList();
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -55,32 +59,59 @@ $(() => {
     $pjaxStudents
         .off('click', '.btn-delete')
         .on('click', '.btn-delete', function() {
+            const $button = $(this);
             CommonUtils.performAjax({
                 url: `${url}/delete-students?id=${$(this).data('id')}`,
                 method: 'DELETE',
+                beforeSend() {
+                    CommonUtils.toggleButtonState($button, true);
+                },
                 success(data) {
                     if (data.success) {
-                        CommonUtils.reloadPjax('#pjax-students', `${url}/list-students${paramQueryEvent()}`);
+                        updateStudentsList();
                     }
                 },
+                complete() {
+                    if ($button) {
+                        CommonUtils.toggleButtonState($button, false);
+                    }
+                }
             });
         });
 
     $pjaxStudents
         .off('click', '.btn-delete-selected-students')
-        .on('click', '.btn-delete-selected-students', () => {
+        .on('click', '.btn-delete-selected-students', function() {
             const students = CommonUtils.getSelectedCheckboxes('students[]');
+            const $button = $(this);
 
             if (students.length) {
                 CommonUtils.performAjax({
                     url: `${url}/delete-students`,
                     method: 'DELETE',
                     data: { students },
+                    beforeSend() {
+                        CommonUtils.toggleButtonState($button, true);
+                        students.forEach(el => {
+                            CommonUtils.toggleButtonState($(`.btn-delete[data-id="${el}"]`), true);
+                        });
+                    },
                     success(data) {
                         if (data.success) {
-                            CommonUtils.reloadPjax('#pjax-students', `${url}/list-students${paramQueryEvent()}`);
+                            updateStudentsList();
                         }
                     },
+                    complete() {
+                        if ($button) {
+                            CommonUtils.toggleButtonState($button, false);
+                        }
+                        students.forEach(el => {
+                            let $btnDelete = $(`.btn-delete[data-id="${el}"]`)
+                            if ($btnDelete) {
+                                CommonUtils.toggleButtonState($btnDelete, false);
+                            }
+                        });
+                    }
                 });
             }
         });

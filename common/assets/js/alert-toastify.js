@@ -1,11 +1,11 @@
 $(() => {
     let toastSource = null;
 
-    function renderFlashMessages(toastAlerts) {
-        for (let alert of toastAlerts) {
+    function renderFlashMessages(toasts) {
+        for (let toast of toasts) {
             let newNoty = new Noty({
-                text: alert.text,
-                type: alert.type,
+                text: toast.text,
+                type: toast.type,
                 theme: 'vz',
                 progressBar: true,
                 timeout: 5000,
@@ -27,7 +27,7 @@ $(() => {
                         let cntToast = this.barDom.querySelector('.toast-body div');
                         let prbToast = this.barDom.querySelector('.toast-body .progress-bar');
                         
-                        switch (alert.type) {
+                        switch (toast.type) {
                             case 'primary':
                                 cntToast
                                 .insertBefore(Object.assign(document.createElement('div'), { className: 'flex-shrink-0 me-2' }), cntToast.firstChild)
@@ -55,7 +55,7 @@ $(() => {
                             case 'error':
                                 cntToast
                                 .insertBefore(Object.assign(document.createElement('div'), { className: 'flex-shrink-0 me-2' }), cntToast.firstChild)
-                                .appendChild(Object.assign(document.createElement('i'), { className: 'ri-alert-line align-middle' }));
+                                .appendChild(Object.assign(document.createElement('i'), { className: 'ri-toast-line align-middle' }));
 
                                 prbToast.classList.add('bg-danger');
 
@@ -100,7 +100,7 @@ $(() => {
         toastSource = new EventSource(toastUrl);
         toastSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            if (data && data.length) {
+            if (data && data.length && !document.hidden) {
                 renderFlashMessages(data);
             }
         };

@@ -11,6 +11,7 @@ class StudentForm extends Model
     public string $name = '';
     public ?string $patronymic = '';
     public ?int $events_id = null;
+    public string $updated_at = '';
 
     const SCENARIO_CREATE = 'create';
     const SCENARIO_UPDATE = 'update';
@@ -27,8 +28,9 @@ class StudentForm extends Model
     {
         return [
             [['surname', 'name'], 'required'],
-            [['events_id'], 'required', 'on' => self::SCENARIO_CREATE, 'message' => 'Необходимо выбрать чемпионат.'],
+            [['events_id'], 'required', 'on' => self::SCENARIO_CREATE, 'message' => 'Необходимо выбрать событие.'],
             [['surname', 'name', 'patronymic'], 'string', 'max' => 255],
+            ['updated_at', 'safe'],
             [['surname', 'name', 'patronymic'], 'trim'],
             ['patronymic', 'default', 'value' => null],
             [['events_id'], 'exist', 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],

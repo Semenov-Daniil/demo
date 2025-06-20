@@ -15,7 +15,8 @@ $(() => {
             success: (data) => {
                 if (data.success) {
                     $form.trigger("reset");
-                    reloadPjaxDebounced(pjaxExperts, updateUrl());
+                    document.activeElement.blur();
+                    updateExpertsList();
                 } else if (data.errors) {
                     $form.yiiActiveForm('updateMessages', data.errors, true);
                 }

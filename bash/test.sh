@@ -1,11 +1,11 @@
 #!/bin/bash
 
-STUDENTS=('tzldyady' 'xedlocux' 'yuanwvun')
-
+STUDENTS=('bxxxcywz' 'cztuonsy' 'gkxvbaio' 'jifshymr' 'jpjktunc' 'juxtjznb' 'mwiifsyy' 'qviflogn' 'rbdeezyz' 'trgzxzfl' 'twhryocy' 'vnwdmiya' 'waxuanwa' 'wjckkyrt' 'wuopuenb' 'wxekdngg' 'zuryoplh')
+ 
 for student in "${STUDENTS[@]}"; do
-        # bash "/var/www/demo/bash/system/delete_user.sh" "$student" &
-        # bash "/var/www/demo/bash/utils/umount.sh" "/var/www/demo/students/$student/_assets" &
-        # rm -rf "/var/www/demo/students/$student/" &
+        # bash "/var/www/demo/bash/system/delete_user.sh" "$student"
+        # bash "/var/www/demo/bash/utils/umount.sh" "/var/www/demo/students/$student/_assets"
+        # rm -rf "/var/www/demo/students/$student/"
         # sleep 1
         rm /etc/apache2/sites-available/$student-*
     # (

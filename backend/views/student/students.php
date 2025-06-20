@@ -23,33 +23,21 @@ ChoicesAsset::register($this);
 
 $this->title = 'Студенты';
 
-$this->registerJsFile('@web/js/modules/student/students.js');
+$this->registerJsFile('@web/js/modules/student/students.js', ['depends' => BackendAppAsset::class]);
 
 ?>
 
 <div class="row">
-    <?php Pjax::begin([
-        'id' => 'pjax-create-student',
-        'enablePushState' => false,
-        'timeout' => 10000,
-    ]); ?>
-        <?= $this->render('_student-create', [
-            'model' => $model,
-            'events' => $events
-        ]) ?>
-    <?php Pjax::end(); ?>
+    <?= $this->render('_student-create', [
+        'model' => $model,
+        'events' => $events
+    ]) ?>
 </div>
 
 <div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-students',
-        'enablePushState' => false,
         'timeout' => 10000,
-        'options' => [
-            'data' => [
-                'pjax-grid' => true
-            ]
-        ]
     ]); ?>
         <?= $this->render('_students-list', [
             'dataProvider' => $dataProvider,

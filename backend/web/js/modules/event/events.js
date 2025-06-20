@@ -4,21 +4,9 @@ const url = '/expert/event';
 const urlExperts = '/expert/expert';
 
 const pjaxEvents = '#pjax-events';
-const pjaxEventCreate = '#pjax-create-event';
 
-const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 1000);
+const reloadPjaxDebounced = CommonUtils.debounceWithPjax(CommonUtils.reloadPjax, 500);
 
-const updateUrl = () => {
-    let local = new URL(window.location.href);
-    let pjaxUrl;
-    try {
-        pjaxUrl = new URL(`${url}/list-events`);
-    } catch {
-        pjaxUrl = new URL(`${url}/list-events`, local.origin);
-    }
-
-    let currentPage = local.searchParams.get('page');
-    if (currentPage !== null) pjaxUrl.searchParams.set('page', currentPage);
-
-    return pjaxUrl.pathname + pjaxUrl.search + pjaxUrl.hash;
+const updateEventsList = () => {
+    return reloadPjaxDebounced(pjaxEvents, CommonUtils.updateUrl(`${url}/list-events`));
 }

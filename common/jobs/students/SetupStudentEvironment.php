@@ -22,7 +22,7 @@ class SetupStudentEvironment extends BaseObject implements JobInterface
             $service->setupStudentEnvironment($this->student, $this->login, $this->password);
         } catch (\Exception $e) {
             Yii::error("Error job set up student evironment: " . $e->getMessage(), __METHOD__);
-            $service->deleteStudent($this->student?->students_id);
+            $service->deleteStudents([$this->student?->students_id]);
             throw $e;
         }   
     }

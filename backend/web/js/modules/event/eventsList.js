@@ -8,7 +8,7 @@ $(() => {
 
     const updateCheckboxState = () => CommonUtils.updateCheckboxState('events_all', 'events[]', actionButtonClasses);
 
-    CommonUtils.connectDataSSE(`${url}/sse-data-updates`, reloadPjaxDebounced, pjaxEvents, updateUrl());
+    CommonUtils.connectDataSSE(`${url}/sse-data-updates`, updateEventsList);
 
     $pjaxEvents
         .off('click', '.btn-select-all-events')
@@ -41,7 +41,7 @@ $(() => {
                 success(data) {
                     if (data.success) {
                         $modalUpdateEvent.modal('hide');
-                        reloadPjaxDebounced(pjaxEvents, updateUrl());
+                        updateEventsList();
                     } else if (data.errors) {
                         $form.yiiActiveForm('updateMessages', data.errors, true);
                     }
@@ -66,7 +66,7 @@ $(() => {
                 },
                 success(data) {
                     if (data.success) {
-                        reloadPjaxDebounced(pjaxEvents, updateUrl());
+                        updateEventsList();
                     }
                 },
                 complete() {
@@ -79,13 +79,9 @@ $(() => {
 
     $pjaxEvents
         .off('click', '.btn-delete-selected-events')
-        .on('click', '.btn-delete-selected-events', () => {
+        .on('click', '.btn-delete-selected-events', function() {
             const events = CommonUtils.getSelectedCheckboxes('events[]');
             const $button = $(this);
-
-            events.forEach(el => {
-                CommonUtils.toggleButtonState($(`.btn-delete[data-id="${el}"]`), true);
-            });
 
             if (events.length) {
                 CommonUtils.performAjax({
@@ -94,10 +90,13 @@ $(() => {
                     data: { events },
                     beforeSend() {
                         CommonUtils.toggleButtonState($button, true);
+                        events.forEach(el => {
+                            CommonUtils.toggleButtonState($(`.btn-delete[data-id="${el}"]`), true);
+                        });
                     },
                     success(data) {
                         if (data.success) {
-                            reloadPjaxDebounced(pjaxEvents, updateUrl());
+                            updateEventsList();
                         }
                     },
                     complete() {
