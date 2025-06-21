@@ -1,6 +1,4 @@
 $(() => {
-    const $pjaxCreateModule = $('#pjax-create-module');
-    const pjaxModules = '#pjax-modules';
     const eventSelect = '#events-select';
     const placeholderData = `
         <div class="row">
@@ -37,37 +35,119 @@ $(() => {
             </div>
         </div>     
     `;
-    const paramQueryEvent = () => ($(eventSelect).val() ? `?event=${$(eventSelect).val()}` : '');
+    $pjaxModules = $(pjaxModules);
 
-    $pjaxCreateModule
+    const $form = $('#form-create-module');
+    const $button = $('.btn-create-module');
+
+    $form
         .off('change', eventSelect)
         .on('change', eventSelect, () => {
-            $(pjaxModules)
+            window.history.pushState({}, '', setEventParam(window.location.href, $(eventSelect).val()));
+
+            $pjaxModules
                 .off('pjax:beforeSend')
-                .on('pjax:beforeSend', () => $(pjaxModules).html(placeholderData))
-                .off('pjax:end')
-                .on('pjax:end', () => window.history.pushState({}, '', `module${paramQueryEvent()}`));
+                .on('pjax:beforeSend', () => $pjaxModules.html(placeholderData));
 
-            CommonUtils.reloadPjax(pjaxModules, `${url}/list-modules${paramQueryEvent()}`);
+            updateModulesList().then(() => {
+                $pjaxModules.off('pjax:beforeSend');
+            });
 
-            $(pjaxModules)
-                .off('pjax:beforeSend');
+            if (sourceSSE) sourceSSE.close();
+            if ($(eventSelect).val()) sourceSSE = CommonUtils.connectDataSSE(setEventParam(`${window.location.origin}${url}/sse-data-updates`, $(eventSelect).val()), updateModulesList);
+
+            $(eventSelect).removeClass('is-valid is-invalid');
         });
 
-    $pjaxCreateModule
-        .off('beforeSubmit')
-        .on('beforeSubmit', () => {
-            CommonUtils.toggleButtonState($('.btn-create-module'), true);
-        })
-        .off('pjax:complete')
-        .on('pjax:complete', () => {
-            CommonUtils.toggleButtonState($('.btn-create-module'), false);
-            CommonUtils.reloadPjax(pjaxModules, `${url}/list-modules${paramQueryEvent()}`);
+    const loadChoicesDate = (url) => {
+        CommonUtils.performAjax({
+            url: url,
+            method: 'GET',
+            success(data) {
+                const hasGroup = data.hasGroup;
+                const events = data.events;
+                const choices = [choicesMap.get('events-select')];
+                choices.forEach((el) => {
+                    if (el) {
+                        const $select = $(el.passedElement.element);
+                        const storeChoices = el._store._state.choices;
+                        const currentValue = $select.val() ?? '';
+
+                        storeChoices.forEach(option => {
+                            if (option.value !== '') el.removeChoice(option.value);
+                        });
+                        $select.find('option').not('[value=""]').remove();
+
+                        if (hasGroup) {
+                            const groupChoices = events.map((group, index) => ({
+                                label: group.group,
+                                id: index,
+                                choices: group.items.map(item => ({
+                                    value: item.value + '',
+                                    label: item.label
+                                }))
+                            }));
+
+                            el.setChoices(groupChoices, 'value', 'label', false);
+                        } else {
+                            const flatChoices = events.map(item => ({
+                                value: item.value + '',
+                                label: item.label
+                            }));
+
+                            el.setChoices(flatChoices, 'value', 'label', false);
+                        }
+
+                        const allValues = hasGroup
+                            ? events.flatMap(g => g.items.map(i => i.value + ''))
+                            : events.map(i => i.value + '');
+
+                        if (allValues.includes(currentValue)) {
+                            el.setChoiceByValue(currentValue);
+                            $select.val(currentValue);
+                        } else {
+                            el.setChoiceByValue('');
+                            $select.val('');
+                            $select.removeClass('is-valid is-invalid');
+                        }
+                        window.history.pushState({}, '', setEventParam(window.location.href, $select.val()));
+                    }
+                })
+            },
+        });
+        updateModulesList();
+    }
+
+    CommonUtils.connectDataSSE(`${urlEvent}/sse-data-updates`, loadChoicesDate, `${url}/all-events`);
+
+    $form.on('beforeSubmit', function(e) {
+        e.preventDefault();
+
+        CommonUtils.performAjax({
+            url: $form.prop('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            beforeSend: () => {
+                CommonUtils.toggleButtonState($button, true);
+            },
+            success: (data) => {
+                if (data.success) {
+                    // $form.trigger("reset");
+                    $form.yiiActiveForm('resetForm');
+                    document.activeElement.blur();
+                    let currentEvent = getEventParam(window.location.href);
+                    $(eventSelect).val(currentEvent);
+                    choicesMap.get('events-select').setChoiceByValue(currentEvent);
+                    updateModulesList();
+                } else if (data.errors) {
+                    $form.yiiActiveForm('updateMessages', data.errors, true);
+                }
+            },
+            complete: () => {
+                CommonUtils.toggleButtonState($button, false);
+            }
         });
 
-    $pjaxCreateModule
-        .off('pjax:end')
-        .on('pjax:end', () => {
-            CommonUtils.inputChoiceInit($pjaxCreateModule.find('select[data-choices]')[0]);
-        })
+        return false;
+    });
 });

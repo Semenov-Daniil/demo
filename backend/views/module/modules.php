@@ -31,18 +31,10 @@ $this->registerJsFile('@web/js/modules/module/modules.js', ['depends' => Backend
 ?>
 
 <div class="row mb-4">
-    <?php Pjax::begin([
-        'id' => 'pjax-create-module',
-        'enablePushState' => false,
-        'timeout' => 10000,
+    <?= $this->render('_module-create', [
+        'model' => $model,
+        'events' => $events
     ]); ?>
-
-        <?= $this->render('_module-create', [
-            'model' => $model,
-            'events' => $events
-        ]); ?>
-    
-    <?php Pjax::end(); ?>
 </div>
 
 <div class="row">

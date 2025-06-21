@@ -149,7 +149,13 @@ class Events extends ActiveRecord
                 'title',
                 'countModules' => Modules::find()
                     ->select('COUNT(*)')
-                    ->where(['events_id' => new Expression(self::tableName() . '.id')]),
+                    ->where([
+                        'events_id' => new Expression(self::tableName() . '.id'),
+                        Modules::tableName() . '.statuses_id' => [
+                            Statuses::getStatusId(Statuses::CONFIGURING),
+                            Statuses::getStatusId(Statuses::READY),
+                        ],
+                    ]),
             ])
             ->where([
                 self::tableName() . '.statuses_id' => [

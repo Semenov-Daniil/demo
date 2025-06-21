@@ -19,7 +19,7 @@ class SetupModuleEvironment extends BaseObject implements JobInterface
             $service->setupModuleEnvironment($this->module);
         } catch (\Exception $e) {
             Yii::error("Error job set up module evironment: " . $e->getMessage(), __METHOD__);
-            $service->deleteModule($this->module?->id);
+            $service->deleteModules([$this->module?->id]);
             throw $e;
         }   
     }

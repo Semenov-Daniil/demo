@@ -3,9 +3,11 @@
 namespace common\services;
 
 use common\jobs\modules\ChangePrivilegesStudents;
+use common\jobs\modules\DeleteModuleEvironment;
 use common\jobs\modules\SetupModuleEvironment;
 use common\models\Events;
 use common\models\Modules;
+use common\models\Statuses;
 use common\models\Students;
 use Exception;
 use Yii;
@@ -16,18 +18,23 @@ use function PHPUnit\Framework\returnSelf;
 class ModuleService
 {
     public string $logFile = '';
+    public string $tempIndex = 'temp_index.html';
 
     private VirtualHostService $vhostService;
     private array $filesModule = [
         'access.log' => '',
         'error.log' => '',
-        'index.php' => '<?php echo "Welcome, Student to Module";'
     ];
 
     public function __construct()
     {
         $this->vhostService = new VirtualHostService();
         $this->logFile ='modules.log';
+    }
+
+    public function getEventChannel($id)
+    {
+        return Yii::$app->sse::MODULE_CHANNEL . "_event_$id";
     }
 
     public static function getDirectoryModuleFileTitle(int $moduleNumber, bool $show = true): string
@@ -84,6 +91,9 @@ class ModuleService
 
         $this->updatePermissionModuleEvent($moduleEventPath, $model->status);
 
+        $model->statuses_id = Statuses::getStatusId(Statuses::READY);
+        if ($model->update() === false) throw "Failed to update the modules's status to ready";
+
         return true;
     }
 
@@ -111,7 +121,7 @@ class ModuleService
 
         Yii::$app->fileComponent->createDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
 
-        if (!$this->addFilesToModule($login, Yii::getAlias("@students/{$login}/{$studentModuleDir}"))) {
+        if (!$this->addFilesToModule($module, $student)) {
             throw new Exception("Failed to create module files: {$login}/{$studentModuleDir}");
         }
 
@@ -127,15 +137,21 @@ class ModuleService
         return Yii::$app->fileComponent->updatePermission($moduleDirectory, $module->status ? "770" : "070", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
     }
 
-    private function addFilesToModule(string $login, string $path): bool
+    private function addFilesToModule(Modules $module, Students $student): bool
     {
+        $login = $student->user->login;
+        $studentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number, $module->status);
+        $studentDir = Yii::getAlias("@students/$login/$studentModuleDir");
         foreach ($this->filesModule as $filename => $content) {
-            file_put_contents("$path/$filename", $content);
-
-            if ($filename == 'index.php') {
-                Yii::$app->fileComponent->updatePermission("$path/$filename", "775", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
-            }
+            file_put_contents("$studentDir/$filename", $content);
         }
+
+        $index = "$studentDir/index.html";
+        $tempIndex = Yii::getAlias("@templates/{$this->tempIndex}");
+        $content = file_get_contents($tempIndex);
+        $content = str_replace('${number}', $module->number, $content);
+        file_put_contents($index, $content);
+        Yii::$app->fileComponent->updatePermission($index, "775", "$login:" . Yii::$app->params['siteGroup'], "--log={$this->logFile}");
 
         return true;
     }
@@ -218,12 +234,16 @@ class ModuleService
 
     public function deleteModules(array $moduleIds): bool
     {
-        foreach ($moduleIds as $id) {
-            if (!$this->deleteModule($id)) {
-                return false;
-            }
+        Modules::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $moduleIds]);
+
+        if ($moduleIds) {
+            Yii::$app->sse->publish($this->getEventChannel($moduleIds[0]), 'delete-module');
+            (new EventService())->publishEvent(Modules::findOne(['id' => $moduleIds[0]])->event->experts_id, 'delete-module');
         }
 
+        foreach ($moduleIds as $id) {
+            Yii::$app->queue->push(new DeleteModuleEvironment(['moduleId' => $id]));
+        }
         return true;
     }
 
@@ -250,7 +270,7 @@ class ModuleService
             $this->deleteModulesStudents($module);
 
             $event = $module->event;
-            $moduleDirTitle = $this->getDirectoryModuleFileTitle($module->number);
+            $moduleDirTitle = $this->getDirectoryModuleFileTitle($module->number, $module->status);
             Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@events/{$event->dir_title}/{$moduleDirTitle}"));
 
             if (!$module->delete()) throw new Exception('Failed to delete module');
@@ -301,7 +321,8 @@ class ModuleService
     
             Yii::$app->dbComponent->deleteDb($dbName);
     
-            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/{$login}/{$studentModuleDir}"));
+            $currentModuleDir = $this->getTitleDirectoryModule($student->dir_prefix, $module->number, $module->status);
+            Yii::$app->fileComponent->removeDirectory(Yii::getAlias("@students/{$login}/{$currentModuleDir}"));
             
             return true;
         } catch (\Exception $e) {

@@ -20,8 +20,12 @@ use yii\web\YiiAsset;
  * @property int $events_id
  * @property int $status
  * @property int $number
+ * @property string|null $created_at
+ * @property string|null $updated_at
+ * @property int $statuses_id
  *
  * @property Events $event
+ * @property Statuses $statuses
  */
 class Modules extends \yii\db\ActiveRecord
 {
@@ -44,7 +48,9 @@ class Modules extends \yii\db\ActiveRecord
             ['status', 'boolean'],
             ['status', 'default', 'value' => true],
             [['events_id'], 'exist', 'skipOnError' => true, 'targetClass' => Events::class, 'targetAttribute' => ['events_id' => 'id']],
-            [['events_id', 'number'], 'unique', 'targetAttribute' => ['events_id', 'number'], 'message' => 'Несоответсвующий номер модуля.'],
+            // [['events_id', 'number'], 'unique', 'targetAttribute' => ['events_id', 'number'], 'message' => 'Несоответсвующий номер модуля.'],
+            [['statuses_id'], 'exist', 'skipOnError' => true, 'targetClass' => Statuses::class, 'targetAttribute' => ['statuses_id' => 'id']],
+            ['statuses_id', 'default', 'value' => Statuses::getStatusId(Statuses::CONFIGURING)],
         ];
     }
 
@@ -79,7 +85,13 @@ class Modules extends \yii\db\ActiveRecord
         $transaction = Yii::$app->db->beginTransaction();
         try {
             $maxNumber = static::find()
-                ->where(['events_id' => $this->events_id])
+                ->where([
+                    'events_id' => $this->events_id,
+                    'statuses_id' => [
+                        Statuses::getStatusId(Statuses::CONFIGURING),
+                        Statuses::getStatusId(Statuses::READY),
+                    ]
+                ])
                 ->max('number')
             ;
     
@@ -102,6 +114,16 @@ class Modules extends \yii\db\ActiveRecord
     }
 
     /**
+     * Gets query for [[Statuses]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getStatuses()
+    {
+        return $this->hasOne(Statuses::class, ['id' => 'statuses_id']);
+    }
+
+    /**
      * Get ActiveDataProvider modules
      * 
      * @return ActiveDataProvider
@@ -111,7 +133,13 @@ class Modules extends \yii\db\ActiveRecord
         return new ActiveDataProvider([
             'query' => Modules::find()
                 ->select(['id', 'status', 'number'])
-                ->where(['events_id' => $eventId])
+                ->where([
+                    'events_id' => $eventId,
+                    'statuses_id' => [
+                        Statuses::getStatusId(Statuses::CONFIGURING),
+                        Statuses::getStatusId(Statuses::READY),
+                    ]
+                ])
             ,
             'pagination' => [
                 'pageSize' => $records,
@@ -129,7 +157,14 @@ class Modules extends \yii\db\ActiveRecord
     {
         $modules = self::find()
             ->select(['number'])    
-            ->where(['events_id' => $student->event->id, 'status' => true])
+            ->where([
+                'events_id' => $student->event->id,
+                'status' => true,
+                'statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
             ->asArray()
             ->all()
         ;

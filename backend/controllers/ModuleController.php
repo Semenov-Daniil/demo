@@ -4,10 +4,13 @@ namespace backend\controllers;
 
 use common\models\Events;
 use common\models\Modules;
+use common\models\Statuses;
+use common\services\EventService;
 use common\services\ModuleService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\Html;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -81,24 +84,52 @@ class ModuleController extends BaseController
     public function actionCreateModule()
     {
         $model = new Modules();
+        $result = ['success' => false];
 
         if ($this->request->isPost && $model->load($this->request->post())) {
-            $success = $this->moduleService->createModule($model);
+            $result['success'] = $this->moduleService->createModule($model);
 
             Yii::$app->toast->addToast(
-                $success ? 'Модуль успешно создан.' : 'Не удалось создать модуль.',
-                $success ? 'success' : 'error'
+                $result['success'] ? 'Модуль успешно создан.' : 'Не удалось создать модуль.',
+                $result['success'] ? 'success' : 'error'
             );
 
-            if ($success) {
-                $model = new Modules(['events_id' => $model->events_id]);
+            if ($result['success']) {
+                $this->publishModules($model->events_id, $model->event->experts_id, 'create-module');
             }
+
+            $result['errors'] = [];
+            foreach ($model->getErrors() as $attribute => $errors) {
+                $result['errors'][Html::getInputId($model, $attribute)] = $errors;
+            }
+
+            return $this->asJson($result);
         }
 
         return $this->renderAjaxIfRequested('_module-create', [
             'model' => $model,
             'events' => $this->getEvents(),
         ]);
+    }
+
+    public function actionAllEvents()
+    {
+        $result = ['hasGroup' => false, 'events' => []];
+        $eventsList = $this->getEvents();
+        if (Yii::$app->user->can('sExpert')) {
+            $result['hasGroup'] = true;
+            $result['events'] = array_map(function($groupLabel, $group) {
+                return ['group' => $groupLabel, 'items' => array_map(function($id, $name) {
+                    return ['value' => $id, 'label' => $name];
+                }, array_keys($group), $group)];
+            }, array_keys($eventsList), $eventsList);
+        } else {
+            $result['events'] = array_map(function($id, $name) {
+                return ['value' => $id, 'label' => $name];
+            }, array_keys($eventsList), $eventsList);
+        }
+
+        return $this->asJson($result);
     }
 
     /**
@@ -172,6 +203,22 @@ class ModuleController extends BaseController
         return $this->asJson($result);
     }
 
+    public function actionSseDataUpdates(int $event)
+    {
+        if ($event) {
+            Yii::$app->sse->subscriber($this->moduleService->getEventChannel($event));
+        }
+        exit;
+    }
+
+    protected function publishModules(int $eventId, int $expertId, string $message = ''): void
+    {
+        if ($eventId) {
+            Yii::$app->sse->publish($this->moduleService->getEventChannel($eventId), $message);
+            (new EventService())->publishEvent($expertId, $message);
+        }
+    }
+
     protected function findModule(?int $id): ?Modules
     {
         if ($id && ($model = Modules::findOne(['id' => $id])) !== null) {
@@ -185,6 +232,15 @@ class ModuleController extends BaseController
 
     protected function findEvent(?int $id): ?Events
     {
-        return Events::findOne(['id' => $id]);
+        return Events::find()
+            ->where([
+                'id' => $id,
+                'statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
+            ->one()
+        ;
     }
 }

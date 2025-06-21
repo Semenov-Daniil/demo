@@ -17,21 +17,28 @@ $this->registerJsFile('@web/js/modules/module/modulesList.js', ['depends' => [Ba
 <?php if (!is_null($event)): ?> 
 <div class="p-3 pt-0 d-flex flex-wrap gap-3 justify-content-end">
     <?= Html::submitButton('
-        <span class="d-flex align-items-center cnt-text">
-        <i class="ri-add-line align-middle fs-16 me-2"></i> Добавить
-        </span>
+        <span class="d-flex align-items-center cnt-text"><i class="ri-add-line align-middle fs-16 me-2"></i> Добавить</span>
         <span class="d-flex align-items-center d-none cnt-load">
-        <span class="spinner-border flex-shrink-0" role="status">
-        </span>
-        <span class="flex-grow-1 ms-2">
-        Добавление...
-        </span>
+            <span class="spinner-border flex-shrink-0" role="status"></span>
+            <span class="flex-grow-1 ms-2">Добавление...</span>
         </span>
         ', ['class' => 'btn btn-success btn-load btn-create-module', 'form' => 'form-create-module']) ?>
     <?php if ($dataProvider->totalCount): ?> 
         <?= Html::button('<span><i class="ri-check-double-line align-middle fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-modules']) ?>
-        <?= Html::button('<i class="ri-brush-2-line align-middle fs-16 me-2"></i> Очистить', ['class' => 'btn btn-secondary btn-clear-selected-modules', 'disabled' => true]) ?>
-        <?= Html::button('<i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-modules', 'disabled' => true]) ?>
+        <?= Html::button('
+            <div class="d-flex align-items-center cnt-text"><i class="ri-brush-2-line align-middle fs-16 me-2"></i> Очистить</div>
+            <div class="d-flex align-items-center d-none cnt-load">
+                <span class="spinner-border flex-shrink-0" role="status"></span>
+                <span class="flex-grow-1 ms-2">Очищение...</span>
+            </div>
+        ', ['class' => 'btn btn-secondary btn-load btn-clear-selected-modules', 'disabled' => true]) ?>
+        <?= Html::button('
+            <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</div>
+            <div class="d-flex align-items-center d-none cnt-load">
+                <span class="spinner-border flex-shrink-0" role="status"></span>
+                <span class="flex-grow-1 ms-2">Удаление...</span>
+            </div>
+        ', ['class' => 'btn btn-danger btn-load btn-delete-selected-modules', 'disabled' => true]) ?>
     <?php endif; ?>
 </div>
 <?php endif; ?>
@@ -148,10 +155,16 @@ $this->registerJsFile('@web/js/modules/module/modulesList.js', ['depends' => [Ba
                     ',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model['id']], 'title' => 'Удалить']);
+                            return Html::button('
+                                <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line ri-lg"></i></div>
+                                <div class="d-flex align-items-center d-none cnt-load"><span class="spinner-border flex-shrink-0" role="status"></span></div>
+                            ', ['class' => 'btn btn-icon btn-danger btn-soft-danger btn-load btn-delete', 'data' => ['id' => $model['id']], 'title' => 'Удалить']);
                         },
                         'clear' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-brush-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-secondary btn-clear', 'data' => ['id' => $model['id']], 'title' => 'Очистить']);
+                            return Html::button('
+                                <div class="d-flex align-items-center cnt-text"><i class="ri-brush-2-line ri-lg"></i></div>
+                                <div class="d-flex align-items-center d-none cnt-load"><span class="spinner-border flex-shrink-0" role="status"></span></div>
+                            ', ['class' => 'btn btn-icon btn-secondary btn-soft-secondary btn-load btn-clear', 'data' => ['id' => $model['id']], 'title' => 'Очистить']);
                         },
                     ],
                     'visible' => $dataProvider->totalCount
