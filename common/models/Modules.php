@@ -132,10 +132,15 @@ class Modules extends \yii\db\ActiveRecord
     {
         return new ActiveDataProvider([
             'query' => Modules::find()
-                ->select(['id', 'status', 'number'])
+                ->select([self::tableName() . '.id', 'status', 'number', 'events_id'])
+                ->joinWith('event', false)
                 ->where([
                     'events_id' => $eventId,
-                    'statuses_id' => [
+                    self::tableName() . '.statuses_id' => [
+                        Statuses::getStatusId(Statuses::CONFIGURING),
+                        Statuses::getStatusId(Statuses::READY),
+                    ],
+                    Events::tableName() . '.statuses_id' => [
                         Statuses::getStatusId(Statuses::CONFIGURING),
                         Statuses::getStatusId(Statuses::READY),
                     ]
@@ -156,11 +161,16 @@ class Modules extends \yii\db\ActiveRecord
     public static function getModulesStudent(object $student): array
     {
         $modules = self::find()
-            ->select(['number'])    
+            ->select(['number', 'events_id'])
+            ->joinWith('event', false)
             ->where([
                 'events_id' => $student->event->id,
                 'status' => true,
-                'statuses_id' => [
+                self::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ],
+                Events::tableName() . '.statuses_id' => [
                     Statuses::getStatusId(Statuses::CONFIGURING),
                     Statuses::getStatusId(Statuses::READY),
                 ]

@@ -60,6 +60,36 @@ class FileController extends BaseController
         return Yii::$app->user->can('sExpert') ? Events::getExpertEvents() : Events::getEvents(Yii::$app->user->id);
     }
 
+    public function actionAllEvents()
+    {
+        $result = ['hasGroup' => false, 'events' => []];
+        $eventsList = $this->getEvents();
+        if (Yii::$app->user->can('sExpert')) {
+            $result['hasGroup'] = true;
+            $result['events'] = array_map(function($groupLabel, $group) {
+                return ['group' => $groupLabel, 'items' => array_map(function($id, $name) {
+                    return ['value' => $id, 'label' => $name];
+                }, array_keys($group), $group)];
+            }, array_keys($eventsList), $eventsList);
+        } else {
+            $result['events'] = array_map(function($id, $name) {
+                return ['value' => $id, 'label' => $name];
+            }, array_keys($eventsList), $eventsList);
+        }
+
+        return $this->asJson($result);
+    }
+
+    public function actionAllModules(int|null $event = null)
+    {
+        $result = ['hasGroup' => false, 'events' => []];
+        $modulesList = Files::getDirectories($event);
+        $result['events'] = array_map(function($id, $name) {
+            return ['value' => $id, 'label' => $name];
+        }, array_keys($modulesList), $modulesList);
+        return $this->asJson($result);
+    }
+
     /**
      * Displays files page.
      *
@@ -183,6 +213,14 @@ class FileController extends BaseController
         Yii::$app->toast->addToast('Файл не найден.', 'error');
 
         return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
+    }
+
+    public function actionSseDataUpdates(int $event)
+    {
+        if ($event) {
+            Yii::$app->sse->subscriber($this->fileService->getEventChannel($event));
+        }
+        exit;
     }
 
     protected function findFile(int|string $id): Files

@@ -26,6 +26,11 @@ class FileService
         $this->moduleService = new ModuleService();
     }
 
+    public function getEventChannel($id)
+    {
+        return Yii::$app->sse::FILE_CHANNEL . "_event_$id";
+    }
+
     public function validateFile(UploadedFile $file): array
     {
         $validator = new FileValidator([
@@ -55,6 +60,7 @@ class FileService
                 $fileInfo = $this->processFile($model, $file);
                 if (empty($fileInfo['errors'])) {
                     $transaction->commit();
+                    Yii::$app->sse->publish($this->getEventChannel($model->events_id), 'upload-file');
                     $this->currentFileId = null;
                 } else {
                     $model->addError('files', ['filename' => $file->name, 'errors' => $fileInfo['errors']]);
@@ -132,6 +138,7 @@ class FileService
             }
 
             $transaction->commit();
+            Yii::$app->sse->publish($this->getEventChannel($model->events_id), 'delete-file');
             return true;
         } catch (Exception $e) {
             $transaction->rollBack();
@@ -161,7 +168,7 @@ class FileService
      */
     public function getFileDirectory(Files $model): string
     {
-        return $this->getEventBasePath($model) . '/' . ($model->modules_id ? $this->moduleService->getDirectoryModuleFileTitle($model->module->number, $model->module->number) : self::PUBLIC_DIR);
+        return $this->getEventBasePath($model) . '/' . ($model->modules_id ? $this->moduleService->getDirectoryModuleFileTitle($model->module->number, $model->module->status) : self::PUBLIC_DIR);
     }
 
     /**

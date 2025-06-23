@@ -17,7 +17,13 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
 <?php if ($dataProvider->totalCount): ?> 
 <div class="p-3 d-flex flex-wrap gap-3 justify-content-end">
     <?= Html::button('<span><i class="ri-check-double-line fs-16 me-2"></i> Выбрать все</span>', ['class' => 'btn btn-primary btn-select-all-files']) ?>
-    <?= Html::button('<i class="ri-delete-bin-2-line fs-16 me-2"></i> Удалить', ['class' => 'btn btn-danger btn-delete-selected-files', 'disabled' => true]) ?>
+    <?= Html::button('
+        <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line align-middle fs-16 me-2"></i> Удалить</div>
+        <div class="d-flex align-items-center d-none cnt-load">
+            <span class="spinner-border flex-shrink-0" role="status"></span>
+            <span class="flex-grow-1 ms-2">Удаление...</span>
+        </div>
+    ', ['class' => 'btn btn-danger btn-load btn-delete-selected-files', 'disabled' => true]) ?>
 </div>
 <?php endif; ?>
 
@@ -101,7 +107,10 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
                                 . (is_null($fileSize) ? '' : '<p class="fs-13 text-muted mb-0">' . Yii::$app->fileComponent->formatSizeUnits($fileSize)) . '</p>';
                     },
                     'options' => [
-                        'class' => 'col-4'
+                        'class' => 'col-5'
+                    ],
+                    'contentOptions' => [
+                        'class' => 'text-wrap text-break'
                     ],
                     'visible' => $dataProvider->totalCount,
                 ],
@@ -110,6 +119,9 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
                     'value' => function ($model) {
                         return $model->moduleTitle;
                     },
+                    'options' => [
+                        'class' => 'col-auto'
+                    ],
                     'visible' => $dataProvider->totalCount,
                 ],
                 [
@@ -120,10 +132,13 @@ $this->registerJsFile('@web/js/modules/file/filesList.js', ['depends' => Backend
                     </div>',
                     'buttons' => [
                         'delete' => function ($url, $model, $key) {
-                            return Html::button('<i class="ri-delete-bin-2-line ri-lg"></i>', ['class' => 'btn btn-icon btn-soft-danger btn-delete', 'data' => ['id' => $model->id]]);
+                            return Html::button('
+                                <div class="d-flex align-items-center cnt-text"><i class="ri-delete-bin-2-line ri-lg"></i></div>
+                                <div class="d-flex align-items-center d-none cnt-load"><span class="spinner-border flex-shrink-0" role="status"></span></div>
+                            ', ['class' => 'btn btn-icon btn-danger btn-soft-danger btn-load btn-delete', 'data' => ['id' => $model->id]]);
                         },
                         'download' => function ($url, $model, $key) use ($event) {
-                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ["file/download/{$model->id}"], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0]]);
+                            return Html::a('<i class="ri-download-2-line ri-lg"></i>', ["file/download/{$model->id}"], ['class' => 'btn btn-icon btn-soft-secondary', 'data' => ['pjax' => 0], 'target' => '_blank', 'download' => true]);
                         },
                     ],
                     'visible' => $dataProvider->totalCount,

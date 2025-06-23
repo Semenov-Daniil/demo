@@ -47,7 +47,7 @@ $(() => {
 
             $pjaxStudents
                 .off('pjax:beforeSend')
-                .on('pjax:beforeSend', () => $pjaxStudents.html(placeholderData));
+                .on('pjax:beforeSend', () => CommonUtils.showLoadingPlaceholderTable(pjaxStudents, 'Студенты'));
 
             updateStudentsList().then(() => {
                 $pjaxStudents.off('pjax:beforeSend');
@@ -62,9 +62,12 @@ $(() => {
         });
 
     const loadChoicesDate = (url) => {
+        let currentEvent = $(eventSelect).val();
+
         CommonUtils.performAjax({
             url: url,
             method: 'GET',
+            async: false,
             success(data) {
                 const hasGroup = data.hasGroup;
                 const events = data.events;
@@ -117,6 +120,11 @@ $(() => {
                 })
             },
         });
+
+        if (currentEvent != $(eventSelect).val()) {
+            $(eventSelect).trigger('change');
+        }
+
         updateStudentsList();
     }
 

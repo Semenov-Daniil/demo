@@ -104,9 +104,12 @@ $(() => {
         });
 
     const loadChoicesDate = (url) => {
+        let currentEvent = $(eventSelect).val();
+
         CommonUtils.performAjax({
             url: url,
             method: 'GET',
+            async: false,
             success(data) {
                 const hasGroup = data.hasGroup;
                 const events = data.events;
@@ -159,6 +162,11 @@ $(() => {
                 })
             },
         });
+
+        if (currentEvent != $(eventSelect).val()) {
+            $(eventSelect).trigger('change');
+        }
+        
         updateStudentsList();
     }
 

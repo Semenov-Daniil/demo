@@ -1,22 +1,9 @@
 $(() => {
-    const pjaxUploadForm = '#pjax-upload-form';
-    const $pjaxUploadForm = $(pjaxUploadForm);
-    const formUploadFiles = '#form-upload-files';
-    const pjaxFiles = '#pjax-files';
-    const eventSelect = '#events-select';
-    const paramQueryEvent = () => ($(eventSelect).val() ? `?event=${$(eventSelect).val()}` : '');
+    const form = '#form-upload-files';
+    const $form = $(form);
+    const $pjaxFiles = $(pjaxFiles);
 
-    let pjaxQueue = Promise.resolve();
-    const reloadPjaxDebounced = CommonUtils.debounce(async () => {
-        pjaxQueue = pjaxQueue.then(async () => {
-            await CommonUtils.reloadPjax(pjaxFiles, `${url}/list-files${paramQueryEvent()}`);
-        }).catch(error => {
-            return Promise.resolve();
-        });
-        return pjaxQueue;
-    }, 500);
-
-    let { dropzone, uploadUI } = dropzoneInit(formUploadFiles, options);
+    let { dropzone, uploadUI } = dropzoneInit(form, options);
 
     dropzone.on("complete", async (file) => {
         if (file.accepted) {
@@ -24,62 +11,73 @@ $(() => {
                 dropzone.processQueue();
             }
 
-            try {
-                await reloadPjaxDebounced();
-            } catch (error) {
-            }
-
             if (dropzone.getQueuedFiles().length === 0) {
-                await pjaxQueue;
                 uploadUI.toggleUploadButton(true);
             }
         }
     });
 
-    $pjaxUploadForm
+    $form
         .off('change', eventSelect)
-        .on('change', eventSelect, async () => {
-            $(pjaxFiles)
+        .on('change', eventSelect, () => {
+            window.history.pushState({}, '', setEventParam(window.location.href, 'event', $(eventSelect).val()));
+
+            $pjaxFiles
                 .off('pjax:beforeSend')
-                .on('pjax:beforeSend', () => CommonUtils.showLoadingPlaceholderTable(pjaxFiles, 'Файлы'))
-                .off('pjax:end')
-                .on('pjax:end', () => window.history.pushState({}, '', `file${paramQueryEvent()}`));
+                .on('pjax:beforeSend', () => CommonUtils.showLoadingPlaceholderTable(pjaxFiles, 'Файлы'));
 
-            await CommonUtils.reloadPjax(pjaxUploadForm, `${url}/upload-form${paramQueryEvent()}`);
-            await CommonUtils.reloadPjax(pjaxFiles, `${url}/list-files${paramQueryEvent()}`);
-
-            $(pjaxFiles)
-                .off('pjax:beforeSend');
-        });
-
-    $pjaxUploadForm
-        .off('beforeSubmit')
-        .on('beforeSubmit', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            dropzone.files.forEach((file) => {
-                if (file.accepted) {
-                    const $preview = $(file.previewElement);
-                    file.upload = {};
-                    $preview.find("[data-dz-uploadprogress]").addClass("d-none");
-                    uploadUI.setProgress(file, 0);
-                    $preview.removeClass("dz-processing dz-error dz-complete");
-                    $preview.find("[data-dz-errormessage]")?.html("");
-                    $preview.find("[data-dz-uploadprogress]").removeClass("bg-danger").addClass("bg-success");
-                    setTimeout(() => $preview.find("[data-dz-uploadprogress]").removeClass("d-none"), 300);
-                }
+            updateFilesList().then(() => {
+                $pjaxFiles.off('pjax:beforeSend');
             });
 
-            setTimeout(() => dropzone.processQueue(), 300);
-            return false;
+            if (sourceSSE) sourceSSE.forEach((el, inx) => {
+                el.close();
+            });
+
+            sourceSSE = [];
+            
+            if ($(eventSelect).val()) {
+                sourceSSE.push(CommonUtils.connectDataSSE(setEventParam(`${window.location.origin}${url}/sse-data-updates`, 'event', $(eventSelect).val()), updateFilesList));
+                sourceSSE.push(CommonUtils.connectDataSSE(setEventParam(`${window.location.origin}${urlModule}/sse-data-updates`, 'event', $(eventSelect).val()), updateModuleSelect));
+            }
+
+            loadChoicesDate(setEventParam(`${window.location.origin}${url}/all-modules`, 'event', $(eventSelect).val()), 'directories-select');
+
+            $(eventSelect).removeClass('is-valid is-invalid');
         });
 
-    $pjaxUploadForm
-        .off('pjax:end')
-        .on('pjax:end', () => {
-            for (let select of $pjaxUploadForm.find('select[data-choices]')) {
-                CommonUtils.inputChoiceInit(select);
+    $form.on('beforeSubmit', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        dropzone.files.forEach((file) => {
+            if (file.accepted) {
+                const $preview = $(file.previewElement);
+                file.upload = {};
+                $preview.find("[data-dz-uploadprogress]").addClass("d-none");
+                uploadUI.setProgress(file, 0);
+                $preview.removeClass("dz-processing dz-error dz-complete");
+                $preview.find("[data-dz-errormessage]")?.html("");
+                $preview.find("[data-dz-uploadprogress]").removeClass("bg-danger").addClass("bg-success");
+                setTimeout(() => $preview.find("[data-dz-uploadprogress]").removeClass("d-none"), 300);
             }
         });
+
+        setTimeout(() => dropzone.processQueue(), 300);
+        return false;
+    });
+
+    const updateEventSelect = () => {
+        let currentEvent = $(eventSelect).val();
+
+        loadChoicesDate(`${url}/all-events`, 'events-select');
+
+        if (currentEvent != $(eventSelect).val()) {
+            $(eventSelect).trigger('change');
+        }
+        
+        updateFilesList();
+    };
+
+    CommonUtils.connectDataSSE(`${urlEvent}/sse-data-updates`, updateEventSelect);
 });

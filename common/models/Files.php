@@ -115,14 +115,27 @@ class Files extends \yii\db\ActiveRecord
         }
 
         $modules = Modules::find()
-            ->select(['id', 'number'])
-            ->where(['events_id' => $eventId])
+            ->select([Modules::tableName() . '.id', 'number', 'events_id'])
+            ->joinWith('event')
+            ->where([
+                'events_id' => $eventId,
+                Modules::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ],
+                Events::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
             ->asArray()
             ->all()
         ;
 
+        // var_dump($modules);die;
+
         foreach ($modules as $module) {
-            $directories[$module['id']] = sprintf('Модуль %s', $module['number']);
+            $directories[$module['id']] = "Модуль {$module['number']}";
         }
 
         return $directories;
@@ -143,10 +156,27 @@ class Files extends \yii\db\ActiveRecord
                 'name',
                 'extension',
                 'modules_id',
-                'events_id',
+                self::tableName() . '.events_id',
             ])
-            ->where([self::tableName() . '.events_id' => $eventId])
-            ->with('event', 'module')
+            // ->with('event', 'module')
+            ->joinWith('event')
+            ->joinWith('module')
+            ->where([
+                self::tableName() . '.events_id' => $eventId,
+                Events::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
+            ->andWhere(['OR', 
+                ['modules_id' => null],
+                [
+                    Modules::tableName() . '.statuses_id' => [
+                        Statuses::getStatusId(Statuses::CONFIGURING),
+                        Statuses::getStatusId(Statuses::READY),
+                    ]
+                ],
+            ])
         ;
 
         $dataProvider = new ActiveDataProvider([
@@ -182,10 +212,25 @@ class Files extends \yii\db\ActiveRecord
             ->joinWith(['module' => function($query) {
                 $query->andWhere(['OR', ['status' => true], ['status' => null]]);
             }])
-            ->where([self::tableName() . '.events_id' => $eventId])
+            ->where([
+                self::tableName() . '.events_id' => $eventId,
+                Events::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ]
+            ])
             ->andWhere(['OR', 
                 ['modules_id' => null],
                 ['IS NOT', 'modules_id', null]
+            ])
+            ->andWhere(['OR', 
+                ['modules_id' => null],
+                [
+                    Modules::tableName() . '.statuses_id' => [
+                        Statuses::getStatusId(Statuses::CONFIGURING),
+                        Statuses::getStatusId(Statuses::READY),
+                    ]
+                ],
             ])
         ;
 
@@ -225,7 +270,14 @@ class Files extends \yii\db\ActiveRecord
                 'modules_id',
                 'number',
             ])
-            ->where([self::tableName() . '.events_id' => $event, 'filename' => $filename])
+            ->where([
+                self::tableName() . '.events_id' => $event,
+                'filename' => $filename,
+                Events::tableName() . '.statuses_id' => [
+                    Statuses::getStatusId(Statuses::CONFIGURING),
+                    Statuses::getStatusId(Statuses::READY),
+                ],
+            ])
             ->joinWith('module', false)
             ->asArray()
             ->one()

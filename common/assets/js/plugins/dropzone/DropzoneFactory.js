@@ -31,6 +31,8 @@ class DropzoneFactory {
                 this.uploadUI.fadeOutPreview(file);
                 return dropzone._updateMaxFilesReachedClass();
             },
+            dictCancelUploadConfirmation: 'Вы уверены, что хотите отменить эту загрузку?',
+            dictUploadCanceled: "Загрузка отменена.",
         });
 
         this.attachEvents(dropzone);

@@ -236,9 +236,9 @@ class ModuleService
     {
         Modules::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $moduleIds]);
 
-        if ($moduleIds) {
-            Yii::$app->sse->publish($this->getEventChannel($moduleIds[0]), 'delete-module');
-            (new EventService())->publishEvent(Modules::findOne(['id' => $moduleIds[0]])->event->experts_id, 'delete-module');
+        if ($moduleIds && $module = Modules::findOne(['id' => $moduleIds[0]])) {
+            Yii::$app->sse->publish($this->getEventChannel($module->events_id), 'delete-module');
+            (new EventService())->publishEvent($module->event->experts_id, 'delete-module');
         }
 
         foreach ($moduleIds as $id) {

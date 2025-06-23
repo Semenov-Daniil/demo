@@ -26,17 +26,11 @@ $this->registerJsFile('@web/js/modules/file/filesUpload.js', ['depends' => [Back
                     <h4>Перетащите файлы или нажмите, чтобы загрузить.</h4>
                 </div>
             </div>
-            <?php Pjax::begin([
-                'id' => 'pjax-upload-form',
-                'enablePushState' => false,
-                'timeout' => 10000,
+            <?= $this->render('_files-upload-form', [
+                'model' => $model,
+                'events' => $events,
+                'directories' => $directories,
             ]); ?>
-                <?= $this->render('_files-upload-form', [
-                    'model' => $model,
-                    'events' => $events,
-                    'directories' => $directories,
-                ]); ?>
-            <?php Pjax::end(); ?>
             <ul class="list-unstyled mb-0" id="dropzone-preview">
                 <li class="mt-2 dz-preview-item dropzone-preview-list d-none">
                     <div class="border rounded">

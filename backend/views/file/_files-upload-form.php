@@ -31,7 +31,7 @@ use yii\widgets\Pjax;
     
     <div class="row mt-3">
         <?= $form->field($model, 'events_id', ['validateOnBlur' => false, 'validateOnChange' => false, 'options' => ['class' => 'col-12 col-md-6 mb-3 field-choices']])->dropDownList($events, ['id' => 'events-select', 'prompt' => 'Выберите событие', 'data' => ['choices' => true, 'choices-group' => true, 'choices-removeItem' => true], 'class' => 'form-select']) ?>
-        <?= $form->field($model, 'modules_id', ['options' => ['class' => 'col-12 col-md-6 mb-3 field-choices']])->dropDownList($directories, ['id' => 'directories-select', 'prompt' => 'Выберите расположение', 'data' => ['choices' => true, 'choices-removeItem' => true, 'choices-search-false' => true, 'choices-sorting-false' => true], 'class' => 'form-select', 'value' => '0']) ?>
+        <?= $form->field($model, 'modules_id', ['options' => ['class' => 'col-12 col-md-6 mb-3 field-choices']])->dropDownList($directories, ['id' => 'directories-select', 'prompt' => 'Выберите расположение', 'data' => ['choices' => true, 'choices-removeItem' => true, 'choices-search-false' => true, 'choices-sorting-false' => true], 'class' => 'form-select']) ?>
     </div>
 
     <div class="d-flex mt-2">

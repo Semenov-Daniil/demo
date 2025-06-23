@@ -47,8 +47,10 @@ $(() => {
 
                         if (allValues.includes(currentValue)) {
                             el.setChoiceByValue(currentValue);
+                            $select.val(currentValue);
                         } else {
                             el.setChoiceByValue('');
+                            $select.val('');
                             $select.removeClass('is-valid is-invalid');
                         }
                     }
