@@ -10,10 +10,9 @@ use yii\web\View;
  */
 class CleaveAsset extends AssetBundle
 {
-    public $sourcePath = '@common/assets';
+    public $sourcePath = '@common/web';
     public $js = [
         'libs/cleave.js/cleave.min.js',
-        'js/plugins/cleave.init.js',
     ];
     public $depends = [
         'yii\web\YiiAsset',

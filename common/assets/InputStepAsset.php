@@ -10,7 +10,7 @@ use yii\web\View;
  */
 class InputStepAsset extends AssetBundle
 {
-    public $sourcePath = '@common/assets';
+    public $sourcePath = '@common/web';
     public $js = [
         'js/plugins/input-step.init.js',
     ];

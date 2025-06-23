@@ -7,7 +7,7 @@ use yii\bootstrap5\Html;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
-/** @var app\models\Modules $dataProvider */
+/** @var common\models\Modules $dataProvider */
 /** @var common\models\Events|null $event */
 
 $this->registerJsFile('@web/js/modules/module/modulesList.js', ['depends' => [BackendAppAsset::class]], 'modulesList');

@@ -18,9 +18,9 @@ use yii\web\View;
 use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
-BackendAppAsset::register($this);
 ChoicesAsset::register($this);
 DropzoneAsset::register($this);
+BackendAppAsset::register($this);
 
 $this->title = 'Файлы';
 
@@ -49,13 +49,8 @@ $this->registerJsFile('@web/js/modules/file/files.js', ['depends' => BackendAppA
 <div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-files',
-        'enablePushState' => false,
-        'timeout' => 10000,
-        'options' => [
-            'data' => [
-                'pjax-grid' => true
-            ]
-        ]
+        'enablePushState' => true,
+        'timeout' => 10000
     ]); ?>
         <?= $this->render('_files-list', [
             'dataProvider' => $dataProvider,

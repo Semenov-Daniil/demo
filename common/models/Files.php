@@ -198,7 +198,7 @@ class Files extends \yii\db\ActiveRecord
         return $dataProvider;
     }
 
-    public static function getDataProviderFilesStudent(?int $eventId = null, int $records = 10): ActiveDataProvider
+    public static function getDataProviderFilesStudent(?int $eventId = null, string $route = 'file', int $records = 10): ActiveDataProvider
     {
         $query = self::find()
             ->select([
@@ -221,10 +221,6 @@ class Files extends \yii\db\ActiveRecord
             ])
             ->andWhere(['OR', 
                 ['modules_id' => null],
-                ['IS NOT', 'modules_id', null]
-            ])
-            ->andWhere(['OR', 
-                ['modules_id' => null],
                 [
                     Modules::tableName() . '.statuses_id' => [
                         Statuses::getStatusId(Statuses::CONFIGURING),
@@ -232,13 +228,16 @@ class Files extends \yii\db\ActiveRecord
                     ]
                 ],
             ])
+            ->orderBy([
+                'modules_id' => SORT_ASC
+            ])
         ;
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
                 'pageSize' => $records,
-                'route' => 'file',
+                'route' => $route,
             ],
         ]);
 

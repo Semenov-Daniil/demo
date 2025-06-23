@@ -10,7 +10,7 @@ use yii\web\View;
  */
 class LoginAsset extends AssetBundle
 {
-    public $sourcePath = '@common/assets';
+    public $sourcePath = '@common/web';
     public $css = [
         'css/bootstrap.min.css',
         'css/icons.min.css',

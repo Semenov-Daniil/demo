@@ -204,6 +204,8 @@ class ModuleService
 
         $this->updatePermissionModuleEvent($moduleNewDir, $module->status);
 
+        Yii::$app->sse->publish($this->getEventChannel($module->events_id), 'change-status-module');
+
         return true;
     }
 

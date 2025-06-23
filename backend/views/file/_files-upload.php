@@ -41,7 +41,7 @@ $this->registerJsFile('@web/js/modules/file/filesUpload.js', ['depends' => [Back
                                 </div>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="pt-1">
+                                <div class="pt-1 text-wrap text-break">
                                     <h5 class="fs-14 mb-1" data-dz-name>&nbsp;</h5>
                                     <p class="fs-13 text-muted mb-0" data-dz-size></p>
                                     <strong class="error text-danger" data-dz-errormessage></strong>

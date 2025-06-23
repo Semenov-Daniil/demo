@@ -16,8 +16,8 @@ use yii\widgets\Pjax;
 
 $this->title = 'Данные студентов';
 
-BackendAppAsset::register($this);
 ChoicesAsset::register($this);
+BackendAppAsset::register($this);
 
 $this->registerJsFile('@web/js/modules/student-data/student-data.js', ['depends' => BackendAppAsset::class]);
 

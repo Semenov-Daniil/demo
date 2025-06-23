@@ -11,6 +11,7 @@ use common\models\Roles;
 use common\models\Students;
 use common\models\Users;
 use common\services\FileService;
+use common\services\ModuleService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\helpers\VarDumper;
@@ -64,8 +65,8 @@ class MainController extends Controller
      */
     public function actionIndex()
     {
-        $student = Students::findOne(['students_id' => Yii::$app->user->id]);
-        $files = Files::getDataProviderFilesStudent($student->event->id);
+        $student = $this->findStudent(Yii::$app->user->id);
+        $files = Files::getDataProviderFilesStudent($student->events_id, 'index');
         $modules = Modules::getModulesStudent($student);
 
         return $this->render('index', [
@@ -73,6 +74,30 @@ class MainController extends Controller
             'files' => $files,
             'modules' => $modules,
         ]);
+    }
+
+    public function actionFilesList()
+    {
+        $student = $this->findStudent(Yii::$app->user->id);
+        return $this->renderAjax('_files-list', [ 'files' => Files::getDataProviderFilesStudent($student->events_id, 'index') ]);
+    }
+
+    public function actionSseFilesUpdates()
+    {
+        $student = $this->findStudent(Yii::$app->user->id);
+        Yii::$app->sse->subscriber((new FileService)->getEventChannel($student->events_id));
+    }
+
+    public function actionModulesList()
+    {
+        $student = $this->findStudent(Yii::$app->user->id);
+        return $this->renderAjax('_modules-list', [ 'modules' => Modules::getModulesStudent($student) ]);
+    }
+
+    public function actionSseModulesUpdates()
+    {
+        $student = $this->findStudent(Yii::$app->user->id);
+        Yii::$app->sse->subscriber((new ModuleService)->getEventChannel($student->events_id));
     }
 
     /**
@@ -142,8 +167,19 @@ class MainController extends Controller
             return $model;
         }
 
-        $this->addToastMessage('Файл не найден.', 'error');
+        Yii::$app->toast->addToast('Файл не найден.', 'error');
 
         throw new NotFoundHttpException('Файл не найден.');
+    }
+
+    protected function findStudent(int|null $id = null)
+    {
+        if ($id && $student = Students::findOne(['students_id' => $id])) {
+            return $student;
+        }
+
+        Yii::$app->toast->addToast('Студент не найден.', 'error');
+
+        throw new NotFoundHttpException('Студент не найден.');
     }
 }

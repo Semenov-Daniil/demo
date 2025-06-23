@@ -10,7 +10,7 @@ use yii\web\View;
  */
 class ChoicesAsset extends AssetBundle
 {
-    public $sourcePath = '@common/assets';
+    public $sourcePath = '@common/web';
     public $js = [
         'libs/fuse.js/dist/fuse.min.js',
         'libs/choices.js/public/assets/scripts/choices.min.js',

@@ -2,6 +2,7 @@
 
 namespace backend\assets;
 
+use common\assets\AppAsset as AssetsAppAsset;
 use yii\web\AssetBundle;
 
 /**
@@ -13,10 +14,9 @@ class AppAsset extends AssetBundle
     public $baseUrl = '@web';
     public $css = [];
     public $js = [
-        './js/commonUtils.js',
-        './js/plugins/grid-checkbox-persistence.init.js',
+        'js/plugins/grid-checkbox-persistence.init.js',
     ];
     public $depends = [
-        'yii\web\YiiAsset',
+        'yii\web\YiiAsset', AssetsAppAsset::class
     ];
 }

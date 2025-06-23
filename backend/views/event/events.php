@@ -18,10 +18,10 @@ use yii\widgets\Pjax;
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var array $experts */
 
-BackendAppAsset::register($this);
 ChoicesAsset::register($this);
 CleaveAsset::register($this);
 InputStepAsset::register($this);
+BackendAppAsset::register($this);
 
 $this->title = 'События';
 

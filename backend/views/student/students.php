@@ -18,8 +18,8 @@ use yii\helpers\Html;
 use yii\web\YiiAsset;
 use yii\widgets\Pjax;
 
-BackendAppAsset::register($this);
 ChoicesAsset::register($this);
+BackendAppAsset::register($this);
 
 $this->title = 'Студенты';
 

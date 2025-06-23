@@ -10,7 +10,7 @@ use yii\web\View;
  */
 class DropzoneAsset extends AssetBundle
 {
-    public $sourcePath = '@common/assets';
+    public $sourcePath = '@common/web';
     public $css = [
         'libs/dropzone/dropzone.css',
     ];
@@ -21,6 +21,6 @@ class DropzoneAsset extends AssetBundle
         'js/plugins/dropzone/DropzoneFactory.js',
     ];
     public $depends = [
-        'yii\web\YiiAsset',
+        'yii\web\YiiAsset'
     ];
 }

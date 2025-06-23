@@ -63,7 +63,9 @@ return [
             'class' => 'common\components\SseComponent'
         ],
         'assetManager' => [
-            'forceCopy' => true,
+            // 'forceCopy' => true,
+            'linkAssets' => true,
+            'appendTimestamp' => true,
             'bundles' => [
                 'yii\bootstrap5\BootstrapAsset' => [
                     'css' => []

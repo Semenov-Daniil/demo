@@ -23,8 +23,8 @@ use yii\widgets\Pjax;
 
 $this->title = 'Модули';
 
-BackendAppAsset::register($this);
 ChoicesAsset::register($this);
+BackendAppAsset::register($this);
 
 $this->registerJsFile('@web/js/modules/module/modules.js', ['depends' => BackendAppAsset::class]);
 
@@ -40,13 +40,8 @@ $this->registerJsFile('@web/js/modules/module/modules.js', ['depends' => Backend
 <div class="row">
     <?php Pjax::begin([
         'id' => 'pjax-modules',
-        'enablePushState' => false,
+        'enablePushState' => true,
         'timeout' => 10000,
-        'options' => [
-            'data' => [
-                'pjax-grid' => true
-            ]
-        ]
     ]); ?>
 
         <?= $this->render('_modules-list', [
