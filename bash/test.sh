@@ -1,6 +1,6 @@
 #!/bin/bash
 
-STUDENTS=('bxxxcywz' 'cztuonsy' 'gkxvbaio' 'jifshymr' 'jpjktunc' 'juxtjznb' 'mwiifsyy' 'qviflogn' 'rbdeezyz' 'trgzxzfl' 'twhryocy' 'vnwdmiya' 'waxuanwa' 'wjckkyrt' 'wuopuenb' 'wxekdngg' 'zuryoplh')
+STUDENTS=('aehzbedy' 'fpigdmma' 'indmbyyk' 'urylvxpu' 'zxrvbchr')
  
 for student in "${STUDENTS[@]}"; do
         # bash "/var/www/demo/bash/system/delete_user.sh" "$student"

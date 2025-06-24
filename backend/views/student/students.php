@@ -28,10 +28,12 @@ $this->registerJsFile('@web/js/modules/student/students.js', ['depends' => Backe
 ?>
 
 <div class="row">
-    <?= $this->render('_student-create', [
-        'model' => $model,
-        'events' => $events
-    ]) ?>
+    <div>
+        <?= $this->render('_student-create', [
+            'model' => $model,
+            'events' => $events
+        ]) ?>
+    </div>
 </div>
 
 <div class="row">

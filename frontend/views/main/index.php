@@ -101,7 +101,7 @@ $this->registerJsFile('js/sseDataUpdates.js', ['depends' => AppAsset::class]);
                 </div>
     
                 <div class="card-body list-group p-0 list-group-flush">
-                    <?= Html::a("<b>phpMyAdmin:</b> http://{$_SERVER['SERVER_ADDR']}/phpmyadmin", "http://{$_SERVER['SERVER_ADDR']}/phpmyadmin/index.php?user=".Yii::$app->user->identity->login."&password=".EncryptedPasswords::decryptByPassword(Yii::$app->user->identity->encryptedPassword->encrypted_password), ['class' => 'list-group-item list-group-item-action'])?>
+                    <?= Html::a("<b>phpMyAdmin:</b> http://{$_SERVER['HTTP_HOST']}/phpmyadmin", "http://{$_SERVER['HTTP_HOST']}/phpmyadmin/?user=".Yii::$app->user->identity->login."&pass=".EncryptedPasswords::decryptByPassword(Yii::$app->user->identity->encryptedPassword->encrypted_password), ['class' => 'list-group-item list-group-item-action', 'target' => '_open'])?>
                 </div>
             </div>
         </div>

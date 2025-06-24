@@ -32,11 +32,13 @@ use yii\widgets\ListView;
         <ul class="list-group list-group-flush">
             <li class="list-group-item"><b>Логин:</b> <?= Html::encode($model['login']); ?></li>
             <li class="list-group-item"><b>Пароль:</b> <?= Html::encode($model['password']); ?></li>
-            <li class="list-group-item">
+            <li class="list-group-item pb-0">
                 <b>Модули</b>
                 <ul class="list-group list-group-flush">
                     <?php foreach ($model['modules'] as $module): ?>
-                        <?= Html::a("Модуль {$module['number']}: http://{$module['domain']}", "http://{$module['domain']}", ['class' => 'list-group-item'])?>
+                        <li class="list-group-item">
+                            <?= Html::a("Модуль {$module['number']}: http://{$module['domain']}", "http://{$module['domain']}", ['class' => 'list-group-item text-decoration-none border-0 p-0', 'target' => '_open'])?>
+                        </li>
                     <?php endforeach; ?>
                 </ul>
             </li>

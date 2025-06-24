@@ -1,39 +1,4 @@
 $(() => {
-    const placeholderData = `
-        <div class="row">
-            <div>
-                <div class="card">
-                    <div class="card-header align-items-center d-flex position-relative">
-                        <h4 class="card-title mb-0 flex-grow-1">Студенты</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="grid-view">
-                            <div class="table-responsive table-card table-responsive placeholder-glow">
-                                <div class="row gx-0 gap-2">
-                                    <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col m-2 p-3 rounded-1"></div>
-                                </div>
-                                <div class="row gx-0 gap-2">
-                                    <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col m-2 p-3 rounded-1"></div>
-                                </div>
-                                <div class="row gx-0 gap-2">
-                                    <div class="placeholder col-1 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col-4 m-2 p-3 rounded-1"></div>
-                                    <div class="placeholder col m-2 p-3 rounded-1"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>    
-    `;
     const eventSelect = '#events-select';
     const $pjaxStudents = $(pjaxStudents);
 
