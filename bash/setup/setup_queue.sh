@@ -1,6 +1,6 @@
 #!/bin/bash
 # setup_queue.sh - Скрипт для настройки yii-queue
-# Расположение: bash/utils/setup_queue.sh
+# Расположение: bash/setup/setup_queue.sh
 
 set -euo pipefail
 

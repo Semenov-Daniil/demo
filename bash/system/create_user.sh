@@ -75,9 +75,6 @@ bash "$SETUP_WORKSPACE" "$USERNAME" "$WORKSPACE" || exit $?
 # Добавление пользователя Samba
 bash "$ADD_SAMBA_USER" "$USERNAME" "$PASSWORD" || exit $?
 
-# Настройка SSH
-bash "$CONFIG_SSH" || exit $?
-
 exit 0
 
 

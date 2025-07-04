@@ -23,15 +23,11 @@ fi
 # Создание директории логов
 make_log_dir() {
     local log_dir=$(dirname "$1")
-    local lockfile="${TMP_DIR}/${LOCK_LOG_PREF}_$(echo "$log_dir" | sha256sum | cut -d' ' -f1).lock"
-    (
-        flock -x 200 || { echo "Failed to acquire lock for '$log_dir'"; return 1; }
-        [[ -d "$log_dir" ]] || {
-            mkdir -p "$log_dir" || { echo "Cannot create '$log_dir'"; return 1; }
-            chown "${SITE_USER}:${SITE_GROUP}" "$log_dir" || { echo "Failed to set ownership for '$log_dir'"; return 1; }
-            chmod 750 "$log_dir" || { echo "Failed to set permissions for '$log_dir'"; return 1; }
-        }
-    ) 200>"$lockfile"
+    [[ -d "$log_dir" ]] || {
+        mkdir -p "$log_dir" || { echo "Cannot create '$log_dir'"; return 1; }
+        chown "${SITE_USER}:${SITE_GROUP}" "$log_dir" || { echo "Failed to set ownership for '$log_dir'"; return 1; }
+        chmod 750 "$log_dir" || { echo "Failed to set permissions for '$log_dir'"; return 1; }
+    }
     return $?
 }
 

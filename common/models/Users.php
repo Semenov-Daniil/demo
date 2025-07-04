@@ -251,11 +251,13 @@ class Users extends ActiveRecord implements IdentityInterface
         $cacheKey = 'super_expert_role_assigned';
         $isAssigned = Yii::$app->cache->getOrSet($cacheKey, function () use ($auth, $user) {
             $role = $auth->getRole('sExpert');
-            if ($role && !$auth->checkAccess($user->id, $role->name)) {
-                $auth->assign($role, $user->id);
+            if ($role) {
+                if (!$auth->checkAccess($user->id, $role->name)) {
+                    $auth->assign($role, $user->id);
+                }
                 return true;
             }
-            return $auth->checkAccess($user->id, 'sExpert');
+            return false;
         }, 3600);
 
         return $user;

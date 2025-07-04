@@ -24,16 +24,6 @@ trap cleanup SIGINT SIGTERM EXIT
 declare -rx USERNAME="${ARGS[0]}"
 declare -rx USER_WORKSPACE="${ARGS[1]}"
 
-_setup_chroot() {
-    bash "$SETUP_CHROOT" || {
-        log_message "error" "Failed to source '$SETUP_CHROOT'"
-        return "$EXIT_GENERAL_ERROR"
-    }
-    return 0
-}
-
-with_lock "$TMP_DIR/${LOCK_CHROOT_PREF}_setup.log" _setup_chroot || exit $?
-
 # Создание chroot-workspace пользователя
 setup_user_workspace() {
     local username="$1" workspace="$2"

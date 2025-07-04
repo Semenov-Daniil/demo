@@ -30,22 +30,7 @@ remove_chroot_workspace() {
 
     [[ ! -d "$chroot_workspace" ]] && { log_message "warning" "Failed to find the '$chroot_workspace' workspace"; return 0; }
 
-    local units=$(get_mount_units "$chroot_workspace") unit
-    for unit in $units; do
-        remove_systemd_unit "$unit" || return $?
-    done
-
-    mount | grep -q -F "$CHROOT_HOME/$username" && {
-        local mountpoint
-        mount | grep "$CHROOT_HOME/$username" | awk '{print $3}' | sort -r | while IFS= read -r mountpoint; do
-            umount "$mountpoint" 2>/dev/null || {
-                fuser -v "$mountpoint" 2>/dev/null
-                fuser -km "$mountpoint" 2>/dev/null
-                sleep 1
-                umount -f "$mountpoint" 2>/dev/null || umount -l "$mountpoint" 2>/dev/null || true
-            }
-        done
-    }
+    umount_unit $chroot_workspace || return $?
 
     rm -rf "$CHROOT_HOME/$username" || {
         log_message "error" "Failed to delete the home directory '$CHROOT_HOME/$username'"

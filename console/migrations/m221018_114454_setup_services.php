@@ -2,6 +2,7 @@
 
 use common\rbac\UserRoleRule;
 use yii\db\Migration;
+use yii\helpers\Console;
 
 /**
  * Class m221018_114454_setup_services
@@ -13,17 +14,14 @@ class m221018_114454_setup_services extends Migration
      */
     public function safeUp()
     {
-        $logFile = 'services.log';
-
         try {
-            $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/utils/check_services.sh'), ['-y', "--log={$logFile}"]);
+            $output = Yii::$app->commandComponent->executeBashScript(Yii::getAlias('@bash/setup/setup.sh'));
             if ($output['returnCode']) {
-                throw new Exception("Failed to setup services: {$output['stderr']}");
+                throw new Exception("\nFailed to setup services:\n{$output['stderr']}\n{$output['stdout']}");
             }
-            
             return true;
         } catch (\Exception $e) {
-            echo $e->getMessage() . "\n";
+            echo "{$e->getMessage()}\n";
             return false;
         }
     }

@@ -19,22 +19,7 @@ remove_chroot() {
         return 0
     }
 
-    local units=$(get_mount_units "$BASE_CHROOT") unit
-    for unit in $units; do
-        remove_systemd_unit "$unit" || return $?
-    done
-
-    mount | grep -q -F "$BASE_CHROOT" && {
-        local mountpoint
-        mount | grep "$BASE_CHROOT" | awk '{print $3}' | sort -r | while IFS= read -r mountpoint; do
-            umount "$mountpoint" 2>/dev/null || {
-                fuser -v "$mountpoint" 2>/dev/null
-                fuser -km "$mountpoint" 2>/dev/null
-                sleep 1
-                umount -f "$mountpoint" 2>/dev/null || umount -l "$mountpoint" 2>/dev/null || true
-            }
-        done
-    }
+    umount_unit $BASE_CHROOT || return $?
 
     rm -rf "$BASE_CHROOT" || {
         log_message "error" "Failed to delete chroot directory '$BASE_CHROOT'"

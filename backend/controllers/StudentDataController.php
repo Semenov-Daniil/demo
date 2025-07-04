@@ -140,7 +140,7 @@ class StudentDataController extends BaseController
                     }
                 }
 
-                $sqlFile = $this->dumpDb($dbs[$key], $login, $password);
+                $sqlFile = $this->dumpDb($dbs[$key], Yii::$app->db->username, Yii::$app->db->password);
     
                 if ($sqlFile && file_exists($sqlFile)) {
                     $zip->addFile($sqlFile, $folderName . '/' . basename($sqlFile));

@@ -8,7 +8,6 @@ class CommonUtils
     static pjaxStatusMap = {};
 
     static toggleButtonState($button, isLoading) {
-        console.log($button, isLoading);
         $button.find('.cnt-text').toggleClass('d-none', isLoading);
         $button.find('.cnt-load').toggleClass('d-none', !isLoading);
         $button.prop('disabled', isLoading);

@@ -1,15 +1,17 @@
 #!/bin/bash
 
 # check_services.sh - Утилита для проверки наличия служб
-# Расположение: bash/utils/check_services.sh
+# Расположение: bash/setup/check_services.sh
 
-set -e
+set -euo pipefail
 
 # Подключение локального config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
     echo "Failed to source local config.sh"
     exit 1
 }
+
+[[ "$LOG_FILE" == "${DEFAULT_LOG_FILE:-}" ]] && LOG_FILE="services.log"
 
 # Обработка флага -y
 AUTO_YES=false
@@ -32,9 +34,9 @@ if [[ ${#REQUIRED_SERVICES[@]} -eq 0 ]]; then
     exit ${EXIT_INVALID_ARG}
 fi
 
-# Проверка массива SERVICE_MAP
-if ! declare -p SERVICE_MAP >/dev/null 2>&1; then
-    log_message "error" "SERVICE_MAP array is not defined in config.sh"
+# Проверка массива REQUIRED_SERVICE_MAP
+if ! declare -p REQUIRED_SERVICE_MAP >/dev/null 2>&1; then
+    log_message "error" "REQUIRED_SERVICE_MAP array is not defined in config.sh"
     exit ${EXIT_INVALID_ARG}
 fi
 
@@ -45,7 +47,7 @@ install_package() {
 
     if dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"; then
         log_message "info" "Package $package is already installed"
-        return ${EXIT_SUCCESS}
+        return 0
     fi
 
     if [[ "$AUTO_YES" == true ]]; then
@@ -87,7 +89,7 @@ install_package() {
             ;;
     esac
 
-    return ${EXIT_SUCCESS}
+    return 0
 }
 
 # Включение и запуск сервиса
@@ -97,7 +99,7 @@ start_service() {
 
     if systemctl is-enabled "$service" >/dev/null 2>&1 && systemctl is-active "$service" >/dev/null 2>&1; then
         log_message "info" "Service $service is enabled and active"
-        return ${EXIT_SUCCESS}
+        return 0
     fi
 
     if [[ "$AUTO_YES" == true ]]; then
@@ -130,7 +132,7 @@ start_service() {
             ;;
     esac
 
-    return ${EXIT_SUCCESS}
+    return 0
 }
 
 log_message "info" "Starting check for required services: ${REQUIRED_SERVICES[*]}"
@@ -151,8 +153,8 @@ fi
 
 # Проверка и запуск сервисов
 for package in "${REQUIRED_SERVICES[@]}"; do
-    # Получение списка сервисов из SERVICE_MAP
-    service_names="${SERVICE_MAP[$package]:-}"
+    # Получение списка сервисов из REQUIRED_SERVICE_MAP
+    service_names="${REQUIRED_SERVICE_MAP[$package]:-}"
     
     # Пропуск пакетов без сервисов
     if [[ -z "$service_names" ]]; then
@@ -162,8 +164,8 @@ for package in "${REQUIRED_SERVICES[@]}"; do
 
     # Обработка каждого сервиса
     for service_name in $service_names; do
-        if ! systemctl list-units --type=service --all | grep -qw "$service_name.service"; then
-            log_message "warning" "Service $service_name not found for package $package: systemctl list-units --type=service --all | grep -qw "$service_name.service""
+        if ! systemctl list-units --type=service --all | grep "$service_name.service" >/dev/null 2>&1; then
+            log_message "warning" "Service $service_name not found for package $package. Check command: systemctl list-units --type=service --all | grep -qw "$service_name.service""
             continue
         fi
 
@@ -176,4 +178,4 @@ done
 
 log_message "info" "All required services checked and configured successfully"
 
-exit ${EXIT_SUCCESS}
+exit 0

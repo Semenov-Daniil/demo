@@ -365,5 +365,31 @@ get_mount_units() {
     echo "${unit_names[*]}"
 }
 
-export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_rbind mount_devtmpfs mount_devpts mount_tmpfs mount_proc mount_overlay get_mount_units mount_rslave
+# Размонтирование
+# Usage: umount_unit <target>
+umount_unit() {
+    local target="$1"
+    [[ -z "$target" || ! -e "$target" ]] && { log_message "error" "No target provided"; return "$EXIT_INVALID_ARG"; }
+
+    local units=$(get_mount_units "$target") unit
+    for unit in $units; do
+        remove_systemd_unit "$unit" || return $?
+    done
+
+    mount | grep -q -F "$target" && {
+        local mountpoint
+        mount | grep "$target" | awk '{print $3}' | sort -r | while IFS= read -r mountpoint; do
+            umount "$mountpoint" 2>/dev/null || {
+                fuser -v "$mountpoint" 2>/dev/null
+                fuser -km "$mountpoint" 2>/dev/null
+                sleep 1
+                umount -f "$mountpoint" 2>/dev/null || umount -l "$mountpoint" 2>/dev/null || true
+            }
+        done
+    }
+
+    return 0
+}
+
+export -f title_mount_unit path_to_unit is_active_unit create_systemd_unit _create_systemd_unit_locked start_systemd_unit _start_systemd_unit_locked remove_systemd_unit _remove_systemd_unit_locked get_unit_content mount_unit mount_bind mount_rbind mount_devtmpfs mount_devpts mount_tmpfs mount_proc mount_overlay get_mount_units mount_rslave umount_unit
 return 0

@@ -11,9 +11,6 @@ source "$LOCAL_CONFIG" || {
     exit 1
 }
 
-# Запуск настройки Samba
-bash "$CONFIG_SAMBE" || exit $?
-
 # Очистка при ошибке
 cleanup() {
     exit_code=$?

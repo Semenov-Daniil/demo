@@ -26,12 +26,11 @@ return [
     ],
     'components' => [
         'cache' => [
-            // 'class' => \yii\caching\FileCache::class,
             'class' => 'yii\redis\Cache',
         ],
         'session' => [
             'class' => 'yii\redis\Session',
-            'redis' => 'redis', // указывает на компонент выше
+            'redis' => 'redis',
             'keyPrefix' => 'session:',
             'timeout' => 3600,
         ],
