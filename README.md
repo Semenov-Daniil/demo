@@ -64,13 +64,13 @@
 Установите необходимые пакеты:
 ```bash
 sudo apt update
-sudo apt install apache2 libapache2-mod-php php php-mysql php-mbstring php-intl php-redis mysql-server openssh-server samba samba-common-bin redis-server phpmyadmin composer
+sudo apt install apache2 libapache2-mpm-itk libapache2-mod-php php php-mysql php-mbstring php-intl php-redis mysql-server openssh-server samba samba-common-bin redis-server phpmyadmin composer
 ```
 
 Включите модули Apache:
 
 ```bash
-sudo a2enmod php mpm_itk headers rewrite
+sudo a2enmod mpm_itk headers rewrite
 sudo systemctl restart apache2
 ```
 
