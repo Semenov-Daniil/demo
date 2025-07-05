@@ -46,7 +46,7 @@ check_bash_preexec() {
     }
 
     log_message "info" "Configuration bash-preexec changed"
-    printf '%s' "$BASH_PREEXEC" > "$ETC_BASH_PREEXEC" || {
+    printf '%s' $(<"$BASH_PREEXEC") > "$ETC_BASH_PREEXEC" || {
         log_message "error" "Failed to write '$ETC_BASH_PREEXEC'" >&2
         return "$EXIT_BASH_FAILED"
     }
