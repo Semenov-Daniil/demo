@@ -14,5 +14,5 @@ return [
     'siteName' => 'demo.ru',
     'siteUser' => isset($_ENV['SITE_USER']) ? $_ENV['SITE_USER'] : (getenv('SITE_USER') ?: 'www-data'),
     'siteGroup' => isset($_ENV['SITE_GROUP']) ? $_ENV['SITE_GROUP'] : (getenv('SITE_GROUP') ?: 'www-data'),
-    'vhSuffix' => isset($_ENV['VH_SUFFIX']) ? $_ENV['VH_SUFFIX'] : (getenv('VH_SUFFIX') ?: '.demo.ru'),
+    'vhSuffix' => isset($_ENV['VH_SUFFIX']) ? $_ENV['VH_SUFFIX'] : (getenv('VH_SUFFIX') ?: ''),
 ];
