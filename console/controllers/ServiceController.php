@@ -48,6 +48,7 @@ class ServiceController extends Controller
             ->where([
                 'roles_id' => Roles::getRoleId('expert'),
                 'statuses_id' => Statuses::getStatusId(Statuses::ERROR),
+                'statuses_id' => Statuses::getStatusId(Statuses::DELETING),
             ])
             ->column()
         ;
@@ -58,6 +59,7 @@ class ServiceController extends Controller
             ->select(['id'])
             ->where([
                 'statuses_id' => Statuses::getStatusId(Statuses::ERROR),
+                'statuses_id' => Statuses::getStatusId(Statuses::DELETING),
             ])
             ->column()
         ;    
@@ -69,6 +71,7 @@ class ServiceController extends Controller
             ->where([
                 'roles_id' => Roles::getRoleId('students'),
                 'statuses_id' => Statuses::getStatusId(Statuses::ERROR),
+                'statuses_id' => Statuses::getStatusId(Statuses::DELETING),
             ])
             ->column()
         ;
