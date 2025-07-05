@@ -1,218 +1,295 @@
-<a name="readme-top"></a>
+# Цифровая платформа для выполнения работ по компетенции «Веб-технологии»
 
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-
-
-
-<!-- PROJECT LOGO -->
-<br />
-<div align="center">
-      <h3 align="center">Цифровая платформа "Demo" для чемпионатов по веб-технологиям</h3>
-    <br />
-</div>
-
-
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Оглавление</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">О проекте</a>
-      <ul>
-        <li><a href="#the-main-functionality">Уникальность проекта</a></li>
-        <li><a href="#the-main-functionality">Функционал</a></li>
-      </ul>
-    </li>
-    <li>
-        <a href="#the-main-functionality">Требования к развертыванию</a>
-    </li>
-    <li>
-      <a href="#getting-started">Как развернуть</a>
-      <ul>
-           <li><a href="#the-main-functionality">Получение проекта</a></li>
-           <li><a href="#the-main-functionality">Установка зависимостей</a></li>
-           <li><a href="#the-main-functionality">Инициализация проекта</a></li>
-           <li><a href="#the-main-functionality">Настройка конфигурации</a></li>
-           <li><a href="#the-main-functionality">Применение миграций</a></li>
-           <li><a href="#the-main-functionality">Проверка</a></li>
-      </ul>
-    </li>
-    <li>
-        <a href="#documentation">Дополнительно</a>
-        <ul>
-            <li><a href="#the-main-functionality">Технологический стек</a></li>
-            <li><a href="#the-main-functionality">Будущие улучшения</a></li>
-            <li><a href="#the-main-functionality">Контакты</a></li>
-            <li><a href="#license">Лицензия</a></li>
-        </ul>
-    </li>
-  </ol>
-</details>
-
-
-
-<!-- ABOUT THE PROJECT -->
 ## О проекте
 
-Цифровая платформа **"Demo"** — это специализированное решение для организации и проведения чемпионатов по веб-технологиям в локальной сети колледжа. Проект разработан для автоматизации процессов управления соревнованиями, предоставления студентам удобной среды для выполнения заданий и обеспечения экспертов инструментами для контроля и оценки. "Demo" помогает студентам оттачивать навыки веб-разработки, а преподавателям — эффективно организовывать образовательные мероприятия.
+Цифровая платформа разработана для локального управления чемпионатами и демонстрационными экзаменами по компетенции «Веб-технологии» в образовательных учреждениях. Она обеспечивает автономное развертывание, изолированные рабочие среды для студентов, управление событиями, участниками и файлами, а также высокий уровень безопасности и гибкости.
 
-### Уникальность проекта
-
-Уникальность платформы "Demo" заключается в интеграции виртуальных хостингов для каждого студента, что позволяет выполнять задания непосредственно на сервере колледжа с централизованным хранением данных. Это обеспечивает доступ к работам с любого ПК в локальной сети, а также упрощает управление чемпионатами через модульную структуру этапов (например, создание API, разработка SPA, верстка и дизайн).
-
-<!-- REQUIREMENTS -->
-## Функционал
-
+### Основные возможности
 - **Для экспертов**:
-  - Управление чемпионатами (создание, удаление, настройка).
-  - Управление студентами и экспертами (добавление, удаление).
-  - Настройка модулей чемпионата (этапы соревнования) и управление файлами.
+  - Управление экспертами, событиями, студентами, модулями и файлами.
+  - Создание и настройка чемпионатов и экзаменов.
+  - Экспорт данных студентов в формате .docx.
 - **Для студентов**:
-  - Личный кабинет с доступом к файлам чемпионата.
-  - Получение команды для подключения к виртуальному диску через cmd.
-  - Доступ к базам данных через phpMyAdmin для выполнения заданий.
-- **Для неавторизованных пользователей**:
-  - Возможность авторизации в системе.
+  - Доступ к личному кабинету с индивидуальной рабочей областью.
+  - Подключение через SSH или сетевой диск (Samba).
+  - Работа с виртуальными хостами и базами данных через phpMyAdmin.
+  - Просмотр и скачивание файлов событий.
 
-## Требования к развертыванию
+### Основной стек технологий
+#### Технологии проекта
+- Backend: **PHP** (фреймворк **Yii2**, шаблон Advanced).
+- Frontend: **HTML, CSS, JavaScript** (бибилотеки **Bootstrap5** и **jQuery**)
 
-- PHP версии 5.6.0 или выше (рекомендуется PHP 7.4+).
-- MySQL для базы данных.
-- Composer для управления зависимостями.
-- Веб-сервер (Apache или Nginx).
-- Git (для клонирования репозитория).
-- Доступ к хостингу или серверу (например, Bluehost) с поддержкой SSH (желательно).
+#### Технологии окружения
+- **Apache2**: Веб-сервер с модулями `php`, `mpm_itk_module`, `headers_module`, `rewrite_module`.
+- **MySQL**: СУБД для хранения данных.
+- **OpenSSH**: Для безопасного подключения к рабочим областям.
+- **Samba**: Для монтирования рабочих директорий как сетевых дисков.
+- **Redis**: Для хранения сессий и работы с очередями.
+- **phpMyAdmin**: Для управления базами данных.
+- **Composer**: Для управления зависимостями PHP.
 
-<!-- GETTING STARTED -->
-## Как развернуть
+## Требования
 
-### 1. Получение проекта
+- **Операционная система**: Ubuntu Server 24.04 (рекомендуется) или другой Linux-дистрибутив, совместимый с необходимыми пакетами. Проект разрабатывался с использованием виртуальной машины VMware, но может быть развёрнут на физическом сервере или хостинге.
+- **Программное обеспечение**:
+  - Apache2 (с модулями `php`, `mpm_itk_module`, `headers_module`, `rewrite_module`).
+  - PHP ≥ 7 (с модулями `pdo_mysql`, `mbstring`, `intl`, `redis`).
+  - MySQL или совместимая СУБД.
+  - Composer (для управления зависимостями).
+- **Аппаратное обеспечение**:
+  - Минимум 4 ГБ оперативной памяти и 20 ГБ дискового пространства.
 
-Вы можете развернуть проект двумя способами:
+## Безопасность
 
-#### Через ZIP-архив
-- Скачайте ZIP-архив проекта из репозитория.
-- Разархивируйте его на локальном компьютере, убедившись, что структура папок (`frontend`, `backend`, `common`, `console`) сохранена.
+- **Изоляция окружений**: Студенты работают в изолированных chroot-окружениях, ограничивающих доступ к файловой системе сервера.
+- **RBAC**: Ролевое управление доступом (Role-Based Access Control) обеспечивает строгое разграничение прав между экспертами и студентами.
+- **Шифрование паролей**: Пароли хранятся в зашифрованном виде, с возможностью просмотра в читаемом формате через таблицу `encrypted_passwords`.
+- **Локальная сеть**: Платформа работает в изолированной локальной сети, минимизируя риски внешних атак.
+- **Контроль доступа**: Доступ к виртуальным хостам, базам данных и файлам ограничен правами пользователя.
 
-#### Через GitHub
-- Клонируйте репозиторий:
-  ```bash
-  git clone https://github.com/Semenov-Daniil/demo
-  ```
+## Установка
 
-### 2. Установка зависимостей
-- Перейдите в корневую директорию проекта:
-  ```bash
-  cd /path/to/yii2-demo
-  ```
-- Установите зависимости через Composer:
-  ```bash
-  composer install
-  ```
-  Если Composer не установлен глобально, используйте php composer.phar install.
+### 1. Подготовка окружения
+Проект разрабатывался на Ubuntu Server 24.04 с использованием следующего стека программного обеспечения:
+- Apache2 (с модулями `php`, `mpm_itk_module`, `headers_module`, `rewrite_module`)
+- PHP (с модулями `pdo_mysql`, `mbstring`, `intl`, `redis`)
+- MySQL
+- OpenSSH
+- Samba
+- Redis
+- phpMyAdmin
+- Composer
+
+Установите необходимые пакеты:
+```bash
+sudo apt update
+sudo apt install apache2 libapache2-mod-php php php-mysql php-mbstring php-intl php-redis mysql-server openssh-server samba redis-server phpmyadmin composer
+```
+
+Включите модули Apache:
+
+```bash
+sudo a2enmod php mpm_itk headers rewrite
+sudo systemctl restart apache2
+```
+
+### 2. Настройка проекта
+
+**Требования к проекту**:
+
+- PHP ≥ 7 (с модулями `pdo_mysql`, `mbstring`, `intl`, `redis`).
+- MySQL.
+- Composer.
+
+1. Склонируйте репозиторий или скопируйте проект в директорию `/var/www/project`.
+
+2. Убедитесь, что все файлы и директории принадлежат пользователю `www-data`:
+
+   ```bash
+   sudo chown -R www-data:www-data /var/www/project
+   ```
+
+3. Настройте права для выполнения bash-скриптов пользователем `www-data`:
+
+   ```bash
+   echo "www-data ALL=(ALL) NOPASSWD: /var/www/project/bash/*.sh" | sudo tee /etc/sudoers.d/www-data
+   echo "www-data ALL=(ALL) NOPASSWD: /var/www/project/bash/**/*.sh" | sudo tee -a /etc/sudoers.d/www-data
+   ```
+
+4. Скопируйте файл `env.example` в `.env` и настройте параметры:
+
+   ```bash
+   cp env.example .env
+   ```
+
+   В `.env` укажите:
+
+   - Секретные ключи (не меняйте после начальной настройки, иначе пароли студентов и экспертов станут недоступны в читаемом виде).
+   - Логин и пароль супер-эксперта.
+   - Пользователь и группа сайта
+   - Суффикс к виртуальным хостам (не меняйте после начальной настройки, иначе возникунт проблемы с управлением и удалением уже созданых виртуальных хостов студентов).
+
+5. Создайте базу данных MySQL и пользователя:
+
+   ```sql
+   CREATE DATABASE platform_db;
+   CREATE USER 'platform_user'@'localhost' IDENTIFIED BY 'secure_password';
+   GRANT ALL PRIVILEGES ON platform_db.* TO 'platform_user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+
+6. Настройте подключение к базе данных в `common/config/main-local.php`:
+
+   ```php
+   'components' => [
+       'db' => [
+           'class' => 'yii\db\Connection',
+           'dsn' => 'mysql:host=localhost;dbname=platform_db',
+           'username' => 'platform_user',
+           'password' => 'secure_password',
+           'charset' => 'utf8',
+       ],
+   ],
+   ```
 
 ### 3. Инициализация проекта
-- Выполните команду для инициализации:
-  ```bash
-  php init
-  ```
-- Выберите среду: 0 для Development или 1 для Production.
 
-### 4. Настройка конфигурации
-- Настройте подключение к базе данных в common/config/main-local.php:
-  ```php
-  'components' => [
-    'db' => [
-        'class' => 'yii\db\Connection',
-        'dsn' => 'mysql:host=localhost;dbname=your_database_name',
-        'username' => 'your_database_username',
-        'password' => 'your_database_password',
-        'charset' => 'utf8',
-    ],
-  ],
-  ```
-- Установите ключ валидации cookie в frontend/config/main-local.php и backend/config/main-local.php:
-  ```php
-  'request' => [
-    'cookieValidationKey' => 'введите_случайную_строку_здесь',
-  ],
-  ```
-- Установите обязательные значения в common/config/param-local.php:
-  ```php
-  'encryptionKey' => 'ключ-шифрования',
-  'superExpert' => [
-        'login' => 'логин-системного-эксперта',
-        'password' => 'пароль-системного-эксперта',
-  ]
-  ```
+1. Установите зависимости через Composer:
 
-### 5. Применение миграций
-- Создайте базу данных через phpMyAdmin или другой инструмент.
-- Примените миграции:
-  ```bash
-  php yii migrate
-  ```
+   ```bash
+   composer update
+   ```
 
-### 6. Проверка
-- Откройте в браузере:
-  - Студент: http://yourdomain.com
-  - Эксперт: http://yourdomain.com/expert
-- Проверьте логи в frontend/runtime/logs и backend/runtime/logs при возникновении ошибок.
+2. Инициализируйте проект:
 
-<!-- Additionally -->
-## Дополнительно
+   ```bash
+   php init
+   ```
 
-### Дополнительно
-- Frontend: HTML, CSS, JavaScript, jQuery.
-- Backend: PHP, Yii2 (шаблон Advanced).
-- База данных: MySQL.
-- Контроль версий: Git, GitHub.
+   Выберите режим (prod или dev).
 
-### Будущие улучшения
-- Интеграция автоматического создания виртуальных хостингов.
-- Добавление системы автоматической проверки заданий.
-- Расширение модулей для обучения (например, уроки по API или SPA).
+3. Примените миграции базы данных:
 
-### Контакты
-Semenov Daniil - ds.daniilsemen.ds@gmail.com
-Project Link: [https://github.com/Semenov-Daniil/demo](https://github.com/Semenov-Daniil/demo)
+   ```bash
+   php yii migrate
+   ```
 
-### Лиценция
+### 4. Настройка сервера
 
-Распространяется по лицензии MIT. Смотреть `LICENSE.mt` для получения более подробной информации.
+Настройте виртуальный хост Apache для основного домена (`http://domain`). Пример конфигурации:
+
+```apache
+<VirtualHost *:80>
+    ServerName domain
+    DocumentRoot /var/www/project
+    <Directory /var/www/project>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+1. Сохраните конфигурацию в `/etc/apache2/sites-available/platform.conf`.
+
+2. Активируйте виртуальный хост:
+
+   ```bash
+   sudo a2ensite platform.conf
+   sudo systemctl reload apache2
+   ```
+
+3. Убедитесь, что все файлы и директории принадлежат пользователю `www-data`:
+
+   ```bash
+   sudo chown -R www-data:www-data /var/www/project
+   ```
+
+### 5. Проверка
+
+- Перейдите на `http://domain/login` для авторизации студентов.
+- Перейдите на `http://domain/expert/login` для авторизации экспертов.
+- Убедитесь, что сервисы SSH, Samba, Redis и phpMyAdmin работают корректно.
+
+## Первоначальное использование
+
+1. **Настройка супер-эксперта**:
+
+   - В файле `.env` обязательно измените логин и пароль супер-эксперта:
+
+     ```env
+     SUPER_EXPERT_LOGIN=admin
+     SUPER_EXPERT_PASSWORD=secure_password
+     ```
+
+Установите `ENCRYPTION_KEY` и не меняйте его после начальной настройки, чтобы избежать потери читаемых паролей студентов и экспертов:
+
+```env
+ENCRYPTION_KEY=your_secure_encryption_key
+```
+
+1. Авторизуйтесь как супер-эксперт на `http://domain/expert/login`.
+
+2. Добавьте новых экспертов.
+
+3. Платформа готова к использованию!
+
+## Использование
+
+### Для студентов
+
+1. Перейдите на `http://domain/login` и войдите, используя предоставленные логин и пароль.
+2. В личном кабинете вы можете:
+   - Скопировать команды для подключения по SSH или сетевого диска.
+   - Перейти к базе данных через phpMyAdmin.
+   - Скачать файлы события.
+   - Перейти к виртуальным хостам модулей.
+3. Для выхода нажмите «Выход» в меню пользователя.
+
+### Для экспертов
+
+1. Перейдите на `http://domain/expert/login` и войдите с логином и паролем.
+2. В административной панели доступны разделы:
+   - **Эксперты**: создание, редактирование, удаление экспертов.
+   - **События**: управление чемпионатами и экзаменами.
+   - **Студенты**: добавление, редактирование, удаление и экспорт данных.
+   - **Данные студентов**: экспорт работ студентов.
+   - **Модули**: управление этапами событий (добавление, очистка, смена статуса).
+   - **Файлы**: загрузка, скачивание и удаление материалов.
+3. Для выхода нажмите «Выход» в меню пользователя.
+
+### Для администраторов
+
+- Регулярно создавайте резервные копии базы данных и директорий `/events` и `/students`.
+- Используйте команды для эксплуатации:
+  - `php yii migrate` — применение миграций базы данных.
+  - `php yii service/setup` — проверка, установка и настройка зависимостей.
+  - `php yii service/clear` — удаление неактивных пользователей и связанных данных.
+
+## Логи и очереди
+
+- **Логи**:
+
+  - Логи Yii2: `frontend/runtime/logs`, `backend/runtime/logs`, `console/runtime/logs`.
+  - Логи bash-скриптов: `bash/logs`.
+
+- **Очереди**:
+
+  - Просмотр работы очередей: используйте журнал Linux для сервиса `redis`:
+
+    ```bash
+    sudo journalctl -u redis
+    ```
+
+  - Для кастомных очередей Yii2: используйте журнал Linux для сервиса `yii-queue-worker.service`:
+
+    ```bash
+    sudo journalctl -u yii-queue-worker.service -f
+    ```
+
+## Сообщение об ошибках
+
+Если вы обнаружили баг, создайте Issue с описанием:
+
+- Шаги воспроизведения.
+- Ожидаемое и фактическое поведение.
+- Системные характеристики (ОС, версии ПО).
+
+## Лицензия
+
+Проект распространяется под лицензией MIT. Вы можете свободно использовать, модифицировать и распространять код при условии указания авторства и сохранения лицензии.
+
+## Контакты
+
+Для вопросов и предложений:
+
+- **Автор**: Даниил Вадимович Семенов
+- **Электронная почта**: ds.daniilsemen.ds@gmail.com
+- **GitHub**: https://github.com/Semenov-Daniil
 
 ---
 
-Спасибо за интерес к проекту "Demo"! Мы надеемся, что платформа станет полезным инструментом для проведения чемпионатов и обучения веб-технологиям.
+*Проект разработан в рамках дипломной работы Санкт-Петербургского колледжа судостроения, информационных и прикладных технологий, 2025 год.*
 
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/Semenov-Daniil/api-file-cloud.svg?style=for-the-badge
-[contributors-url]: https://github.com/Semenov-Daniil/api-file-cloud/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/Semenov-Daniil/api-file-cloud.svg?style=for-the-badge
-[forks-url]: https://github.com/Semenov-Daniil/api-file-cloud/network/members
-[stars-shield]: https://img.shields.io/github/stars/Semenov-Daniil/api-file-cloud.svg?style=for-the-badge
-[stars-url]: https://github.com/Semenov-Daniil/api-file-cloud/stargazers
-[issues-shield]: https://img.shields.io/github/issues/Semenov-Daniil/api-file-cloud.svg?style=for-the-badge
-[issues-url]: https://github.com/Semenov-Daniil/api-file-cloud/issues
-[license-shield]: https://img.shields.io/github/license/Semenov-Daniil/api-file-cloud.svg?style=for-the-badge
-[license-url]: https://github.com/Semenov-Daniil/api-file-cloud/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/othneildrew
-[Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
-[Bootstrap-url]: https://getbootstrap.com
-[JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
-[JQuery-url]: https://jquery.com 
+```
