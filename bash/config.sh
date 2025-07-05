@@ -143,8 +143,10 @@ getent group "$SITE_GROUP" >/dev/null || {
 }
 
 getent group "$STUDENT_GROUP" >/dev/null || {
-    log_message "error" "Group '$STUDENT_GROUP' does not exist"
-    return ${EXIT_GENERAL_ERROR}
+    groupadd "$STUDENT_GROUP" >/dev/null || {
+        log_message "error" "Group '$STUDENT_GROUP' does not exist"
+        return ${EXIT_GENERAL_ERROR}
+    }
 }
 
 groups "$SITE_USER" | grep -q "$STUDENT_GROUP" || {
