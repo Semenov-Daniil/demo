@@ -88,7 +88,8 @@ class ExpertService
      */
     public function deleteExperts(array $expertIds): bool
     {
-        if (in_array(Yii::$app->user->id, $expertIds)) return false;
+        $userId = (Yii::$app instanceof \yii\web\Application ? Yii::$app->user->id : null);
+        if (in_array($userId, $expertIds)) return false;
 
         Users::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $expertIds]);
         foreach ($expertIds as $id) {

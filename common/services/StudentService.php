@@ -166,7 +166,7 @@ class StudentService
     public function deleteStudents(array $studentIds): bool
     {
         Users::updateAll(['statuses_id' => Statuses::getStatusId(Statuses::DELETING)], ['id' => $studentIds]);
-        Yii::$app->sse->publish($this->getEventChannel(Students::findOne(['students_id' => $studentIds[0]])?->events_id), 'student-delete');
+        if (!empty($studentIds)) Yii::$app->sse->publish($this->getEventChannel(Students::findOne(['students_id' => $studentIds[0]])?->events_id), 'student-delete');
         foreach ($studentIds as $id) {
             Yii::$app->queue->push(new DeleteStudentEnvironment(['studentId' => $id]));
         }
