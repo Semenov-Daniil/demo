@@ -7,7 +7,7 @@ set -euo pipefail
 # Подключение глобального config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../config.sh" || {
     echo "Failed to source global config.sh"
-    return 1
+    exit 1
 }
 
 # Функция очистки старых записей в лог-файлах

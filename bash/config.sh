@@ -126,6 +126,12 @@ source "$LOGGING_SCRIPT" || {
 }
 
 # Main
+[[ ! -d "$STUDENTS_DIR" ]] && { create_directories "$STUDENTS_DIR" 755 "$SITE_USER:$SITE_GROUP" || return $?; }
+
+[[ ! -d "$TMP_DIR" ]] && { create_directories "$TMP_DIR" 1777 "$SITE_USER:$SITE_GROUP" || return $?; }
+
+[[ ! -d "$ETC_STUDENTS" ]] && { create_directories "$ETC_STUDENTS" 755 "root:root" || return $?; }
+
 id "$SITE_USER" >/dev/null || {
     log_message "error" "User '$SITE_USER' does not exist"
     return ${EXIT_GENERAL_ERROR}
@@ -144,11 +150,5 @@ getent group "$STUDENT_GROUP" >/dev/null || {
 groups "$SITE_USER" | grep -q "$STUDENT_GROUP" || {
     usermod -aG "$STUDENT_GROUP" "$SITE_USER" >/dev/null
 }
-
-[[ ! -d "$STUDENTS_DIR" ]] && { create_directories "$STUDENTS_DIR" 755 "$SITE_USER:$SITE_GROUP" || return $?; }
-
-[[ ! -d "$TMP_DIR" ]] && { create_directories "$TMP_DIR" 1777 "$SITE_USER:$SITE_GROUP" || return $?; }
-
-[[ ! -d "$ETC_STUDENTS" ]] && { create_directories "$ETC_STUDENTS" 755 "root:root" || return $?; }
 
 return 0
