@@ -3,13 +3,14 @@
 ## Оглавление
 - [Общее описание](#общее-описание)
 - [Структура папок](#структура-папок)
-- [Зависимости](#зависимости)
-- [Общие рекомендации](#общие-рекомендации)
 - [Глобальный конфигурационный файл](#глобальный-конфигурационный-файл)
 - [Скрипты](#скрипты)
   - [Папка `lib/`](#папка-lib)
+  - [Папка `logging/`](#папка-logging)
+  - [Папка `chroot/`](#папка-chroot)
   - [Папка `samba/`](#папка-samba)
   - [Папка `ssh/`](#папка-ssh)
+  - [Папка `setup/`](#папка-setup)
   - [Папка `system/`](#папка-system)
   - [Папка `utils/`](#папка-utils)
   - [Папка `vhost/`](#папка-vhost)
@@ -21,547 +22,580 @@
 - **`bash/`** — корневая папка для всех скриптов.
   - **`config.sh`** — глобальный конфигурационный файл, подключаемый ко всем скриптам.
   - **`lib/`** — подключаемые файлы с общими функциями.
+  - **`logging/`** — скрипты логирования.
+  - **`chroot/`** — скрипты для настройки chroot.
   - **`samba/`** — скрипты для настройки Samba.
   - **`ssh/`** — скрипты для настройки SSH.
+  - **`setup/`** — скрипты для настройки проекта.
   - **`system/`** — скрипты для системной логики.
   - **`utils/`** — утилиты, которые можно запускать самостоятельно.
   - **`vhost/`** — скрипты для настройки виртуальных хостов.
   - **`logs/`** — папка для хранения логов (создаётся автоматически).
+  - **`tmp/`** — папка для хранения вмременных файлов (создаётся автоматически).
 
-Каждая из папок `samba`, `ssh`, `system`, `utils`, `vhost` содержит локальный файл `config.sh` с настройками, специфичными для данной категории скриптов.
-
-## Зависимости
-Скрипты требуют установленных пакетов, указанных в `REQUIRED_SERVICES`. Убедитесь, что они установлены:
-```bash
-sudo apt update
-sudo apt install apache2 openssh-server samba samba-common-bin
-```
-
-## Общие рекомендации
-1. **Права доступа**: Большинство скриптов требуют прав суперпользователя (`sudo`). Пользователь `www-data`, отвечающий за веб-сайт, должен иметь возможность выполнять скрипты без ввода пароля. Для этого добавьте строку в файл `sudoers`:
-   ```bash
-   sudo visudo
-   ```
-   Добавьте:
-   ```bash
-   www-data ALL=(ALL) NOPASSWD: /path/to/bash/*.sh
-   ```
-   Где `/path/to/` — путь к корневой папке сайта (например, `/var/www/project/`).
-2. **Права выполнения для `www-data`**: Чтобы пользователь `www-data` мог выполнять скрипты, установите соответствующие права:
-   ```bash
-   sudo chown www-data:www-data /path/to/bash/*.sh
-   sudo chmod 750 /path/to/bash/*.sh
-   ```
-   Это обеспечит, что только `www-data` и root смогут выполнять скрипты.
-3. **Логи**: Логи сохраняются в `bash/logs/`. Проверяйте их для диагностики ошибок.
-4. **Конфигурация**: Настраивайте переменные в `.env` или локальных `config.sh` перед запуском.
-5. **Запуск утилит**: Скрипты в `utils/` можно запускать напрямую:
-   ```bash
-   sudo bash utils/<script_name>.sh
-   ```
+Каждая из папок `logging`, `setup`, `samba`, `ssh`, `system`, `utils`, `vhost` содержит локальный файл `config.sh` с настройками, специфичными для данной категории скриптов.
 
 ## Глобальный конфигурационный файл
-Файл `bash/config.sh` задаёт основные переменные и функции, используемые всеми скриптами. Он должен быть подключён (`source`) в начале каждого скрипта.
+Файл `bash/config.sh` задаёт основные переменные и функции, используемые всеми скриптами, проверяет основные показатели. Он должен быть подключён (`source`) в начале каждого скрипта.
 
-### Основные переменные
-Переменные задаются в файле `bash/.env` или напрямую в `config.sh`. Основные переменные, которые можно настроить:
-- **`SITE_USER`** (по умолчанию: `www-data`) — пользователь для веб-сервера.
-- **`SITE_GROUP`** (по умолчанию: `www-data`) — группа для веб-сервера.
-- **`STUDENT_GROUP`** (по умолчанию: `students`) — группа для студентов.
-- **`STUDENTS_DIR`** (по умолчанию: `${PROJECT_ROOT}/students`) — директория для данных студентов.
-- **`REQUIRED_SERVICES`** — массив сервисов, необходимых для работы скриптов:
-  - `apache2`
-  - `openssh-server`
-  - `samba`
-  - `samba-common-bin`
-- **`LOGS_DIR`** (по умолчанию: `${SCRIPTS_DIR}/logs`) — директория для логов.
-
-### Использование
-Глобальный `config.sh` подключается в скриптах с помощью:
-```bash
-source "${SCRIPTS_DIR}/config.sh"
-```
-**Важно**: Скрипт нельзя запускать напрямую (`./config.sh`), только подключать через `source`.
+### Переменные
+Получается переменные из `.env` файла проекта. 
+Основные переменные, которые можно настроить:
+- Переменные студентов:
+  - **`STUDENT_GROUP`** (по умолчанию: `students`) — группа для студентов.
+  - **`STUDENTS_DIR`** (по умолчанию: `${PROJECT_ROOT}/students`) — директория для данных студентов.
+- Переменные логирования:
+  - **`DEFAULT_LOG_FILE`** (по умолчанию: `logs.log`) - название файла логирования.
+- Сервисы и пакеты:
+  - **`REQUIRED_SERVICES`** — массив сервисов, необходимых для работы.
+  - **`REQUIRED_SERVICE_MAP`** — массив пакетов сервисов, необходимых для работы.
+- Переменные блоуировки flock:
+  - **`LOCK_TIMEOUT`** (по умолчанию: `30`) - время блокировки фалов (в секундах).
+  - **`LOCK_PREF`** (по умолчанию: `lock`) - превикс файлов блокировки.
+- Переменные chroot:
+  - **`BASE_CHROOT`** (по умолчанию `/srv/chroot`) - путь к chroot.
 
 ## Скрипты
 
 ### Папка `lib/`
-Содержит подключаемые файлы с функциями, используемыми другими скриптами. Все скрипты подключаются через функцию `source_script` из `config.sh`:
-```bash
-source_script "${LIB_DIR}/<script_name>.sh"
-```
+Содержит подключаемые файлы с функциями, используемыми другими скриптами.
 
-#### `check_cmds.sh`
+#### check_commands.fn.sh
 **Описание**: Проверяет наличие указанных команд в системе.
 
 **Функции**:
-- `check_cmds <команда1> <команда2> ...` — проверяет, доступны ли указанные команды.
-  - Возвращает `EXIT_SUCCESS` (0), если все команды найдены, или `EXIT_NO_CMD` (1), если есть отсутствующие.
-  - Пример: `check_cmds ls cat rm`
+- `check_commands <команда1> <команда2> ...` — возвращает 0, если все команды доступны, или 1, если есть отсутствующие.
 
-**Использование**:
-```bash
-source_script "${CHECK_CMDS_SCRIPT}"
-check_cmds ls cat rm || exit $?
-```
-
-#### `check_deps.sh`
-**Описание**: Проверяет, установлены ли указанные пакеты (зависимости).
+#### check_dependency.fn.sh
+**Описание**: Проверяет наличие указанных пакетов в системе через `dpkg-query`.
 
 **Функции**:
-- `check_deps <пакет1> <пакет2> ...` — проверяет наличие пакетов через `dpkg-query`.
-  - Возвращает `EXIT_SUCCESS` (0), если все пакеты установлены, или `EXIT_NO_DEPENDENCY` (1), если есть отсутствующие.
-  - Пример: `check_deps grep tar`
+- `check_dependency <пакет1> <пакет2> ...` — возвращает 0, если все пакеты установлены, или 1, если есть отсутствующие.
 
-**Использование**:
-```bash
-source_script "${CHECK_DEPS_SCRIPT}"
-check_deps grep tar || exit $?
-```
+#### common.sh
+**Описание**: Подключает вспомогательные скрипты из директории `lib`.
 
-#### `create_dirs.sh`
-**Описание**: Создаёт директории и настраивает их права и владельцев.
+**Функциональность**:
+- Подключает `check_commands.fn.sh`, `check_dependency.fn.sh`, `create_directories.fn.sh`, `update_permissions.fn.sh`, `with_lock.fn.sh`.
+
+#### create_directories.fn.sh
+**Описание**: Создаёт директории, устанавливает права и владельцев.
 
 **Функции**:
-- `create_directories <путь1> <путь2> ... <права> <владелец>` — создаёт директории, устанавливает права (в восьмеричном формате) и владельца (формат `user:group` или `user`).
-  - Возвращает `EXIT_SUCCESS` (0) при успехе, `EXIT_INVALID_ARG` (2) при неверных аргументах, или `EXIT_GENERAL_ERROR` (1) при ошибке.
-  - Пример: `create_directories /path/dir1 /path/dir2 750 root:root`
+- `create_directories <путь1> <путь2> ... <права> <владелец>` — создаёт директории с указанными правами (восьмеричный формат) и владельцем (формат `user:group`). Возвращает 0 при успехе, 1 при ошибке.
 
-**Использование**:
-```bash
-source_script "${CREATE_DIRS_SCRIPT}"
-create_directories /path/dir1 /path/dir2 750 root:root || exit $?
-```
-
-#### `logging.sh`
-**Описание**: Предоставляет функции для логирования сообщений в файлы и вывода в консоль.
+#### mounts.fn.sh
+**Описание**: Предоставляет функции для монтирования файловых систем и управления systemd mount units.
 
 **Функции**:
-- `log_message <уровень> <сообщение>` — записывает сообщение в лог-файл и выводит в консоль. Уровни: `info`, `warning`, `error`.
-  - Пример: `log_message info "Operation completed"`
-- `check_level <уровень>` — проверяет корректность уровня лога.
-- `make_log_dir <путь_к_лог_файлу>` — создаёт директорию для логов.
-- `clean_old_log <лог_файл>` — удаляет записи старше `LOG_RETENTION_DAYS` (по умолчанию 30 дней).
-- `format_log <уровень> <сообщение>` — форматирует запись лога с временной меткой.
-- `write_log <лог_файл> <запись>` — записывает сообщение в лог-файл.
-- `print_log <уровень> <сообщение>` — выводит сообщение в консоль.
-
-**Использование**:
-```bash
-source_script "${LOGGING_SCRIPT}" my_log.log
-log_message info "Operation completed" || exit $?
-```
+- `title_mount_unit <путь>` — генерирует название systemd mount unit.
+- `path_to_unit <название>` — возвращает путь к файлу unit.
+- `is_active_unit <название>` — проверяет, активен ли unit.
+- `create_systemd_unit <название> <содержимое>` — создаёт systemd unit.
+- `start_systemd_unit <название>` — запускает systemd unit.
+- `remove_systemd_unit <название>` — удаляет systemd unit.
+- `get_unit_content <источник> <назначение> [<тип>] [<опции>] [<зависимости>]` — генерирует содержимое mount unit.
+- `mount_unit <источник> <назначение> [<тип>] [<опции>] [<зависимости>]` — монтирует файловую систему.
+- `mount_bind <источник> <назначение> [<опции>] [<зависимости>]` — выполняет bind-монтирование.
+- `mount_rbind <источник> <назначение> [<опции>] [<зависимости>]` — выполняет rbind-монтирование.
+- `mount_devtmpfs <назначение> [<зависимости>]` — монтирует devtmpfs.
+- `mount_devpts <назначение> [<зависимости>]` — монтирует devpts.
+- `mount_tmpfs <назначение> [<опции>] [<зависимости>]` — монтирует tmpfs.
+- `mount_proc <назначение> [<зависимости>]` — монтирует proc.
+- `mount_overlay <lowerdir> <upperdir> <workdir> <merged> [<зависимости>]` — монтирует overlay.
+- `mount_rslave <цель> <зависимости>` — выполняет rslave-монтирование.
+- `get_mount_units <директория>` — возвращает список mount units в директории.
+- `umount_unit <цель>` — размонтирует файловую систему.
 
 **Переменные**:
-- `LOG_RETENTION_DAYS` (по умолчанию: 30) — срок хранения логов в днях.
-- `LOGS_DIR` (по умолчанию: `bash/logs/`) — директория для логов.
-- `DEFAULT_LOG` (по умолчанию: `${LOGS_DIR}/logs.log`) — лог-файл по умолчанию.
+- `MOUNT_UNIT_DIR` (по умолчанию: `/etc/systemd/system`) — директория для systemd units.
+- `LOCK_SYSTEMD_FILE` (по умолчанию: `/tmp/lock_systemd_unit.lock`) — файл блокировки.
+- `UNIT_START_TIMEOUT` (по умолчанию: `15`) — таймаут запуска unit (в секундах).
 
-#### `update_perms.sh`
+#### restrict_binaries.fn.sh
+**Описание**: Ограничивает доступ к указанным бинарным файлам в chroot-окружении.
+
+**Функции**:
+- `restrict_binaries <корень> <команда1> <команда2> ...` — устанавливает права `000` для указанных команд в `/bin` или `/usr/bin` chroot-окружения. Возвращает 0 при успехе, 1 при ошибке.
+
+#### update_permissions.fn.sh
 **Описание**: Обновляет права и владельцев для файлов и директорий.
 
 **Функции**:
-- `update_permissions <путь1> <путь2> ... <права> <владелец>` — устанавливает права (в восьмеричном формате) и владельца (формат `user:group` или `user`) для файлов/директорий.
-  - Возвращает `EXIT_SUCCESS` (0) при успехе, `EXIT_INVALID_ARG` (2) при неверных аргументах, или `EXIT_GENERAL_ERROR` (1) при ошибке.
-  - Пример: `update_permissions /path/file1 /path/dir1 755 root:root`
+- `update_permissions <путь1> <путь2> ... <права> <владелец>` — устанавливает права (восьмеричный формат) и владельца (формат `user:group`). Возвращает 0 при успехе, 1 при ошибке.
+
+#### with_lock.fn.sh
+
+**Описание**: Выполняет операции с использованием блокировки через `flock`.
+
+**Функции**:
+- `with_lock <файл_блокировки> <действие> [<аргументы> ...]` — выполняет указанное действие с блокировкой. Возвращает 0 при успехе, 1 при ошибке.
+
+### Папка `logging/`
+Содержит скрипты для логирования сообщений и управления лог-файлами. Скрипты предназначены для записи сообщений в файлы, вывода в консоль и очистки устаревших логов.
+
+#### Локальный `config.sh`
+
+**Описание**: Задаёт конфигурацию для скриптов логирования.
+
+**Переменные**:
+- `LOG_RETENTION_DAYS` (по умолчанию: `30`) — срок хранения логов (в днях).
+- `LOCK_LOG_PREF` (по умолчанию: `lock_log`) — префикс для файлов блокировки.
+- `LOG_LEVELS` (по умолчанию: `info`, `warning`, `error`, `ok`) — допустимые уровни логов.
+
+#### clean_logs.sh
+**Описание**: Очищает записи в лог-файлах, старше указанного срока хранения.
+
+**Функции**:
+- `clean_logs` — очищает все лог-файлы в директории `LOGDIR`, удаляя записи старше `LOG_RETENTION_DAYS`.
+- `clean_log <файл> <дата>` — очищает записи в указанном файле, старше заданной даты.
+
+#### logging.fn.sh
+**Описание**: Предоставляет функции для логирования сообщений в файлы и вывода в консоль.
+
+**Функции**:
+- `log_message <уровень> <сообщение>` — записывает сообщение в лог-файл и выводит в консоль. Уровни: `info`, `warning`, `error`, `ok`.
+- `check_level <уровень>` — проверяет допустимость уровня лога.
+- `make_log_dir <путь_к_лог_файлу>` — создаёт директорию для логов.
+- `write_log <файл> <запись>` — записывает сообщение в лог-файл.
+- `print_log <уровень> <сообщение>` — выводит сообщение в консоль.
+- `format_log <уровень> <сообщение>` — форматирует запись лога с временной меткой.
+
+### Папка `chroot/`
+Cодержит скрипты для создания, настройки, управления и удаления chroot-окружений, включая рабочие пространства пользователей. Скрипты используют функции из bash/lib для монтирования, ограничения доступа и логирования.
+
+#### Локальный `config.sh`
+**Описание**: Задаёт конфигурацию для скриптов chroot-окружения.
+
+**Переменные**:
+- `SYSTEM_DIRS` — системные директории для монтирования.
+- `RESTRICTED_CMDS` — команды, ограничиваемые в chroot.
+- `LOCK_CHROOT_PREF` (`lock_chroot`) — префикс для файлов блокировки.
+- `ETC_BASHRC`, `ETC_BASH_PREEXEC` — пути к конфигурационным файлам Bash.
+- `MOUNTS_FN`, `RESTRICT_BINARIES_FN`, `SETUP_CHROOT`, `INIT_CHROOT`, `REMOVE_CHROOT`, `REMOVE_WORKSPACE` — пути к скриптам и функциям.
+
+#### init_chroot.sh
+**Описание**: Инициализирует chroot-окружение с монтированием системных директорий.
+
+**Функции**:
+- `init_chroot` — создаёт chroot-окружение в `BASE_CHROOT`, монтирует системные директории, ограничивает команды.
 
 **Использование**:
 ```bash
-source_script "${UPDATE_PERMS_SCRIPT}"
-update_permissions /path/file1 /path/dir1 755 root:root || exit $?
+sudo bash /path/to/init_chroot.sh || exit $?
 ```
 
-### Папка `samba/`
-Содержит скрипты для настройки Samba-сервера и управления пользователями Samba. Все скрипты требуют прав суперпользователя и подключают локальный `config.sh`.
+#### remove_chroot.sh
+**Описание**: Удаляет chroot-окружение.
+
+**Функции**:
+- `remove_chroot` — размонтирует и удаляет директорию `BASE_CHROOT`.
+
+**Использование**:
+```bash
+sudo bash /path/to/remove_chroot.sh || exit $?
+```
+
+#### remove_workspace.sh
+**Описание**: Удаляет рабочее пространство пользователя в chroot.
+
+**Функции**:
+- `remove_chroot_workspace <имя_пользователя>` — размонтирует и удаляет рабочее пространство пользователя.
+
+**Использование**:
+```bash
+sudo bash /path/to/remove_workspace.sh || exit $?
+```
+
+#### setup_chroot.sh
+**Описание**: Настраивает chroot-окружение, включая файлы Bash и ограничения.
+
+**Функции**:
+- `check_bashrc` — обновляет `.bashrc` в chroot.
+- `check_bash_preexec` — обновляет `.bash-preexec.sh` в chroot.
+- `check_chroot` — проверяет существование chroot и инициализирует при необходимости.
+
+**Использование**:
+```bash
+sudo bash /path/to/setup_chroot.sh || exit $?
+```
+
+#### setup_workspace.sh
+**Описание**: Создаёт рабочее пространство пользователя в chroot.
+
+**Функции**:
+- `setup_user_workspace <имя_пользователя> <рабочая_директория>` — создаёт рабочее пространство, монтирует директорию, настраивает `.bashrc` и `.bash-preexec.sh`.
+
+**Использование**:
+```bash
+sudo bash /path/to/setup_workspace.sh username /path/to/workspace || exit $?
+```
+
+#### Конфигурационные файлы
+
+#### .bashrc
+**Описание**: Конфигурация Bash для пользователей в chroot-окружении. Задаёт переменные окружения, ограничения ресурсов, логирование команд и проверку путей.
+
+#### .bash-preexec.sh
+**Описание**: Поддержка функций `preexec` и `precmd` для выполнения проверок перед командами и отображением приглашения в chroot.
+
+### Папка `/samba`
+Содержит скрипты для настройки Samba, управления пользователями и конфигурацией сетевых шар. Скрипты используют функции из `bash/lib` для проверки зависимостей, монтирования и логирования.
 
 #### Локальный `config.sh`
 **Описание**: Задаёт конфигурацию для скриптов Samba.
 
-**Основные переменные**:
-- **`SAMBA_CONFIG_FILE`** (по умолчанию: `/etc/samba/smb.conf`) — путь к конфигурационному файлу Samba.
-- **`SAMBA_BACKUP_CONFIG`** (по умолчанию: `/etc/samba/smb.conf.bak`) — путь к резервной копии конфигурации.
-- **`SAMBA_LOG_DIR`** (по умолчанию: `/var/log/samba`) — директория для логов Samba.
-- **`SAMBA_LOG_FILE`** (по умолчанию: `${SAMBA_LOG_DIR}/samba.log`) — лог-файл Samba.
-- **`SAMBA_TEMP_CONFIG`** (по умолчанию: `/tmp/smb.conf.tmp`) — временный файл конфигурации.
-- **`SAMBA_SERVICES`** — массив сервисов Samba: `smbd`, `nmbd`.
-- **`SAMBA_PORTS`** — порты для Samba: `137/udp`, `138/udp`, `139/tcp`, `445/tcp`.
-- **`SAMBA_GLOBAL_PARAMS`** — параметры глобальной секции Samba:
-  - `workgroup = WORKGROUP`
-  - `server string = %h server (Samba, Ubuntu)`
-  - `server role = standalone server`
-  - `security = user`
-  - `map to guest = never`
-  - `smb encrypt = required`
-  - `min protocol = SMB3`
-  - `log file = ${SAMBA_LOG_FILE}`
-  - `max log size = 1000`
+**Переменные**:
+- `LOCK_SAMBA_PREF` (`lock_samba`) — префикс для файлов блокировки.
+- `CONFIG_SAMBA`, `REMOVE_USER` — пути к скриптам Samba.
 
-**Использование**:
-Подключается автоматически в скриптах Samba:
-```bash
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-```
-
-#### `add_student_samba.sh`
-**Описание**: Добавляет пользователя в Samba, создавая учётную запись с паролем.
-
-**Использование**:
-```bash
-sudo bash samba/add_student_samba.sh <username> <password> [--log=<log_file>]
-```
-- `<username>` — имя пользователя (должно существовать в системе и быть в группе `students`).
-- `<password>` — пароль для Samba.
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `add_student_samba.log`).
-
-**Пример**:
-```bash
-sudo bash samba/add_student_samba.sh student1 securepass
-```
-
-#### `delete_student_samba.sh`
-**Описание**: Удаляет пользователя из Samba.
-
-**Использование**:
-```bash
-sudo bash samba/delete_student_samba.sh <username> [--log=<log_file>]
-```
-- `<username>` — имя пользователя.
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `delete_student_samba.log`).
-
-**Пример**:
-```bash
-sudo bash samba/delete_student_samba.sh student1
-```
-
-#### `delete_user_samba.sh`
-**Описание**: Содержит функцию для удаления пользователя из Samba.
+#### add_samba_user.sh
+**Описание**: Добавляет или обновляет пользователя Samba.
 
 **Функции**:
-- `delete_user_samba <username>` — удаляет пользователя из Samba, завершает его процессы и перезагружает конфигурацию.
-  - Возвращает `EXIT_SUCCESS` (0) при успехе, или код ошибки (например, `EXIT_SAMBA_USER_DELETE_FAILED` (25)).
-  - Пример: `delete_user_samba student1`
-- `check_and_terminate_user <username>` — завершает активные процессы пользователя.
+- `add_samba_user <имя_пользователя> <пароль>` — добавляет пользователя Samba или обновляет его пароль.
 
 **Использование**:
-Подключается в других скриптах:
 ```bash
-source_script "${DELETE_USER_SAMBA}"
-delete_user_samba student1 || exit $?
+sudo bash /path/to/add_samba_user.sh username password || exit $?
 ```
 
-#### `setup_samba.sh`
-**Описание**: Настраивает Samba-сервер: обновляет конфигурацию, создаёт шары, открывает порты, запускает сервисы.
+#### check_setup_samba.sh
+**Описание**: Проверяет и настраивает зависимости, сервисы и порты Samba.
 
 **Функции**:
 - `start_samba_services` — запускает сервисы `smbd` и `nmbd`.
 - `configure_ufw` — открывает порты Samba в UFW.
-- `backup_samba_config` — создаёт резервную копию конфигурации.
-- `update_global_config` — обновляет глобальную секцию конфигурации Samba.
-- `add_user_share` — добавляет пользовательскую шару для студентов.
-- `apply_samba_config` — проверяет и применяет конфигурацию.
-- `cleanup` — удаляет временные файлы.
+- `check_samba_dependencies` — проверяет наличие пакетов и команд Samba.
+
+**Переменные**:
+- `SAMBA_PORTS` (`137/udp`, `138/udp`, `139/tcp`, `445/tcp`) — порты Samba.
+- `SAMBA_REQUIRED_COMMAND` (`pdbedit`, `smbpasswd`, `smbcontrol`, `testparm`) — необходимые команды.
+- `SAMBA_REQUIRED_DEPENCY` (`samba`, `samba-common-bin`) — необходимые пакеты.
+- `SAMBA_SERVICES` (`smbd`, `nmbd`) — сервисы Samba.
+- `SERVICE_START_TIMEOUT` (5) — таймаут запуска сервиса (в секундах).
 
 **Использование**:
-Подключается в других скриптах или запускается напрямую:
 ```bash
-sudo bash samba/setup_samba.sh [--log=<log_file>]
-```
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `setup_samba.log`).
-
-**Пример**:
-```bash
-sudo bash samba/setup_samba.sh
+sudo bash /path/to/check_setup_samba.sh || exit $?
 ```
 
-### Папка `ssh/`
-Sкрипты для настройки SSH и управления chroot-окружением для пользователей группы `students`. Все скрипты требуют прав суперпользователя и подключают локальный `config.sh`.
+#### remove_samba_user.sh
+**Описание**: Удаляет пользователя Samba и завершает его сессии.
+
+**Функции**:
+- `get_user_pids <имя_пользователя>` — получает PID активных сессий.
+- `close_samba_sessions <имя_пользователя>` — завершает сессии пользователя.
+- `remove_samba_user <имя_пользователя>` — удаляет пользователя Samba.
+
+**Использование**:
+```bash
+sudo bash /path/to/remove_samba_user.sh username || exit $?
+```
+
+#### config_samba.sh
+**Описание**: Настраивает конфигурацию Samba, включая `smb.conf` и `student.conf`.
+
+**Функции**:
+- `check_requirements` — проверяет наличие Samba и файлов конфигурации.
+- `restart_smbd` — перезапускает сервис `smbd`.
+- `check_global_section` — добавляет включение `student.conf` в `smb.conf`.
+- `check_student_template` — обновляет `student.conf`.
+- `apply_updates` — применяет изменения конфигурации.
+
+**Переменные**:
+- `CONFIG_FILE` (`/etc/samba/smb.conf`) — основной файл конфигурации Samba.
+- `STUDENT_CONF` (`/etc/samba/student.conf`) — файл конфигурации для студентов.
+- `TEMPLATE_CONF` (`student.conf`) — шаблон конфигурации.
+- `LOCK_FILE` (`/tmp/samba_configure.lock`) — файл блокировки.
+- `BACKUP_DIR` (`/etc/samba/backup`) — директория для резервных копий.
+
+**Использование**:
+```bash
+sudo bash /path/to/config_samba.sh || exit $?
+```
+
+#### Конфигурационные файлы
+
+#### student.conf
+**Описание**: Шаблон конфигурации Samba для создания пользовательских сетевых шар с доступом к рабочим пространствам.
+
+### Папка `/setup`
+Содержит скрипты для базовой настройки проекта, включая проверку и запуск сервисов, настройку cron-заданий и управление очередями Yii2.
 
 #### Локальный `config.sh`
-**Описание**: Задаёт конфигурацию для скриптов SSH и chroot-окружения.
+**Описание**: Задаёт конфигурацию для скриптов настройки.
 
-**Основные переменные**:
-- **`CHROOT_DIR`** (по умолчанию: `/var/chroot`) — корневая директория для chroot-окружений.
-- **`CHROOT_STUDENTS`** (по умолчанию: `${CHROOT_DIR}/${STUDENT_GROUP}`) — директория для chroot-окружений студентов.
-- **`SSH_CONFIG_FILE`** (по умолчанию: `/etc/ssh/sshd_config`) — основной конфигурационный файл SSH.
-- **`SSH_CONFIGS_DIR`** (по умолчанию: `/etc/ssh/sshd_config.d`) — директория для дополнительных конфигураций SSH.
-- **`STUDENT_CONF_FILE`** (по умолчанию: `${SSH_CONFIGS_DIR}/${STUDENT_GROUP}.conf`) — файл конфигурации для группы `students`.
-- **`MOUNT_DIRS`** — директории для монтирования в chroot: `dev`, `proc`, `usr`, `bin`, `lib`, `lib64`, `home`.
-- **`MOUNT_FILES`** — файлы для монтирования (по умолчанию пустой массив).
-- **`CHROOT_BASE_DIRS`** — базовые директории в chroot: `dev`, `etc`, `home`, `usr`, `bin`, `lib`, `lib64`, `proc`, `tmp`.
-
-**Использование**:
-Подключается автоматически в скриптах SSH:
-```bash
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-```
-
-#### `init_student_chroot.sh`
-**Описание**: Инициализирует chroot-окружение для студента, создавая директории, монтируя ресурсы и настраивая `/etc/fstab`.
-
-**Использование**:
-```bash
-sudo bash ssh/init_student_chroot.sh <username> [--log=<log_file>]
-```
-- `<username>` — имя пользователя (должно существовать в системе).
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `init_student_chroot.log`).
-
-**Пример**:
-```bash
-sudo bash ssh/init_student_chroot.sh student1
-```
-
-#### `remove_student_chroot.sh`
-**Описание**: Удаляет chroot-окружение студента.
-
-**Использование**:
-```bash
-sudo bash ssh/remove_student_chroot.sh <username> [--log=<log_file>]
-```
-- `<username>` — имя пользователя.
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `remove_student_chroot.log`).
-
-**Пример**:
-```bash
-sudo bash ssh/remove_student_chroot.sh student1
-```
-
-#### `remove_chroot.sh`
-**Описание**: Содержит функции для удаления chroot-окружения.
+#### check_services.sh
+**Описание**: Проверяет и устанавливает пакеты, запускает сервисы, указанные в `REQUIRED_SERVICES` и `REQUIRED_SERVICE_MAP`. Поддерживает флаг `-y` для автоматического подтверждения.
 
 **Функции**:
-- `remove_chroot <username>` — удаляет chroot-окружение, размонтирует директории, очищает `/etc/fstab` и удаляет директорию.
-  - Возвращает `EXIT_SUCCESS` (0) при успехе, или код ошибки (например, `EXIT_MOUNT_FAILED` (10)).
-  - Пример: `remove_chroot student1`
-- `check_and_terminate_user <username>` — завершает активные процессы пользователя.
-- `remove_chroot_dir <chroot_dir>` — удаляет chroot-директорию.
-- `clean_fstab <chroot_dir>` — удаляет записи из `/etc/fstab`.
-- `cleanup_mounts <chroot_dir>` — размонтирует директории и файлы.
+- `install_package <пакет>` — устанавливает пакет, если он отсутствует.
+- `start_service <сервис>` — включает и запускает сервис.
 
 **Использование**:
-Подключается в других скриптах:
 ```bash
-source_script "${REMOVE_CHROOT}"
-remove_chroot student1 || exit $?
+sudo bash /path/to/check_services.sh -y || exit $?
 ```
 
-#### `setup_ssh.sh`
-**Описание**: Настраивает SSH-сервер для использования chroot-окружения для группы `students`, обновляет конфигурации и запускает сервис.
+#### setup_cron.sh
+**Описание**: Настраивает cron-задания для запуска скриптов проекта.
 
 **Функции**:
-- `start_ssh_service` — запускает SSH-сервис.
+- `start_cron_services` — запускает сервис `cron`.
+- `setup_cron_jobs` — добавляет задания в crontab.
+
+**Переменные**:
+- `CRON_JOBS` — ассоциативный массив с путями к скриптам и расписанием (например, `CHECK_SERVICES` — `0 0 * * *`).
+- `SERVICE_START_TIMEOUT` — таймаут запуска сервиса (в секундах, определяется внешне).
+
+**Использование**:
+```bash
+sudo bash /path/to/setup_cron.sh || exit $?
+```
+
+#### setup_queue.sh
+**Описание**: Настраивает и запускает systemd unit для очереди Yii2.
+
+**Использование**:
+```bash
+sudo bash /path/to/setup_queue.sh || exit $?
+```
+
+#### setup.sh
+**Описание**: Выполняет полную настройку проекта, запуская скрипты из директорий `setup`, `chroot`, `samba`, `ssh`, `vhost`, `logging`.
+
+**Использование**:
+```bash
+sudo bash /path/to/setup.sh || exit $?
+```
+
+### Папка `/ssh`
+Содержит скрипты для настройки SSH-сервера, включая запуск сервисов, конфигурацию портов и файлов конфигурации.
+
+#### Локальный `config.sh`
+**Описание**: Задаёт конфигурацию для скриптов SSH.
+
+**Переменные**:
+- `CONFIG_FILE` (`/etc/ssh/sshd_config`) — основной файл конфигурации SSH.
+- `CONFIG_DIR` (`/etc/ssh/sshd_config.d`) — директория дополнительных конфигураций.
+
+#### check_setup_ssh.sh
+**Описание**: Проверяет и настраивает сервисы SSH, порты и зависимости.
+
+**Функции**:
+- `start_ssh_services` — запускает сервисы из `SSH_SERVICES`.
 - `get_ssh_port` — получает порт SSH из конфигурации.
-- `configure_ufw` — открывает SSH-порт в UFW.
-- `check_configs_dir` — проверяет доступность директории `sshd_config.d`.
-- `update_student_config` — создаёт/обновляет конфигурацию для группы `students`.
-- `update_main_config` — добавляет директиву `Include` в основной `sshd_config`.
-- `restart_ssh_service` — проверяет синтаксис и перезапускает SSH.
-
-**Использование**:
-Подключается в других скриптах или запускается напрямую:
-```bash
-sudo bash ssh/setup_ssh.sh [--log=<log_file>]
-```
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `setup_ssh.log`).
-
-**Пример**:
-```bash
-sudo bash ssh/setup_ssh.sh
-```
-
-### Папка `system/`
-Содержит скрипты для создания и удаления системных пользователей, а также настройки директорий модулей. Все скрипты требуют прав суперпользователя и подключают локальный `config.sh`.
-
-#### Локальный `config.sh`
-**Описание**: Задаёт конфигурацию для скриптов системной логики.
-
-**Основные переменные**:
-- В данном файле отсутствуют специфические переменные, используются переменные из глобального `config.sh` (например, `SITE_USER`, `SITE_GROUP`, `STUDENT_GROUP`).
-
-**Использование**:
-Подключается автоматически в скриптах `system`:
-```bash
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-```
-
-#### `create_user.sh`
-**Описание**: Создаёт системного пользователя, устанавливает пароль и назначает домашнюю директорию.
+- `configure_ufw` — открывает порт SSH в UFW.
+- `check_samba_dependencies` — проверяет наличие пакета `openssh-server` и команды `sshd`.
 
 **Использование**:
 ```bash
-sudo bash system/create_user.sh <username> <password> <home_dir> [--log=<log_file>]
-```
-- `<username>` — имя пользователя (должно быть уникальным).
-- `<password>` — пароль пользователя.
-- `<home_dir>` — путь к домашней директории (должен существовать).
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `create_user.log`).
-
-**Пример**:
-```bash
-sudo bash system/create_user.sh student1 securepass /home/student1
+sudo bash /path/to/check_setup_ssh.sh || exit $?
 ```
 
-#### `delete_user.sh`
-**Описание**: Удаляет системного пользователя, завершая его процессы.
-
-**Использование**:
-```bash
-sudo bash system/delete_user.sh <username> [--log=<log_file>]
-```
-- `<username>` — имя пользователя (должен быть в группе `students`).
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `delete_user.log`).
-
-**Пример**:
-```bash
-sudo bash system/delete_user.sh student1
-```
-
-#### `setup_module_dirs.sh`
-**Описание**: Настраивает права доступа к директориям модулей для указанного пользователя.
-
-**Использование**:
-```bash
-sudo bash system/setup_module_dirs.sh <username> <dir1> <dir2> ... [--log=<log_file>]
-```
-- `<username>` — имя пользователя (должен существовать).
-- `<dir1> <dir2> ...` — пути к директориям модулей (должны существовать).
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `setup_module_dirs.log`).
-
-**Пример**:
-```bash
-sudo bash system/setup_module_dirs.sh student1 /path/to/module1 /path/to/module2
-```
-
-### Папка `utils/`
-Содержит утилиты для самостоятельного запуска, которые помогают в управлении системой. Все скрипты требуют прав суперпользователя и подключают локальный `config.sh`.
-
-#### Локальный `config.sh`
-**Описание**: Задаёт конфигурацию для утилит.
-
-**Основные переменные**:
-- В данном файле отсутствуют специфические переменные, используются переменные из глобального `config.sh` (например, `REQUIRED_SERVICES`, `SERVICE_MAP`).
-
-**Использование**:
-Подключается автоматически в утилитах:
-```bash
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-```
-
-#### `check_services.sh`
-**Описание**: Проверяет наличие и состояние необходимых сервисов, устанавливает отсутствующие пакеты и запускает/включает сервисы.
-
-**Использование**:
-```bash
-sudo bash utils/check_services.sh [-y] [--log=<log_file>]
-```
-- `-y` — автоматически подтверждает установку пакетов и запуск сервисов.
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `check_services.log`).
-
-**Пример**:
-```bash
-sudo bash utils/check_services.sh -y
-```
-
-### Папка `vhost/`
-Содержит скрипты для настройки и управления виртуальными хостами Apache2. Все скрипты требуют прав суперпользователя и подключают локальный `config.sh`.
-
-#### Локальный `config.sh`
-**Описание**: Задаёт конфигурацию для скриптов управления виртуальными хостами Apache2.
-
-**Основные переменные**:
-- **`VHOST_AVAILABLE_DIR`** (по умолчанию: `/etc/apache2/sites-available`) — директория для доступных конфигураций виртуальных хостов.
-- **`VHOST_ENABLED_DIR`** (по умолчанию: `/etc/apache2/sites-enabled`) — директория для активированных конфигураций.
-- **`VHOST_LOG_DIR`** (по умолчанию: `/var/log/apache2`) — директория для логов Apache2.
-- **`VHOST_LOG_FILE`** (по умолчанию: `${VHOST_LOG_DIR}/vhost.log`) — лог-файл для виртуальных хостов.
-- **`APACHE_SERVICES`** — массив сервисов Apache2: `apache2`.
-- **`APACHE_PORTS`** — порты Apache2: `80/tcp`, `443/tcp`.
-- **`VHOST_PERMS`** (по умолчанию: `644`) — права доступа для файлов конфигурации.
-- **`VHOST_OWNER`** (по умолчанию: `root:root`) — владелец файлов конфигурации.
-
-**Использование**:
-Подключается автоматически в скриптах `vhost`:
-```bash
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-```
-
-#### `create_vhost.sh`
-**Описание**: Создаёт и активирует виртуальный хост Apache2, записывая указанную конфигурацию.
-
-**Использование**:
-```bash
-sudo bash vhost/create_vhost.sh <vhost-name> <config-content> [--log=<log_file>]
-```
-- `<vhost-name>` — имя виртуального хоста (должно быть уникальным).
-- `<config-content>` — содержимое конфигурационного файла (например, `<VirtualHost *:80>...</VirtualHost>`).
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `create_vhost.log`).
-
-**Пример**:
-```bash
-sudo bash vhost/create_vhost.sh example.com "<VirtualHost *:80>
-    ServerName example.com
-    DocumentRoot /var/www/example
-    ErrorLog ${VHOST_LOG_DIR}/example-error.log
-    CustomLog ${VHOST_LOG_DIR}/example-access.log combined
-</VirtualHost>"
-```
-
-#### `disable_vhost.sh`
-**Описание**: Отключает виртуальный хост Apache2, удаляя его из активированных сайтов.
-
-**Использование**:
-```bash
-sudo bash vhost/disable_vhost.sh <vhost-name> [--log=<log_file>]
-```
-- `<vhost-name>` — имя виртуального хоста.
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `disable_vhost.log`).
-
-**Пример**:
-```bash
-sudo bash vhost/disable_vhost.sh example.com
-```
-
-#### `remove_vhost.fn.sh`
-**Описание**: Содержит функцию для удаления виртуального хоста.
+#### config_ssh.sh
+**Описание**: Настраивает конфигурацию SSH, включая `sshd_config` и `student.conf`.
 
 **Функции**:
-- `remove_vhost <vhost-name>` — отключает и удаляет конфигурацию виртуального хоста.
-  - Возвращает `EXIT_SUCCESS` (0) при успехе, или код ошибки (например, `EXIT_VHOST_DELETE_FAILED` (44)).
-  - Пример: `remove_vhost example.com`
+- `check_requirements` — проверяет наличие SSH и файлов конфигурации.
+- `restart_ssh` — перезапускает сервис `sshd`.
+- `check_main_config` — добавляет включение `student.conf` в `sshd_config`.
+- `check_student_template` — обновляет `student.conf`.
+- `apply_updates` — применяет изменения конфигурации.
 
-**Использование**:
-Подключается в других скриптах:
-```bash
-source_script "${REMOVE_VHOST_SCRIPT}"
-remove_vhost example.com || exit $?
-```
-
-#### `remove_vhost.sh`
-**Описание**: Удаляет виртуальный хост Apache2, вызывая функцию `remove_vhost`.
+**Переменные**:
+- `LOCK_FILE` (`/tmp/ssh_configure.lock`) — файл блокировки.
+- `BACKUP_DIR` (`/etc/ssh/backup`) — директория для резервных копий.
 
 **Использование**:
 ```bash
-sudo bash vhost/remove_vhost.sh <vhost-name> [--log=<log_file>]
+sudo bash /path/to/config_ssh.sh || exit $?
 ```
-- `<vhost-name>` — имя виртуального хоста.
-- `--log=<log_file>` — имя лог-файла (по умолчанию: `remove_vhost.log`).
 
-**Пример**:
+#### Конфигурационные файлы
+
+#### student.conf
+**Описание**: Шаблон конфигурации SSH для пользователей группы `STUDENT_GROUP`, задающий chroot-окружение и ограничения.
+
+### Папка `/system`
+Содержит скрипты для создания и удаления системных пользователей, их интеграции с chroot и Samba.
+
+#### config.sh
+**Описание**: Задаёт конфигурацию для скриптов управления пользователями.
+
+**Переменные**:
+- `LOCK_USER_PREF` (`lock_user`) — префикс для файлов блокировки.
+- `DELETE_USER`, `ADD_SAMBA_USER`, `REMOVE_SAMBA_USER`, `CONFIG_SSH`, `SETUP_WORKSPACE`, `REMOVE_WORKSPACE` — пути к скриптам проекта.
+
+**Использование**:
 ```bash
-sudo bash vhost/remove_vhost.sh example.com
+source /path/to/config.sh
 ```
 
-#### `setup_apache.sh`
-**Описание**: Настраивает Apache2, проверяет зависимости, запускает сервис и открывает порты в UFW.
+#### create_user.sh
+**Описание**: Создаёт системного пользователя, его рабочую область в chroot и Samba-учётную запись. При ошибке удаляет созданного пользователя.
 
 **Функции**:
-- `start_apache_service` — запускает и включает сервис Apache2.
-- `configure_ufw` — открывает порты Apache2 в UFW.
+- `create_user` — создаёт пользователя, устанавливает пароль и группу.
 
 **Использование**:
-Подключается в других скриптах:
 ```bash
-source_script "${SETUP_APACHE_SCRIPT}"
+sudo bash /path/to/create_user.sh username password /path/to/workspace || exit $?
 ```
-**Пример**:
+
+#### delete_user.sh
+**Описание**: Удаляет системного пользователя, его рабочую область в chroot и Samba-учётную запись.
+
+**Функции**:
+- `terminate_user <имя_пользователя>` — завершает процессы пользователя.
+- `delete_user <имя_пользователя>` — удаляет пользователя и его домашнюю директорию.
+
+**Использование**:
 ```bash
-sudo bash vhost/setup_apache.sh [--log=<log_file>]
+sudo bash /path/to/delete_user.sh username || exit $?
 ```
+
+### Папка `/utils`
+Содержит утилитные скрипты для создания директорий, управления правами и монтирования/размонтирования файловых систем для использования внутри php.
+
+#### Локальный `config.sh`
+**Описание**: Задаёт конфигурацию для утилитных скриптов. Не определяет собственных переменных, подключает глобальный `config.sh`.
+
+#### create_directories.sh
+**Описание**: Создаёт директории с указанными правами и владельцем, используя функцию `create_directories` из `bash/lib`.
+
+**Использование**:
+```bash
+sudo bash /path/to/create_directories.sh /path/dir1 /path/dir2 755 root:root || exit $?
+```
+
+#### mount.sh
+**Описание**: Выполняет bind-монтирование файловой системы, используя функцию `mount_bind` из `bash/lib`.
+
+**Использование**:
+```bash
+sudo bash /path/to/mount.sh /source /dest [options] || exit $?
+```
+
+#### umount.sh
+**Описание**: Размонтирует файловую систему, используя функцию `umount_unit` из `bash/lib`.
+
+**Использование**:
+```bash
+sudo bash /path/to/umount.sh /target || exit $?
+```
+
+#### update_permissions.sh
+**Описание**: Обновляет права и владельца для файлов/директорий, используя функцию `update_permissions` из `bash/lib`.
+
+**Использование**:
+```bash
+sudo bash /path/to/update_permissions.sh /path/file1 /path/dir1 755 root:root || exit $?
+```
+
+### Папка `/vhost`
+Содержит скрипты для настройки Apache, управления виртуальными хостами, их создания, включения, отключения и удаления.
+
+#### Локальный `config.sh`
+**Описание**: Задаёт конфигурацию для скриптов управления виртуальными хостами Apache.
+
+**Переменные**:
+- `VHOST_AVAILABLE` (`/etc/apache2/sites-available`) — директория доступных хостов.
+- `VHOST_ENABLED` (`/etc/apache2/sites-enabled`) — директория включённых хостов.
+- `LOCK_VHOST_PREF` (`lock_vhost`) — префикс для файлов блокировки хоста.
+- `LOCK_GLOBAL_VHOST` (`lock_vhost_global`) — файл глобальной блокировки.
+
+#### check_setup_apache.sh
+**Описание**: Проверяет и настраивает сервисы Apache, порты и зависимости.
+
+**Функции**:
+- `start_apache_service` — запускает сервисы из `APACHE_SERVICES`.
+- `configure_ufw` — открывает порты Apache в UFW.
+- `check_apache_dependencies` — проверяет наличие пакета `apache2` и команд.
+
+**Переменные**:
+- `APACHE_SERVICES` (`apache2`) — сервисы Apache.
+- `APACHE_COMMAND` (`a2ensite`, `a2dissite`, `apache2ctl`) — команды Apache.
+- `APACHE_PORTS` (`80/tcp`, `443/tcp`) — порты Apache.
+- `SERVICE_START_TIMEOUT` (5) — таймаут запуска сервиса (в секундах).
+
+**Использование**:
+```bash
+sudo bash /path/to/check_setup_apache.sh || exit $?
+```
+
+#### setup_apache.sh
+**Описание**: Настраивает Apache, включая модуль `mpm_itk` и его параметры.
+
+**Функции**:
+- `check_requirements` — проверяет наличие Apache и конфигурации.
+- `check_mpm_itk` — устанавливает и настраивает модуль `mpm_itk`.
+- `restart_apache` — перезапускает сервис Apache.
+- `setup_apache` — выполняет настройку Apache с блокировкой.
+
+**Переменные**:
+- `MAIN_CONFIG` (`/etc/apache2/apache2.conf`) — основной файл конфигурации.
+- `BACKUP_FILE` — путь к резервной копии конфигурации.
+
+**Использование**:
+```bash
+sudo bash /path/to/setup_apache.sh || exit $?
+```
+
+#### create_vhost.sh
+**Описание**: Создаёт и включает виртуальный хост Apache на основе шаблона `vhost.conf`.
+
+**Функции**:
+- `setup_vhost <пользователь> <домен> <директория>` — настраивает виртуальный хост.
+- `create_vhost <файл> <пользователь> <домен> <директория>` — создаёт файл конфигурации.
+- `configtest <домен> <файл>` — проверяет синтаксис конфигурации.
+
+**Использование**:
+```bash
+sudo bash /path/to/create_vhost.sh username domain /path/to/dir || exit $?
+```
+
+#### enable_vhost.sh
+**Описание**: Включает виртуальный хост Apache.
+
+**Функции**:
+- `enable_vhost <домен>` — включает хост с помощью `a2ensite`.
+- `_enable_vhost_lock <домен>` — выполняет включение с блокировкой.
+- `_reload_apache_lock <домен>` — перезагружает Apache.
+- `_disable_vhost_lock <домен>` — отключает хост при ошибке.
+
+**Использование**:
+```bash
+sudo bash /path/to/enable_vhost.sh domain || exit $?
+```
+
+#### disable_vhost.sh
+**Описание**: Отключает виртуальный хост Apache.
+
+**Функции**:
+- `disable_vhost <домен>` — отключает хост с помощью `a2dissite`.
+- `_disable_vhost_lock <домен>` — выполняет отключение с блокировкой.
+- `_reload_apache_lock <домен>` — перезагружает Apache.
+- `_enable_vhost_lock <домен>` — включает хост при ошибке.
+
+**Использование**:
+```bash
+sudo bash /path/to/disable_vhost.sh domain || exit $?
+```
+
+#### remove_vhost.sh
+**Описание**: Удаляет виртуальный хост Apache.
+
+**Функции**:
+- `remove_vhost <домен>` — отключает и удаляет файл конфигурации хоста.
+
+**Использование**:
+```bash
+sudo bash /path/to/remove_vhost.sh domain || exit $?
+```
+
+#### Конфигурационные файлы
+
+#### vhost.conf
+**Описание**: Шаблон конфигурации виртуального хоста Apache для настройки домена, директории и прав доступа.

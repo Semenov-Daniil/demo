@@ -1,6 +1,6 @@
 #!/bin/bash
 # restrict_binaries.fn.sh - Скрипт экспортирующий функцию ограничения команд
-# Расположение: bash/chroot/restrict_binaries.fn.sh
+# Расположение: bash/lib/restrict_binaries.fn.sh
 
 set -euo pipefail
 

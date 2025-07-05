@@ -1,6 +1,6 @@
 #!/bin/bash
 # mounts.fn.sh - Скрипт вспомогательных функций монтирования
-# Расположение: bash/chroot/mounts.fn.sh
+# Расположение: bash/lib/mounts.fn.sh
 
 set -euo pipefail
 

@@ -11,7 +11,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh" || {
     exit 1
 }
 
-bash "$CHECK_SERVICES" || exit $?
+bash "$CHECK_SERVICES" -y || exit $?
 bash "$SETUP_CRON" || exit $?
 bash "$SETUP_QUEUE" || exit $?
 bash "$SETUP_CHROOT" || exit $?

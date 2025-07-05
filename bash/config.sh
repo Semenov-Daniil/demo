@@ -92,7 +92,7 @@ declare -rAx REQUIRED_SERVICE_MAP=(
 )
 
 # Lock
-declare -rx LOCK_TIMEOUT=15
+declare -rx LOCK_TIMEOUT=30
 declare -rx LOCK_PREF="lock"
 
 # Chroot

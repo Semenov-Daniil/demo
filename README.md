@@ -64,7 +64,7 @@
 Установите необходимые пакеты:
 ```bash
 sudo apt update
-sudo apt install apache2 libapache2-mod-php php php-mysql php-mbstring php-intl php-redis mysql-server openssh-server samba redis-server phpmyadmin composer
+sudo apt install apache2 libapache2-mod-php php php-mysql php-mbstring php-intl php-redis mysql-server openssh-server samba samba-common-bin redis-server phpmyadmin composer
 ```
 
 Включите модули Apache:
