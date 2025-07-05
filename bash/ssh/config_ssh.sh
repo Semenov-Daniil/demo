@@ -65,6 +65,8 @@ restart_ssh() {
         }
     }
 
+    systemctl restart ssh >/dev/null 2>&1
+
     log_message "info" "Samba configuration reloaded successfully"
     return 0
 }
