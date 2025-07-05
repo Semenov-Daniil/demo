@@ -93,8 +93,9 @@ sudo systemctl restart apache2
 3. Настройте права для выполнения bash-скриптов пользователем `www-data`:
 
    ```bash
-   echo "www-data ALL=(ALL) NOPASSWD: /var/www/project/bash/*.sh" | sudo tee /etc/sudoers.d/www-data
+   echo "www-data ALL=(ALL) NOPASSWD: /var/www/project/bash/*.sh" | sudo tee -a /etc/sudoers.d/www-data
    echo "www-data ALL=(ALL) NOPASSWD: /var/www/project/bash/**/*.sh" | sudo tee -a /etc/sudoers.d/www-data
+   sudo chmod 440 /etc/sudoers.d/www-data
    ```
 
 4. Скопируйте файл `env.example` в `.env` и настройте параметры:
