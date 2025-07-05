@@ -26,7 +26,7 @@ make_log_dir() {
     [[ -d "$log_dir" ]] || {
         mkdir -p "$log_dir" || { echo "Cannot create '$log_dir'"; return 1; }
         chown "${SITE_USER}:${SITE_GROUP}" "$log_dir" || { echo "Failed to set ownership for '$log_dir'"; return 1; }
-        chmod 750 "$log_dir" || { echo "Failed to set permissions for '$log_dir'"; return 1; }
+        chmod 755 "$log_dir" || { echo "Failed to set permissions for '$log_dir'"; return 1; }
     }
     return $?
 }
@@ -35,7 +35,7 @@ make_log_dir() {
 write_log() {
     local log_file="$1" log_entry="$2"
     echo "$log_entry" >> "$log_file" || { echo "Failed to write to '$log_file'"; return 1; }
-    update_permissions "$log_file" 750 "$SITE_USER:$SITE_GROUP"
+    update_permissions "$log_file" 755 "$SITE_USER:$SITE_GROUP"
     return $?
 }
 
